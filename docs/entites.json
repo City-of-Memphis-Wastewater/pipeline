@@ -1,0 +1,46 @@
+[
+    {
+        "id": "s197",
+        "name": "Effluent",
+        "color": "Blue",
+        "unit": "MGD",
+        "site": "eefe228a-39a2-4742-a9e3-c07314544ada",
+		"ip":"172.19.4.128",
+		"zd":"WWTF",
+		"sid":3550,
+		"idcs":"FI-405/415"
+    },
+    {
+        "id": "s200",
+        "name": "Influent",
+        "color": "DarkOrange",
+        "unit": "gps",
+        "site": "eefe228a-39a2-4742-a9e3-c07314544ada",
+		"ip":"172.19.4.128",
+		"zd":"WWTF",
+		"sid":5392,
+		"idcs":"I-5005A"
+    }
+    {
+        "id": "s198",
+        "name": "Effluent",
+        "color": "Blue",
+        "unit": "MGD",
+        "site": "64c5c5ac-04ca-4a08-bdce-5327e4b21bc5",
+		"ip":"172.19.4.127",
+		"zd":"Maxson",
+		"sid":8528,
+		"idcs":"FI8001"
+    },
+    {
+        "id": "s199",
+        "name": "Influent",
+        "color": "DarkOrange",
+        "unit": "gps",
+        "site": "64c5c5ac-04ca-4a08-bdce-5327e4b21bc5",
+		"ip":"172.19.4.127",
+		"zd":"Maxson",
+		"sid":2308,
+		"idcs":"M100FI"
+    }
+]

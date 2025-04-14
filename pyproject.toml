@@ -1,0 +1,19 @@
+[project]
+name = "rjn-clarity"
+version = "0.1.0"
+description = "\"API access for reading (GET) and writing (POST), to https://rjn-clarity-api.com/v1/clarity\""
+authors = [
+    {name = "George Clayton Bennett",email = "george.bennett@memphistn.gov"}
+]
+license = {text = "BSD-3"}
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "suds (>=1.2.0,<2.0.0)",
+    "requests (>=2.32.3,<3.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
