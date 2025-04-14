@@ -68,7 +68,7 @@ for point_object in Point.point_dict.values():
         byte_string = request.content
         #pprint(f"byte_string={byte_string}")
         decoded_str = byte_string.decode('utf-8')
-        data = json.loads(decoded_str)
+        data = json.loads(decoded_str) 
         #pprint(f"data={data}")
         points = data["points"]
 
