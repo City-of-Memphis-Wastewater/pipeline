@@ -26,17 +26,53 @@ class Directories:
         cls.set_tokenauth_file()
         cls.set_env_file()
     @classmethod
-    def set_project_dir(cls):
-        cls.directories_file = Path(__file__).resolve()
-        cls.project = cls.directories_file.parents[1]  # Move up two levels from the current file
+    def set_project_dir(cls,path_str=None):
+        if path_str is None:
+            cls.directories_file = Path(__file__).resolve()
+            cls.project = cls.directories_file.parents[1]  # Move up two levels from the current file
+        if input is not None and Path(path_str).is_dir() :
+            cls.project = path_str
+            
     @classmethod
-    def set_env_dir(cls):
+    def set_env_dir(cls,path_str=None):
+        if path_str is None:
+            cls.env = cls.get_project_dir()+"\\env"
+        if input is not None and Path(path_str).is_dir() :
+            cls.env = path_str
     @classmethod
-    def set_src_dir(cls):
+    def set_src_dir(cls,path_str=None):
+        if path_str is None:
+            cls.src = cls.get_project_dir()+"\\src"
+        if input is not None and Path(path_str).is_dir() :
+            cls.src = path_str
     @classmethod
-    def set_token_auth_file(cls):
+    def set_gui_dir(cls,path_str=None):
+        if path_str is None:
+            cls.gui = cls.get_project_dir()+"\\gui"
+        if input is not None and Path(path_str).is_dir() :
+            cls.gui = path_str
     @classmethod
-    def set_user_credentials_file(cls):
+    def set_shell_dir(cls,path_str=None):
+        if path_str is None:
+            cls.shell = cls.get_project_dir()+"\\shell"
+        if input is not None and Path(path_str).is_dir() :
+            cls.shell = path_str
+    @classmethod
+    def set_tui_dir(cls,path_str=None):
+        if path_str is None:
+            cls.tui = cls.get_project_dir()+"\\tui"
+        if input is not None and Path(path_str).is_dir() :
+            cls.tui = path_str
+    @classmethod
+    def set_api_dir(cls,path_str=None):
+        if path_str is None:
+            cls.api = cls.get_project_dir()+"\\api"
+        if input is not None and Path(path_str).is_dir() :
+            cls.api = path_str
+    #@classmethod
+    #def set_token_auth_file(cls):
+    #@classmethod
+    #def set_user_credentials_file(cls):
     
     @classmethod
     def get_project_dir(cls):
@@ -44,7 +80,7 @@ class Directories:
     def get_env_dir(cls):
     @classmethod
     def get_src_dir(cls):
-    @classmethod
-    def get_token_auth_file(cls):
-    @classmethod
-    def get_user_credentials_file(cls):
+    #@classmethod
+    #def get_token_auth_file(cls):
+    #@classmethod
+    #def get_user_credentials_file(cls):

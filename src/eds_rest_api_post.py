@@ -3,42 +3,36 @@ import json
 from pprint import pprint
 from datetime import datetime
 
+from eds_point import Point
 post_to_rjn = True
-class Point:
-    point_dict = dict()
-    @classmethod
-    def add_to_point_dict(cls,self):
-        cls.point_dict.update({self.sid:self})
-    def __init__(self):
-        self.ip_address = str()
-        self.idcs = str()
-        self.sid = int()
-        self.zd = int()
-        self.rjn_siteid = str()
-        self.rjn_entityid = str()
-        self.rjn_name= str()
-    def __init__(self,ip_address,idcs,sid,zd,rjn_siteid,rjn_entityid,rjn_name):
-        self.ip_address = ip_address
-        self.idcs = idcs
-        self.sid = sid
-        self.zd = zd
-        self.rjn_siteid = rjn_siteid
-        self.rjn_entityid = rjn_entityid
-        self.rjn_name= rjn_name
-        self.add_to_point_dict(self)
-    def set_value(self,value = float()):
-        self.value = value
-        #self.timestamp = 
 
 
 #Point(ip_address="172.19.4.128",idcs="FI-405/415",sid="3550",zd="WWTF",rjn_siteid="eefe228a-39a2-4742-a9e3-c07314544ada",rjn_entityid="s197",rjn_name="Effluent") # failing
 #Point(ip_address="172.19.4.128",idcs="I-5005A",sid="5392",zd="WWTF",rjn_siteid="eefe228a-39a2-4742-a9e3-c07314544ada",rjn_entityid="s200",rjn_name="Influent") # failing
-Point(ip_address="172.19.4.127",idcs="FI8001",sid=8528,zd="Maxson",rjn_siteid="64c5c5ac-04ca-4a08-bdce-5327e4b21bc5",rjn_entityid="s198",rjn_name="Effluent")
-Point(ip_address="172.19.4.127",idcs="M100FI",sid=2308,zd="Maxson",rjn_siteid="64c5c5ac-04ca-4a08-bdce-5327e4b21bc5",rjn_entityid="s199",rjn_name="Influent")
+Point().populate_eds_characteristics(
+    ip_address="172.19.4.127",
+    idcs="FI8001",
+    sid=8528,
+    zd="Maxson"
+).populate_rjn_characteristics(
+    rjn_siteid="64c5c5ac-04ca-4a08-bdce-5327e4b21bc5",
+    rjn_entityid="s198",
+    rjn_name="Effluent"
+)
+
+Point().populate_eds_characteristics(
+    ip_address="172.19.4.127",
+    idcs="M100FI",
+    sid=2308,
+    zd="Maxson"
+).populate_rjn_characteristics(
+    rjn_siteid="64c5c5ac-04ca-4a08-bdce-5327e4b21bc5",
+    rjn_entityid="s199",
+    rjn_name="Influent")
 #Point(ip_address="172.19.4.127",idcs="M310LI",sid=2382,zd="Maxson",rjn_siteid="64c5c5ac-04ca-4a08-bdce-5327e4b21bc5",rjn_entityid=None,rjn_name="Wet well level")
 #Point(ip_address="172.19.4.127",idcs="PAA-DOSE-EAST-PPM",sid=11002,zd="Maxson",rjn_siteid="64c5c5ac-04ca-4a08-bdce-5327e4b21bc5",rjn_entityid=None,rjn_name="PAA Dose East")
 
-sid_list = [int(x) for x in list(Point.point_dict.keys())]
+sid_list = [p.sid for p in Point.get_point_set()]
 print(f"sid_list = {sid_list}")
 
 for point_object in Point.point_dict.values():
