@@ -41,6 +41,30 @@ def populate_today():
         rjn_siteid="64c5c5ac-04ca-4a08-bdce-5327e4b21bc5",
         rjn_entityid="s199",
         rjn_name="Influent")
+    
+    Point().populate_eds_characteristics(
+        ip_address="172.19.4.127",
+        idcs="M310LI",
+        sid=2382,
+        zd="Maxson"
+    ).populate_manual_characteristics(
+        shortdesc="WETWELL"
+    ).populate_rjn_characteristics(
+        rjn_siteid="64c5c5ac-04ca-4a08-bdce-5327e4b21bc5",
+        rjn_entityid=None,
+        rjn_name=None)
+    
+    Point().populate_eds_characteristics(
+        ip_address="172.19.4.127",
+        idcs="D-321E",
+        sid=11003,
+        zd="Maxson"
+    ).populate_manual_characteristics(
+        shortdesc="DOSE"
+    ).populate_rjn_characteristics(
+        rjn_siteid="64c5c5ac-04ca-4a08-bdce-5327e4b21bc5",
+        rjn_entityid=None,
+        rjn_name=None)
 
 def retrieve_and_show_points(option = "live"):
     sid_list = [p.sid for p in Point.get_point_set()]
@@ -82,16 +106,18 @@ def show_points_live(api_url,point_object,headers):
     #pprint(f"data={data}")
     points = data["points"]
 
-    i=0
-    point = points[i]
-    #print(f"dir(point) = {point}")
-    #print(f'''value:{points[i]["value"]},idcs:{points[i]["idcs"]},sid:{points[i]["sid"]},quality:{points[i]["quality"]},desc:{points[i]["desc"]},ts:{points[i]["ts"]},dt:{datetime.fromtimestamp(points[i]["ts"])}''')
-    print(f'''{point_object.shortdesc},av:{round(point["value"],2)},idcs:{point["idcs"]},sid:{point["sid"]},dt:{datetime.fromtimestamp(point["ts"])}''')
-    
+    if len(points)>0:
+        i=0
+        point = points[i]
+        #print(f"dir(point) = {point}")
+        #print(f'''value:{points[i]["value"]},idcs:{points[i]["idcs"]},sid:{points[i]["sid"]},quality:{points[i]["quality"]},desc:{points[i]["desc"]},ts:{points[i]["ts"]},dt:{datetime.fromtimestamp(points[i]["ts"])}''')
+        print(f'''{point_object.shortdesc}, av:{round(point["value"],2)}, idcs:{point["idcs"]}, sid:{point["sid"]}, dt:{datetime.fromtimestamp(point["ts"])}''')
+    elif len(points)==0:
+        print(f"{point_object.shortdesc}, no data returned, len(points)==0")
 
-    #if post_to_rjn is True:
 def show_points_tabular_trend(api_url,point_object,headers):
     request_url = api_url + 'trend/tabular'
+
     query = {
         'period' : {
         'from' : 1744661000,
