@@ -39,15 +39,16 @@ class LiveFeedApp(App):
         # Start live updates
         self.set_interval(1.0, self.update_live_feed)
 
+
     async def update_live_feed(self) -> None:
         """Simulate live data updates."""
         # Simulating a new data feed
         new_data = {
-            "Name": "NEW", 
-            "Avg": f"{round(40 + 10 * (await self.random_float()), 2)}", 
-            "IDCS": f"ID{await self.random_int()}", 
-            "SID": f"{await self.random_int()}", 
-            "Datetime": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            "Name": "NEW",
+            "Avg": f"{round(40 + 10 * (await self.random_float()), 2)}",
+            "IDCS": f"ID{await self.random_int()}",
+            "SID": f"{await self.random_int()}",
+            "Datetime": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         }
 
         # Add new row
