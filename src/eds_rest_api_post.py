@@ -14,6 +14,8 @@ Point().populate_eds_characteristics(
     idcs="FI8001",
     sid=8528,
     zd="Maxson"
+).populate_manual_characteristics(
+    shortdesc="EFF"
 ).populate_rjn_characteristics(
     rjn_siteid="64c5c5ac-04ca-4a08-bdce-5327e4b21bc5",
     rjn_entityid="s198",
@@ -25,6 +27,8 @@ Point().populate_eds_characteristics(
     idcs="M100FI",
     sid=2308,
     zd="Maxson"
+).populate_manual_characteristics(
+    shortdesc="INFLU"
 ).populate_rjn_characteristics(
     rjn_siteid="64c5c5ac-04ca-4a08-bdce-5327e4b21bc5",
     rjn_entityid="s199",
@@ -34,8 +38,9 @@ Point().populate_eds_characteristics(
 
 sid_list = [p.sid for p in Point.get_point_set()]
 print(f"sid_list = {sid_list}")
+pprint(Point.get_point_set())
 
-for point_object in Point.point_dict.values():
+for point_object in Point.get_point_set():
     #api_url = 'http://localhost:43084/api/v1/'
     #api_url = 'http://172.19.4.127:43084/api/v1/'
     api_url = f'http://{point_object.ip_address}:43084/api/v1/'
@@ -66,9 +71,13 @@ for point_object in Point.point_dict.values():
         #pprint(f"data={data}")
         points = data["points"]
 
+        
         i=0
-        print(f'''value:{points[i]["value"]},idcs:{points[i]["idcs"]},sid:{points[i]["sid"]},quality:{points[i]["quality"]},desc:{points[i]["desc"]},ts:{points[i]["ts"]},dt:{datetime.fromtimestamp(points[i]["ts"])}''')
-        #point_object.rjn_
+        point = points[i]
+        #print(f"dir(point) = {point}")
+        #print(f'''value:{points[i]["value"]},idcs:{points[i]["idcs"]},sid:{points[i]["sid"]},quality:{points[i]["quality"]},desc:{points[i]["desc"]},ts:{points[i]["ts"]},dt:{datetime.fromtimestamp(points[i]["ts"])}''')
+        print(f'''{point_object.shortdesc},av:{round(point["value"],2)},idcs:{point["idcs"]},sid:{point["sid"]},dt:{datetime.fromtimestamp(point["ts"])}''')
+        
 
         #if post_to_rjn is True:
     else:

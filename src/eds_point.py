@@ -46,6 +46,9 @@ class Point:
         self.rjn_entityid = rjn_entityid
         self.rjn_name= rjn_name
         return self # big money, allows fore chaining
+    def populate_manual_characteristics(self,shortdesc=str()):
+        self.shortdesc = shortdesc
+        return self # big money, allows fore chaining
     def set_value(self,value = float(), timestamp = int()):
         self.value = value
         self.timestamp = timestamp
