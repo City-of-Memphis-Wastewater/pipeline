@@ -7,11 +7,19 @@ Purpose: Consolidate and modularize API address URLs, much like the Pavlovian Di
 """
 
 class Address:
-    ip_address_default = "172.19.4.127" # Maxson
+    protocol = "http://" # scheme
     ip_address = str()
+    host = str()
     base_url = str()
+    rest_api_port = int()
+    soap_api_port = int()
     rest_api_url = str()
     soap_api_url = str()
+    filepath_config_toml = "./configs/*.toml"
+    
+    @classmethod
+    def get_config_toml(cls):
+        return cls.filepath_config_toml
 
     @classmethod
     def get_ip_address(cls):
@@ -22,7 +30,6 @@ class Address:
     @classmethod
     def set_ip_address(cls,ip_address):
         cls.ip_address = ip_address
-    
         
     @classmethod
     def get_base_url(cls):
@@ -30,16 +37,15 @@ class Address:
             cls.set_base_url()
         return cls.base_url
     @classmethod
-    def set_base_url(cls):
-        cls.base_url = 'http://'+str(cls.get_ip_address()) # must cast possible None as string to force calculation
-
-    
+    def set_base_url(cls):  
+        cls.base_url = 'http://'+str(cls.get_ip_address()) # must cast possible None as string to force calculation    
     
     @classmethod
     def get_rest_api_url(cls):
         if cls.rest_api_url is str():
             cls.set_rest_api_url()
         return cls.rest_api_url
+    
     @classmethod
     def set_rest_api_url(cls,ip_address=None):
         # this allows for an IP address (like from Maxson or Stiles) to be inserted without first calling set_ip_address. 
@@ -71,14 +77,43 @@ class Address:
         if cls.soap_api_url is str():
             cls.set_soap_api_url()
         return cls.soap_api_url
-
     @classmethod
-    def start(cls):
+    def calculate(cls):
         #Config.get_default_ip_address()    
         cls.get_ip_address()
 
+class AddressRjn(Address):
+    """ RJN offered us access to their REST API """
+    filepath_config_toml = ".\configs\config_rjn.toml"
+
+    @classmethod
+    def get_config_toml(cls):
+        return cls.filepath_config_toml
+
+    if True:
+        " Explicitly override irrelevant inherited methods to prevent use. "
+        @classmethod
+        def get_soap_api(cls):
+            raise NotImplementedError("RJN did not offer us a SOAP API")
+        @classmethod
+        def set_soap_api(cls):  
+            raise NotImplementedError("RJN did not offer us a SOAP API")
+
+class AddressEds(Address):
+    # allow for multiple EDS servers
+    rest_api_port = 43084
+    soap_api_port = 43080
+    ip_address_default = "172.19.4.127" # Maxson
+    ip_address_list = ["172.19.4.127",
+                             "172.19.4.128"]
+    filepath_config_toml = ".\configs\config_eds.toml"
+    rest_api_url_list = ["http://172.19.4.127:43084/api/v1/",
+                             "http://172.19.4.128:43084/api/v1/"]
+    
+
+
 if __name__ == "__main__":
-    Address.start()
+    Address.calculate()
     print(f"Address.get_soap_api_url() = {Address.get_soap_api_url()}")
     print(f"Address.base_url = {Address.base_url}")
     
