@@ -2,15 +2,83 @@ import requests
 import json
 from pprint import pprint
 from datetime import datetime
+import sys
 #import textual
 
+from address import Address
 from eds_point import Point
 post_to_rjn = True
 
+class ApiCalls:
+    ip_address_maxson = "172.19.4.127"
+    ip_address_stiles = "172.19.4.128"
+
+    def __init__(self,ip_address_default = "172.19.4.127"):
+        self.ip_address_default = ip_address_default
+
+    def test_connection_to_internet():
+        try:
+            # call Cloudflare's CDN test site, because it is lite.
+            response = requests.get("http://1.1.1.1", timeout = 5)
+            print("You are connected to the internet.")
+        except:
+            print(f"It appears you are not connected to the internet.")
+            sys.exit()
+
+    def test_connection_to_eds():
+        for url in Address.get_rest_api_url_list():
+            try:
+                # call Cloudflare's CDN test site, because it is lite.
+                response = requests.get(url, timeout = 5)
+                print(f"You are able to access an EDS: {url}") 
+                
+            except:
+                print(f"Connection to an EDS is failing: {url}")
+                sys.exit()
+
+    def get_license(api_url,header):
+        request_url = api_url + 'license'
+        request = requests.get(request_url, headers=header)
+        return request
+
+    def get_token(ip_address):
+        Address.set_ip_address(ip_address)
+        api_url = Address.get_rest_api_url() # if none, use known, if else, us Address.get_current_ip_address()
+        request_url = api_url + 'login'
+        data = {'username' : 'admin', 'password' : '', 'type' : 'rest client'}
+        #data = {'username' : 'rjn', 'password' : 'RjnClarity2025', 'type' : 'rest client'}  
+        response = requests.post(request_url, json = data)
+        #print(f"response={response}")
+        token = json.loads(response.text)
+        headers = {'Authorization' : 'Bearer {}'.format(token['sessionId'])}
+        return api_url,headers
+
 def run_today():
+    ApiCalls.test_connection_to_internet()
+    ApiCalls.test_connection_to_eds()
+    api = ApiCalls(ip_address_default = "172.19.4.127")
+    api_url,headers = ApiCalls.get_token(ip_address = ApiCalls.ip_address_maxson)
     populate_today()  
     retrieve_and_show_points(option=0) # live [0] or tabular [1]
+    #retrieve_and_show_points(option=1)
 
+def populate_multiple_generic_points_from_dicts(loaded_dicts):
+    for dic in loaded_dicts:
+        populate_generic_point_from_dict(dic)
+
+def populate_generic_point_from_dict(dic):
+    Point().populate_eds_characteristics(
+        ip_address=dic["ip_address"],
+        idcs=dic["idcs"],
+        sid=dic["sid"],
+        zd=dic["zd"]
+    ).populate_manual_characteristics(
+        shortdesc=dic["shortdesc"]
+    ).populate_rjn_characteristics(
+        rjn_siteid=dic["rjn_siteid"],
+        rjn_entityid=dic["rjn_entityid"],
+        rjn_name=dic["rjn_name"]
+    )
 def populate_today():
     #Point(ip_address="172.19.4.128",idcs="FI-405/415",sid="3550",zd="WWTF",rjn_siteid="eefe228a-39a2-4742-a9e3-c07314544ada",rjn_entityid="s197",rjn_name="Effluent") # failing
     #Point(ip_address="172.19.4.128",idcs="I-5005A",sid="5392",zd="WWTF",rjn_siteid="eefe228a-39a2-4742-a9e3-c07314544ada",rjn_entityid="s200",rjn_name="Influent") # failing
@@ -70,22 +138,11 @@ def retrieve_and_show_points(option = "live"):
     sid_list = [p.sid for p in Point.get_point_set()]
     print(f"sid_list = {sid_list}")
     pprint(Point.get_point_set())
-
     for point_object in Point.get_point_set():
-        #api_url = 'http://localhost:43084/api/v1/'
-        #api_url = 'http://172.19.4.127:43084/api/v1/'
-        api_url = f'http://{point_object.ip_address}:43084/api/v1/'
-        request_url = api_url + 'login'
-        data = {'username' : 'admin', 'password' : '', 'type' : 'rest client'}
-        #data = {'username' : 'rjn', 'password' : 'RjnClarity2025', 'type' : 'rest client'}  
-        response = requests.post(request_url, json = data)
-        #print(f"response={response}")
-        token = json.loads(response.text)
-        headers = {'Authorization' : 'Bearer {}'.format(token['sessionId'])}
         if option == "live" or option == 0: 
-            show_points_live(api_url,point_object,headers)
+            show_points_live(api_url=Address.get_rest_api_url(),headers = Address.get_header(),point_object=point_object,)
         if option == "tabular" or option == 1:
-            show_points_tabular_trend(api_url,point_object,headers)
+            show_points_tabular_trend(api_url=Address.get_rest_api_url(),headers = Address.get_header(),point_object=point_object,)
 
 def show_points_live(api_url,point_object,headers):
     request_url = api_url + 'points/query'
@@ -104,16 +161,19 @@ def show_points_live(api_url,point_object,headers):
     decoded_str = byte_string.decode('utf-8')
     data = json.loads(decoded_str) 
     #pprint(f"data={data}")
-    points = data["points"]
-
-    if len(points)>0:
-        i=0
-        point = points[i]
-        #print(f"dir(point) = {point}")
-        #print(f'''value:{points[i]["value"]},idcs:{points[i]["idcs"]},sid:{points[i]["sid"]},quality:{points[i]["quality"]},desc:{points[i]["desc"]},ts:{points[i]["ts"]},dt:{datetime.fromtimestamp(points[i]["ts"])}''')
-        print(f'''{point_object.shortdesc}, av:{round(point["value"],2)}, idcs:{point["idcs"]}, sid:{point["sid"]}, dt:{datetime.fromtimestamp(point["ts"])}''')
-    elif len(points)==0:
-        print(f"{point_object.shortdesc}, no data returned, len(points)==0")
+    points_datas = data["points"]
+    def print_point_info_row(point_object,point_data):
+            print(f'''{point_object.shortdesc}, sid:{point_data["sid"]}, idcs:{point_data["idcs"]}, dt:{datetime.fromtimestamp(point_data["ts"])}, un:{point_data["un"]}. av:{round(point_data["value"],2)}''')
+    if len(points_datas)==0:
+        print(f"{point_object.shortdesc}, sid:{point_object.sid}, no data returned, len(points)==0")
+    elif len(points_datas)==1:
+        # This is expected, that there is one point value returned for each SID, which is the match call.
+        point_data = points_datas[0]
+        print_point_info_row(point_object,point_data)
+    elif len(points_datas)>1:
+        for point_data in points_datas:
+            print_point_info_row(point_object,point_data)
+    
 
 def show_points_tabular_trend(api_url,point_object,headers):
     request_url = api_url + 'trend/tabular'
@@ -146,6 +206,7 @@ def show_points_tabular_trend(api_url,point_object,headers):
     decoded_str = byte_string.decode('utf-8')
     data = json.loads(decoded_str)
     pprint(f"data={data}")
+
 
 
 if __name__ == "__main__":
