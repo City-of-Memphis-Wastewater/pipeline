@@ -58,8 +58,8 @@ class Address:
         if False:
             rest_api_url_list = [cls.get_rest_api_url()]
         else:
-            rest_api_url_list = ["https://172.19.4.127:43084/api/v1/",
-                             "https://172.19.4.128:43084/api/v1/"]
+            rest_api_url_list = ["http://172.19.4.127:43084/api/v1/",
+                             "http://172.19.4.128:43084/api/v1/"]
         return rest_api_url_list
     
     

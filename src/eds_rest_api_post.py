@@ -26,14 +26,29 @@ class ApiCalls:
             sys.exit()
 
     def test_connection_to_eds():
-        for url in Address.get_rest_api_url_list():
+        for api_url in Address.get_rest_api_url_list():
             try:
-                # call Cloudflare's CDN test site, because it is lite.
-                response = requests.get(url, timeout = 5)
-                print(f"You are able to access an EDS: {url}") 
-                
+            #if True:
+                api_url = "http://172.19.4.127:43084/api/v1/"
+                login_url = api_url+"login"
+                data = {'username' : 'admin', 'password' : '', 'type' : 'rest client'}
+                response = requests.post(login_url, json = data)
+                #print(f"Status Code: {response.status_code}")
+                #print(f"Response Text: '{response.text}'")
+                if response.status_code == 200:
+                    try:
+                        token = response.json()
+                    except json.JSONDecodeError:
+                        print("Failed to parse JSON:")
+                        token = None
+                #request_url = api_url + 'ping'
+                #headers = {'Authorization' : 'Bearer {}'.format(token['sessionId'])}
+                #response = requests.get(request_url, headers = headers)
+
+                print(f"You are able to access an EDS: {api_url}") 
+            #else:
             except:
-                print(f"Connection to an EDS is failing: {url}")
+                print(f"Connection to an EDS is failing: {api_url}")
                 sys.exit()
 
     def get_license(api_url,header):
