@@ -28,7 +28,6 @@ class Address:
                                                             rest_api_port = self.rest_api_port,
                                                             rest_api_path = self.rest_api_path)
         self.set_auth_url(rest_api_base_url=self.rest_api_base_url,auth_path = self.auth_path)
-        
 
 
     def set_rest_api_base_url(self,protocol,host,port_colon,rest_api_port,rest_api_path):
@@ -152,15 +151,17 @@ class Address:
     #                          "http://172.19.4.128:43084/api/v1/"]
     # ''' """
 
-
-if __name__ == "__main__":
-    #Address.calculate()
-    #print(f"Address.get_soap_api_url() = {Address.get_soap_api_url()}")
-    #print(f"Address.base_url = {Address.base_url}")
+def generate_relevant_api_addresses():
     maxson = Address(host = "172.19.4.127", port_colon = ":", rest_api_port = 43084, soap_api_port = 43080, protocol = "http://", rest_api_path = "/api/v1/", auth_path = "login/", username = "admin", password = "")
     stiles = Address(host = "172.19.4.128", port_colon = ":", rest_api_port = 43084, soap_api_port = 43080, protocol = "http://", rest_api_path = "/api/v1/", auth_path = "login/", username = "admin", password = "")
     rjn = Address(host = "rjn-clarity-api.com", port_colon = "", rest_api_port = None, soap_api_port = None, protocol = "https://", rest_api_path = "/v1/clarity/", auth_path = "auth/", username = "OuREElQ2", password = "0.k2h6i19utie0.nzom0vbg020.")
+    return maxson, stiles, rjn
 
+if __name__ == "__main__":
+    maxson = Address(host = "172.19.4.127", port_colon = ":", rest_api_port = 43084, soap_api_port = 43080, protocol = "http://", rest_api_path = "/api/v1/", auth_path = "login/", username = "admin", password = "")
+    stiles = Address(host = "172.19.4.128", port_colon = ":", rest_api_port = 43084, soap_api_port = 43080, protocol = "http://", rest_api_path = "/api/v1/", auth_path = "login/", username = "admin", password = "")
+    rjn = Address(host = "rjn-clarity-api.com", port_colon = "", rest_api_port = None, soap_api_port = None, protocol = "https://", rest_api_path = "/v1/clarity/", auth_path = "auth/", username = "OuREElQ2", password = "0.k2h6i19utie0.nzom0vbg020.")
+    maxson, stiles, rjn = generate_relevant_api_addresses()
     maxson.get_auth_token()
     stiles.get_auth_token()
-    rjn.get_auth_token()
+    rjn.get_auth_token()    

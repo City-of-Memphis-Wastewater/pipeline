@@ -1,0 +1,13 @@
+[eds_characteristics]
+ip_address="172.19.4.127"
+idcs="D-321E"
+sid=11003
+zd="Maxson"
+
+[manual_characteristics]
+shortdesc="DOSE"
+
+[rjn_characteristics]
+rjn_siteid="64c5c5ac-04ca-4a08-bdce-5327e4b21bc5"
+rjn_entityid=null
+rjn_name=null

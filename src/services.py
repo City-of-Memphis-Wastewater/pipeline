@@ -4,69 +4,12 @@ from pprint import pprint
 from datetime import datetime
 import sys
 #import textual
+import src.helpers.load_toml
 
 from address import Address
 from eds_point import Point
 post_to_rjn = True
 
-class ApiCalls:
-    ip_address_maxson = "172.19.4.127"
-    ip_address_stiles = "172.19.4.128"
-
-    def __init__(self,ip_address_default = "172.19.4.127"):
-        self.ip_address_default = ip_address_default
-
-    def test_connection_to_internet():
-        try:
-            # call Cloudflare's CDN test site, because it is lite.
-            response = requests.get("http://1.1.1.1", timeout = 5)
-            print("You are connected to the internet.")
-        except:
-            print(f"It appears you are not connected to the internet.")
-            sys.exit()
-
-    def test_connection_to_eds():
-        for api_url in Address.get_rest_api_url_list():
-            try:
-            #if True:
-                api_url = "http://172.19.4.127:43084/api/v1/"
-                login_url = api_url+"login"
-                data = {'username' : 'admin', 'password' : '', 'type' : 'rest client'}
-                response = requests.post(login_url, json = data)
-                #print(f"Status Code: {response.status_code}")
-                #print(f"Response Text: '{response.text}'")
-                if response.status_code == 200:
-                    try:
-                        token = response.json()
-                    except json.JSONDecodeError:
-                        print("Failed to parse JSON:")
-                        token = None
-                #request_url = api_url + 'ping'
-                #headers = {'Authorization' : 'Bearer {}'.format(token['sessionId'])}
-                #response = requests.get(request_url, headers = headers)
-
-                print(f"You are able to access an EDS: {api_url}") 
-            #else:
-            except:
-                print(f"Connection to an EDS is failing: {api_url}")
-                sys.exit()
-
-    def get_license(api_url,header):
-        request_url = api_url + 'license'
-        request = requests.get(request_url, headers=header)
-        return request
-
-    def get_token(ip_address):
-        Address.set_ip_address(ip_address)
-        api_url = Address.get_rest_api_url() # if none, use known, if else, us Address.get_current_ip_address()
-        request_url = api_url + 'login'
-        data = {'username' : 'admin', 'password' : '', 'type' : 'rest client'}
-        #data = {'username' : 'rjn', 'password' : 'RjnClarity2025', 'type' : 'rest client'}  
-        response = requests.post(request_url, json = data)
-        #print(f"response={response}")
-        token = json.loads(response.text)
-        headers = {'Authorization' : 'Bearer {}'.format(token['sessionId'])}
-        return api_url,headers
 
 def run_today():
     ApiCalls.test_connection_to_internet()
@@ -76,6 +19,22 @@ def run_today():
     populate_today()  
     retrieve_and_show_points(option=0) # live [0] or tabular [1]
     #retrieve_and_show_points(option=1)
+
+def run_tomorrow():
+    
+    apicalls_maxson = ApiCalls()
+    ApiCalls.test_connection_to_internet()
+    ApiCalls.test_connection_to_eds()
+    api = ApiCalls(ip_address_default = "172.19.4.127")
+    api_url,headers = ApiCalls.get_token(ip_address = ApiCalls.ip_address_maxson)
+    populate_today()  
+    retrieve_and_show_points(option=0) # live [0] or tabular [1]
+    #retrieve_and_show_points(option=1)
+
+def populate_multiple_generic_points_from_filelist(filelist):
+    for f in filelist:
+        dic = src.helpers.load_toml(f)
+        populate_generic_point_from_dict(dic)
 
 def populate_multiple_generic_points_from_dicts(loaded_dicts):
     for dic in loaded_dicts:
