@@ -18,11 +18,9 @@ class EdsClient:
             'type': 'rest client'
         }
 
-        #response = requests.post(request_url, json=data)
-        #response.raise_for_status()
         response = make_request(request_url, data)
-        token = response.json()
-        headers = {'Authorization': f"Bearer {token['sessionId']}"}
+        token = response.json()['sessionId']
+        headers = {'Authorization': f"Bearer {token}"}
 
-        return token['sessionId'], headers
+        return token, headers
     

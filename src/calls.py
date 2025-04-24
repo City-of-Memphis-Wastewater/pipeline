@@ -2,6 +2,8 @@ import requests
 import certifi
 import sys
 import json
+import time
+
 
 class EdsCalls:
     ip_address_maxson = "172.19.4.127"
@@ -65,16 +67,51 @@ class EdsCalls:
 class RjnCalls:
     def __init__(self,address_object):
         self.address_object = address_object
-import time
 
-def make_request(url, data, retries=3, delay=2):
+#def make_request(url, data, retries=3, delay=2):
+
+
+def make_request(url, data=None, method="POST", headers=None, retries=3, delay=2, timeout=10, verify_ssl=True):
+    #try:
+    #    #response = requests.post(url, json=data, timeout=10, verify=False)  # set `verify=True` in prod
+    #    headers = {
+    #        "Content-Type": "application/json",
+    #        "Accept": "application/json"
+    #    }
+    #    response = requests.post(url, json=data, timeout=10, headers=headers, verify=certifi.where())
+    #    response.raise_for_status()
+    #    return response
+    
     try:
-        #response = requests.post(url, json=data, timeout=10, verify=False)  # set `verify=True` in prod
-        headers = {
+        default_headers = {
+            "Accept": "application/json",
             "Content-Type": "application/json",
-            "Accept": "application/json"
         }
-        response = requests.post(url, json=data, timeout=10, headers=headers, verify=certifi.where())
+
+        merged_headers = {**default_headers, **(headers or {})}
+
+        verify = certifi.where() if verify_ssl else False
+
+        request_func = {
+            "POST": requests.post,
+            "GET": requests.get,
+            "PUT": requests.put,
+            "DELETE": requests.delete,
+            "PATCH": requests.patch,
+        }.get(method.upper())
+
+        if not request_func:
+            raise ValueError(f"Unsupported HTTP method: {method}")
+
+        response = request_func(
+            url,
+            json=data if method.upper() != "GET" else None,
+            params=data if method.upper() == "GET" else None,
+            headers=merged_headers,
+            timeout=timeout,
+            verify=verify
+        )
+
         response.raise_for_status()
         return response
     except requests.exceptions.SSLError as e:

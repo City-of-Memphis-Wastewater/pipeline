@@ -14,12 +14,17 @@ class RjnClient:
 
         #response = requests.post(request_url, json=data)
         #response.raise_for_status()
+
+        #response = make_request(request_url, data)
+        #token = response.json()
+
         response = make_request(request_url, data)
-        token = response.json()
+        token = response.json().get("token")
+
         print(f"token = {token}")
         ['sessionId']
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {token}"
+            "Authorization": f"Bearer {token}"  
         }
         return token, headers
