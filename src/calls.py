@@ -4,6 +4,14 @@ import sys
 import json
 import time
 
+def test_connection_to_internet():
+    try:
+        # call Cloudflare's CDN test site, because it is lite.
+        response = requests.get("http://1.1.1.1", timeout = 5)
+        print("You are connected to the internet.")
+    except:
+        print(f"It appears you are not connected to the internet.")
+        sys.exit()
 
 class EdsCalls:
     ip_address_maxson = "172.19.4.127"
@@ -12,14 +20,7 @@ class EdsCalls:
     def __init__(self,address_object):
         self.address_object = address_object
 
-    def test_connection_to_internet():
-        try:
-            # call Cloudflare's CDN test site, because it is lite.
-            response = requests.get("http://1.1.1.1", timeout = 5)
-            print("You are connected to the internet.")
-        except:
-            print(f"It appears you are not connected to the internet.")
-            sys.exit()
+
 
     def test_connection_to_eds(address_object):
         for api_url in address_object.get_rest_api_url_list():
@@ -71,7 +72,7 @@ class RjnCalls:
 #def make_request(url, data, retries=3, delay=2):
 
 
-def make_request(url, data=None, method="POST", headers=None, retries=3, delay=2, timeout=10, verify_ssl=True):
+def make_request(url, data=None, json=None, method="POST", headers=None, retries=3, delay=2, timeout=10, verify_ssl=True):
     #try:
     #    #response = requests.post(url, json=data, timeout=10, verify=False)  # set `verify=True` in prod
     #    headers = {
@@ -105,7 +106,7 @@ def make_request(url, data=None, method="POST", headers=None, retries=3, delay=2
 
         response = request_func(
             url,
-            json=data if method.upper() != "GET" else None,
+            json=data,
             params=data if method.upper() == "GET" else None,
             headers=merged_headers,
             timeout=timeout,

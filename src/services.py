@@ -4,10 +4,10 @@ from pprint import pprint
 from datetime import datetime
 import sys
 #import textual
-import src.helpers.load_toml
+#import src.helpers.load_toml
 
-from address import Address
-from eds_point import Point
+#from src.address import Address
+from src.eds_point import Point
 post_to_rjn = True
 
 
@@ -114,16 +114,16 @@ def retrieve_and_show_points(option = "live"):
     pprint(Point.get_point_set())
     for point_object in Point.get_point_set():
         if option == "live" or option == 0: 
-            show_points_live(api_url=Address.get_rest_api_url(),headers = Address.get_header(),point_object=point_object,)
+            show_points_live(api_url=Address.get_rest_api_url(),headers = Address.get_header(),sid=point_object.sid,)
         if option == "tabular" or option == 1:
             show_points_tabular_trend(api_url=Address.get_rest_api_url(),headers = Address.get_header(),point_object=point_object,)
 
-def show_points_live(api_url,point_object,headers):
+def show_points_live(api_url,sid = int(),shortdesc = str(),headers = None):
     request_url = api_url + 'points/query'
     query = {
         'filters' : [{
         'zd' : ['Maxson','WWTF'],
-        'sid': [point_object.sid],
+        'sid': [sid],
         'tg' : [0, 1],
         }],
         'order' : ['iess']
@@ -136,17 +136,17 @@ def show_points_live(api_url,point_object,headers):
     data = json.loads(decoded_str) 
     #pprint(f"data={data}")
     points_datas = data["points"]
-    def print_point_info_row(point_object,point_data):
-            print(f'''{point_object.shortdesc}, sid:{point_data["sid"]}, idcs:{point_data["idcs"]}, dt:{datetime.fromtimestamp(point_data["ts"])}, un:{point_data["un"]}. av:{round(point_data["value"],2)}''')
+    def print_point_info_row(sid,point_data):
+            print(f'''{shortdesc}, sid:{point_data["sid"]}, idcs:{point_data["idcs"]}, dt:{datetime.fromtimestamp(point_data["ts"])}, un:{point_data["un"]}. av:{round(point_data["value"],2)}''')
     if len(points_datas)==0:
-        print(f"{point_object.shortdesc}, sid:{point_object.sid}, no data returned, len(points)==0")
+        print(f"{shortdesc}, sid:{sid}, no data returned, len(points)==0")
     elif len(points_datas)==1:
         # This is expected, that there is one point value returned for each SID, which is the match call.
         point_data = points_datas[0]
-        print_point_info_row(point_object,point_data)
+        print_point_info_row(sid,point_data)
     elif len(points_datas)>1:
         for point_data in points_datas:
-            print_point_info_row(point_object,point_data)
+            print_point_info_row(sid,point_data)
     
 
 def show_points_tabular_trend(api_url,point_object,headers):
