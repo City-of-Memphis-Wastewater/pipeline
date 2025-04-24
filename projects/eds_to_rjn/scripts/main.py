@@ -32,12 +32,14 @@ def main():
     #show_points_live()
     eds.show_points_live(site = "Maxson", sid = 2308,shortdesc = "INFLUENT",headers = headers_eds)
     #eds.show_points_live(site = "Maxson", iess = "M100FI.UNIT0@NET0",headers = headers_eds)
-    eds.show_points_tabular_trend(site = "Maxson", sid = 2308,idcs = "M100FI",starttime = 1745516074, endtime = 1745433274,headers = headers_eds)
+    eds.show_points_tabular_trend(site = "Maxson", sid = 2308,idcs = "M100FI",starttime = 1745431200, endtime = 1745514000, headers = headers_eds)
+    
 
-    decoded_str = eds.get_points_export(site = "Maxson",headers = headers_eds)
-    export_file_path = project_manager.get_exports_file_path(filename = 'export_eds_points.txt')
-    eds.save_points_export(decoded_str, export_file_path = export_file_path)
-    print(f"Export file will be saved to: {export_file_path}")
+    if False:
+        decoded_str = eds.get_points_export(site = "Maxson",headers = headers_eds)
+        export_file_path = project_manager.get_exports_file_path(filename = 'export_eds_points_all.txt')
+        eds.save_points_export(decoded_str, export_file_path = export_file_path)
+        print(f"Export file will be saved to: {export_file_path}")
 
 if __name__ == "__main__":
     main()

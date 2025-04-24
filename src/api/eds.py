@@ -90,7 +90,7 @@ class EdsClient:
             'from' : starttime,
             'till' : endtime
             },
-            'step' : 60,
+            'step' : 1,
             'items' : [{
             'pointId' : {
             'sid' : sid,
@@ -117,14 +117,22 @@ class EdsClient:
         response = make_request(url = request_url, headers=headers, method = "GET")
         #request = requests.get(request_url, headers=headers)
         byte_string = response.content
+        print(f"byte_string = {byte_string}")
         decoded_str = byte_string.decode('utf-8')
-        data = json.loads(decoded_str)
-        pprint(f"data={data}")
+
+        print(f"Status: {response.status_code}")
+        #print("Response content (raw bytes):")
+        #print(response.content)
+        #print(f"decoded_str = {decoded_str}")
+        print(decoded_str[:500])  # Print just a slice
+
+        #data = json.loads(decoded_str)
+        #pprint(f"data={data}")
 
     def get_points_export(self,site: str,sid: int=int(),idcs:str=str(), starttime :int=int(),endtime:int=int(),shortdesc : str="",headers = None):
         api_url = str(self.config[site]["url"])
         zd = site
-        iess = '^A'
+        iess = ''
         order = 'iess'
         query = '?zd={}&iess={}&order={}'.format(zd, iess, order)
         request_url = api_url + 'points/export' + query
