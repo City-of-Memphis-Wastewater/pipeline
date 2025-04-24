@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 import json
 from src.calls import make_request
 class EdsClient:
@@ -44,8 +44,10 @@ class EdsClient:
         #request = requests.post(request_url, headers = headers, json = query)
         response = make_request(request_url, data, headers=headers, json = query)
 
-    def show_points_live(api_url,sid = int(),shortdesc = str(),headers = None):
+    def show_points_live(self,site: str,sid: int,shortdesc : str="",headers = None):
+        api_url = str(self.config[site]["url"])
         request_url = api_url + 'points/query'
+        print(f"request_url = {request_url}")
         query = {
             'filters' : [{
             'zd' : ['Maxson','WWTF'],
@@ -55,9 +57,10 @@ class EdsClient:
             'order' : ['iess']
             }
 
-        request = requests.post(request_url, headers = headers, json = query)
+        #request = requests.post(request_url, headers = headers, data = query)
+        response = make_request(request_url, headers=headers, data = query)
         #pprint(f"request={request}")
-        byte_string = request.content
+        byte_string = response.content
         decoded_str = byte_string.decode('utf-8')
         data = json.loads(decoded_str) 
         #pprint(f"data={data}")

@@ -3,7 +3,6 @@ from src.env import SecretsYaml
 from src.api.eds import EdsClient
 from src.api.rjn import RjnClient
 from src.calls import test_connection_to_internet
-#from src.services import show_points_live
 
 def main():
 
@@ -23,6 +22,8 @@ def main():
     #get_sid_list() # from csv or xlsx file, for Don Hudgins - check typical export scheme
 
     #show_points_live()
+    eds.show_points_live(site = "Maxson", sid = 2308,shortdesc = "INFLUENT",headers = headers_eds)
+    #eds.show_points_live(site = "Maxson", iess = "M100FI.UNIT0@NET0",headers = headers_eds)
 
 
 if __name__ == "__main__":
