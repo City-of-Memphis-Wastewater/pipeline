@@ -153,3 +153,40 @@ class EdsClient:
         with open(export_file_path, "w", encoding="utf-8") as f:
             for line in lines:
                 f.write(line + "\n")  # Save each line in the text file
+
+
+    def get_value_at_time(self,site :str = "Maxson", sid: int=int(),idcs:str=str(), starttime :int=int(),endtime:int=int(),shortdesc : str="" , headers = None):
+        api_url = str(self.config[site]["url"])
+        # Step 2: Set up the query with the timestamp filter
+        iess = idcs+".UNIT0@NET0"
+        query = {
+            'filters': [{
+                'zd': [site],  # Replace with your source name
+                #'ts': {  # Timestamp filter
+                #    'from': starttime,  # Replace with your "from" timestamp
+                #    'till': endtime  # Replace with your "till" timestamp
+                #}
+            }],
+            'order': ['iess'],  # Order results by 'iess' (or any other field)
+            'page': 1,
+            'pagesize': 50  # You can adjust this as needed,'
+        }
+
+        # Step 3: Send the POST request
+        request_url = api_url + 'points/query'
+        response = make_request(url = request_url, headers=headers, method="POST", data = query)
+
+        byte_string = response.content
+        decoded_str = byte_string.decode('utf-8')
+        #print(f"Status: {response.status_code}")
+        #print("Response content (raw bytes):")
+        #print(response.content)
+        #print(f"decoded_str = {decoded_str}")
+        print(decoded_str[:1500])  # Print just a slice
+        # Step 4: Process the response
+        response_data = response.json()
+        if 'points' in response_data:
+            print(response_data['points'])
+        else:
+            print("No points found within the specified timestamp range.")
+
