@@ -2,6 +2,7 @@
 Title: eds_point
 Author: George Clayton Bennett
 '''
+import csv
 from collections import deque
 class Point:
     point_dict = dict()
@@ -53,3 +54,20 @@ class Point:
         self.value = value
         self.timestamp = timestamp
         self.add_value_to_value_dict()
+
+
+
+class PointManager:
+    def __init__(self, csv_path):
+        self.points = self._load_points(csv_path)
+
+    def _load_points(self, path):
+        with open(path, newline='') as csvfile:
+            reader = csv.DictReader(csvfile)
+            return list(reader)
+
+    def get_point_by_sid(self, sid):
+        return next((p for p in self.points if str(p["sid"]) == str(sid)), None)
+
+    def get_point_by_idcs(self, idcs):
+        return next((p for p in self.points if p.get("idcs") == idcs), None)

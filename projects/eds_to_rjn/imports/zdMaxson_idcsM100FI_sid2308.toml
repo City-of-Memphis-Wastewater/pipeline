@@ -1,6 +1,7 @@
 [eds_characteristics]
 ip_address="172.19.4.127"
 idcs="M100FI"
+iess = "M100FI.UNIT0@NET0"
 sid=2308
 zd="Maxson"
 

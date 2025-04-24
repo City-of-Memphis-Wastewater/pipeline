@@ -72,16 +72,7 @@ class RjnCalls:
 #def make_request(url, data, retries=3, delay=2):
 
 
-def make_request(url, data=None, json=None, method="POST", headers=None, retries=3, delay=2, timeout=10, verify_ssl=True):
-    #try:
-    #    #response = requests.post(url, json=data, timeout=10, verify=False)  # set `verify=True` in prod
-    #    headers = {
-    #        "Content-Type": "application/json",
-    #        "Accept": "application/json"
-    #    }
-    #    response = requests.post(url, json=data, timeout=10, headers=headers, verify=certifi.where())
-    #    response.raise_for_status()
-    #    return response
+def make_request(url, data=None, params = None, method="POST", headers=None, retries=3, delay=2, timeout=10, verify_ssl=True):
     
     try:
         default_headers = {
@@ -107,7 +98,7 @@ def make_request(url, data=None, json=None, method="POST", headers=None, retries
         response = request_func(
             url,
             json=data,
-            params=data if method.upper() == "GET" else None,
+            params=params,
             headers=merged_headers,
             timeout=timeout,
             verify=verify

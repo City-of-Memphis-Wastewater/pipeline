@@ -1,6 +1,7 @@
 from datetime import datetime
 import json
 from src.calls import make_request
+from pprint import pprint
 class EdsClient:
     def __init__(self,config):
         self.config = config
@@ -18,7 +19,7 @@ class EdsClient:
             'type': 'rest client'
         }
 
-        response = make_request(request_url, data)
+        response = make_request(url = request_url, data=data)
         token = response.json()['sessionId']
         headers = {'Authorization': f"Bearer {token}"}
 
@@ -42,7 +43,7 @@ class EdsClient:
         
         }
         #request = requests.post(request_url, headers = headers, json = query)
-        response = make_request(request_url, data, headers=headers, json = query)
+        response = make_request(url = request_url, data = data, headers=headers, json = query)
 
     def show_points_live(self,site: str,sid: int,shortdesc : str="",headers = None):
         api_url = str(self.config[site]["url"])
@@ -58,7 +59,7 @@ class EdsClient:
             }
 
         #request = requests.post(request_url, headers = headers, data = query)
-        response = make_request(request_url, headers=headers, data = query)
+        response = make_request(url = request_url, headers=headers, data = query)
         #pprint(f"request={request}")
         byte_string = response.content
         decoded_str = byte_string.decode('utf-8')
@@ -76,4 +77,84 @@ class EdsClient:
         elif len(points_datas)>1:
             for point_data in points_datas:
                 print_point_info_row(sid,point_data)
+    
+
+    def show_points_tabular_trend(self,site: str,sid: int,idcs:str, starttime :int,endtime:int,shortdesc : str="",headers = None):
+        api_url = str(self.config[site]["url"])
+        #idcs = "M100FI" # get from csv lookup
+
+        request_url = api_url + 'trend/tabular'
         
+        data = {
+            'period' : {
+            'from' : starttime,
+            'till' : endtime
+            },
+            'step' : 60,
+            'items' : [{
+            'pointId' : {
+            'sid' : sid,
+            'iess' : f'{idcs}.UNIT0@NET0'
+            },
+            'shadePriority' : 'DEFAULT'
+            }]
+            }
+        
+        #request = requests.post(url = request_url, headers = headers, json = query)
+        response = make_request(url = request_url, headers=headers, data = data, method="POST")
+        byte_string = response.content
+        decoded_str = byte_string.decode('utf-8')
+        data = json.loads(decoded_str)
+        pprint(data)
+        pprint(f"data={data}")
+        id = data["id"]
+        pprint(f"id={id}")
+        query = '?id={}'.format(id)
+        data = {'id': id}
+        request_url = api_url + 'trend/tabular' + query
+        print(f"request_url = {request_url}")
+        #response = make_request(url = request_url, data = data, headers=headers)
+        response = make_request(url = request_url, headers=headers, method = "GET")
+        #request = requests.get(request_url, headers=headers)
+        byte_string = response.content
+        decoded_str = byte_string.decode('utf-8')
+        data = json.loads(decoded_str)
+        pprint(f"data={data}")
+
+    def get_points_export(self,site: str,sid: int=int(),idcs:str=str(), starttime :int=int(),endtime:int=int(),shortdesc : str="",headers = None):
+        api_url = str(self.config[site]["url"])
+        zd = site
+        iess = '^A'
+        order = 'iess'
+        query = '?zd={}&iess={}&order={}'.format(zd, iess, order)
+        request_url = api_url + 'points/export' + query
+        response = make_request(url = request_url, headers=headers, method="GET")
+        byte_string = response.content
+        decoded_str = byte_string.decode('utf-8')
+        #print(f"Status: {response.status_code}")
+        #print("Response content (raw bytes):")
+        #print(response.content)
+        #print(f"decoded_str = {decoded_str}")
+        #print(decoded_str[:500])  # Print just a slice
+
+        return decoded_str
+
+    def save_points_export(self,decoded_str, export_file_path):
+        lines = decoded_str.strip().splitlines()
+
+        with open(export_file_path, "w", encoding="utf-8") as f:
+            for line in lines:
+                f.write(line + "\n")  # Save each line in the text file
+
+        """
+        for line in lines:
+            # Skip metadata headers (those start with '#')
+            if line.startswith('#') or not line.strip():
+                continue
+
+            # Print or process the actual data lines
+            print("Data line:", line)
+
+            # Example: split by whitespace or tabs
+            parts = line.split()
+            print("Parts:", parts)"""
