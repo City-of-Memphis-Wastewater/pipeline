@@ -64,3 +64,24 @@ class EdsCalls:
 class RjnCalls:
     def __init__(self,address_object):
         self.address_object = address_object
+import time
+
+def make_request(url, data, retries=3, delay=2):
+    try:
+        response = requests.post(url, json=data, timeout=10, verify=False)  # set `verify=True` in prod
+        response.raise_for_status()
+        return response
+    except requests.exceptions.SSLError as e:
+        raise ConnectionError(f"❌ SSL Error: {e}")
+    except requests.exceptions.HTTPError as e:
+        if response.status_code == 503 and retries > 0:
+            # Retry the request if the server is unavailable
+            print(f"🚧 Service unavailable (503). Retrying in {delay} seconds...")
+            time.sleep(delay)
+            return make_request(url, data, retries - 1, delay * 2)  # Exponential backoff
+        elif response.status_code == 403:
+            raise PermissionError("🔒 Access denied (403). The server rejected your credentials or IP.")
+        else:
+            raise RuntimeError(f"❌ HTTP error: {response.status_code} {response.text}")
+    except requests.exceptions.RequestException as e:
+        raise ConnectionError(f"❌ Request failed: {e}")

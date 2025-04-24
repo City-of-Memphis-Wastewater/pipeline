@@ -1,0 +1,22 @@
+import requests
+from src.calls import make_request
+class RjnClient:
+    def __init__(self,config):
+        self.config = config
+
+    def get_token(self):
+        
+        request_url = self.config['url'] + 'auth'
+        data = {
+            'client_id': self.config['client_id'],
+            'password': self.config['password'],
+            'type': 'rest client'
+        }
+
+        #response = requests.post(request_url, json=data)
+        #response.raise_for_status()
+        response = make_request(request_url, data)
+        token = response.json()
+        headers = {'Authorization': f"Bearer {token['sessionId']}"}
+
+        return token['sessionId'], headers
