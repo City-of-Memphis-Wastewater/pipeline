@@ -9,14 +9,17 @@ class RjnClient:
         request_url = self.config['url'] + 'auth'
         data = {
             'client_id': self.config['client_id'],
-            'password': self.config['password'],
-            'type': 'rest client'
+            'password': self.config['password']
         }
 
         #response = requests.post(request_url, json=data)
         #response.raise_for_status()
         response = make_request(request_url, data)
         token = response.json()
-        headers = {'Authorization': f"Bearer {token['sessionId']}"}
-
-        return token['sessionId'], headers
+        print(f"token = {token}")
+        ['sessionId']
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {token}"
+        }
+        return token, headers
