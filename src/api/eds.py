@@ -145,16 +145,3 @@ class EdsClient:
         with open(export_file_path, "w", encoding="utf-8") as f:
             for line in lines:
                 f.write(line + "\n")  # Save each line in the text file
-
-        """
-        for line in lines:
-            # Skip metadata headers (those start with '#')
-            if line.startswith('#') or not line.strip():
-                continue
-
-            # Print or process the actual data lines
-            print("Data line:", line)
-
-            # Example: split by whitespace or tabs
-            parts = line.split()
-            print("Parts:", parts)"""

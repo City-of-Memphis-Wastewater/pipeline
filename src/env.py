@@ -9,8 +9,8 @@ class SecretsYaml:
         self.config = config
 
     @staticmethod
-    def load_config(path="secrets.yaml"):
-        with open(path, 'r') as f:
+    def load_config(secrets_file_path="secrets.yaml"):
+        with open(secrets_file_path, 'r') as f:
             return yaml.safe_load(f)
         
     def print_config(self):

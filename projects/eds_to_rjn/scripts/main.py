@@ -8,11 +8,14 @@ from src.projectmanager import ProjectManager
 def main():
 
     test_connection_to_internet()
-    config_obj = SecretsYaml.load_config()
+
+    project_name = 'eds_to_rjn'
+    project_manager = ProjectManager(project_name)
+    secrets_file_path = project_manager.get_configs_file_path(filename = 'secrets.yaml')
+    config_obj = SecretsYaml.load_config(secrets_file_path = secrets_file_path)
     #secrets = SecretsYaml(config_obj)
     #secrets.print_config()
-    project_name = 'eds_to_rjn'  # Replace with actual project name
-    project_manager = ProjectManager(project_name)
+    
 
     eds = EdsClient(config_obj['eds_apis'])
     rjn = RjnClient(config_obj['rjn_api'])
@@ -32,7 +35,7 @@ def main():
     eds.show_points_tabular_trend(site = "Maxson", sid = 2308,idcs = "M100FI",starttime = 1745516074, endtime = 1745433274,headers = headers_eds)
 
     decoded_str = eds.get_points_export(site = "Maxson",headers = headers_eds)
-    export_file_path = project_manager.get_export_file_path(filename = 'export_eds_points.txt')
+    export_file_path = project_manager.get_exports_file_path(filename = 'export_eds_points.txt')
     eds.save_points_export(decoded_str, export_file_path = export_file_path)
     print(f"Export file will be saved to: {export_file_path}")
 
