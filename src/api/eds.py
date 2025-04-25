@@ -26,6 +26,7 @@ class EdsClient:
         return token, headers
 
     def get_tabular_trend(self,plant_zd = "Maxson", iess = "M100FI.UNIT0@NET0", headers=None):
+        "Failed"
         try:
             plant_cfg = self.config[plant_zd]
         except KeyError:
@@ -45,7 +46,8 @@ class EdsClient:
         #request = requests.post(request_url, headers = headers, json = query)
         response = make_request(url = request_url, data = data, headers=headers, json = query)
 
-    def show_points_live(self,site: str,sid: int,shortdesc : str="",headers = None):
+    def get_points_live(self,site: str,sid: int,shortdesc : str="",headers = None):
+        "Success"
         api_url = str(self.config[site]["url"])
         request_url = api_url + 'points/query'
         print(f"request_url = {request_url}")
@@ -80,6 +82,7 @@ class EdsClient:
     
 
     def show_points_tabular_trend(self,site: str,sid: int,idcs:str, starttime :int,endtime:int,shortdesc : str="",headers = None):
+        "Failed"
         api_url = str(self.config[site]["url"])
         #idcs = "M100FI" # get from csv lookup
 
@@ -100,36 +103,33 @@ class EdsClient:
             }]
             }
         
-        #request = requests.post(url = request_url, headers = headers, json = query)
         response = make_request(url = request_url, headers=headers, data = data, method="POST")
         byte_string = response.content
         decoded_str = byte_string.decode('utf-8')
         data = json.loads(decoded_str)
         pprint(data)
         pprint(f"data={data}")
-        id = data["id"]
+        id = data["id"] # query id, to reference an existing process, see page 36 of EDS REST API Python Examples.pdf.
         pprint(f"id={id}")
         query = '?id={}'.format(id)
-        data = {'id': id}
+        #data = {'id': id} # already true
         request_url = api_url + 'trend/tabular' + query
         print(f"request_url = {request_url}")
-        #response = make_request(url = request_url, data = data, headers=headers)
-        response = make_request(url = request_url, headers=headers, method = "GET")
-        #request = requests.get(request_url, headers=headers)
+        response = make_request(url = request_url, headers=headers, method = "GET") # includes the query id in the url
         byte_string = response.content
         print(f"byte_string = {byte_string}")
         decoded_str = byte_string.decode('utf-8')
-
         print(f"Status: {response.status_code}")
+        print(decoded_str[:500])  # Print just a slice
+
         #print("Response content (raw bytes):")
         #print(response.content)
         #print(f"decoded_str = {decoded_str}")
-        print(decoded_str[:500])  # Print just a slice
-
         #data = json.loads(decoded_str)
         #pprint(f"data={data}")
 
     def get_points_export(self,site: str,sid: int=int(),idcs:str=str(), starttime :int=int(),endtime:int=int(),shortdesc : str="",headers = None):
+        "Success"
         api_url = str(self.config[site]["url"])
         zd = site
         iess = ''
@@ -156,6 +156,7 @@ class EdsClient:
 
 
     def get_value_at_time(self,site :str = "Maxson", sid: int=int(),idcs:str=str(), starttime :int=int(),endtime:int=int(),shortdesc : str="" , headers = None):
+        "Failed"
         api_url = str(self.config[site]["url"])
         # Step 2: Set up the query with the timestamp filter
         iess = idcs+".UNIT0@NET0"

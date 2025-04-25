@@ -29,11 +29,13 @@ def main():
 
     #get_sid_list() # from csv or xlsx file, for Don Hudgins - check typical export scheme
 
-    #show_points_live()
-    eds.show_points_live(site = "Maxson", sid = 2308,shortdesc = "INFLUENT",headers = headers_eds)
-    #eds.show_points_live(site = "Maxson", iess = "M100FI.UNIT0@NET0",headers = headers_eds)
-    #eds.show_points_tabular_trend(site = "Maxson", sid = 2308,idcs = "M100FI",starttime = 1745431200, endtime = 1745514000, headers = headers_eds)
-    eds.get_value_at_time(site = "Maxson", sid = 2308,idcs = "M100FI",starttime = 1745431200, endtime = 1745514000, headers = headers_eds)
+    #get_points_live()
+    print(f"\neds.get_points_live():")
+    eds.get_points_live(site = "Maxson", sid = 2308,shortdesc = "INFLUENT",headers = headers_eds)
+    #eds.get_points_live(site = "Maxson", iess = "M100FI.UNIT0@NET0",headers = headers_eds)
+    print(f"\nshow_points_tabular_trend():")
+    eds.show_points_tabular_trend(site = "Maxson", sid = 2308,idcs = "M100FI",starttime = 1745431200, endtime = 1745514000, headers = headers_eds)
+    #eds.get_value_at_time(site = "Maxson", sid = 2308,idcs = "M100FI",starttime = 1745431200, endtime = 1745514000, headers = headers_eds)
     
 
     if False:

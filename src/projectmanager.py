@@ -1,4 +1,5 @@
 import os
+import toml
 
 class ProjectManager:
     def __init__(self, project_name):
@@ -54,13 +55,37 @@ class ProjectManager:
         if not os.path.exists(self.scripts_dir):
             os.makedirs(self.scripts_dir)
 
+    def get_projects_dir(self):
+        return os.path.join(self.base_dir, 'projects')
+
+    def get_project_dir(self):
+        return os.path.join(self.get_projects_dir(), self.project_name)
+
+    @classmethod
+    def identify_default_project(cls):
+        """
+        Class method that reads default_project.toml to identify the default project.
+        """
+        base_dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+        projects_dir = os.path.join(base_dir, 'projects')
+        default_toml_path = os.path.join(projects_dir, 'default_project.toml')
+
+        if not os.path.exists(default_toml_path):
+            raise FileNotFoundError(f"Missing default_project.toml in {projects_dir}")
+
+        with open(default_toml_path, 'r') as f:
+            config = toml.load(f)
+
+        try:
+            return config['default project']['project']
+        except KeyError as e:
+            raise KeyError(f"Missing key in default_project.toml: {e}")
+
 if __name__ ==  "__main__":
     # Usage
-    project_name = 'your_project'  # Replace with actual project name
+    # Dynamically identify the default project from TOML
+    project_name = ProjectManager.identify_default_project()
     project_manager = ProjectManager(project_name)
     project_manager.create_exports_dir()
+    print(f"Active project: {project_manager.get_project_dir()}")
 
-    # Get export file path
-    filename = 'export_file.txt'  # Replace with the desired filename
-    export_file_path = project_manager.get_exports_file_path(filename)
-    print(f"Export file will be saved to: {export_file_path}")

@@ -114,11 +114,11 @@ def retrieve_and_show_points(option = "live"):
     pprint(Point.get_point_set())
     for point_object in Point.get_point_set():
         if option == "live" or option == 0: 
-            show_points_live(api_url=Address.get_rest_api_url(),headers = Address.get_header(),sid=point_object.sid,)
+            get_points_live(api_url=Address.get_rest_api_url(),headers = Address.get_header(),sid=point_object.sid,)
         if option == "tabular" or option == 1:
             show_points_tabular_trend(api_url=Address.get_rest_api_url(),headers = Address.get_header(),point_object=point_object,)
 
-def show_points_live(api_url,sid = int(),shortdesc = str(),headers = None):
+def get_points_live(api_url,sid = int(),shortdesc = str(),headers = None):
     request_url = api_url + 'points/query'
     query = {
         'filters' : [{
