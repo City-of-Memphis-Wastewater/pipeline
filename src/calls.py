@@ -81,6 +81,7 @@ def make_request(url, data=None, params = None, method="POST", headers=None, ret
         }
 
         merged_headers = {**default_headers, **(headers or {})}
+        print(f"merged_headers = {merged_headers}")
 
         verify = certifi.where() if verify_ssl else False
 
@@ -103,13 +104,18 @@ def make_request(url, data=None, params = None, method="POST", headers=None, ret
             timeout=timeout,
             verify=verify
         )
-
-        response.raise_for_status()
+        print("\nflag\n")
+        if response is None:
+            raise RuntimeError("Received an empty response from the server.")
+        else:
+            response.raise_for_status()
         return response
     except requests.exceptions.SSLError as e:
         raise ConnectionError(f"SSL Error: {e}")
     except requests.exceptions.HTTPError as e:
-        if response.status_code == 503 and retries > 0:
+        if response.status_code == 500:
+            print(f"HTTP 500 Error - Response content: {response.text}")
+        elif response.status_code == 503 and retries > 0:
             # Retry the request if the server is unavailable
             print(f"Service unavailable (503). Retrying in {delay} seconds...")
             time.sleep(delay)

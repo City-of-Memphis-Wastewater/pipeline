@@ -178,7 +178,7 @@ def process_sites_and_send(csv_path, eds_api, eds_site, eds_headers, rjn_base_ur
                     entity_id=rjn_entityid,
                     headers=rjn_headers,
                     timestamp=timestamp,
-                    value=round(value, 4)
+                    value=round(value, 2)
                 )
             except Exception as e:
                 print(f"Error processing SID {eds_sid}: {e}")
