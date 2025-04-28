@@ -130,4 +130,7 @@ def make_request(url, data=None, params = None, method="POST", headers=None, ret
         else:
             raise RuntimeError(f"HTTP error: {response.status_code} {response.text}")
     except requests.exceptions.RequestException as e:
-        raise ConnectionError(f"Request failed: {e}")
+        print(f"Request failed: {e}")
+        if hasattr(e, 'response') and e.response is not None:
+            print(f"Response: {e.response.text}")
+        raise

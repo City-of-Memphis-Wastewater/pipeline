@@ -36,7 +36,9 @@ def send_data_to_rjn(base_url, project_id, entity_id, headers, timestamp, value)
     spoof_timestamp = timestamp - timedelta(minutes=5)
     timestamp_str = timestamp.strftime('%Y-%m-%dT%H:%M:%S')
     spoof_timestamp_str = spoof_timestamp.strftime('%Y-%m-%dT%H:%M:%S')
-
+    print(f"timestamp_str = {timestamp_str}")
+    print(f"spoof_timestamp_str = {spoof_timestamp_str}")
+    print(f"value = {value}")
     url = f"{base_url}/projects/{project_id}/entities/{entity_id}/data"
     params = {
         "interval": 300,
@@ -46,14 +48,15 @@ def send_data_to_rjn(base_url, project_id, entity_id, headers, timestamp, value)
     body = {
         "comments": "Imported from EDS.",
         "data": {
-            spoof_timestamp_str : value,
             timestamp_str: value
         }
     }
+    print(f"Body to send: {body}")
     # Always add Accept header
+    print(f"headers= {headers}")
     full_headers = {**headers, "Accept": "application/json"}
     try:
-        response = make_request(url=url, headers=full_headers, params = params, method="POST", data=body)
+        response = make_request(url=url, headers=headers, params = params, method="POST", data=body)
         #response = requests.post(url, headers=headers, params=params, json=body)
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
