@@ -6,7 +6,7 @@ import datetime
 from typing import Callable, Any
 
 
-from src.project_manager import ProjectManager
+from src.projectmanager import ProjectManager
 
 # ----------------------------
 # JARGON GLOSSARY
@@ -27,6 +27,7 @@ from src.project_manager import ProjectManager
 def load_snapshot_hook(pm: ProjectManager) -> Callable[[], dict]:
     """
     Dynamically load retrieve_snapshot_data() from the project's main.py script.
+    # poetry run python -m projects.<project>.scripts.main
     """
     script_path = pm.get_scripts_file_path("main.py")
 
@@ -43,6 +44,7 @@ def load_snapshot_hook(pm: ProjectManager) -> Callable[[], dict]:
     return getattr(module, "retrieve_snapshot_data")
 
 def retrieve_snapshot_data() -> dict:
+    # defunct? check engineering notes
     """
     Return live data as a dictionary. Should include timestamp and sensor data.
     """

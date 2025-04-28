@@ -34,10 +34,12 @@ def main():
     eds.get_points_live(site = "Maxson", sid = 2308,shortdesc = "INFLUENT",headers = headers_eds)
     #eds.get_points_live(site = "Maxson", iess = "M100FI.UNIT0@NET0",headers = headers_eds)
     print(f"\nshow_points_tabular_trend():")
-    eds.show_points_tabular_trend(site = "Maxson", sid = 2308,idcs = "M100FI",starttime = 1745431200, endtime = 1745514000, headers = headers_eds)
+    #eds.show_points_tabular_trend(site = "Maxson", sid = 2308,idcs = "M100FI",starttime = 1745431200, endtime = 1745514000, headers = headers_eds)
     #eds.get_value_at_time(site = "Maxson", sid = 2308,idcs = "M100FI",starttime = 1745431200, endtime = 1745514000, headers = headers_eds)
     
-
+    def post_captured_values_from_eds_to_rjn():
+        pass
+    
     if False:
         decoded_str = eds.get_points_export(site = "Maxson",headers = headers_eds)
         export_file_path = project_manager.get_exports_file_path(filename = 'export_eds_points_all.txt')

@@ -1,2 +1,5 @@
 .env
 secrets.yaml
+**/.env
+**/secrets.yaml
+!*/
