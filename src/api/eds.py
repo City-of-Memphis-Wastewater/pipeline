@@ -13,6 +13,7 @@ class EdsClient:
             raise ValueError(f"Unknown plant_zd '{plant_zd}'")
 
         request_url = plant_cfg['url'] + 'login'
+        print(f"request_url = {request_url}")
         data = {
             'username': plant_cfg['username'],
             'password': plant_cfg['password'],
@@ -25,26 +26,6 @@ class EdsClient:
 
         return token, headers
 
-    def get_tabular_trend(self,plant_zd = "Maxson", iess = "M100FI.UNIT0@NET0", headers=None):
-        "Failed"
-        try:
-            plant_cfg = self.config[plant_zd]
-        except KeyError:
-            raise ValueError(f"Unknown plant_zd '{plant_zd}'")
-        
-        request_url = plant_cfg['url'] + 'login'
-        data = {
-            'username': plant_cfg['username'],
-            'password': plant_cfg['password'],
-            'type': 'rest client'
-        }
-        query = {
-            "filters": [{"zd": [plant_zd], "tg": [0, 1]}],
-            "order": [iess]
-        
-        }
-        #request = requests.post(request_url, headers = headers, json = query)
-        response = make_request(url = request_url, data = data, headers=headers, json = query)
 
     def get_points_live(self,site: str,sid: int,shortdesc : str="",headers = None):
         "Success"
@@ -69,9 +50,11 @@ class EdsClient:
         #pprint(f"data={data}")
         points_datas = data["points"]
         def print_point_info_row(sid,point_data):
-                print(f'''{shortdesc}, sid:{point_data["sid"]}, idcs:{point_data["idcs"]}, dt:{datetime.fromtimestamp(point_data["ts"])}, un:{point_data["un"]}. av:{round(point_data["value"],2)}''')
-        if len(points_datas)==0:
+            pass
+            #print(f'''{shortdesc}, sid:{point_data["sid"]}, idcs:{point_data["idcs"]}, dt:{datetime.fromtimestamp(point_data["ts"])}, un:{point_data["un"]}, av:{round(point_data["value"],2)}''')
+        if not points_datas:
             print(f"{shortdesc}, sid:{sid}, no data returned, len(points)==0")
+            return None
         elif len(points_datas)==1:
             # This is expected, that there is one point value returned for each SID, which is the match call.
             point_data = points_datas[0]
@@ -79,8 +62,29 @@ class EdsClient:
         elif len(points_datas)>1:
             for point_data in points_datas:
                 print_point_info_row(sid,point_data)
+        #print(f"points_datas[0] = {points_datas[0]}")
+        return points_datas[0]  # You expect exactly one point usually
     
-
+    def get_tabular_trend(self,plant_zd = "Maxson", iess = "M100FI.UNIT0@NET0", headers=None):
+        "Failed"
+        try:
+            plant_cfg = self.config[plant_zd]
+        except KeyError:
+            raise ValueError(f"Unknown plant_zd '{plant_zd}'")
+        
+        request_url = plant_cfg['url'] + 'login'
+        data = {
+            'username': plant_cfg['username'],
+            'password': plant_cfg['password'],
+            'type': 'rest client'
+        }
+        query = {
+            "filters": [{"zd": [plant_zd], "tg": [0, 1]}],
+            "order": [iess]
+        
+        }
+        #request = requests.post(request_url, headers = headers, json = query)
+        response = make_request(url = request_url, data = data, headers=headers, json = query)
     def show_points_tabular_trend(self,site: str,sid: int,idcs:str, starttime :int,endtime:int,shortdesc : str="",headers = None):
         "Failed"
         api_url = str(self.config[site]["url"])
@@ -191,3 +195,10 @@ class EdsClient:
         else:
             print("No points found within the specified timestamp range.")
 
+def fetch_eds_data(eds_api, site, sid, shortdesc, headers):
+    point_data = eds_api.get_points_live(site=site, sid=sid, shortdesc=shortdesc, headers=headers)
+    if point_data is None:
+        raise ValueError(f"No live point returned for SID {sid}")
+    ts = point_data["ts"]
+    value = point_data["value"]
+    return ts, value

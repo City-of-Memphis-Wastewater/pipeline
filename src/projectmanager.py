@@ -54,6 +54,13 @@ class ProjectManager:
     def create_scripts_dir(self):
         if not os.path.exists(self.scripts_dir):
             os.makedirs(self.scripts_dir)
+    
+    def get_queries_dir(self):
+        return os.path.join(self.get_project_dir(), 'queries')
+    
+    def get_queries_file_path(self,filename='points.csv'):
+        # Return the full path to the config file
+        return os.path.join(self.get_queries_dir(), filename)
 
     def get_projects_dir(self):
         return os.path.join(self.base_dir, 'projects')
@@ -79,6 +86,7 @@ class ProjectManager:
             return config['default-project']['project']
         except KeyError as e:
             raise KeyError(f"Missing key in default-project.toml: {e}")
+        
         
 def establish_default_project():
     project_name = ProjectManager.identify_default_project()

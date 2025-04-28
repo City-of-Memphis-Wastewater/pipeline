@@ -120,6 +120,8 @@ class DataCaptureDaemon:
 
             time.sleep(5)  # check every few seconds for clock alignment
 
+
+
 # ----------------------------
 # MAIN ENTRY POINT
 # ----------------------------

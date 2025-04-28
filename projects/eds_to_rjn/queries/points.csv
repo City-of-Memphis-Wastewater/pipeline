@@ -1,0 +1,5 @@
+ip_address,idcs,iess,sid,zd,shortdesc,rjn_siteid,rjn_entityid,rjn_name
+172.19.4.127,M100FI,M100FI.UNIT0@NET0,2308,Maxson,INFLU,64c5c5ac-04ca-4a08-bdce-5327e4b21bc5,199,Influent
+172.19.4.127,FI8001,FI8001.UNIT0@NET0,8528,Maxson,EFF,64c5c5ac-04ca-4a08-bdce-5327e4b21bc5,198,Effluent
+
+

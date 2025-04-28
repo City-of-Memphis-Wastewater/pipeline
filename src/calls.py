@@ -113,7 +113,18 @@ def make_request(url, data=None, params = None, method="POST", headers=None, ret
             # Retry the request if the server is unavailable
             print(f"Service unavailable (503). Retrying in {delay} seconds...")
             time.sleep(delay)
-            return make_request(url, data, retries - 1, delay * 2)  # Exponential backoff
+            #return make_request(url, data, retries - 1, delay * 2)  # Exponential backoff
+            return make_request(
+                url=url,
+                data=data,
+                params=params,
+                method=method,
+                headers=headers,
+                retries=retries - 1,
+                delay=delay * 2,
+                timeout=timeout,
+                verify_ssl=verify_ssl
+            )
         elif response.status_code == 403:
             raise PermissionError("Access denied (403). The server rejected your credentials or IP.")
         else:
