@@ -3,13 +3,16 @@
 import os
 import requests
 import yaml
+from src.projectmanager import ProjectManager 
+from src.projectmanager import establish_default_project
 
 class SecretsYaml:
     def __init__(self, config):
         self.config = config
 
     @staticmethod
-    def load_config(secrets_file_path="secrets.yaml"):
+    #def load_config(secrets_file_path="secrets.yaml"):
+    def load_config(secrets_file_path): 
         with open(secrets_file_path, 'r') as f:
             return yaml.safe_load(f)
         
@@ -21,31 +24,22 @@ class SecretsYaml:
                 print(f"{key} = {val}")
 
 
-
-def demo1_yaml():
-    config = SecretsYaml.load_config()
+def demo_secrets():
+    """
+    The defaut SecretsYaml.load_config() call 
+    should load fromthe default-project 
+    as defined by the configuration file in the projects directorys,
+    caed defaut_project.toml - Clayton Bennett 26 April 2025.
+    However this call can also be made if another project is made the active project.
+    """
+    project_name = ProjectManager.identify_default_project()
+    project_manager = ProjectManager(project_name)
+    secrets_file_path = project_manager.get_configs_file_path(filename = 'secrets.yaml')
+    config = SecretsYaml.load_config(secrets_file_path = secrets_file_path)
     secrets = SecretsYaml(config)
-    
-    def print_secrets():    
-        secrets.print_config()
-    
-    def get_and_print_token_eds():
-        token, headers = secrets.get_token_eds(plant_zd = "Maxson")
-        print(f"Token: {token}")
-        print(f"Headers: {headers}")
-
-    def get_and_print_token_rjn():
-        token, headers = secrets.get_token_rjn()
-        print(f"Token: {token}")
-        print(f"Headers: {headers}")
-    
-    print_secrets()
-    get_and_print_token_eds()
-    get_and_print_token_rjn()
-
+    secrets.print_config()
     return secrets
 
 if __name__ == "__main__":
     # call from the root directory using poetry run python -m src.env
-
-    secrets=demo1_yaml()
+    secrets=demo_secrets()

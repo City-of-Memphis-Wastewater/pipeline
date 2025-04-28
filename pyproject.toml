@@ -1,7 +1,7 @@
 [project]
-name = "rjn-clarity"
+name = "pipeline"
 version = "0.1.0"
-description = "\"API access for reading (GET) and writing (POST), to https://rjn-clarity-api.com/v1/clarity\""
+description = "\"API access for reading from the EDS and writing, to https://rjn-clarity-api.com/v1/clarity\""
 authors = [
     {name = "George Clayton Bennett",email = "george.bennett@memphistn.gov"}
 ]

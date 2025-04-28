@@ -64,28 +64,40 @@ class ProjectManager:
     @classmethod
     def identify_default_project(cls):
         """
-        Class method that reads default_project.toml to identify the default project.
+        Class method that reads default-project.toml to identify the default-project.
         """
         base_dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
         projects_dir = os.path.join(base_dir, 'projects')
-        default_toml_path = os.path.join(projects_dir, 'default_project.toml')
+        default_toml_path = os.path.join(projects_dir, 'default-project.toml')
 
         if not os.path.exists(default_toml_path):
-            raise FileNotFoundError(f"Missing default_project.toml in {projects_dir}")
+            raise FileNotFoundError(f"Missing default-project.toml in {projects_dir}")
 
         with open(default_toml_path, 'r') as f:
             config = toml.load(f)
-
         try:
-            return config['default project']['project']
+            return config['default-project']['project']
         except KeyError as e:
-            raise KeyError(f"Missing key in default_project.toml: {e}")
+            raise KeyError(f"Missing key in default-project.toml: {e}")
+        
+def establish_default_project():
+    project_name = ProjectManager.identify_default_project()
+    project_manager = ProjectManager(project_name)
+    return project_manager.get_project_dir()
+
+def demo_projectmanager_og():
+    # Dynamically identify the default-project from TOML
+    project_name = ProjectManager.identify_default_project()
+    project_manager = ProjectManager(project_name)
+    project_manager.get_project_dir()
+    project_manager.create_exports_dir()
+
+def demo_projectmanager():
+    print(f"establish_default_project() = {establish_default_project()}")
 
 if __name__ ==  "__main__":
     # Usage
-    # Dynamically identify the default project from TOML
-    project_name = ProjectManager.identify_default_project()
-    project_manager = ProjectManager(project_name)
-    project_manager.create_exports_dir()
-    print(f"Active project: {project_manager.get_project_dir()}")
+    
+    print(f"Default, active project: {demo_projectmanager()}")
 
+    

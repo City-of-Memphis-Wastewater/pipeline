@@ -123,11 +123,11 @@ class DataCaptureDaemon:
 # ----------------------------
 
 if __name__ == "__main__":
-    # Dynamically identify the default project from TOML
+    # Dynamically identify the default-project from TOML
     project_name = ProjectManager.identify_default_project()
     pm = ProjectManager(project_name)
 
-    # Dynamically load the hook from the default project's script
+    # Dynamically load the hook from the default-project's script
     snapshot_hook = load_snapshot_hook(pm)
 
     # Pass all into the daemon

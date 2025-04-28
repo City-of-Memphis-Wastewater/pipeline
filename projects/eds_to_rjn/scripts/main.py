@@ -16,8 +16,8 @@ def main():
     #secrets = SecretsYaml(config_obj)
     #secrets.print_config()
     
-
-    eds = EdsClient(config_obj['eds_apis'])
+    # toml headings
+    eds = EdsClient(config_obj['eds_apis']) 
     rjn = RjnClient(config_obj['rjn_api'])
     
     token_eds, headers_eds = eds.get_token()
