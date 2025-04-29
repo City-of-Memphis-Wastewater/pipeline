@@ -11,21 +11,22 @@ class QueriesManager:
         """
         Returns a list of query CSV file paths:
         - If `filename` is provided, use only that one. Expected source: argparse cli
-        - Else, try to read default-query.toml for a list.
+        - Else, try to read default-queries.toml for a list.
         - Else, fallback to ['points.csv']
         """
         if filename:
+            "Return a one-csv list"
             paths = [self.project_manager.get_queries_file_path(filename)]
         else:
             try:
                 default_query_path = os.path.join(
-                    self.project_manager.get_queries_dir(), 'default-query.toml'
+                    self.project_manager.get_queries_dir(), 'default-queries.toml'
                 )
                 with open(default_query_path, 'r') as f:
                     query_config = toml.load(f)
                 filenames = query_config['default-query']['files']
                 if not isinstance(filenames, list):
-                    raise ValueError("Expected a list under 'files' in default-query.toml")
+                    raise ValueError("Expected a list under 'files' in default-queries.toml")
                 paths = [self.project_manager.get_queries_file_path(fname) for fname in filenames]
             except Exception as e:
                 print(f"Warning: {e}. Falling back to ['points.csv']")

@@ -1,5 +1,3 @@
-.env
-secrets.yaml
 **/.env
 **/secrets.yaml
 **/daemon_log.txt
