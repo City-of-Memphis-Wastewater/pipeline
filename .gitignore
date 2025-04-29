@@ -3,3 +3,4 @@
 **/daemon_log.txt
 !*/
 myenv/
+.python-version
