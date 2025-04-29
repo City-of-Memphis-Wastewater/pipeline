@@ -2,46 +2,71 @@ import os
 import toml
 
 class QueriesManager:
-    project_manager = None
-    def __init__(self, project_manager:object):
+    def __init__(self, project_manager: object):
+        if not project_manager:
+            raise ValueError("project_manager must be provided and not None.")
         self.project_manager = project_manager
-        self.queries_file_path = str()
 
-def identify_default_queries(self):
+    def get_query_file_paths(self, filename=None):
         """
-        Method that reads default-query.toml, after the project has been established.
+        Returns a list of query CSV file paths:
+        - If `filename` is provided, use only that one. Expected source: argparse cli
+        - Else, try to read default-query.toml for a list.
+        - Else, fallback to ['points.csv']
         """
-        if not self.project_manager:
-             raise ValueError("self.project_manager must be provided and not None.")
-        
-        default_query_path = os.path.join(self.project_manager.get_queries_dir(), 'default-query.toml')
+        if filename:
+            paths = [self.project_manager.get_queries_file_path(filename)]
+        else:
+            try:
+                default_query_path = os.path.join(
+                    self.project_manager.get_queries_dir(), 'default-query.toml'
+                )
+                with open(default_query_path, 'r') as f:
+                    query_config = toml.load(f)
+                filenames = query_config['default-query']['files']
+                if not isinstance(filenames, list):
+                    raise ValueError("Expected a list under 'files' in default-query.toml")
+                paths = [self.project_manager.get_queries_file_path(fname) for fname in filenames]
+            except Exception as e:
+                print(f"Warning: {e}. Falling back to ['points.csv']")
+                paths = [self.project_manager.get_queries_file_path('points.csv')]
 
-        if not os.path.exists(default_query_path):
-            raise FileNotFoundError(f"Missing default-query.toml in {self.project_manager.get_queries_dir()}")
-
-        with open(default_query_path, 'r') as f:
-            query = toml.load(f)
-        return default_query_path
-        try:
-            return config['default-project']['project']
-        except KeyError as e:
-            raise KeyError(f"Missing key in default-project.toml: {e}")
-
-        
-def establish_default_queries():
+        for path in paths:
+            if not os.path.exists(path):
+                raise FileNotFoundError(f"Query file not found: {path}")
+        return paths
+    
+def cli_queriesmanager():
+    import argparse
     from src.projectmanager import ProjectManager
+    from src.queriesmanager import QueriesManager
+    parser = argparse.ArgumentParser(description="Select CSV file for querying.")
+    parser.add_argument(
+        '--csv-file',
+        type=str,
+        default=None,
+        help="Specify the CSV file to use for querying (default is points.csv)"
+    )
+    args = parser.parse_args()
+
+    # Set up project manager
     project_name = ProjectManager.identify_default_project()
     project_manager = ProjectManager(project_name)
-    queries_file_path = identify_default_queries(project_manager)
-    return project_manager.get_project_dir()
+    queries_manager = QueriesManager(project_manager)
 
-
-def demo_queriesmanager():
-    print(f"establish_default_project() = {establish_default_queries()}")
+    try:
+        # Get the query file path (either default or user-provided)
+        query_file_path = queries_manager.get_query_file_paths(args.csv_file)
+        print(f"Using query file: {query_file_path}")
+        # Further processing with the query file...
+        
+    except FileNotFoundError as e:
+        print(f"Error: {e}")
+    except Exception as e:
+        print(f"Unexpected error: {e}")
 
 if __name__ ==  "__main__":
-    # Usage
-    
-    print(f"Default, active project: {demo_queriesmanager()}")
+    cli_queriesmanager()
 
-    
+
+

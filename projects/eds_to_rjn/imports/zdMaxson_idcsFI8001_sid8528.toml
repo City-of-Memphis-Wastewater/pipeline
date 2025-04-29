@@ -1,6 +1,7 @@
 [eds_characteristics]
 ip_address="172.19.4.127"
 idcs="FI8001"
+iess="FI8001.UNIT0@NET0"
 sid=8528
 zd="Maxson"
 

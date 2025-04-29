@@ -21,7 +21,7 @@ def make_request(url, data=None, params = None, method="POST", headers=None, ret
         }
 
         merged_headers = {**default_headers, **(headers or {})}
-        print(f"merged_headers = {merged_headers}")
+        #print(f"merged_headers = {merged_headers}")
 
         verify = certifi.where() if verify_ssl else False
 
@@ -44,7 +44,6 @@ def make_request(url, data=None, params = None, method="POST", headers=None, ret
             timeout=timeout,
             verify=verify
         )
-        print("\nflag\n")
         if response is None:
             raise RuntimeError("Received an empty response from the server.")
         else:

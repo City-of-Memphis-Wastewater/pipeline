@@ -89,7 +89,7 @@ def get_rjn_tokens_and_headers(config_obj):
     # toml headings
     rjn = RjnClient(config_obj['rjn_api'])
     token_rjn, headers_rjn = rjn.get_token()
-    print(f"token_rjn = {token_rjn}")
+    #print(f"token_rjn = {token_rjn}")
     return rjn, headers_rjn
 
 def call_eds_get_points_live(eds,headers_eds_maxson, headers_eds_stiles):
@@ -137,17 +137,20 @@ def process_points_and_send_to_rjn(csv_file_path, eds: EdsClient, rjn: RjnClient
                 "value": point_data["value"],
                 "units": point_data["un"],
                 "source_sid": sid,
-                "source_iess": point_data["idcs"]
+                "source_iess": point_data["iess"]
             }
             rjn.send_point(payload)
             print(f"Posted point {payload['rjn_name']} to RJN.")
         else:
             print(f"No point data found for SID {sid}")
 
-def process_sites_and_send(csv_path, eds_api, eds_site, eds_headers, rjn_base_url, rjn_headers):
+def _process_sites_and_send(csv_path, eds_api, eds_site, eds_headers, rjn_base_url, rjn_headers):
+    print(f"\nmain.process_sites_and_send()")
+    print(f"csv_path = {csv_path}")
     with open(csv_path, newline='') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
+            #print(f"\trow = {row}")
             try:
                 eds_sid = int(row["sid"])
                 shortdesc = row.get("shortdesc", "")
@@ -173,17 +176,88 @@ def process_sites_and_send(csv_path, eds_api, eds_site, eds_headers, rjn_base_ur
                 dt = datetime.fromtimestamp(ts)
                 rounded_dt = round_time_to_nearest_five(dt)
                 timestamp = rounded_dt
+                timestamp_str = timestamp.strftime('%Y-%m-%d %H:%M:%S')
 
                 send_data_to_rjn(
                     base_url=rjn_base_url,
                     project_id=rjn_siteid,
                     entity_id=rjn_entityid,
                     headers=rjn_headers,
-                    timestamp=timestamp,
-                    value=round(value, 2)
+                    timestamps=[timestamp_str],
+                    values=[round(value, 2)]
                 )
             except Exception as e:
                 print(f"Error processing SID {eds_sid}: {e}")
+
+
+def process_sites_and_send(csv_path, eds_api, eds_site, eds_headers, rjn_base_url, rjn_headers):
+    print(f"\nmain.process_sites_and_send()")
+    print(f"csv_path = {csv_path}")
+    
+    with open(csv_path, newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        
+        for row in reader:
+            print(f"\trow = {row}")
+            
+            # Skip empty rows (if all values in the row are empty or None)
+            if not any(row.values()):
+                print("Skipping empty row.")
+                continue
+
+            try:
+                # Convert and validate values
+                eds_sid = int(row["sid"]) if row["sid"] not in (None, '', '\t') else None
+                shortdesc = row.get("shortdesc", "")
+                
+                # Validate rjn_siteid and rjn_entityid are not None or empty
+                rjn_siteid = row["rjn_siteid"] if row.get("rjn_siteid") not in (None, '', '\t') else None
+                rjn_entityid = row["rjn_entityid"] if row.get("rjn_entityid") not in (None, '', '\t') else None
+                
+                # Ensure the necessary data is present, otherwise skip the row
+                if None in (eds_sid, rjn_siteid, rjn_entityid):
+                    print(f"Skipping row due to missing required values: SID={eds_sid}, rjn_siteid={rjn_siteid}, rjn_entityid={rjn_entityid}")
+                    continue
+
+            except KeyError as e:
+                print(f"Missing expected column in CSV: {e}")
+                continue
+            except ValueError as e:
+                print(f"Invalid data in row: {e}")
+                continue
+
+            try:
+                # Fetch data from EDS
+                ts, value = fetch_eds_data(
+                    eds_api=eds_api,
+                    site=eds_site,
+                    sid=eds_sid,
+                    shortdesc=shortdesc,
+                    headers=eds_headers
+                )
+
+                if value is None:
+                    print(f"Skipping null value for SID {eds_sid}")
+                    continue
+
+                # Process timestamp
+                dt = datetime.fromtimestamp(ts)
+                rounded_dt = round_time_to_nearest_five(dt)
+                timestamp = rounded_dt
+                timestamp_str = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+
+                # Send data to RJN
+                send_data_to_rjn(
+                    base_url=rjn_base_url,
+                    project_id=rjn_siteid,
+                    entity_id=rjn_entityid,
+                    headers=rjn_headers,
+                    timestamps=[timestamp_str],
+                    values=[round(value, 2)]
+                )
+            except Exception as e:
+                print(f"Error processing SID {eds_sid}: {e}")
+
 
 def post_captured_values_from_eds_to_rjn():
     pass

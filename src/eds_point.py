@@ -26,6 +26,7 @@ class Point:
     def __init__(self):
         self.ip_address = str()
         self.idcs = str()
+        self.iess = str()
         self.sid = int()
         self.zd = int()
         self.unit = str()
@@ -36,9 +37,9 @@ class Point:
         self.rjn_entityid = str()
         self.rjn_name= str()
         self.register_point_to_class_set(self)
-    def populate_eds_characteristics(self,ip_address,idcs,sid,zd):
+    def populate_eds_characteristics(self,ip_address,iess,sid,zd):
         self.ip_address = ip_address
-        self.idcs = idcs
+        self.iess = iess
         self.sid = sid
         self.zd = zd
         return self # big money, allows fore chaining
@@ -55,8 +56,6 @@ class Point:
         self.timestamp = timestamp
         self.add_value_to_value_dict()
 
-
-
 class PointManager:
     def __init__(self, csv_path):
         self.points = self._load_points(csv_path)
@@ -71,3 +70,6 @@ class PointManager:
 
     def get_point_by_idcs(self, idcs):
         return next((p for p in self.points if p.get("idcs") == idcs), None)
+    
+    def get_point_by_iess(self, iess):
+        return next((p for p in self.points if p.get("iess") == iess), None)

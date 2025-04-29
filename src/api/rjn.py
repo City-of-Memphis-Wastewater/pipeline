@@ -6,8 +6,9 @@ class RjnClient:
         self.config = config
 
     def get_token(self):
-        
+        print("\nRjnClient.get_token()")
         request_url = self.config['url'] + 'auth'
+        print(f"request_url = {request_url}")
         data = {
             'client_id': self.config['client_id'],
             'password': self.config['password']
@@ -60,7 +61,7 @@ def send_data_to_rjn(base_url:str, project_id:str, entity_id:int, headers:dict, 
     try:
         response = make_request(url=url, headers=headers, params = params, method="POST", data=body)
         response.raise_for_status()
-        print(f"Sent {timestamps} -> {values} to {entity_id} (HTTP {response.status_code})")
+        print(f"Sent {timestamps} -> {values} to entity {entity_id} (HTTP {response.status_code})")
     except requests.exceptions.RequestException as e:
         print(f"Error sending data to RJN: {e}")
         if response is not None:# and response.status_code != 500:

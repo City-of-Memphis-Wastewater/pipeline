@@ -4,3 +4,4 @@ secrets.yaml
 **/secrets.yaml
 **/daemon_log.txt
 !*/
+myenv/

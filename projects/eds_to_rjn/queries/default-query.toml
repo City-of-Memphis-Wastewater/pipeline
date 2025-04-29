@@ -1,2 +1,6 @@
 # example: file="query_24April2025.txt"
+[default-query]
+files = ["points.csv", "points-copy.csv"]
+
+[default-query-defunct]
 file="query_24April2025.txt"

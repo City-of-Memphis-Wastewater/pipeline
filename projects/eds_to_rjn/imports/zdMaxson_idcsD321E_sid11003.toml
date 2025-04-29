@@ -1,6 +1,7 @@
 [eds_characteristics]
 ip_address="172.19.4.127"
 idcs="D-321E"
+iess="D-321E.UNIT0@NET0"
 sid=11003
 zd="Maxson"
 
