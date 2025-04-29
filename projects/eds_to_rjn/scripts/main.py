@@ -9,27 +9,21 @@ from src.calls import test_connection_to_internet
 from src.helpers import round_time_to_nearest_five
 from src.projectmanager import ProjectManager
 from src.queriesmanager import QueriesManager
-from src.points_loader import PointsCsvLoader
+#from src.points_loader import PointsCsvLoader
 from src.api.rjn import send_data_to_rjn
 from src.api.eds import fetch_eds_data
 
-def chonka():
+def main():
     test_connection_to_internet()
 
     project_name = 'eds_to_rjn' # project_name = ProjectManager.identify_default_project()
     project_manager = ProjectManager(project_name)
     secrets_file_path = project_manager.get_configs_file_path(filename = 'secrets.yaml')
     config_obj = SecretsYaml.load_config(secrets_file_path = secrets_file_path)
-    #csv_file_path = project_manager.get_queries_file_path(filename='points.csv')
-    #csv_file_path = project_manager.get_queries_file_path()
-
     queries_manager = QueriesManager(project_manager)
     try:
-        # Get the query file path (either default or user-provided)
         queries_file_path_list = queries_manager.get_query_file_paths() # use default identified by the default-queries.toml file
         print(f"Using query file: {queries_file_path_list}")
-        # Further processing with the query file...
-        
     except FileNotFoundError as e:
         print(f"Error: {e}")
 
@@ -37,38 +31,9 @@ def chonka():
     #eds_api, headers_eds_maxson, headers_eds_stiles = get_eds_tokens_and_headers_both(config_obj) # Stiles EDS needs to be configured to allow access on the 43084 port. Compare both servers.
     headers_eds_stiles = None
 
-
     rjn_api, headers_rjn = get_rjn_tokens_and_headers(config_obj)
     for csv_file_path in queries_file_path_list:
         process_sites_and_send(csv_file_path, eds_api, eds_site = "Maxson", eds_headers = headers_eds_maxson, rjn_base_url=rjn_api.config['url'], rjn_headers=headers_rjn)
-
-    
-def main():
-
-    test_connection_to_internet()
-
-    project_name = 'eds_to_rjn'
-    project_manager = ProjectManager(project_name)
-    secrets_file_path = project_manager.get_configs_file_path(filename = 'secrets.yaml')
-    config_obj = SecretsYaml.load_config(secrets_file_path = secrets_file_path)
-    
-    #eds, headers_eds_maxson, headers_eds_stiles = get_eds_tokens_and_headers_both(config_obj)
-    eds, headers_eds_maxson = get_eds_maxson_token_and_headers(config_obj)
-    if False:
-        queries_manager = QueriesManager(project_manager) # check file pointed to by default-queries.toml
-        queries_manager.load_queries_from_default_queries_file()
-    else:
-        #call_eds_get_points_live(eds, headers_eds_maxson, headers_eds_stiles)
-        call_eds_maxson_get_points_live(eds, headers_eds_maxson)
-
-    rjn, headers_rjn = get_rjn_tokens_and_headers(config_obj)
-
-    
-    if False:
-        decoded_str = eds.get_points_export(site = "Maxson",headers = headers_eds)
-        export_file_path = project_manager.get_exports_file_path(filename = 'export_eds_points_all.txt')
-        eds.save_points_export(decoded_str, export_file_path = export_file_path)
-        print(f"Export file will be saved to: {export_file_path}")
 
 def get_all_tokens(config_obj):
     # toml headings
@@ -185,5 +150,5 @@ def post_captured_values_from_eds_to_rjn():
 def load_data_from_file():
     pass
 if __name__ == "__main__":
-    #main()
-    chonka()
+    main()
+
