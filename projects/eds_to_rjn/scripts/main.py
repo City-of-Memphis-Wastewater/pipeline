@@ -35,6 +35,7 @@ def main():
     for csv_file_path in queries_file_path_list:
         process_sites_and_send(csv_file_path, eds_api, eds_site = "Maxson", eds_headers = headers_eds_maxson, rjn_base_url=rjn_api.config['url'], rjn_headers=headers_rjn)
 
+
 def get_all_tokens(config_obj):
     # toml headings
     eds = EdsClient(config_obj['eds_apis']) 
@@ -131,6 +132,17 @@ def process_sites_and_send(csv_path, eds_api, eds_site, eds_headers, rjn_base_ur
                 rounded_dt = round_time_to_nearest_five(dt)
                 timestamp = rounded_dt
                 timestamp_str = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+
+                if False:
+                    # Store data for aggregation
+                    store_data_for_aggregation(
+                        base_url=rjn_base_url,
+                        project_id=rjn_siteid,
+                        entity_id=rjn_entityid,
+                        headers=rjn_headers,
+                        timestamps=[timestamp_str],
+                        values=[round(value, 2)]
+                    )
 
                 # Send data to RJN
                 send_data_to_rjn(

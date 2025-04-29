@@ -1,0 +1,65 @@
+#daemon_runner.py
+import schedule, time
+import logging
+import datetime
+from projects.eds_to_rjn.scripts import collector, storage, aggregator
+from projects.eds_to_rjn.scripts.main import get_eds_maxson_token_and_headers, get_rjn_tokens_and_headers
+from src.env import SecretsYaml
+from src.api.eds import EdsClient
+from src.api.rjn import RjnClient
+from src.projectmanager import ProjectManager
+from src.queriesmanager import QueriesManager
+
+def run_live_cycle():
+    print("Running live cycle...")
+    #test_connection_to_internet()
+
+    project_name = 'eds_to_rjn' # project_name = ProjectManager.identify_default_project()
+    project_manager = ProjectManager(project_name)
+    secrets_file_path = project_manager.get_configs_file_path(filename = 'secrets.yaml')
+    config_obj = SecretsYaml.load_config(secrets_file_path = secrets_file_path)
+    queries_manager = QueriesManager(project_manager)
+    try:
+        queries_file_path_list = queries_manager.get_query_file_paths() # use default identified by the default-queries.toml file
+        print(f"Using query file: {queries_file_path_list}")
+    except FileNotFoundError as e:
+        print(f"Error: {e}")
+
+    eds_api, headers_eds_maxson = get_eds_maxson_token_and_headers(config_obj)
+
+    for csv_file_path in queries_file_path_list:
+        data = collector.collect_live_values(csv_file_path, eds_api, "Maxson", headers_eds_maxson)
+        storage.store_live_values(data, project_manager.get_aggregate_dir()+"/live_data.csv") # project_manager.get_live_data_csv_file
+
+def run_hourly_cycle(): 
+    print("Running hourly cycle...")
+    project_name = 'eds_to_rjn' # project_name = ProjectManager.identify_default_project()
+    project_manager = ProjectManager(project_name)
+    secrets_file_path = project_manager.get_configs_file_path(filename = 'secrets.yaml')
+    config_obj = SecretsYaml.load_config(secrets_file_path = secrets_file_path)
+    rjn_api, headers_rjn = get_rjn_tokens_and_headers(config_obj)
+    aggregator.aggregate_and_send(data_file = project_manager.get_aggregate_dir()+"/live_data.csv",
+                                  checkpoint_file = project_manager.get_aggregate_dir()+"/sent_data.csv",
+                                  rjn_base_url=rjn_api.config['url'],
+                                  headers_rjn=headers_rjn)
+def setup_schedules():
+    # Get current time and round it to the next multiple of 5 minutes
+    now = datetime.datetime.now()
+    minutes_to_next_five = 5 - (now.minute % 5)
+    next_run_time = now + datetime.timedelta(minutes=minutes_to_next_five)
+
+    # Schedule the first run at the next multiple of 5 minutes
+    schedule.every().day.at(next_run_time.strftime("%H:%M")).do(run_live_cycle)
+    schedule.every(5).minutes.do(run_live_cycle)
+    schedule.every().hour.at(":00").do(run_hourly_cycle)
+
+def main():
+    print("Starting daemon_runner...")
+    #logging.info("Daemon started and running...")
+    setup_schedules()
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
+
+if __name__ == "__main__":
+    main()

@@ -10,6 +10,7 @@ class ProjectManager:
         self.imports_dir = self.get_imports_dir()
         self.configs_dir = self.get_configs_dir()
         self.scripts_dir = self.get_scripts_dir()
+        self.aggregate_dir = self.get_aggregate_dir()
 
     def get_exports_dir(self):
         return os.path.join(self.project_dir, 'exports')
@@ -18,6 +19,9 @@ class ProjectManager:
         # Return the full path to the export file
         return os.path.join(self.exports_dir, filename)
 
+    def get_aggregate_dir(self):
+        return os.path.join(self.exports_dir, 'aggregate')
+    
     def create_exports_dir(self):
         if not os.path.exists(self.exports_dir):
             os.makedirs(self.exports_dir)
