@@ -4,7 +4,7 @@ from pprint import pprint
 from datetime import datetime, timedelta
 import sys
 #import textual
-#import src.helpers.load_toml
+from src.helpers import load_toml
 
 #from src.address import Address
 from src.eds_point import Point
@@ -17,29 +17,9 @@ def round_time_to_nearest_five(dt: datetime) -> datetime:
     rounded_minute = max(m for m in allowed_minutes if m <= dt.minute)
     return dt.replace(minute=rounded_minute, second=0, microsecond=0)
 
-def run_today():
-    ApiCalls.test_connection_to_internet()
-    ApiCalls.test_connection_to_eds()
-    api = ApiCalls(ip_address_default = "172.19.4.127")
-    api_url,headers = ApiCalls.get_token(ip_address = ApiCalls.ip_address_maxson)
-    populate_today()  
-    retrieve_and_show_points(option=0) # live [0] or tabular [1]
-    #retrieve_and_show_points(option=1)
-
-def run_tomorrow():
-    
-    apicalls_maxson = ApiCalls()
-    ApiCalls.test_connection_to_internet()
-    ApiCalls.test_connection_to_eds()
-    api = ApiCalls(ip_address_default = "172.19.4.127")
-    api_url,headers = ApiCalls.get_token(ip_address = ApiCalls.ip_address_maxson)
-    populate_today()  
-    retrieve_and_show_points(option=0) # live [0] or tabular [1]
-    #retrieve_and_show_points(option=1)
-
 def populate_multiple_generic_points_from_filelist(filelist):
     for f in filelist:
-        dic = src.helpers.load_toml(f)
+        dic = load_toml(f)
         populate_generic_point_from_dict(dic)
 
 def populate_multiple_generic_points_from_dicts(loaded_dicts):
@@ -59,70 +39,9 @@ def populate_generic_point_from_dict(dic):
         rjn_entityid=dic["rjn_entityid"],
         rjn_name=dic["rjn_name"]
     )
-def populate_today():
-    #Point(ip_address="172.19.4.128",idcs="FI-405/415",sid="3550",zd="WWTF",rjn_siteid="eefe228a-39a2-4742-a9e3-c07314544ada",rjn_entityid="s197",rjn_name="Effluent") # failing
-    #Point(ip_address="172.19.4.128",idcs="I-5005A",sid="5392",zd="WWTF",rjn_siteid="eefe228a-39a2-4742-a9e3-c07314544ada",rjn_entityid="s200",rjn_name="Influent") # failing
-    #Point(ip_address="172.19.4.127",idcs="M310LI",sid=2382,zd="Maxson",rjn_siteid="64c5c5ac-04ca-4a08-bdce-5327e4b21bc5",rjn_entityid=None,rjn_name="Wet well level")
-    #Point(ip_address="172.19.4.127",idcs="PAA-DOSE-EAST-PPM",sid=11002,zd="Maxson",rjn_siteid="64c5c5ac-04ca-4a08-bdce-5327e4b21bc5",rjn_entityid=None,rjn_name="PAA Dose East")
 
-    Point().populate_eds_characteristics(
-        ip_address="172.19.4.127",
-        idcs="FI8001",
-        sid=8528,
-        zd="Maxson"
-    ).populate_manual_characteristics(
-        shortdesc="EFF"
-    ).populate_rjn_characteristics(
-        rjn_siteid="64c5c5ac-04ca-4a08-bdce-5327e4b21bc5",
-        rjn_entityid="s198",
-        rjn_name="Effluent"
-    )
-
-    Point().populate_eds_characteristics(
-        ip_address="172.19.4.127",
-        idcs="M100FI",
-        sid=2308,
-        zd="Maxson"
-    ).populate_manual_characteristics(
-        shortdesc="INFLU"
-    ).populate_rjn_characteristics(
-        rjn_siteid="64c5c5ac-04ca-4a08-bdce-5327e4b21bc5",
-        rjn_entityid="s199",
-        rjn_name="Influent")
-    
-    Point().populate_eds_characteristics(
-        ip_address="172.19.4.127",
-        idcs="M310LI",
-        sid=2382,
-        zd="Maxson"
-    ).populate_manual_characteristics(
-        shortdesc="WETWELL"
-    ).populate_rjn_characteristics(
-        rjn_siteid="64c5c5ac-04ca-4a08-bdce-5327e4b21bc5",
-        rjn_entityid=None,
-        rjn_name=None)
-    
-    Point().populate_eds_characteristics(
-        ip_address="172.19.4.127",
-        idcs="D-321E",
-        sid=11003,
-        zd="Maxson"
-    ).populate_manual_characteristics(
-        shortdesc="DOSE"
-    ).populate_rjn_characteristics(
-        rjn_siteid="64c5c5ac-04ca-4a08-bdce-5327e4b21bc5",
-        rjn_entityid=None,
-        rjn_name=None)
-
-def retrieve_and_show_points(option = "live"):
-    sid_list = [p.sid for p in Point.get_point_set()]
-    print(f"sid_list = {sid_list}")
-    pprint(Point.get_point_set())
-    for point_object in Point.get_point_set():
-        if option == "live" or option == 0: 
-            get_points_live(api_url=Address.get_rest_api_url(),headers = Address.get_header(),sid=point_object.sid,)
-        if option == "tabular" or option == 1:
-            show_points_tabular_trend(api_url=Address.get_rest_api_url(),headers = Address.get_header(),point_object=point_object,)
+def print_point_info_row(point_data, shortdesc):
+    print(f'''{shortdesc}, sid:{point_data["sid"]}, idcs:{point_data["idcs"]}, dt:{datetime.fromtimestamp(point_data["ts"])}, un:{point_data["un"]}. av:{round(point_data["value"],2)}''')
 
 def get_points_live(api_url,sid = int(),shortdesc = str(),headers = None):
     request_url = api_url + 'points/query'
@@ -136,23 +55,17 @@ def get_points_live(api_url,sid = int(),shortdesc = str(),headers = None):
         }
 
     request = requests.post(request_url, headers = headers, json = query)
-    #pprint(f"request={request}")
     byte_string = request.content
     decoded_str = byte_string.decode('utf-8')
     data = json.loads(decoded_str) 
     #pprint(f"data={data}")
-    points_datas = data["points"]
-    def print_point_info_row(sid,point_data):
-            print(f'''{shortdesc}, sid:{point_data["sid"]}, idcs:{point_data["idcs"]}, dt:{datetime.fromtimestamp(point_data["ts"])}, un:{point_data["un"]}. av:{round(point_data["value"],2)}''')
-    if len(points_datas)==0:
+    points_datas = data.get("points", [])
+    if not points_datas:
         print(f"{shortdesc}, sid:{sid}, no data returned, len(points)==0")
-    elif len(points_datas)==1:
-        # This is expected, that there is one point value returned for each SID, which is the match call.
-        point_data = points_datas[0]
-        print_point_info_row(sid,point_data)
-    elif len(points_datas)>1:
+    else:
         for point_data in points_datas:
-            print_point_info_row(sid,point_data)
+            print_point_info_row(point_data, shortdesc)
+
     
 
 def show_points_tabular_trend(api_url,point_object,headers):

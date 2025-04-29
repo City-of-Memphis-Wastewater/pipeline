@@ -31,14 +31,20 @@ class RjnClient:
         else:
             print(f"Failed to post point {payload.get('rjn_name')}: {response.status_code}")
 
-def send_data_to_rjn(base_url, project_id, entity_id, headers, timestamp, value):
+def send_data_to_rjn(base_url:str, project_id:str, entity_id:int, headers:dict, timestamps, values):
+    if timestamps is None:
+        raise ValueError("timestamps cannot be None")
+    if values is None:
+        raise ValueError("values cannot be None")
+    if not isinstance(timestamps, list):
+        timestamps = [timestamps]
+    if not isinstance(values, list):
+        values = [values]
+    # Check for matching lengths of timestamps and values
+    if len(timestamps) != len(values):
+        raise ValueError(f"timestamps and values must have the same length: {len(timestamps)} vs {len(values)}")
 
-    spoof_timestamp = timestamp - timedelta(minutes=5)
-    timestamp_str = timestamp.strftime('%Y-%m-%dT%H:%M:%S')
-    spoof_timestamp_str = spoof_timestamp.strftime('%Y-%m-%dT%H:%M:%S')
-    print(f"timestamp_str = {timestamp_str}")
-    print(f"spoof_timestamp_str = {spoof_timestamp_str}")
-    print(f"value = {value}")
+
     url = f"{base_url}/projects/{project_id}/entities/{entity_id}/data"
     params = {
         "interval": 300,
@@ -46,21 +52,18 @@ def send_data_to_rjn(base_url, project_id, entity_id, headers, timestamp, value)
         "incoming_time": "DST"
     }
     body = {
-        "comments": "Imported from EDS.",
-        "data": {
-            timestamp_str: value
-        }
+    "comments": "Imported from EDS.",
+    "data": dict(zip(timestamps, values))  # Works for single or multiple entries
     }
-    print(f"Body to send: {body}")
-    # Always add Accept header
-    print(f"headers= {headers}")
-    full_headers = {**headers, "Accept": "application/json"}
+
+    response = None
     try:
         response = make_request(url=url, headers=headers, params = params, method="POST", data=body)
-        #response = requests.post(url, headers=headers, params=params, json=body)
         response.raise_for_status()
+        print(f"Sent {timestamps} -> {values} to {entity_id} (HTTP {response.status_code})")
     except requests.exceptions.RequestException as e:
         print(f"Error sending data to RJN: {e}")
-        if response.status_code != 500:
+        if response is not None:# and response.status_code != 500:
             print(f"Response content: {response.text}")  # Print error response
-    print(f"Sent {timestamp} -> {value} to {entity_id} (HTTP {response.status_code})")
+        
+    
