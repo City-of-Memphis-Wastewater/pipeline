@@ -27,6 +27,8 @@ def chonka():
     headers_eds_stiles = None
     rjn_api, headers_rjn = get_rjn_tokens_and_headers(config_obj)
 
+    #eds_api.get_license(site="Maxson",headers=headers_eds_maxson)
+
     process_sites_and_send(csv_file_path, eds_api, eds_site = "Maxson", eds_headers = headers_eds_maxson, rjn_base_url=rjn_api.config['url'], rjn_headers=headers_rjn)
 
     

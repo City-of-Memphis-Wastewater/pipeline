@@ -23,8 +23,15 @@ class EdsClient:
         response = make_request(url = request_url, data=data)
         token = response.json()['sessionId']
         headers = {'Authorization': f"Bearer {token}"}
-
+    
         return token, headers
+
+    def get_license(self,site:str,headers=None):
+        plant_cfg = self.config[site]
+        request_url = plant_cfg['url'] + 'license'
+        response = make_request(url = request_url, headers=headers, method = "GET", data = {})
+        pprint(response.__dict__)
+        return response
 
 
     def get_points_live(self,site: str,sid: int,shortdesc : str="",headers = None):
