@@ -6,7 +6,7 @@ from src.env import SecretsYaml
 from src.api.eds import EdsClient
 from src.api.rjn import RjnClient
 from src.calls import test_connection_to_internet
-from src.services import round_time_to_nearest_five
+from src.helpers import round_time_to_nearest_five
 from src.projectmanager import ProjectManager
 from src.queriesmanager import QueriesManager
 from src.points_loader import PointsCsvLoader
@@ -34,7 +34,7 @@ def chonka():
         print(f"Error: {e}")
 
     eds_api, headers_eds_maxson = get_eds_maxson_token_and_headers(config_obj)
-    #eds_api, headers_eds_maxson, headers_eds_stiles = get_eds_tokens_and_headers(config_obj) # Stiles EDS needs to be configured to allow access on the 43084 port. Compare both servers.
+    #eds_api, headers_eds_maxson, headers_eds_stiles = get_eds_tokens_and_headers_both(config_obj) # Stiles EDS needs to be configured to allow access on the 43084 port. Compare both servers.
     headers_eds_stiles = None
 
 
@@ -52,7 +52,7 @@ def main():
     secrets_file_path = project_manager.get_configs_file_path(filename = 'secrets.yaml')
     config_obj = SecretsYaml.load_config(secrets_file_path = secrets_file_path)
     
-    #eds, headers_eds_maxson, headers_eds_stiles = get_eds_tokens_and_headers(config_obj)
+    #eds, headers_eds_maxson, headers_eds_stiles = get_eds_tokens_and_headers_both(config_obj)
     eds, headers_eds_maxson = get_eds_maxson_token_and_headers(config_obj)
     if False:
         queries_manager = QueriesManager(project_manager) # check file pointed to by default-queries.toml
@@ -75,45 +75,33 @@ def get_all_tokens(config_obj):
     eds = EdsClient(config_obj['eds_apis']) 
     rjn = RjnClient(config_obj['rjn_api'])
     
-    token_eds, headers_eds_maxson = eds.get_token(plant_zd="Maxson")
-    token_eds, headers_eds_stiles = eds.get_token(plant_zd="WWTF")
+    token_eds, headers_eds_maxson = eds.get_token_and_headers(plant_zd="Maxson")
+    token_eds, headers_eds_stiles = eds.get_token_and_headers(plant_zd="WWTF")
     print(f"token_eds = {token_eds}")
     #print(f"headers_eds = {headers_eds}")
-    token_rjn, headers_rjn = rjn.get_token()
+    token_rjn, headers_rjn = rjn.get_token_and_headers()
     print(f"token_rjn = {token_rjn}")
     return eds, rjn, headers_eds_maxson, headers_eds_stiles, headers_rjn
 
-def get_eds_tokens_and_headers(config_obj):
+def get_eds_tokens_and_headers_both(config_obj):
     # toml headings
     eds = EdsClient(config_obj['eds_apis'])
-    token_eds, headers_eds_maxson = eds.get_token(plant_zd="Maxson")
-    token_eds, headers_eds_stiles = eds.get_token(plant_zd="WWTF")
+    token_eds, headers_eds_maxson = eds.get_token_and_headers(plant_zd="Maxson")
+    token_eds, headers_eds_stiles = eds.get_token_and_headers(plant_zd="WWTF")
     return eds, headers_eds_maxson, headers_eds_stiles
 
 def get_eds_maxson_token_and_headers(config_obj):
     # toml headings
     eds = EdsClient(config_obj['eds_apis'])
-    token_eds, headers_eds_maxson = eds.get_token(plant_zd="Maxson")
+    token_eds, headers_eds_maxson = eds.get_token_and_headers(plant_zd="Maxson")
     return eds, headers_eds_maxson
 
 def get_rjn_tokens_and_headers(config_obj):
     # toml headings
     rjn = RjnClient(config_obj['rjn_api'])
-    token_rjn, headers_rjn = rjn.get_token()
+    token_rjn, headers_rjn = rjn.get_token_and_headers()
     #print(f"token_rjn = {token_rjn}")
     return rjn, headers_rjn
-
-def call_eds_get_points_live(eds,headers_eds_maxson, headers_eds_stiles):
-    print(f"\neds.get_points_live():")
-    eds.get_points_live(site = "Maxson", sid = 2308,shortdesc = "INFLUENT",headers = headers_eds_maxson) # M100FI.UNIT0@NET0
-    eds.get_points_live(site = "Maxson", sid = 8528,shortdesc = "EFFLUENT",headers = headers_eds_maxson) # FI8001.UNIT0@NET0
-    eds.get_points_live(site = "WWTF", sid = 5392,shortdesc = "INFLUENT",headers = headers_eds_stiles) # I-5005A.UNIT1@NET1
-    eds.get_points_live(site = "WWTF", sid = 3550,shortdesc = "EFFLUENT",headers = headers_eds_stiles) # FI-405/415.UNIT1@NET1
-
-def call_eds_maxson_get_points_live(eds,headers_eds_maxson):
-    print(f"\neds.get_points_live():")
-    eds.get_points_live(site = "Maxson", sid = 2308,shortdesc = "INFLUENT",headers = headers_eds_maxson) # M100FI.UNIT0@NET0
-    eds.get_points_live(site = "Maxson", sid = 8528,shortdesc = "EFFLUENT",headers = headers_eds_maxson) # FI8001.UNIT0@NET0
 
 def call_eds_stiles_get_points_live(eds, headers_eds_stiles):
     print(f"\neds.get_points_live():")

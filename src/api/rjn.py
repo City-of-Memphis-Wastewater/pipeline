@@ -5,8 +5,8 @@ class RjnClient:
     def __init__(self,config):
         self.config = config
 
-    def get_token(self):
-        print("\nRjnClient.get_token()")
+    def get_token_and_headers(self):
+        print("\nRjnClient.get_token_and_headers()")
         request_url = self.config['url'] + 'auth'
         print(f"request_url = {request_url}")
         data = {

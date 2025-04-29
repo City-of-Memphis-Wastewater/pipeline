@@ -6,8 +6,8 @@ class EdsClient:
     def __init__(self,config):
         self.config = config
 
-    def get_token(self,plant_zd="Maxson"):
-        print("\nEdsClient.get_token()")
+    def get_token_and_headers(self,plant_zd="Maxson"):
+        print("\nEdsClient.get_token_and_headers()")
         try:
             plant_cfg = self.config[plant_zd]
         except KeyError:
@@ -172,3 +172,21 @@ def fetch_eds_data(eds_api, site, sid, shortdesc, headers):
     ts = point_data["ts"]
     value = point_data["value"]
     return ts, value
+
+def demo_eds_save_point_export():
+    from src.env import SecretsYaml
+    from src.projectmanager import ProjectManager
+    from src.queriesmanager import QueriesManager
+    project_name = ProjectManager.identify_default_project()
+    project_manager = ProjectManager(project_name)
+    secrets_file_path = project_manager.get_configs_file_path(filename = 'secrets.yaml')
+    config_obj = SecretsYaml.load_config(secrets_file_path = secrets_file_path)
+    eds = EdsClient(config_obj['eds_apis'])
+    token_eds, headers_eds_maxson = eds.get_token_and_headers(plant_zd="Maxson")
+    decoded_str = eds.get_points_export(site = "Maxson",headers = headers_eds_maxson)
+    export_file_path = project_manager.get_exports_file_path(filename = 'export_eds_points_all.txt')
+    eds.save_points_export(decoded_str, export_file_path = export_file_path)
+    print(f"Export file will be saved to: {export_file_path}")
+
+def __main__():
+    demo_eds_save_point_export()
