@@ -1,6 +1,8 @@
 **/.env
 **/secrets.yaml
 **/daemon_log.txt
+**/live_data.csv
+**/sent_data.csv
 !*/
 myenv/
 .python-version
