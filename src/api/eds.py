@@ -66,7 +66,7 @@ class EdsClient:
                 self.print_point_info_row(point_data, shortdesc)
         return points_datas[0]  # You expect exactly one point usually
     
-    def get_tabular_trend(self,plant_zd = "WWTD", iess = "M100FI.UNIT0@NET0", headers=None):
+    def get_tabular_trend(self,plant_zd = "WWTF", iess = "M100FI.UNIT0@NET0", headers=None):
         "Failed"
         try:
             plant_cfg = self.config[plant_zd]
@@ -172,14 +172,15 @@ def demo_eds_save_point_export():
     from src.projectmanager import ProjectManager
     project_name = ProjectManager.identify_default_project()
     project_manager = ProjectManager(project_name)
-    secrets_file_path = project_manager.get_configs_file_path(filename = 'secrets-example.yaml')
+    secrets_file_path = project_manager.get_configs_file_path(filename = 'secrets.yaml')
     config_obj = SecretsYaml.load_config(secrets_file_path = secrets_file_path)
     eds = EdsClient(config_obj['eds_apis'])
-    token_eds, headers_eds = eds.get_token_and_headers(plant_zd="WWTD")
-    decoded_str = eds.get_points_export(site = "WWTD",headers = headers_eds)
+    token_eds, headers_eds = eds.get_token_and_headers(plant_zd="Maxson")
+    decoded_str = eds.get_points_export(site = "Maxson",headers = headers_eds)
     export_file_path = project_manager.get_exports_file_path(filename = 'export_eds_points_all.txt')
     eds.save_points_export(decoded_str, export_file_path = export_file_path)
     print(f"Export file will be saved to: {export_file_path}")
 
-def __main__():
+if __name__ == "__main__":
+    print("test")
     demo_eds_save_point_export()
