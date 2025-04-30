@@ -63,7 +63,7 @@ def get_eds_maxson_token_and_headers(config_obj):
 
 def get_rjn_tokens_and_headers(config_obj):
     # toml headings
-    rjn = RjnClient(config_obj['rjn_api'])
+    rjn = RjnClient(config_obj['contractor_apis']['RJN'])
     token_rjn, headers_rjn = rjn.get_token_and_headers()
     #print(f"token_rjn = {token_rjn}")
     return rjn, headers_rjn
