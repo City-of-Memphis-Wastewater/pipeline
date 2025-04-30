@@ -6,7 +6,7 @@ class EdsClient:
     def __init__(self,config):
         self.config = config
 
-    def get_token_and_headers(self,plant_zd="WWTF"):
+    def get_token_and_headers(self,plant_zd="Maxson"):
         print("\nEdsClient.get_token_and_headers()")
         try:
             plant_cfg = self.config[plant_zd]
@@ -65,33 +65,10 @@ class EdsClient:
             for point_data in points_datas:
                 self.print_point_info_row(point_data, shortdesc)
         return points_datas[0]  # You expect exactly one point usually
-    
-    def get_tabular_trend(self,plant_zd = "WWTF", iess = "M100FI.UNIT0@NET0", headers=None):
-        "Failed"
-        try:
-            plant_cfg = self.config[plant_zd]
-        except KeyError:
-            raise ValueError(f"Unknown plant_zd '{plant_zd}'")
-        
-        request_url = plant_cfg['url'] + 'login'
-        data = {
-            'username': plant_cfg['username'],
-            'password': plant_cfg['password'],
-            'type': 'rest client'
-        }
-        query = {
-            "filters": [{"zd": [plant_zd], "tg": [0, 1]}],
-            "order": [iess]
-        
-        }
-        response = make_request(url = request_url, data = data, headers=headers, json = query)
 
-    def show_points_tabular_trend(self,site: str,sid: int,iess:str, starttime :int,endtime:int,shortdesc : str="",headers = None):
+    def get_tabular_trend(self,site: str="Maxson",sid: int=0,iess:str="M100FI.UNIT0@NET0", starttime :int=1744661000,endtime:int=1744661700,shortdesc : str="INF-DEFAULT",headers = None):
+        "Based on EDS REST API Pyhton Examples.pdf, pages 36-37."
         "Failed"
-        if not starttime:
-            starttime = 1744661000, # hardcoded, demo
-        if not endtime:
-            endtime = 1744661700, # hardcoded, demo
         api_url = str(self.config[site]["url"])
         
         "Initialize the query with a POST request" 
@@ -122,8 +99,8 @@ class EdsClient:
         pprint(f"id={id}")
         query = '?id={}'.format(id)
         #data = {'id': id} # already true
-        #request_url = api_url + 'trend/tabular' + query
-        request_url = api_url + 'events/read' + query
+        request_url = api_url + 'trend/tabular' + query
+        #request_url = api_url + 'events/read' + query
         print(f"request_url = {request_url}")
         response = make_request(url = request_url, headers=headers, method = "GET") # includes the query id in the url
         byte_string = response.content
@@ -131,12 +108,6 @@ class EdsClient:
         decoded_str = byte_string.decode('utf-8')
         print(f"Status: {response.status_code}")
         print(decoded_str[:500])  # Print just a slice
-
-        #print("Response content (raw bytes):")
-        #print(response.content)
-        #print(f"decoded_str = {decoded_str}")
-        #data = json.loads(decoded_str)
-        #pprint(f"data={data}")
 
     def get_points_export(self,site: str,sid: int=int(),iess:str=str(), starttime :int=int(),endtime:int=int(),shortdesc : str="",headers = None):
         "Success"
@@ -166,6 +137,23 @@ def fetch_eds_data(eds_api, site, sid, shortdesc, headers):
     value = point_data["value"]
     return ts, value
 
+def demo_get_tabular_trend():
+    print("Start: demo_show_points_tabular_trend()")
+    from src.env import SecretsYaml
+    from src.projectmanager import ProjectManager
+    from src.api.eds import EdsClient
+    project_name = ProjectManager.identify_default_project()
+    project_manager = ProjectManager(project_name)
+    secrets_file_path = project_manager.get_configs_file_path(filename = 'secrets.yaml')
+    config_obj = SecretsYaml.load_config(secrets_file_path = secrets_file_path)
+    key0 = list(config_obj.keys())[0]
+    key00 = list(config_obj[key0].keys())[0]
+    eds = EdsClient(config_obj[key0])
+    token_eds, headers_eds = eds.get_token_and_headers(plant_zd=key00)
+    eds.get_tabular_trend(site=key00,shortdesc="DEMO",headers = headers_eds)
+    
+    print(f"End: demo_show_points_tabular_trend()")
+
 def demo_eds_save_point_export():
     print("Start demo_eds_save_point_export()")
     from src.env import SecretsYaml
@@ -174,13 +162,28 @@ def demo_eds_save_point_export():
     project_manager = ProjectManager(project_name)
     secrets_file_path = project_manager.get_configs_file_path(filename = 'secrets.yaml')
     config_obj = SecretsYaml.load_config(secrets_file_path = secrets_file_path)
-    eds = EdsClient(config_obj['eds_apis'])
-    token_eds, headers_eds = eds.get_token_and_headers(plant_zd="Maxson")
-    decoded_str = eds.get_points_export(site = "Maxson",headers = headers_eds)
+    key0 = list(config_obj.keys())[0]
+    key00 = list(config_obj[key0].keys())[0]
+    eds = EdsClient(config_obj[key0])
+    token_eds, headers_eds = eds.get_token_and_headers(plant_zd=key00)
+    decoded_str = eds.get_points_export(site = key00,headers = headers_eds)
     export_file_path = project_manager.get_exports_file_path(filename = 'export_eds_points_all.txt')
     eds.save_points_export(decoded_str, export_file_path = export_file_path)
     print(f"Export file will be saved to: {export_file_path}")
 
+
 if __name__ == "__main__":
-    print("test")
-    demo_eds_save_point_export()
+    #demo_eds_save_point_export()
+    #demo_get_tabular_trend()
+    import sys
+    cmd = sys.argv[1] if len(sys.argv) > 1 else "default"
+
+    if cmd == "demo-points":
+        demo_eds_save_point_export()
+    elif cmd == "demo-trend":
+        demo_get_tabular_trend()
+    else:
+        print("Usage options: \n" 
+        "poetry run python -m src.api.eds demo-points \n"  
+        "poetry run python -m src.api.eds demo-trend")
+    
