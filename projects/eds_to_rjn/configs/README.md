@@ -1,5 +1,6 @@
 # secrets.yaml
 Access will not work without a secrets.yaml file in /pipeline/projects/your-project-name/config/secrets.yaml
+secrets.yaml is registered with the .gitignore for security.
 
 // Example secrets.yaml:
 ```
