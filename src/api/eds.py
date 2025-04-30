@@ -67,7 +67,7 @@ class EdsClient:
         return points_datas[0]  # You expect exactly one point usually
 
     def get_tabular_trend(self,site: str="Maxson",sid: int=0,iess:str="M100FI.UNIT0@NET0", starttime :int=1744661000,endtime:int=1744661700,shortdesc : str="INF-DEFAULT",headers = None):
-        "Based on EDS REST API Pyhton Examples.pdf, pages 36-37."
+        "Based on EDS REST API Python Examples.pdf, pages 36-37."
         "Failed"
         api_url = str(self.config[site]["url"])
         
