@@ -3,6 +3,7 @@
 **/daemon_log.txt
 **/live_data.csv
 **/sent_data.csv
+**/export_eds_points_all.txt
 !*/
 myenv/
 src/defunct/

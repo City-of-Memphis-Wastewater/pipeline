@@ -9,7 +9,6 @@ from src.calls import test_connection_to_internet
 from src.helpers import round_time_to_nearest_five
 from src.projectmanager import ProjectManager
 from src.queriesmanager import QueriesManager
-#from src.points_loader import PointsCsvLoader
 from src.api.rjn import send_data_to_rjn
 from src.api.eds import fetch_eds_data
 
@@ -75,6 +74,8 @@ def call_eds_stiles_get_points_live(eds, headers_eds_stiles):
     eds.get_points_live(site = "WWTF", sid = 3550,shortdesc = "EFFLUENT",headers = headers_eds_stiles) # FI-405/415.UNIT1@NET1
 
 def process_sites_and_send(csv_path, eds_api, eds_site, eds_headers, rjn_base_url, rjn_headers):
+    "Retrieve and send immediately, without intermediate storage"
+    "Altnerative: projects.eds_to_rjn.scripts.daemon_runner"
     print(f"\nmain.process_sites_and_send()")
     print(f"csv_path = {csv_path}")
     
@@ -132,18 +133,6 @@ def process_sites_and_send(csv_path, eds_api, eds_site, eds_headers, rjn_base_ur
                 rounded_dt = round_time_to_nearest_five(dt)
                 timestamp = rounded_dt
                 timestamp_str = timestamp.strftime('%Y-%m-%d %H:%M:%S')
-
-                if False:
-                    # Store data for aggregation
-                    store_data_for_aggregation(
-                        base_url=rjn_base_url,
-                        project_id=rjn_siteid,
-                        entity_id=rjn_entityid,
-                        headers=rjn_headers,
-                        timestamps=[timestamp_str],
-                        values=[round(value, 2)]
-                    )
-
                 # Send data to RJN
                 send_data_to_rjn(
                     base_url=rjn_base_url,
@@ -156,11 +145,6 @@ def process_sites_and_send(csv_path, eds_api, eds_site, eds_headers, rjn_base_ur
             except Exception as e:
                 print(f"Error processing SID {eds_sid}: {e}")
 
-
-def post_captured_values_from_eds_to_rjn():
-    pass
-def load_data_from_file():
-    pass
 if __name__ == "__main__":
     main()
 

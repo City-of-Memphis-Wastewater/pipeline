@@ -1,12 +1,12 @@
 #daemon_runner.py
 import schedule, time
-import logging
+#import logging
 import datetime
 from projects.eds_to_rjn.scripts import collector, storage, aggregator
 from projects.eds_to_rjn.scripts.main import get_eds_maxson_token_and_headers, get_rjn_tokens_and_headers
 from src.env import SecretsYaml
-from src.api.eds import EdsClient
-from src.api.rjn import RjnClient
+#from src.api.eds import EdsClient
+#from src.api.rjn import RjnClient
 from src.projectmanager import ProjectManager
 from src.queriesmanager import QueriesManager
 
