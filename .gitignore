@@ -5,4 +5,5 @@
 **/sent_data.csv
 !*/
 myenv/
+src/defunct/
 .python-version

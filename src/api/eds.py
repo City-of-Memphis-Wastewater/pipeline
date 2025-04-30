@@ -6,7 +6,7 @@ class EdsClient:
     def __init__(self,config):
         self.config = config
 
-    def get_token_and_headers(self,plant_zd="Maxson"):
+    def get_token_and_headers(self,plant_zd="WWTF"):
         print("\nEdsClient.get_token_and_headers()")
         try:
             plant_cfg = self.config[plant_zd]
@@ -39,14 +39,14 @@ class EdsClient:
 
 
     def get_points_live(self,site: str,sid: int,shortdesc : str="",headers = None):
-        "Access live value of point from the EDS, based on site value (i.e. Maxson or WWTF (Stiles))"
+        "Access live value of point from the EDS, based on zs/site value (i.e. Maxson, WWTF, Server)"
         print(f"\nEdsClient.get_points_live")
         api_url = str(self.config[site]["url"])
         request_url = api_url + 'points/query'
         print(f"request_url = {request_url}")
         query = {
             'filters' : [{
-            'zd' : ['Maxson','WWTF'],
+            #'zd' : ['Maxson','WWTF','Server','Default'], # What is the default EDS zd name? 
             'sid': [sid],
             'tg' : [0, 1],
             }],
@@ -66,7 +66,7 @@ class EdsClient:
                 self.print_point_info_row(point_data, shortdesc)
         return points_datas[0]  # You expect exactly one point usually
     
-    def get_tabular_trend(self,plant_zd = "Maxson", iess = "M100FI.UNIT0@NET0", headers=None):
+    def get_tabular_trend(self,plant_zd = "WWTD", iess = "M100FI.UNIT0@NET0", headers=None):
         "Failed"
         try:
             plant_cfg = self.config[plant_zd]
@@ -91,10 +91,10 @@ class EdsClient:
         if not starttime:
             starttime = 1744661000, # hardcoded, demo
         if not endtime:
-            endtime = 1744661700 
+            endtime = 1744661700, # hardcoded, demo
         api_url = str(self.config[site]["url"])
-        #idcs = "M100FI" # get from csv lookup
-
+        
+        "Initialize the query with a POST request" 
         request_url = api_url + 'trend/tabular'
         
         data = {
@@ -106,7 +106,7 @@ class EdsClient:
             'items' : [{
             'pointId' : {
             'sid' : sid,
-            'iess' : f'{iess}.UNIT0@NET0'
+            'iess' : iess
             },
             'shadePriority' : 'DEFAULT'
             }]
@@ -149,12 +149,6 @@ class EdsClient:
         response = make_request(url = request_url, headers=headers, method="GET")
         byte_string = response.content
         decoded_str = byte_string.decode('utf-8')
-        #print(f"Status: {response.status_code}")
-        #print("Response content (raw bytes):")
-        #print(response.content)
-        #print(f"decoded_str = {decoded_str}")
-        #print(decoded_str[:500])  # Print just a slice
-
         return decoded_str
 
     def save_points_export(self,decoded_str, export_file_path):
@@ -163,7 +157,6 @@ class EdsClient:
         with open(export_file_path, "w", encoding="utf-8") as f:
             for line in lines:
                 f.write(line + "\n")  # Save each line in the text file
-
 
 def fetch_eds_data(eds_api, site, sid, shortdesc, headers):
     point_data = eds_api.get_points_live(site=site, sid=sid, shortdesc=shortdesc, headers=headers)
@@ -174,16 +167,16 @@ def fetch_eds_data(eds_api, site, sid, shortdesc, headers):
     return ts, value
 
 def demo_eds_save_point_export():
+    print("Start demo_eds_save_point_export()")
     from src.env import SecretsYaml
     from src.projectmanager import ProjectManager
-    from src.queriesmanager import QueriesManager
     project_name = ProjectManager.identify_default_project()
     project_manager = ProjectManager(project_name)
-    secrets_file_path = project_manager.get_configs_file_path(filename = 'secrets.yaml')
+    secrets_file_path = project_manager.get_configs_file_path(filename = 'secrets-example.yaml')
     config_obj = SecretsYaml.load_config(secrets_file_path = secrets_file_path)
     eds = EdsClient(config_obj['eds_apis'])
-    token_eds, headers_eds_maxson = eds.get_token_and_headers(plant_zd="Maxson")
-    decoded_str = eds.get_points_export(site = "Maxson",headers = headers_eds_maxson)
+    token_eds, headers_eds = eds.get_token_and_headers(plant_zd="WWTD")
+    decoded_str = eds.get_points_export(site = "WWTD",headers = headers_eds)
     export_file_path = project_manager.get_exports_file_path(filename = 'export_eds_points_all.txt')
     eds.save_points_export(decoded_str, export_file_path = export_file_path)
     print(f"Export file will be saved to: {export_file_path}")

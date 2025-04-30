@@ -42,7 +42,10 @@ class ProjectManager:
 
     def get_configs_file_path(self, filename):
         # Return the full path to the config file
-        return os.path.join(self.configs_dir, filename)
+        if not os.path.exists(os.path.join(self.configs_dir, filename)):
+            return os.path.join(self.configs_dir, "secrets-example.yaml")
+        else:
+            return os.path.join(self.configs_dir, filename)
     
     def create_configs_dir(self):
         if not os.path.exists(self.configs_dir):

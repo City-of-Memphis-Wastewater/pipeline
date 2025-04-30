@@ -11,7 +11,6 @@ class SecretsYaml:
         self.config = config
 
     @staticmethod
-    #def load_config(secrets_file_path="secrets.yaml"):
     def load_config(secrets_file_path): 
         with open(secrets_file_path, 'r') as f:
             return yaml.safe_load(f)
