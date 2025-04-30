@@ -38,7 +38,7 @@ def main():
 def get_all_tokens(config_obj):
     # toml headings
     eds = EdsClient(config_obj['eds_apis']) 
-    rjn = RjnClient(config_obj['rjn_api'])
+    rjn = RjnClient(config_obj['contractor_apis']['RJN'])
     
     token_eds, headers_eds_maxson = eds.get_token_and_headers(plant_zd="Maxson")
     token_eds, headers_eds_stiles = eds.get_token_and_headers(plant_zd="WWTF")
