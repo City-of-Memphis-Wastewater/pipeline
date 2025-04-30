@@ -54,7 +54,7 @@ def setup_schedules():
     schedule.every().hour.at(":00").do(run_hourly_cycle)
 
 def main():
-    print("Starting daemon_runner...")
+    print(f"Starting daemon_runner at {datetime.datetime.now()}...")
     #logging.info("Daemon started and running...")
     setup_schedules()
     while True:
