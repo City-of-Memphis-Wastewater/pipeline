@@ -1,4 +1,4 @@
-# Exports: daemon temp
+# Exports: export_eds_points_all.txt
 Among other future possibilities, the export_eds_points_all.txt is stored here by the src.api.eds demo_eds_save_point_export() function.
 The point export can be called like this:
 ```
