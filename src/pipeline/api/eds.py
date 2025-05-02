@@ -1,6 +1,7 @@
 from datetime import datetime
 import json
-from src.calls import make_request
+from pipeline.calls import make_request, call_ping
+from pipeline.env import find_urls
 from pprint import pprint
 class EdsClient:
     def __init__(self,config):
@@ -139,9 +140,9 @@ def fetch_eds_data(eds_api, site, sid, shortdesc, headers):
 
 def demo_get_tabular_trend():
     print("Start: demo_show_points_tabular_trend()")
-    from src.env import SecretsYaml
-    from src.projectmanager import ProjectManager
-    from src.api.eds import EdsClient
+    from pipeline.env import SecretsYaml
+    from pipeline.projectmanager import ProjectManager
+    from pipeline.api.eds import EdsClient
     project_name = ProjectManager.identify_default_project()
     project_manager = ProjectManager(project_name)
     secrets_file_path = project_manager.get_configs_file_path(filename = 'secrets.yaml')
@@ -156,8 +157,8 @@ def demo_get_tabular_trend():
 
 def demo_eds_save_point_export():
     print("Start demo_eds_save_point_export()")
-    from src.env import SecretsYaml
-    from src.projectmanager import ProjectManager
+    from pipeline.env import SecretsYaml
+    from pipeline.projectmanager import ProjectManager
     project_name = ProjectManager.identify_default_project()
     project_manager = ProjectManager(project_name)
     secrets_file_path = project_manager.get_configs_file_path(filename = 'secrets.yaml')
@@ -171,6 +172,20 @@ def demo_eds_save_point_export():
     eds.save_points_export(decoded_str, export_file_path = export_file_path)
     print(f"Export file will be saved to: {export_file_path}")
 
+def ping():
+    from pipeline.env import SecretsYaml
+    from pipeline.projectmanager import ProjectManager
+    project_name = ProjectManager.identify_default_project()
+    project_manager = ProjectManager(project_name)
+    secrets_file_path = project_manager.get_configs_file_path(filename = 'secrets.yaml')
+    config_obj = SecretsYaml.load_config(secrets_file_path = secrets_file_path)
+    key0 = list(config_obj.keys())[0]
+    key00 = list(config_obj[key0].keys())[0]
+    url_set = find_urls(config_obj)
+    for url in url_set:
+        print(f"ping url: {url}")
+        call_ping(url)
+
 
 if __name__ == "__main__":
     #demo_eds_save_point_export()
@@ -182,8 +197,11 @@ if __name__ == "__main__":
         demo_eds_save_point_export()
     elif cmd == "demo-trend":
         demo_get_tabular_trend()
+    elif cmd == "ping":
+        ping()
     else:
         print("Usage options: \n" 
-        "poetry run python -m src.api.eds demo-points \n"  
-        "poetry run python -m src.api.eds demo-trend")
+        "poetry run python -m pipeline.api.eds demo-points \n"  
+        "poetry run python -m pipeline.api.eds demo-trend \n"
+        "poetry run python -m pipeline.api.eds ping")
     

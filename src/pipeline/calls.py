@@ -1,7 +1,10 @@
 import requests
 import certifi
+import platform
+import subprocess
 import sys
 import time
+from urllib.parse import urlparse
 
 def test_connection_to_internet():
     try:
@@ -79,3 +82,9 @@ def make_request(url, data=None, params = None, method="POST", headers=None, ret
         if hasattr(e, 'response') and e.response is not None:
             print(f"Response: {e.response.text}")
         raise
+
+def call_ping(url):
+    parsed = urlparse(url)
+    param = "-n" if platform.system().lower() == "windows" else "-c"
+    command = ["ping", param, "1", parsed.hostname]
+    return subprocess.call(command) == 0  # True if ping succeeds

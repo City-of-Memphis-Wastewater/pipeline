@@ -2,15 +2,15 @@
 from datetime import datetime
 import csv
 
-from src.env import SecretsYaml
-from src.api.eds import EdsClient
-from src.api.rjn import RjnClient
-from src.calls import test_connection_to_internet
-from src.helpers import round_time_to_nearest_five
-from src.projectmanager import ProjectManager
-from src.queriesmanager import QueriesManager
-from src.api.rjn import send_data_to_rjn
-from src.api.eds import fetch_eds_data
+from pipeline.env import SecretsYaml
+from pipeline.api.eds import EdsClient
+from pipeline.api.rjn import RjnClient
+from pipeline.calls import test_connection_to_internet
+from pipeline.helpers import round_time_to_nearest_five
+from pipeline.projectmanager import ProjectManager
+from pipeline.queriesmanager import QueriesManager
+from pipeline.api.rjn import send_data_to_rjn
+from pipeline.api.eds import fetch_eds_data
 
 def main():
     test_connection_to_internet()
@@ -33,7 +33,33 @@ def main():
     rjn_api, headers_rjn = get_rjn_tokens_and_headers(config_obj)
     for csv_file_path in queries_file_path_list:
         process_sites_and_send(csv_file_path, eds_api, eds_site = "Maxson", eds_headers = headers_eds_maxson, rjn_base_url=rjn_api.config['url'], rjn_headers=headers_rjn)
+"---"
 
+def sketch_andstiles():
+    test_connection_to_internet()
+
+    project_name = 'eds_to_rjn' # project_name = ProjectManager.identify_default_project()
+    project_manager = ProjectManager(project_name)
+    secrets_file_path = project_manager.get_configs_file_path(filename = 'secrets.yaml')
+    config_obj = SecretsYaml.load_config(secrets_file_path = secrets_file_path)
+    queries_manager = QueriesManager(project_manager)
+    try:
+        queries_file_path_list = queries_manager.get_query_file_paths() # use default identified by the default-queries.toml file
+        print(f"Using query file: {queries_file_path_list}")
+    except FileNotFoundError as e:
+        print(f"Error: {e}")
+
+    eds = EdsClient(config_obj['eds_apis'])
+    token_eds, headers_eds_stiles = eds.get_token_and_headers(plant_zd="WWTF")
+    eds_api, headers_eds_maxson, headers_eds_stiles = get_eds_tokens_and_headers_both(config_obj) # Stiles EDS needs to be configured to allow access on the 43084 port. Compare both servers.
+
+    rjn_api, headers_rjn = get_rjn_tokens_and_headers(config_obj)
+    eds_sites = ["Maxson", "WWTF"]
+    headers_eds = [headers_eds_maxson, headers_eds_stiles]
+    for i,eds_headers in enumerate(headers_eds):
+        eds_site = eds_sites[i]
+        for csv_file_path in queries_file_path_list:
+            process_sites_and_send(csv_file_path, eds_api, eds_site = eds_site, eds_headers = eds_headers, rjn_base_url=rjn_api.config['url'], rjn_headers=headers_rjn)
 
 def get_all_tokens(config_obj):
     # toml headings
@@ -147,4 +173,5 @@ def process_sites_and_send(csv_path, eds_api, eds_site, eds_headers, rjn_base_ur
 
 if __name__ == "__main__":
     main()
+    #sketch_andstiles()
 

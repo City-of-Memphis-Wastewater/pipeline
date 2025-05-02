@@ -4,11 +4,11 @@ import schedule, time
 import datetime
 from projects.eds_to_rjn.scripts import collector, storage, aggregator
 from projects.eds_to_rjn.scripts.main import get_eds_maxson_token_and_headers, get_rjn_tokens_and_headers
-from src.env import SecretsYaml
-#from src.api.eds import EdsClient
-#from src.api.rjn import RjnClient
-from src.projectmanager import ProjectManager
-from src.queriesmanager import QueriesManager
+from pipeline.env import SecretsYaml
+#from pipeline.api.eds import EdsClient
+#from pipeline.api.rjn import RjnClient
+from pipeline.projectmanager import ProjectManager
+from pipeline.queriesmanager import QueriesManager
 
 def run_live_cycle():
     print("Running live cycle...")

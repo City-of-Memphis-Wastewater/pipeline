@@ -1,10 +1,10 @@
-#src.aggregator.py
+#pipeline.aggregator.py
 import csv
 import datetime
 from collections import defaultdict
 import os
 
-from src.api.rjn import send_data_to_rjn
+from pipeline.api.rjn import send_data_to_rjn
 
 def aggregate_and_send(data_file, checkpoint_file, rjn_base_url, headers_rjn):
     # Load data

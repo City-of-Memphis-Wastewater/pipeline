@@ -6,7 +6,7 @@ import datetime
 from typing import Callable, Any
 
 
-from src.projectmanager import ProjectManager
+from pipeline.projectmanager import ProjectManager
 
 # ----------------------------
 # JARGON GLOSSARY

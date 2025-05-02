@@ -3,8 +3,8 @@
 import os
 import requests
 import yaml
-from src.projectmanager import ProjectManager 
-from src.projectmanager import establish_default_project
+from pipeline.projectmanager import ProjectManager 
+from pipeline.projectmanager import establish_default_project
 
 class SecretsYaml:
     def __init__(self, config):
@@ -23,6 +23,23 @@ class SecretsYaml:
                 print(f"{key} = {val}")
 
 
+def find_urls(config, url_set=None):
+    '''determine all values with the key "url" in a config file.'''
+    if url_set is None:
+        url_set = set()
+
+    if isinstance(config, dict):
+        for key, value in config.items():
+            if key == "url":
+                url_set.add(value)
+            else:
+                find_urls(value, url_set)
+    elif isinstance(config, list):
+        for item in config:
+            find_urls(item, url_set)
+
+    return url_set
+
 def demo_secrets():
     """
     The defaut SecretsYaml.load_config() call 
@@ -40,5 +57,5 @@ def demo_secrets():
     return secrets
 
 if __name__ == "__main__":
-    # call from the root directory using poetry run python -m src.env
+    # call from the root directory using poetry run python -m pipeline.env
     secrets=demo_secrets()
