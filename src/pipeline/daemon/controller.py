@@ -9,14 +9,14 @@ from projects.eds_to_rjn.scripts import collector, storage, aggregator
 from threading import Thread
 from projects.eds_to_rjn.scripts import collector, storage, aggregator
 from projects.eds_to_rjn.scripts.main import get_eds_maxson_token_and_headers, get_rjn_tokens_and_headers
-from pipeline.env import SecretsYaml
-from pipeline.projectmanager import ProjectManager
-from pipeline.queriesmanager import QueriesManager
-from pipeline.calls import test_connection_to_internet
+from src.pipeline.env import SecretsYaml
+from src.pipeline.projectmanager import ProjectManager
+from src.pipeline.queriesmanager import QueriesManager
+from src.pipeline.calls import test_connection_to_internet
 
 STATUS_FILE = "status_daemon.txt"
-#RUNNING_FLAG = "pipeline/daemon/daemon_running.flag"
-RUNNING_FLAG = os.path.join("pipeline", "daemon", "daemon_running.flag")
+src_pipeline_path = os.path.join(repo_root, "src", "pipeline", "daemon")  # Correct path to the daemon directory
+RUNNING_FLAG = os.path.join(src_pipeline_path, "daemon_running.flag")  # Ensure this uses src/pipeline/daemon
 
 def start_daemon():
     # Ensure directory exists

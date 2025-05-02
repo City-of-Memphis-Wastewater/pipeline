@@ -1,6 +1,6 @@
 # pipeline/daemon/__init__.py
-from pipeline.daemon.controller import main_cli
-from pipeline.daemon.watchdog import is_daemon_running, check_and_restart_if_needed  
+from src.pipeline.daemon.controller import main_cli
+from src.pipeline.daemon.watchdog import is_daemon_running, check_and_restart_if_needed  
 
 import sys
 import os
@@ -22,7 +22,7 @@ def main():
 
     # Optionally check if a restart is necessary
     check_and_restart_if_needed()
-    
+
 if __name__ == "__main__":
     import sys
     if len(sys.argv) != 2:

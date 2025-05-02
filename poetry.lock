@@ -609,18 +609,6 @@ anyio = ">=3.6.2,<5"
 full = ["httpx (>=0.27.0,<0.29.0)", "itsdangerous", "jinja2", "python-multipart (>=0.0.18)", "pyyaml"]
 
 [[package]]
-name = "suds"
-version = "1.2.0"
-description = "Lightweight SOAP client (community fork)"
-optional = false
-python-versions = ">=3.7"
-groups = ["main"]
-files = [
-    {file = "suds-1.2.0-py3-none-any.whl", hash = "sha256:2cf8ed43ed8a0df350027c741f5295d6be8443d4e820cb36f2c17b033e331d5b"},
-    {file = "suds-1.2.0.tar.gz", hash = "sha256:83b162c3d2355374e11d8b9acf15eeaa158b416b4625821844f9f628d679deaf"},
-]
-
-[[package]]
 name = "textual"
 version = "3.1.1"
 description = "Modern Text User Interface framework"
@@ -716,4 +704,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<4.0.0"
-content-hash = "ed1c3408e4f9e1b464fa412f0b24b7ef4dfd2826613df4ddf005c09fbf330145"
+content-hash = "f0165eab0527da4485d749c34937f7965f68859977fcb6e108cc7ea2476364a2"

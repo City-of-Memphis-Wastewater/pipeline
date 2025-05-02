@@ -4,7 +4,8 @@ import toml
 class ProjectManager:
     def __init__(self, project_name):
         self.project_name = project_name
-        self.base_dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))  # Set base directory dynamically
+        #self.base_dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))  # Set base directory dynamically
+        self.base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
         self.project_dir = os.path.join(self.base_dir, 'projects', project_name)
         self.exports_dir = self.get_exports_dir()
         self.imports_dir = self.get_imports_dir()
@@ -43,6 +44,7 @@ class ProjectManager:
     def get_configs_file_path(self, filename):
         # Return the full path to the config file
         file_path = os.path.join(self.configs_dir, filename)
+        #config_file_path = os.path.join(project_root, "projects", "eds_to_rjn", "configs", "secrets.yaml")
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"Configuration file '{filename}' not found in directory '{self.configs_dir}'.")
         return file_path
