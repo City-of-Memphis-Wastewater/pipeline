@@ -1,5 +1,6 @@
 import os
 import toml
+from pathlib import Path
 
 class ProjectManager:
     def __init__(self, project_name):
@@ -78,7 +79,7 @@ class ProjectManager:
         return os.path.join(self.get_projects_dir(), self.project_name)
 
     @classmethod
-    def identify_default_project(cls):
+    def defunct_identify_default_project(cls):
         """
         Class method that reads default-project.toml to identify the default-project.
         """
@@ -95,6 +96,20 @@ class ProjectManager:
             return config['default-project']['project']
         except KeyError as e:
             raise KeyError(f"Missing key in default-project.toml: {e}")
+            
+    @staticmethod
+    def identify_default_project():
+        # This climbs out of /src/pipeline/ to find the real root
+        root_dir = Path(__file__).resolve().parents[2]  # -> <repo-root>
+        projects_dir = root_dir / "projects"
+        default_file = projects_dir / "default-project.toml"
+        
+        if not default_file.exists():
+            raise FileNotFoundError(f"Missing default-project.toml in {projects_dir}")
+        
+        import toml
+        data = toml.load(default_file)
+        return data["default-project"]["project"]
         
         
 def establish_default_project():

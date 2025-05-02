@@ -1,6 +1,12 @@
 # main.py (or __main__.py)
 from datetime import datetime
 import csv
+import sys
+from pathlib import Path
+
+# Add the root project path so that 'src' can be found
+ROOT = Path(__file__).resolve().parents[2]  # pipeline/projects/eds_to_rjn/scripts -> pipeline
+sys.path.insert(0, str(ROOT))
 
 from src.pipeline.env import SecretsYaml
 from src.pipeline.api.eds import EdsClient
@@ -13,6 +19,9 @@ from src.pipeline.api.rjn import send_data_to_rjn
 from src.pipeline.api.eds import fetch_eds_data
 
 def main():
+    sketch_maxson()
+
+def sketch_maxson():
     test_connection_to_internet()
 
     project_name = 'eds_to_rjn' # project_name = ProjectManager.identify_default_project()
@@ -61,9 +70,6 @@ def sketch_andstiles():
         for csv_file_path in queries_file_path_list:
             process_sites_and_send(csv_file_path, eds_api, eds_site = eds_site, eds_headers = eds_headers, rjn_base_url=rjn_api.config['url'], rjn_headers=headers_rjn)
 
-def run_daemon():
-    from src.pipeline.corelogic import do_all_the_things  # Example
-    do_all_the_things()
 
 def get_all_tokens(config_obj):
     # toml headings

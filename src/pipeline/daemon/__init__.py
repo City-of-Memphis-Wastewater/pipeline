@@ -7,7 +7,7 @@ import os
 import sys
 import os
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "projects")))
+#sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "projects")))
 
 def main():
     # Check if the daemon is already running

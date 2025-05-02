@@ -5,8 +5,8 @@ description = "API access for reading from the EDS and writing to https://rjn-cl
 authors = ["George Clayton Bennett <george.bennett@memphistn.gov>"]
 license = "BSD-3"
 readme = "README.md"
-#packages = [{ include = "pipeline", from = "src" }]
-packages = [{ include = "pipeline", from = "src/pipeline" }]  # More specific path
+packages = [{ include = "pipeline", from = "src" }]  # Adjusted path
+#packages = [{ include = "pipeline", from = "src/pipeline" }]  # More specific path
 
 
 [tool.poetry.dependencies]
@@ -19,6 +19,7 @@ pyyaml = ">=6.0.2,<7.0.0"
 certifi = ">=2025.1.31,<2026.0.0"
 schedule = ">=1.2.2,<2.0.0"
 fastapi = ">=0.115.12,<0.116.0"
+psutil = "^7.0.0"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

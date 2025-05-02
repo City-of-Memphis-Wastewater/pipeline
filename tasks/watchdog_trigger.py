@@ -15,3 +15,5 @@ from src.pipeline.daemon.watchdog import check_and_restart_if_needed
 
 if __name__ == "__main__":
     check_and_restart_if_needed()
+
+

@@ -25,3 +25,47 @@ def check_and_restart_if_needed():
         controller.start_daemon()
     else:
         logger.info("Daemon is running. No restart needed.")
+
+
+import os
+import psutil
+import subprocess
+from src.pipeline.projectmanager import ProjectManager
+import logging
+
+logger = logging.getLogger(__name__)
+
+PID_FILE = "daemon.pid"  # Could be placed in %APPDATA% or a temp dir
+
+def is_process_running(pid):
+    return psutil.pid_exists(pid) and psutil.Process(pid).status() != psutil.STATUS_ZOMBIE
+
+def check_and_restart_if_needed():
+    if os.path.exists(PID_FILE):
+        try:
+            with open(PID_FILE, 'r') as f:
+                pid = int(f.read().strip())
+            if is_process_running(pid):
+                logger.info("Daemon is running. No restart needed.")
+                return
+            else:
+                logger.warning("Stale PID found. Daemon not alive.")
+        except Exception as e:
+            logger.error(f"Error reading PID file: {e}")
+    else:
+        logger.info("No PID file found. Daemon not running.")
+
+    logger.info("Restarting daemon...")
+
+    # Determine which project to run
+    project_name = ProjectManager.identify_default_project()
+    daemon_script = f"projects/{project_name}/scripts/main.py"
+
+    # Start the daemon (e.g., via subprocess)
+    process = subprocess.Popen(["poetry", "run", "python", daemon_script])
+    with open(PID_FILE, 'w') as f:
+        f.write(str(process.pid))
+    logger.info(f"Daemon started with PID {process.pid}")
+
+
+
