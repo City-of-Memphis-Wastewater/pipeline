@@ -1,15 +1,45 @@
 # pipeline/daemon/controller.py
 import schedule, time, datetime, sys, os
+# Point to the *root* of the repo (not src/)
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "projects")))
+repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.append(repo_root)
+
+from projects.eds_to_rjn.scripts import collector, storage, aggregator
 from threading import Thread
 from projects.eds_to_rjn.scripts import collector, storage, aggregator
 from projects.eds_to_rjn.scripts.main import get_eds_maxson_token_and_headers, get_rjn_tokens_and_headers
 from pipeline.env import SecretsYaml
 from pipeline.projectmanager import ProjectManager
 from pipeline.queriesmanager import QueriesManager
-from pipeline.call import test_connection_to_internet
+from pipeline.calls import test_connection_to_internet
 
-STATUS_FILE = "daemon_status.txt"
-RUNNING_FLAG = "pipeline/daemon/daemon_running.flag"
+STATUS_FILE = "status_daemon.txt"
+#RUNNING_FLAG = "pipeline/daemon/daemon_running.flag"
+RUNNING_FLAG = os.path.join("pipeline", "daemon", "daemon_running.flag")
+
+def start_daemon():
+    # Ensure directory exists
+    os.makedirs(os.path.dirname(RUNNING_FLAG), exist_ok=True)
+
+    if os.path.exists(RUNNING_FLAG):
+        log_status("Daemon already running.")
+        return
+
+    with open(RUNNING_FLAG, "w") as f:
+        f.write("running")
+
+    log_status("Daemon started.")
+    setup_schedules()
+    try:
+        while True:
+            schedule.run_pending()
+            time.sleep(1)
+    except Exception as e:
+        log_status(f"Fatal error: {e}")
+    finally:
+        stop_daemon()
+
 
 def log_status(message: str):
     print(message)
@@ -57,7 +87,7 @@ def setup_schedules():
     schedule.every(5).minutes.do(run_live_cycle)
     schedule.every().hour.at(":00").do(run_hourly_cycle)
 
-def run_daemon():
+def defunct_start_daemon():
     if os.path.exists(RUNNING_FLAG):
         log_status("Daemon already running.")
         return
@@ -82,15 +112,15 @@ def stop_daemon():
     else:
         log_status("No daemon to stop.")
 
-def daemon_status():
+def status_daemon():
     return os.path.exists(RUNNING_FLAG)
 
 def main_cli(command):
     if command == "-start":
-        Thread(target=run_daemon).start()
+        Thread(target=start_daemon).start()
     elif command == "-stop":
         stop_daemon()
     elif command == "-status":
-        print("RUNNING" if daemon_status() else "STOPPED")
+        print("RUNNING" if status_daemon() else "STOPPED")
     else:
         print("Usage: python -m pipeline.daemon -start | -stop | -status")

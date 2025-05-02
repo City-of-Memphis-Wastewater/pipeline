@@ -1,0 +1,6 @@
+2025-05-01 23:11:33.927426: Daemon started.
+2025-05-01 23:11:40.950005: Daemon stopped.
+2025-05-01 23:24:47.967126: Watchdog detected daemon was stopped. Restarting...
+2025-05-01 23:24:47.967126: Daemon started.
+2025-05-01 23:25:00.980603: Running live cycle...
+2025-05-01 23:25:01.672042: Live cycle error: Configuration file 'secrets.yaml' not found in directory 'C:\Users\george.bennett\OneDrive - City of Memphis\Documents\dev\pipeline\src\projects\eds_to_rjn\configs'.

@@ -2,7 +2,7 @@
 from datetime import datetime
 import json, os
 
-STATUS_PATH = "exports/daemon_status_log.txt"
+STATUS_PATH = "exports/status_daemon_log.txt"
 
 def update_status(state: str, msg: str = ""):
     entry = {

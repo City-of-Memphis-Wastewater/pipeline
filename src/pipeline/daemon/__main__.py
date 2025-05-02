@@ -1,7 +1,7 @@
 # pipeline/daemon/__main__.py
 
 import argparse
-from .controller import start_daemon, stop_daemon, check_status  # Example functions
+from pipeline.daemon.controller import start_daemon, stop_daemon, status_daemon  # Example functions
 
 def main():
     parser = argparse.ArgumentParser(description="Control the pipeline daemon.")
@@ -16,7 +16,7 @@ def main():
     elif args.stop:
         stop_daemon()
     elif args.status:
-        check_status()
+        status_daemon()
     else:
         parser.print_help()
 

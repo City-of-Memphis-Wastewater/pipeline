@@ -3,6 +3,7 @@ import schedule, time
 #import logging
 import datetime
 from projects.eds_to_rjn.scripts import collector, storage, aggregator
+#from pipeline.daemon import collector, storage, aggregator
 from projects.eds_to_rjn.scripts.main import get_eds_maxson_token_and_headers, get_rjn_tokens_and_headers
 from pipeline.env import SecretsYaml
 #from pipeline.api.eds import EdsClient
