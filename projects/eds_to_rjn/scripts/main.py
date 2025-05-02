@@ -2,15 +2,15 @@
 from datetime import datetime
 import csv
 
-from pipeline.env import SecretsYaml
-from pipeline.api.eds import EdsClient
-from pipeline.api.rjn import RjnClient
-from pipeline.calls import test_connection_to_internet
-from pipeline.helpers import round_time_to_nearest_five
-from pipeline.projectmanager import ProjectManager
-from pipeline.queriesmanager import QueriesManager
-from pipeline.api.rjn import send_data_to_rjn
-from pipeline.api.eds import fetch_eds_data
+from src.pipeline.env import SecretsYaml
+from src.pipeline.api.eds import EdsClient
+from src.pipeline.api.rjn import RjnClient
+from src.pipeline.calls import test_connection_to_internet
+from src.pipeline.helpers import round_time_to_nearest_five
+from src.pipeline.projectmanager import ProjectManager
+from src.pipeline.queriesmanager import QueriesManager
+from src.pipeline.api.rjn import send_data_to_rjn
+from src.pipeline.api.eds import fetch_eds_data
 
 def main():
     test_connection_to_internet()

@@ -14,9 +14,16 @@ from src.pipeline.projectmanager import ProjectManager
 from src.pipeline.queriesmanager import QueriesManager
 from src.pipeline.calls import test_connection_to_internet
 
+import os
+
+# Always relative to the current file
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+RUNNING_FLAG = os.path.join(CURRENT_DIR, "daemon_running.flag")
+
+
 STATUS_FILE = "status_daemon.txt"
 src_pipeline_path = os.path.join(repo_root, "src", "pipeline", "daemon")  # Correct path to the daemon directory
-RUNNING_FLAG = os.path.join(src_pipeline_path, "daemon_running.flag")  # Ensure this uses src/pipeline/daemon
+#RUNNING_FLAG = os.path.join(src_pipeline_path, "daemon_running.flag")  # Ensure this uses src/pipeline/daemon
 
 def start_daemon():
     # Ensure directory exists

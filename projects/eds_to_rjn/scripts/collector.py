@@ -1,8 +1,8 @@
 #pipeline.collector.py
 from datetime import datetime
 
-from pipeline.helpers import round_time_to_nearest_five
-from pipeline.api.eds import fetch_eds_data
+from src.pipeline.helpers import round_time_to_nearest_five
+from src.pipeline.api.eds import fetch_eds_data
 
 import csv
 def collect_live_values(csv_path, eds_api, eds_site, eds_headers):
