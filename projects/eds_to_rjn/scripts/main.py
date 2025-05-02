@@ -61,6 +61,10 @@ def sketch_andstiles():
         for csv_file_path in queries_file_path_list:
             process_sites_and_send(csv_file_path, eds_api, eds_site = eds_site, eds_headers = eds_headers, rjn_base_url=rjn_api.config['url'], rjn_headers=headers_rjn)
 
+def run_daemon():
+    from src.pipeline.corelogic import do_all_the_things  # Example
+    do_all_the_things()
+
 def get_all_tokens(config_obj):
     # toml headings
     eds = EdsClient(config_obj['eds_apis']) 

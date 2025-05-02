@@ -3,13 +3,13 @@ import schedule, time
 #import logging
 import datetime
 from projects.eds_to_rjn.scripts import collector, storage, aggregator
-#from pipeline.daemon import collector, storage, aggregator
+#from src.pipeline.daemon import collector, storage, aggregator
 from projects.eds_to_rjn.scripts.main import get_eds_maxson_token_and_headers, get_rjn_tokens_and_headers
-from pipeline.env import SecretsYaml
-#from pipeline.api.eds import EdsClient
-#from pipeline.api.rjn import RjnClient
-from pipeline.projectmanager import ProjectManager
-from pipeline.queriesmanager import QueriesManager
+from src.pipeline.env import SecretsYaml
+#from src.pipeline.api.eds import EdsClient
+#from src.pipeline.api.rjn import RjnClient
+from src.pipeline.projectmanager import ProjectManager
+from src.pipeline.queriesmanager import QueriesManager
 
 def run_live_cycle():
     print("Running live cycle...")
@@ -43,7 +43,9 @@ def run_hourly_cycle():
                                   checkpoint_file = project_manager.get_aggregate_dir()+"/sent_data.csv",
                                   rjn_base_url=rjn_api.config['url'],
                                   headers_rjn=headers_rjn)
-def setup_schedules():
+def defunct_setup_schedules():
+
+    print("projects/eds_to_rjn/scripts/daemon_runner.py")
     # Get current time and round it to the next multiple of 5 minutes
     now = datetime.datetime.now()
     minutes_to_next_five = 5 - (now.minute % 5)
@@ -53,6 +55,24 @@ def setup_schedules():
     schedule.every().day.at(next_run_time.strftime("%H:%M")).do(run_live_cycle)
     schedule.every(5).minutes.do(run_live_cycle)
     schedule.every().hour.at(":00").do(run_hourly_cycle)
+
+def setup_schedules():
+    print("projects/eds_to_rjn/scripts/daemon_runner.py")
+    now = datetime.datetime.now()
+
+    # Calculate how many minutes to the next 5-minute mark (05, 10, 15, etc.)
+    minutes_to_next_five = 5 - (now.minute % 5)
+    
+    # Schedule the first task to run at the next 5-minute mark (e.g., hh:05:00, hh:10:00, ...)
+    first_run_time = now + datetime.timedelta(minutes=minutes_to_next_five)
+    first_run_time_str = first_run_time.strftime("%H:%M")
+    
+    # Schedule tasks to run every 5 minutes at the "hh:05, hh:10, hh:15, etc."
+    schedule.every().day.at(first_run_time_str).do(run_live_cycle)  # First run time
+    schedule.every(5).minutes.do(run_live_cycle)  # After first run, every 5 minutes
+    
+    # Log the next scheduled task
+    print(f"Next live cycle scheduled at: {first_run_time_str}")
 
 def main():
     print(f"Starting daemon_runner at {datetime.datetime.now()}...")
