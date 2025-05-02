@@ -17,9 +17,14 @@ dependencies = [
     "pyyaml (>=6.0.2,<7.0.0)",
     "certifi (>=2025.1.31,<2026.0.0)",
     "schedule (>=1.2.2,<2.0.0)",
+    "fastapi (>=0.115.12,<0.116.0)",
 ]
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
+
+# PEP 621: Define src-based layout
+[tool.poetry]
+packages = [{ include = "pipeline", from = "src" }]

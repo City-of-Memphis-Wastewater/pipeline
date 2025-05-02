@@ -1,6 +1,6 @@
 # src/api/status_api.py
 from fastapi import FastAPI
-from pipeline.pipeline.daemon.status import get_latest_status
+from pipeline.daemon.status import get_latest_status
 
 app = FastAPI()
 
