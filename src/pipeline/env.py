@@ -3,8 +3,8 @@
 import os
 import requests
 import yaml
-from src.pipeline.projectmanager import ProjectManager 
-from src.pipeline.projectmanager import establish_default_project
+from pipeline.projectmanager import ProjectManager 
+from pipeline.projectmanager import establish_default_project
 
 class SecretsYaml:
     def __init__(self, config):

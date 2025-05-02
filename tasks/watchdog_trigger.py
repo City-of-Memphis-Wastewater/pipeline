@@ -10,7 +10,7 @@ import os
 #sys.path.append(project_root)
 
 
-from src.pipeline.daemon.watchdog import check_and_restart_if_needed
+from pipeline.daemon.watchdog import check_and_restart_if_needed
 
 
 if __name__ == "__main__":

@@ -24,3 +24,6 @@ psutil = "^7.0.0"
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.plugins."scripts"]
+controller = "pipeline.daemon.controller:main_cli"

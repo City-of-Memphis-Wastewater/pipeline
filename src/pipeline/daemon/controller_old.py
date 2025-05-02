@@ -9,10 +9,10 @@ from projects.eds_to_rjn.scripts import collector, storage, aggregator
 from threading import Thread
 from projects.eds_to_rjn.scripts import collector, storage, aggregator
 from projects.eds_to_rjn.scripts.main import get_eds_maxson_token_and_headers, get_rjn_tokens_and_headers
-from src.pipeline.env import SecretsYaml
-from src.pipeline.projectmanager import ProjectManager
-from src.pipeline.queriesmanager import QueriesManager
-from src.pipeline.calls import test_connection_to_internet
+from pipeline.env import SecretsYaml
+from pipeline.projectmanager import ProjectManager
+from pipeline.queriesmanager import QueriesManager
+from pipeline.calls import test_connection_to_internet
 
 import os
 
@@ -87,10 +87,11 @@ def run_live_cycle():
         qm = QueriesManager(pm)
         query_files = qm.get_query_file_paths()
         log_status(f"Using query file(s): {query_files}")
-        eds_api, headers = get_eds_maxson_token_and_headers(config)
+        eds_api, headers_eds_maxson = get_eds_maxson_token_and_headers(config)
+        headers_eds_stiles = None
 
         for path in query_files:
-            data = collector.collect_live_values(path, eds_api, "Maxson", headers)
+            data = collector.collect_live_values(path, eds_api, headers_eds_maxson, headers_eds_stiles)
             storage.store_live_values(data, pm.get_aggregate_dir() + "/live_data.csv")
     except Exception as e:
         log_status(f"Live cycle error: {e}")

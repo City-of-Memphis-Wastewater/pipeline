@@ -1,6 +1,6 @@
-from src.pipeline.helpers import load_toml
+from pipeline.helpers import load_toml
 
-from src.pipeline.eds_point import Point
+from pipeline.eds_point import Point
 
 def populate_multiple_generic_points_from_filelist(filelist):
     # This expect a toml file which identified one point
@@ -29,8 +29,8 @@ def populate_generic_point_from_dict(dic):
 
 if __name__ == "__main__":
     # Set up project manager
-    from src.pipeline.projectmanager import ProjectManager
-    from src.pipeline.queriesmanager import QueriesManager
+    from pipeline.projectmanager import ProjectManager
+    from pipeline.queriesmanager import QueriesManager
     project_name = ProjectManager.identify_default_project()
     project_manager = ProjectManager(project_name)
     queries_manager = QueriesManager(project_manager)

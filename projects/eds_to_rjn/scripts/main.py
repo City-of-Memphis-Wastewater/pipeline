@@ -8,18 +8,24 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]  # pipeline/projects/eds_to_rjn/scripts -> pipeline
 sys.path.insert(0, str(ROOT))
 
-from src.pipeline.env import SecretsYaml
-from src.pipeline.api.eds import EdsClient
-from src.pipeline.api.rjn import RjnClient
-from src.pipeline.calls import test_connection_to_internet
-from src.pipeline.helpers import round_time_to_nearest_five
-from src.pipeline.projectmanager import ProjectManager
-from src.pipeline.queriesmanager import QueriesManager
-from src.pipeline.api.rjn import send_data_to_rjn
-from src.pipeline.api.eds import fetch_eds_data
+from pipeline.env import SecretsYaml
+from pipeline.api.eds import EdsClient
+from pipeline.api.rjn import RjnClient
+from pipeline.calls import test_connection_to_internet
+from pipeline.helpers import round_time_to_nearest_five
+from pipeline.projectmanager import ProjectManager
+from pipeline.queriesmanager import QueriesManager
+from pipeline.api.rjn import send_data_to_rjn
+from pipeline.api.eds import fetch_eds_data
 
 def main():
-    sketch_maxson()
+    #sketch_maxson()
+    sketch_daemon_runner_main()
+
+def sketch_daemon_runner_main():
+    import daemon_runner
+    daemon_runner.main()
+
 
 def sketch_maxson():
     test_connection_to_internet()
@@ -38,8 +44,11 @@ def sketch_maxson():
     eds_api, headers_eds_maxson = get_eds_maxson_token_and_headers(config_obj)
     #eds_api, headers_eds_maxson, headers_eds_stiles = get_eds_tokens_and_headers_both(config_obj) # Stiles EDS needs to be configured to allow access on the 43084 port. Compare both servers.
     headers_eds_stiles = None
-
-    rjn_api, headers_rjn = get_rjn_tokens_and_headers(config_obj)
+    try:
+        rjn_api, headers_rjn = get_rjn_tokens_and_headers(config_obj)
+    except:
+        rjn_api = None
+        headers_rjn = None
     for csv_file_path in queries_file_path_list:
         process_sites_and_send(csv_file_path, eds_api, eds_site = "Maxson", eds_headers = headers_eds_maxson, rjn_base_url=rjn_api.config['url'], rjn_headers=headers_rjn)
 "---"
@@ -95,6 +104,12 @@ def get_eds_maxson_token_and_headers(config_obj):
     # toml headings
     eds = EdsClient(config_obj['eds_apis'])
     token_eds, headers_eds_maxson = eds.get_token_and_headers(plant_zd="Maxson")
+    return eds, headers_eds_maxson
+
+def get_eds_stiles_token_and_headers(config_obj):
+    # toml headings
+    eds = EdsClient(config_obj['eds_apis'])
+    token_eds, headers_eds_maxson = eds.get_token_and_headers(plant_zd="WWTP")
     return eds, headers_eds_maxson
 
 def get_rjn_tokens_and_headers(config_obj):

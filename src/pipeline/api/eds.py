@@ -1,7 +1,7 @@
 from datetime import datetime
 import json
-from src.pipeline.calls import make_request, call_ping
-from src.pipeline.env import find_urls
+from pipeline.calls import make_request, call_ping
+from pipeline.env import find_urls
 from pprint import pprint
 class EdsClient:
     def __init__(self,config):
@@ -140,9 +140,9 @@ def fetch_eds_data(eds_api, site, sid, shortdesc, headers):
 
 def demo_get_tabular_trend():
     print("Start: demo_show_points_tabular_trend()")
-    from src.pipeline.env import SecretsYaml
-    from src.pipeline.projectmanager import ProjectManager
-    from src.pipeline.api.eds import EdsClient
+    from pipeline.env import SecretsYaml
+    from pipeline.projectmanager import ProjectManager
+    from pipeline.api.eds import EdsClient
     project_name = ProjectManager.identify_default_project()
     project_manager = ProjectManager(project_name)
     secrets_file_path = project_manager.get_configs_file_path(filename = 'secrets.yaml')
@@ -157,8 +157,8 @@ def demo_get_tabular_trend():
 
 def demo_eds_save_point_export():
     print("Start demo_eds_save_point_export()")
-    from src.pipeline.env import SecretsYaml
-    from src.pipeline.projectmanager import ProjectManager
+    from pipeline.env import SecretsYaml
+    from pipeline.projectmanager import ProjectManager
     project_name = ProjectManager.identify_default_project()
     project_manager = ProjectManager(project_name)
     secrets_file_path = project_manager.get_configs_file_path(filename = 'secrets.yaml')
@@ -173,8 +173,8 @@ def demo_eds_save_point_export():
     print(f"Export file will be saved to: {export_file_path}")
 
 def ping():
-    from src.pipeline.env import SecretsYaml
-    from src.pipeline.projectmanager import ProjectManager
+    from pipeline.env import SecretsYaml
+    from pipeline.projectmanager import ProjectManager
     project_name = ProjectManager.identify_default_project()
     project_manager = ProjectManager(project_name)
     secrets_file_path = project_manager.get_configs_file_path(filename = 'secrets.yaml')

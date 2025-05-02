@@ -1,6 +1,6 @@
 # pipeline/daemon/__init__.py
-from src.pipeline.daemon.controller import main_cli
-from src.pipeline.daemon.watchdog import is_daemon_running, check_and_restart_if_needed  
+from pipeline.daemon.controller import main_cli
+from pipeline.daemon.watchdog import is_daemon_running, check_and_restart_if_needed  
 
 import sys
 import os

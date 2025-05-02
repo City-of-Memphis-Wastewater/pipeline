@@ -1,6 +1,6 @@
 from datetime import timedelta 
 import requests
-from src.pipeline.calls import make_request
+from pipeline.calls import make_request
 class RjnClient:
     def __init__(self,config):
         self.config = config

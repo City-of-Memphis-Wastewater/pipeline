@@ -1,19 +1,19 @@
-#daemon_runner.py
+#projects/eds_to_rjndaemon_runner.py
 import schedule, time
 #import logging
 import datetime
-from projects.eds_to_rjn.scripts import collector, storage, aggregator
-#from src.pipeline.daemon import collector, storage, aggregator
-from projects.eds_to_rjn.scripts.main import get_eds_maxson_token_and_headers, get_rjn_tokens_and_headers
-from src.pipeline.env import SecretsYaml
-#from src.pipeline.api.eds import EdsClient
-#from src.pipeline.api.rjn import RjnClient
-from src.pipeline.projectmanager import ProjectManager
-from src.pipeline.queriesmanager import QueriesManager
+from ..scripts import collector, storage, aggregator
+#from pipeline.daemon import collector, storage, aggregator
+from .main import get_eds_maxson_token_and_headers, get_rjn_tokens_and_headers, get_eds_tokens_and_headers_both
+from pipeline.env import SecretsYaml
+#from pipeline.api.eds import EdsClient
+#from pipeline.api.rjn import RjnClient
+from pipeline.projectmanager import ProjectManager
+from pipeline.queriesmanager import QueriesManager
 
 def run_live_cycle():
     print("Running live cycle...")
-    #test_connection_to_internet()
+    #test_connection_to_internet()  
 
     project_name = 'eds_to_rjn' # project_name = ProjectManager.identify_default_project()
     project_manager = ProjectManager(project_name)
@@ -26,10 +26,11 @@ def run_live_cycle():
     except FileNotFoundError as e:
         print(f"Error: {e}")
 
-    eds_api, headers_eds_maxson = get_eds_maxson_token_and_headers(config_obj)
+    #eds_api, headers_eds_maxson = get_eds_maxson_token_and_headers(config_obj)
+    eds_api, headers_eds_maxson, headers_eds_stiles = get_eds_tokens_and_headers_both(config_obj)
 
     for csv_file_path in queries_file_path_list:
-        data = collector.collect_live_values(csv_file_path, eds_api, "Maxson", headers_eds_maxson)
+        data = collector.collect_live_values(csv_file_path, eds_api, headers_eds_maxson, headers_eds_stiles)
         storage.store_live_values(data, project_manager.get_aggregate_dir()+"/live_data.csv") # project_manager.get_live_data_csv_file
 
 def run_hourly_cycle(): 

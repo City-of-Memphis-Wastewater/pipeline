@@ -1,11 +1,11 @@
 #pipeline.collector.py
 from datetime import datetime
 
-from src.pipeline.helpers import round_time_to_nearest_five
-from src.pipeline.api.eds import fetch_eds_data
+from pipeline.helpers import round_time_to_nearest_five
+from pipeline.api.eds import fetch_eds_data
 
 import csv
-def collect_live_values(csv_path, eds_api, eds_site, eds_headers):
+def collect_live_values(csv_path, eds_api, eds_headers_maxson, eds_headers_stiles):
     data = []
     with open(csv_path, newline='') as csvfile:
         reader = csv.DictReader(csvfile)
@@ -29,9 +29,6 @@ def collect_live_values(csv_path, eds_api, eds_site, eds_headers):
                 if None in (eds_sid, rjn_siteid, rjn_entityid):
                     print(f"Skipping row due to missing required values: SID={eds_sid}, rjn_siteid={rjn_siteid}, rjn_entityid={rjn_entityid}")
                     continue
-                if eds_site != row["zd"]:
-                    print(f"Skipping row due to mismatches site ID / ZD values: eds_site={eds_site}, row['zd']={row['zd']}")
-                    continue
 
             except KeyError as e:
                 print(f"Missing expected column in CSV: {e}")
@@ -40,10 +37,15 @@ def collect_live_values(csv_path, eds_api, eds_site, eds_headers):
                 print(f"Invalid data in row: {e}")
                 continue
 
+            if row["zd"] == "Maxson":
+                eds_headers = eds_headers_maxson
+            elif row["zd"] == "WWTF":
+                eds_headers = eds_headers_stiles
+
             try:
                 ts, value = fetch_eds_data(
                     eds_api=eds_api,
-                    site=eds_site,
+                    site=row["zd"],
                     sid=eds_sid,
                     shortdesc=shortdesc,
                     headers=eds_headers

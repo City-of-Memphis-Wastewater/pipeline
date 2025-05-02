@@ -1,7 +1,7 @@
 import os
 import logging
 import importlib
-from src.pipeline.projectmanager import ProjectManager
+from pipeline.projectmanager import ProjectManager
 
 # Paths
 RUNTIME_DIR = os.path.join(os.getenv("APPDATA", os.path.expanduser("~/.config")), "memphis_pipeline", "runtime")

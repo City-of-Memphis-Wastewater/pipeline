@@ -9,7 +9,7 @@ Keep directory assignment organized, particularly for using project folders.
 Migrate away from directory amangement in environmental.py
 
 Example:
-from src.pipeline.directories import Directories
+from pipeline.directories import Directories
 
 """
 import os
