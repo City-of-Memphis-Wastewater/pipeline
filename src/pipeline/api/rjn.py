@@ -20,6 +20,8 @@ class RjnClient:
             print("Skipping RjnClient.get_token_and_headers() due to connection error")
             print(e)
             return None, None
+        if response is None:
+            return None, None
         token = response.json().get("token")
 
         ['sessionId']
@@ -65,8 +67,11 @@ def send_data_to_rjn(base_url:str, project_id:str, entity_id:int, headers:dict, 
     response = None
     try:
         response = make_request(url=url, headers=headers, params = params, method="POST", data=body)
-        response.raise_for_status()
-        print(f"Sent {timestamps} -> {values} to entity {entity_id} (HTTP {response.status_code})")
+        if response is None:
+            print("Response = None, job cancelled")
+        else:
+            response.raise_for_status()
+            print(f"Sent {timestamps} -> {values} to entity {entity_id} (HTTP {response.status_code})")
     except ConnectionError as e:
         print("Skipping RjnClient.send_data_to_rjn() due to connection error")
         print(e)
