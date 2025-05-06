@@ -11,14 +11,14 @@ def is_daemon_running():
     """
     Check if the daemon is currently running by checking the flag file.
     """
-    from pipeline.daemon import controller
+    from src.pipeline.daemon import controller
     return os.path.exists(controller.RUNNING_FLAG)
 
 def check_and_restart_if_needed():
     """
     Check if the daemon is running, and restart it if not.
     """
-    from pipeline.daemon import controller
+    from src.pipeline.daemon import controller
     if not is_daemon_running():
         logger.warning("Daemon is not running. Restarting now...")
         controller.log_status("Watchdog detected daemon was stopped. Restarting...")
@@ -30,7 +30,7 @@ def check_and_restart_if_needed():
 import os
 import psutil
 import subprocess
-from pipeline.projectmanager import ProjectManager
+from src.pipeline.projectmanager import ProjectManager
 import logging
 
 logger = logging.getLogger(__name__)

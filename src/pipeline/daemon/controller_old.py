@@ -9,10 +9,10 @@ from projects.eds_to_rjn.scripts import collector, storage, aggregator
 from threading import Thread
 from projects.eds_to_rjn.scripts import collector, storage, aggregator
 from projects.eds_to_rjn.scripts.main import get_eds_maxson_token_and_headers, get_rjn_tokens_and_headers
-from pipeline.env import SecretsYaml
-from pipeline.projectmanager import ProjectManager
-from pipeline.queriesmanager import QueriesManager
-from pipeline.calls import test_connection_to_internet
+from src.pipeline.env import SecretsYaml
+from src.pipeline.projectmanager import ProjectManager
+from src.pipeline.queriesmanager import QueriesManager
+from src.pipeline.calls import test_connection_to_internet
 
 import os
 

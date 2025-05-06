@@ -1,7 +1,7 @@
 # pipeline/daemon/__main__.py
 
 import argparse
-from pipeline.daemon.controller import start_daemon, stop_daemon, status_daemon  # Example functions
+from src.pipeline.daemon.controller import start_daemon, stop_daemon, status_daemon  # Example functions
 
 def main():
     parser = argparse.ArgumentParser(description="Control the pipeline daemon.")

@@ -39,8 +39,8 @@ class QueriesManager:
     
 def cli_queriesmanager():
     import argparse
-    from pipeline.projectmanager import ProjectManager
-    from pipeline.queriesmanager import QueriesManager
+    from src.pipeline.projectmanager import ProjectManager
+    from src.pipeline.queriesmanager import QueriesManager
     parser = argparse.ArgumentParser(description="Select CSV file for querying.")
     parser.add_argument(
         '--csv-file',

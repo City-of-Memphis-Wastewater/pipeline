@@ -3,11 +3,11 @@ import schedule, time
 #import logging
 import datetime
 from ..scripts import collector, storage, aggregator
-#from pipeline.daemon import collector, storage, aggregator
+#from src.pipeline.daemon import collector, storage, aggregator
 from .main import get_eds_maxson_token_and_headers, get_rjn_tokens_and_headers, get_eds_tokens_and_headers_both
-from pipeline.env import SecretsYaml
-from pipeline.projectmanager import ProjectManager
-from pipeline.queriesmanager import QueriesManager
+from src.pipeline.env import SecretsYaml
+from src.pipeline.projectmanager import ProjectManager
+from src.pipeline.queriesmanager import QueriesManager
 
 def run_live_cycle():
     print("Running live cycle...")
