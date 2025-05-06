@@ -1,6 +1,7 @@
-from datetime import timedelta 
 import requests
-from src.pipeline.calls import make_request
+from src.pipeline.calls import make_request, call_ping
+from src.pipeline.env import find_urls
+
 class RjnClient:
     def __init__(self,config):
         self.config = config
@@ -74,4 +75,26 @@ def send_data_to_rjn(base_url:str, project_id:str, entity_id:int, headers:dict, 
         if response is not None:# and response.status_code != 500:
             print(f"Response content: {response.text}")  # Print error response
         
-    
+def ping():
+    from src.pipeline.env import SecretsYaml
+    from src.pipeline.projectmanager import ProjectManager
+    project_name = ProjectManager.identify_default_project()
+    project_manager = ProjectManager(project_name)
+    secrets_file_path = project_manager.get_configs_file_path(filename = 'secrets.yaml')
+    config_obj = SecretsYaml.load_config(secrets_file_path = secrets_file_path)
+    url_set = find_urls(config_obj)
+    for url in url_set:
+        if "rjn" in url.lower():
+            print(f"ping url: {url}")
+            call_ping(url)
+
+
+if __name__ == "__main__":
+    import sys
+    cmd = sys.argv[1] if len(sys.argv) > 1 else "default"
+
+    if cmd == "ping":
+        ping()
+    else:
+        print("Usage options: \n"
+        "poetry run python -m pipeline.api.rjn ping")

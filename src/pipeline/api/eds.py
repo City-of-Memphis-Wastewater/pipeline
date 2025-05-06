@@ -179,12 +179,11 @@ def ping():
     project_manager = ProjectManager(project_name)
     secrets_file_path = project_manager.get_configs_file_path(filename = 'secrets.yaml')
     config_obj = SecretsYaml.load_config(secrets_file_path = secrets_file_path)
-    key0 = list(config_obj.keys())[0]
-    key00 = list(config_obj[key0].keys())[0]
     url_set = find_urls(config_obj)
     for url in url_set:
-        print(f"ping url: {url}")
-        call_ping(url)
+        if "43084" in url or "43080" in url: # Expected REST or SOAP API ports for the EDS 
+            print(f"ping url: {url}")
+            call_ping(url)
 
 
 if __name__ == "__main__":
@@ -193,7 +192,7 @@ if __name__ == "__main__":
     import sys
     cmd = sys.argv[1] if len(sys.argv) > 1 else "default"
 
-    if cmd == "demo-points":
+    if cmd == "demo-points-export":
         demo_eds_save_point_export()
     elif cmd == "demo-trend":
         demo_get_tabular_trend()
@@ -201,7 +200,7 @@ if __name__ == "__main__":
         ping()
     else:
         print("Usage options: \n" 
-        "poetry run python -m pipeline.api.eds demo-points \n"  
+        "poetry run python -m pipeline.api.eds demo-points-export \n"  
         "poetry run python -m pipeline.api.eds demo-trend \n"
         "poetry run python -m pipeline.api.eds ping")
     
