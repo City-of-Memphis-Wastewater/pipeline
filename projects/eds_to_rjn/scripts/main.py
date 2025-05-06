@@ -23,7 +23,7 @@ def main():
     sketch_daemon_runner_main()
 
 def sketch_daemon_runner_main():
-    import daemon_runner
+    from . import daemon_runner
     daemon_runner.main()
 
 
