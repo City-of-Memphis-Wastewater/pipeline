@@ -59,11 +59,8 @@ def make_request(url, data=None, params = None, method="POST", headers=None, ret
         return None
     except requests.exceptions.HTTPError as e:
         if response.status_code == 500:
-            #print(f"HTTP 500 Error - Response content: {response.text}")
             logging.error(f"HTTP 500 Error - Response content: {response.text}")
         elif response.status_code == 503 and retries > 0:
-            # Retry the request if the server is unavailable
-            #print(f"Service unavailable (503). Retrying in {delay} seconds...")
             logging.warning(f"Service unavailable (503). Retrying in {delay} seconds...")
             time.sleep(delay)
             #return make_request(url, data, retries - 1, delay * 2)  # Exponential backoff
@@ -81,10 +78,6 @@ def make_request(url, data=None, params = None, method="POST", headers=None, ret
     except NewConnectionError as e:
         logging.warning("Request failed due to connection issues.")
         logging.debug(f"Detailed error: {e}", exc_info=False)  # Only logs full traceback if DEBUG level is set
-        #print(f"Request failed: {e}")
-        #if hasattr(e, 'response') and e.response is not None:
-        #    print(f"Response: {e.response.text}")
-        #raise
 
 def call_ping(url):
     parsed = urlparse(url)
