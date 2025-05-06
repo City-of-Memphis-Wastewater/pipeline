@@ -49,6 +49,18 @@ class ProjectManager:
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"Configuration file '{filename}' not found in directory '{self.configs_dir}'.")
         return file_path
+    def get_configs_secrets_file_path(self):
+        # Return the full path to the config file
+        file_path = os.path.join(self.configs_dir, 'secrets.yaml')
+        fallback_file_path = os.path.join(self.configs_dir, 'secrets-example.yaml')
+        #config_file_path = os.path.join(project_root, "projects", "eds_to_rjn", "configs", "secrets.yaml")
+        if not os.path.exists(file_path) and os.path.exists(fallback_file_path):
+            import shutil
+            shutil.copy(fallback_file_path, file_path)
+            print("secrets.yaml not found, copied from secrets-example.yaml")
+        elif not os.path.exists(file_path) and not os.path.exists(fallback_file_path):
+            raise FileNotFoundError(f"Configuration file secrets.yaml nor secrets-example.yaml not found in directory '{self.configs_dir}'.")
+        return file_path
     
     def create_configs_dir(self):
         if not os.path.exists(self.configs_dir):

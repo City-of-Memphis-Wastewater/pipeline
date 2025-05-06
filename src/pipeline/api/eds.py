@@ -1,30 +1,54 @@
 from datetime import datetime
 import json
+import logging
+from urllib3.exceptions import HTTPError 
+from requests.exceptions import RequestException
+import sys
+
 from src.pipeline.calls import make_request, call_ping
 from src.pipeline.env import find_urls
 from pprint import pprint
+
+# Configure logging (adjust level as needed)
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+
+
 class EdsClient:
     def __init__(self,config):
         self.config = config
 
     def get_token_and_headers(self,plant_zd="Maxson"):
-        print("\nEdsClient.get_token_and_headers()")
+        #print("\nEdsClient.get_token_and_headers()")
+        logging.info("EdsClient.get_token_and_headers()")
+
         try:
             plant_cfg = self.config[plant_zd]
         except KeyError:
+            logging.error(f"Unknown plant_zd '{plant_zd}'")
             raise ValueError(f"Unknown plant_zd '{plant_zd}'")
 
         request_url = plant_cfg['url'] + 'login'
-        print(f"request_url = {request_url}")
+        logging.info(f"Requesting login at {request_url}")
+        #print(f"request_url = {request_url}")
         data = {
             'username': plant_cfg['username'],
             'password': plant_cfg['password'],
             'type': 'rest client'
         }
-
-        response = make_request(url = request_url, data=data)
+        try:
+            response = make_request(url = request_url, data=data)
+            if response is None:
+                logging.warning("Request failed—received NoneType response. Skipping token retrieval.")
+                return None, None  # Prevent AttributeError
+            response.raise_for_status()  # Ensure response is valid
+        except (RequestException, HTTPError) as e:
+            logging.warning("Skipping token retrieval due to connection error.")
+            logging.warning("Your base URL might not be correctly set in secrets.yaml.")
+            #logging.debug(e)  # Only logs full traceback if logging level is set to DEBUG
+            return None, None
+        
         token = response.json()['sessionId']
-        headers = {'Authorization': f"Bearer {token}"}
+        headers = {'Authorization': f"Bearer {token}"} if token else None
 
         return token, headers
 
@@ -55,18 +79,21 @@ class EdsClient:
             }
 
         response = make_request(url = request_url, headers=headers, data = query)
-        byte_string = response.content
-        decoded_str = byte_string.decode('utf-8')
-        data = json.loads(decoded_str) 
-        #pprint(f"data={data}")
-        points_datas = data.get("points", [])
-        if not points_datas:
-            print(f"{shortdesc}, sid:{sid}, no data returned, len(points)==0")
+        if response is None:
+            return None
         else:
-            for point_data in points_datas:
-                self.print_point_info_row(point_data, shortdesc)
-        return points_datas[0]  # You expect exactly one point usually
-
+            byte_string = response.content
+            decoded_str = byte_string.decode('utf-8')
+            data = json.loads(decoded_str) 
+            #pprint(f"data={data}")
+            points_datas = data.get("points", [])
+            if not points_datas:
+                print(f"{shortdesc}, sid:{sid}, no data returned, len(points)==0")
+            else:
+                for point_data in points_datas:
+                    self.print_point_info_row(point_data, shortdesc)
+            return points_datas[0]  # You expect exactly one point usually
+        
     def get_tabular_trend(self,site: str="Maxson",sid: int=0,iess:str="M100FI.UNIT0@NET0", starttime :int=1744661000,endtime:int=1744661700,shortdesc : str="INF-DEFAULT",headers = None):
         "Based on EDS REST API Python Examples.pdf, pages 36-37."
         "Failed"
@@ -91,6 +118,9 @@ class EdsClient:
             }
         
         response = make_request(url = request_url, headers=headers, data = data, method="POST")
+        if response is None:
+            print("Tabular trend request failed: Check your secrets.yaml file URL.")
+            sys.exit()
         byte_string = response.content
         decoded_str = byte_string.decode('utf-8')
         data = json.loads(decoded_str)
@@ -119,6 +149,8 @@ class EdsClient:
         query = '?zd={}&iess={}&order={}'.format(zd, iess, order)
         request_url = api_url + 'points/export' + query
         response = make_request(url = request_url, headers=headers, method="GET")
+        if response is None:
+            sys.exit() # this is better than overwriting a previous exprt with a blank export
         byte_string = response.content
         decoded_str = byte_string.decode('utf-8')
         return decoded_str
@@ -145,10 +177,11 @@ def demo_get_tabular_trend():
     from src.pipeline.api.eds import EdsClient
     project_name = ProjectManager.identify_default_project()
     project_manager = ProjectManager(project_name)
-    secrets_file_path = project_manager.get_configs_file_path(filename = 'secrets.yaml')
+    #secrets_file_path = project_manager.get_configs_file_path(filename = 'secrets.yaml')
+    secrets_file_path = project_manager.get_configs_secrets_file_path()
     config_obj = SecretsYaml.load_config(secrets_file_path = secrets_file_path)
     key0 = list(config_obj.keys())[0]
-    key00 = list(config_obj[key0].keys())[0]
+    key00 = list(config_obj[key0].keys())[0] # test whichever key is first in secrets.yaml
     eds = EdsClient(config_obj[key0])
     token_eds, headers_eds = eds.get_token_and_headers(plant_zd=key00)
     eds.get_tabular_trend(site=key00,shortdesc="DEMO",headers = headers_eds)
@@ -161,7 +194,8 @@ def demo_eds_save_point_export():
     from src.pipeline.projectmanager import ProjectManager
     project_name = ProjectManager.identify_default_project()
     project_manager = ProjectManager(project_name)
-    secrets_file_path = project_manager.get_configs_file_path(filename = 'secrets.yaml')
+    #secrets_file_path = project_manager.get_configs_file_path(filename = 'secrets.yaml')
+    secrets_file_path = project_manager.get_configs_secrets_file_path()
     config_obj = SecretsYaml.load_config(secrets_file_path = secrets_file_path)
     key0 = list(config_obj.keys())[0]
     key00 = list(config_obj[key0].keys())[0]
@@ -177,7 +211,8 @@ def ping():
     from src.pipeline.projectmanager import ProjectManager
     project_name = ProjectManager.identify_default_project()
     project_manager = ProjectManager(project_name)
-    secrets_file_path = project_manager.get_configs_file_path(filename = 'secrets.yaml')
+    #secrets_file_path = project_manager.get_configs_file_path(filename = 'secrets.yaml')
+    secrets_file_path = project_manager.get_configs_secrets_file_path()
     config_obj = SecretsYaml.load_config(secrets_file_path = secrets_file_path)
     url_set = find_urls(config_obj)
     for url in url_set:

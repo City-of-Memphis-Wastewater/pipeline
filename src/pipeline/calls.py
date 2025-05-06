@@ -4,7 +4,11 @@ import platform
 import subprocess
 import sys
 import time
+import logging
 from urllib.parse import urlparse
+from urllib3.exceptions import NewConnectionError
+
+logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
 
 def test_connection_to_internet():
     try:
@@ -16,29 +20,29 @@ def test_connection_to_internet():
         sys.exit()
 
 def make_request(url, data=None, params = None, method="POST", headers=None, retries=3, delay=2, timeout=10, verify_ssl=True):
-    
+    default_headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+    }
+
+    merged_headers = {**default_headers, **(headers or {})}
+    #print(f"merged_headers = {merged_headers}")
+
+    verify = certifi.where() if verify_ssl else False
+
+    request_func = {
+        "POST": requests.post,
+        "GET": requests.get,
+        "PUT": requests.put,
+        "DELETE": requests.delete,
+        "PATCH": requests.patch,
+    }.get(method.upper())
+
+    if not request_func:
+        logging.error(f"Unsupported HTTP method: {method}")
+        return None
+        #raise ValueError(f"Unsupported HTTP method: {method}")
     try:
-        default_headers = {
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-        }
-
-        merged_headers = {**default_headers, **(headers or {})}
-        #print(f"merged_headers = {merged_headers}")
-
-        verify = certifi.where() if verify_ssl else False
-
-        request_func = {
-            "POST": requests.post,
-            "GET": requests.get,
-            "PUT": requests.put,
-            "DELETE": requests.delete,
-            "PATCH": requests.patch,
-        }.get(method.upper())
-
-        if not request_func:
-            raise ValueError(f"Unsupported HTTP method: {method}")
-
         response = request_func(
             url,
             json=data,
@@ -47,41 +51,40 @@ def make_request(url, data=None, params = None, method="POST", headers=None, ret
             timeout=timeout,
             verify=verify
         )
-        if response is None:
-            raise RuntimeError("Received an empty response from the server.")
-        else:
-            response.raise_for_status()
+        response.raise_for_status()
         return response
     except requests.exceptions.SSLError as e:
-        raise ConnectionError(f"SSL Error: {e}")
+        #raise ConnectionError(f"SSL Error: {e}")
+        logging.error(f"SSL Error: {e}")
+        return None
     except requests.exceptions.HTTPError as e:
         if response.status_code == 500:
-            print(f"HTTP 500 Error - Response content: {response.text}")
+            #print(f"HTTP 500 Error - Response content: {response.text}")
+            logging.error(f"HTTP 500 Error - Response content: {response.text}")
         elif response.status_code == 503 and retries > 0:
             # Retry the request if the server is unavailable
-            print(f"Service unavailable (503). Retrying in {delay} seconds...")
+            #print(f"Service unavailable (503). Retrying in {delay} seconds...")
+            logging.warning(f"Service unavailable (503). Retrying in {delay} seconds...")
             time.sleep(delay)
             #return make_request(url, data, retries - 1, delay * 2)  # Exponential backoff
-            return make_request(
-                url=url,
-                data=data,
-                params=params,
-                method=method,
-                headers=headers,
-                retries=retries - 1,
-                delay=delay * 2,
-                timeout=timeout,
-                verify_ssl=verify_ssl
-            )
+            return make_request(url, data, params, method, headers, retries - 1, delay * 2, timeout, verify_ssl)
         elif response.status_code == 403:
-            raise PermissionError("Access denied (403). The server rejected your credentials or IP.")
+            #raise PermissionError("Access denied (403). The server rejected your credentials or IP.")
+            logging.error("Access denied (403). The server rejected your credentials or IP.")
         else:
-            raise RuntimeError(f"HTTP error: {response.status_code} {response.text}")
+            #raise RuntimeError(f"HTTP error: {response.status_code} {response.text}")
+            logging.error(f"HTTP error: {response.status_code} {response.text}")
+        return None
     except requests.exceptions.RequestException as e:
-        print(f"Request failed: {e}")
-        if hasattr(e, 'response') and e.response is not None:
-            print(f"Response: {e.response.text}")
-        raise
+        logging.warning(f"Request failed: {e}")
+        return None  # Ensures calling functions properly handle failure
+    except NewConnectionError as e:
+        logging.warning("Request failed due to connection issues.")
+        logging.debug(f"Detailed error: {e}", exc_info=False)  # Only logs full traceback if DEBUG level is set
+        #print(f"Request failed: {e}")
+        #if hasattr(e, 'response') and e.response is not None:
+        #    print(f"Response: {e.response.text}")
+        #raise
 
 def call_ping(url):
     parsed = urlparse(url)
