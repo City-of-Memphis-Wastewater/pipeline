@@ -6,8 +6,6 @@ from ..scripts import collector, storage, aggregator
 #from pipeline.daemon import collector, storage, aggregator
 from .main import get_eds_maxson_token_and_headers, get_rjn_tokens_and_headers, get_eds_tokens_and_headers_both
 from pipeline.env import SecretsYaml
-#from pipeline.api.eds import EdsClient
-#from pipeline.api.rjn import RjnClient
 from pipeline.projectmanager import ProjectManager
 from pipeline.queriesmanager import QueriesManager
 
@@ -32,7 +30,10 @@ def run_live_cycle():
 
     for csv_file_path in queries_file_path_list:
         data = collector.collect_live_values(csv_file_path, eds_api, headers_eds_maxson, headers_eds_stiles)
-        storage.store_live_values(data, project_manager.get_aggregate_dir()+"/live_data.csv") # project_manager.get_live_data_csv_file
+        if len(data)==0:
+            print("No data retrieved via collector.collect_live_values(). Skipping storage.store_live_values()")
+        else:
+            storage.store_live_values(data, project_manager.get_aggregate_dir()+"/live_data.csv") # project_manager.get_live_data_csv_file
 
 def run_hourly_cycle(): 
     print("Running hourly cycle...")
@@ -45,6 +46,25 @@ def run_hourly_cycle():
                                   checkpoint_file = project_manager.get_aggregate_dir()+"/sent_data.csv",
                                   rjn_base_url=rjn_api.config['url'],
                                   headers_rjn=headers_rjn)
+    
+def run_hourly_cycle_manual(): 
+    print("Running RJN upload, with manual file slection ...")
+    project_name = 'eds_to_rjn' # project_name = ProjectManager.identify_default_project()
+    project_manager = ProjectManager(project_name)
+    print("project_manager, created.")
+    secrets_file_path = project_manager.get_configs_file_path(filename = 'secrets.yaml')
+    print("secrets_file_path, established.")
+    config_obj = SecretsYaml.load_config(secrets_file_path = secrets_file_path)
+    print("config_obj, created.")
+    rjn_api, headers_rjn = get_rjn_tokens_and_headers(config_obj)
+    print("rjn_api & headers_rjn, created.")
+    data_file_manual = str(input("CSV filepath (like /live_data.csv), paste: "))
+    aggregator.aggregate_and_send(data_file = data_file_manual,
+                                  #checkpoint_file = project_manager.get_aggregate_dir()+"/sent_data.csv",
+                                  checkpoint_file = "",
+                                  rjn_base_url=rjn_api.config['url'],
+                                  headers_rjn=headers_rjn)
+    
 def defunct_setup_schedules():
 
     print("projects/eds_to_rjn/scripts/daemon_runner.py")

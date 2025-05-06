@@ -81,6 +81,7 @@ def sketch_andstiles():
 
 
 def get_all_tokens(config_obj):
+    print("eds_to_rjn.scripts.main.get_all_tokens()")
     # toml headings
     eds = EdsClient(config_obj['eds_apis']) 
     rjn = RjnClient(config_obj['contractor_apis']['RJN'])
@@ -94,6 +95,7 @@ def get_all_tokens(config_obj):
     return eds, rjn, headers_eds_maxson, headers_eds_stiles, headers_rjn
 
 def get_eds_tokens_and_headers_both(config_obj):
+    print("eds_to_rjn.scripts.main.get_eds_tokens_and_headers_both()")
     # toml headings
     eds = EdsClient(config_obj['eds_apis'])
     token_eds, headers_eds_maxson = eds.get_token_and_headers(plant_zd="Maxson")
@@ -101,23 +103,27 @@ def get_eds_tokens_and_headers_both(config_obj):
     return eds, headers_eds_maxson, headers_eds_stiles
 
 def get_eds_maxson_token_and_headers(config_obj):
+    print("eds_to_rjn.scripts.main.get_eds_maxson_tokens_and_headers()")
     # toml headings
     eds = EdsClient(config_obj['eds_apis'])
     token_eds, headers_eds_maxson = eds.get_token_and_headers(plant_zd="Maxson")
     return eds, headers_eds_maxson
 
 def get_eds_stiles_token_and_headers(config_obj):
+    print("eds_to_rjn.scripts.main.get_eds_stiles_tokens_and_headers()")
     # toml headings
     eds = EdsClient(config_obj['eds_apis'])
     token_eds, headers_eds_maxson = eds.get_token_and_headers(plant_zd="WWTP")
     return eds, headers_eds_maxson
 
 def get_rjn_tokens_and_headers(config_obj):
+    print("eds_to_rjn.scripts.main.get_rjn_tokens_and_headers()")
     # toml headings
     rjn = RjnClient(config_obj['contractor_apis']['RJN'])
     token_rjn, headers_rjn = rjn.get_token_and_headers()
     #print(f"token_rjn = {token_rjn}")
     return rjn, headers_rjn
+
 
 def call_eds_stiles_get_points_live(eds, headers_eds_stiles):
     print(f"\neds.get_points_live():")
