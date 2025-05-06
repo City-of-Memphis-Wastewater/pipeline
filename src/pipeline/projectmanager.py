@@ -1,6 +1,8 @@
 import os
 import toml
+import logging
 from pathlib import Path
+import sys
 
 class ProjectManager:
     def __init__(self, project_name):
@@ -52,8 +54,23 @@ class ProjectManager:
     def get_configs_secrets_file_path(self):
         # Return the full path to the config file
         file_path = os.path.join(self.configs_dir, 'secrets.yaml')
+        if not os.path.exists(file_path):
+            logging.warning(f"Configuration file secrets.yaml not found in:\n{self.configs_dir}.\nHint: Copy and edit the secrets-example.yaml.")
+            #print("sys.exit()")
+            #sys.exit()
+            #return None  # Avoid raising an exception
+            #raise FileNotFoundError("Missing secrets.yaml file. Check configs directory.")
+            #else:
+            choice = str(input("\nAuto-copy secrets-example.yaml [Y] or sys.exit() [n] ? "))
+            if choice.lower().startswith("y"):
+                file_path = self.get_configs_secrets_file_path_or_copy()
+            else:
+                sys.exit()
+        return file_path
+    def get_configs_secrets_file_path_or_copy(self):
+        # Return the full path to the config file or create it from the fallback copy if it exists
+        file_path = os.path.join(self.configs_dir, 'secrets.yaml')
         fallback_file_path = os.path.join(self.configs_dir, 'secrets-example.yaml')
-        #config_file_path = os.path.join(project_root, "projects", "eds_to_rjn", "configs", "secrets.yaml")
         if not os.path.exists(file_path) and os.path.exists(fallback_file_path):
             import shutil
             shutil.copy(fallback_file_path, file_path)
