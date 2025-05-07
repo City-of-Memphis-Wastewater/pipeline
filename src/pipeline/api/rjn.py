@@ -71,7 +71,8 @@ def send_data_to_rjn(base_url:str, project_id:str, entity_id:int, headers:dict, 
             print("Response = None, job cancelled")
         else:
             response.raise_for_status()
-            print(f"Sent {timestamps} -> {values} to entity {entity_id} (HTTP {response.status_code})")
+            #print(f"Sent {timestamps} -> {values} to entity {entity_id} (HTTP {response.status_code})")
+            print(f"Sent timestamps and values to entity {entity_id} (HTTP {response.status_code})")
     except ConnectionError as e:
         print("Skipping RjnClient.send_data_to_rjn() due to connection error")
         print(e)

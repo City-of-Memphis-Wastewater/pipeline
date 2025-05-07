@@ -33,6 +33,10 @@ def aggregate_and_send(data_file, checkpoint_file, rjn_base_url, headers_rjn):
             if row["value"] == "":
                  #print("Skipping empty row")
                  continue
+            elif "timestamp" not in row:
+                print(row.keys())
+                print("timestamp not in row")
+                continue
             timestamp = row["timestamp"]
             siteid = row["rjn_siteid"]
             entityid = row["rjn_entityid"]
