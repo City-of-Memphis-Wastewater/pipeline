@@ -1,7 +1,0 @@
-# example: file=["query_24April2025.txt"]
-[default-query]
-#files = ["points.csv"]
-files = ["points-maxson.csv", "points-stiles.csv"]
-
-[default-query-ignore]
-file=["query_24April2025.txt"]
