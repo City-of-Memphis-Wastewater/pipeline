@@ -36,10 +36,11 @@ poetry run python -m src.pipeline.api.eds demo-trend
 ## secrets.yaml
 Access will not work without a secrets.yaml file in /pipeline/projects/your-project-name/config/secrets.yaml
 
-### Example secrets.yaml: 
 *API keys are specific to each the project, and can be referenced in the project scripts.*
 You would edit the secrets.yaml file to specify your own EDS server and credentials.
 Important: You need to VPN onto the same network as your server, EDS or otherwise, if it is not available to the outside world.
+
+### Example secrets.yaml: 
 ```
 eds_apis:
   MyServer1:
