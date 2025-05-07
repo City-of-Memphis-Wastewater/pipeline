@@ -5,7 +5,8 @@
 **/sent_data.csv
 **/export_eds_points_all.txt
 **/__pycache__/
-!*/
+!projects/
+!src/
 myenv/
 src/defunct/
 .python-version
