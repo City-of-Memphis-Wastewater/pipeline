@@ -1,0 +1,367 @@
+{
+	"base_url":"https://rjn-clarity-api.com/v1/clarity",
+	"projects":[
+		{
+		"project_id":"47ee48fd-904f-4eda-9ed9-c622d1944194",
+		"sites":[
+			{
+				"site_id":"ef313370-7bcc-4c5c-8da9-4e265097f028",
+				"name":"HL010104",
+				"description": "Horn Lake",
+				"monitor_type": "Flow Monitor",
+				"monitor_start": "2025-02-25T00:00:00",
+				"monitor_end": "2025-06-26T00:00:00",
+				"monitor_status": "Active",
+				"latitude": 35.05439200,
+				"longitude": -90.15283200,
+				"asset_or_facility": "010104",
+				"site_info_path": "https://rjn-clarity-api.com/v1/clarity/MonitorSite/EF313370-7BCC-4C5C-8DA9-4E265097F028/info?child_info=true",
+				"entities": [
+					{
+						"id": "m69",
+						"name": "*Depth",
+						"color": "Lime",
+						"unit": "in",
+						"site": "ef313370-7bcc-4c5c-8da9-4e265097f028"
+					},
+					{
+						"id": "m70",
+						"name": "*Flow",
+						"color": "Blue",
+						"unit": "MGD",
+						"site": "ef313370-7bcc-4c5c-8da9-4e265097f028"
+					},
+					{
+						"id": "m71",
+						"name": "*Rain",
+						"color": "DodgerBlue",
+						"unit": "in",
+						"site": "ef313370-7bcc-4c5c-8da9-4e265097f028"
+					},
+					{
+						"id": "m72",
+						"name": "*Velocity",
+						"color": "Red",
+						"unit": "f/s",
+						"site": "ef313370-7bcc-4c5c-8da9-4e265097f028"
+					},
+					{
+						"id": "s187",
+						"name": "Wireless Signal",
+						"color": "Gray",
+						"unit": "in",
+						"site": "ef313370-7bcc-4c5c-8da9-4e265097f028"
+					}
+				]
+			},
+			{
+				"site_id": "d528106a-8015-4b41-950f-f588cd3bf00f",
+				"name": "HL010150",
+				"description": "Horn Lake",
+				"monitor_type": "Flow Monitor",
+				"monitor_start": "2025-02-25T00:00:00",
+				"monitor_end": "2025-06-26T00:00:00",
+				"monitor_status": "Active",
+				"latitude": 34.99759800,
+				"longitude": -90.08561300,
+				"asset_or_facility": "HL0101050",
+				"site_info_path": "https://rjn-clarity-api.com/v1/clarity/MonitorSite/D528106A-8015-4B41-950F-F588CD3BF00F/info?child_info=true",
+				"entities": [
+					{
+						"id": "m35",
+						"name": "*Depth",
+						"color": "Lime",
+						"unit": "in",
+						"site": "d528106a-8015-4b41-950f-f588cd3bf00f"
+					},
+					{
+						"id": "m36",
+						"name": "*Flow",
+						"color": "Blue",
+						"unit": "MGD",
+						"site": "d528106a-8015-4b41-950f-f588cd3bf00f"
+					},
+					{
+						"id": "m37",
+						"name": "*Rain",
+						"color": "DodgerBlue",
+						"unit": "in",
+						"site": "d528106a-8015-4b41-950f-f588cd3bf00f"
+					},
+					{
+						"id": "m38",
+						"name": "*Velocity",
+						"color": "Red",
+						"unit": "f/s",
+						"site": "d528106a-8015-4b41-950f-f588cd3bf00f"
+					}
+				]
+			},
+			{
+				"site_id": "e2c40cbd-8505-4eb1-b442-5118502a0079",
+				"name": "Harbor",
+				"monitor_type": "Flow Monitor",
+				"monitor_start": "2025-02-24T00:00:00",
+				"monitor_end": "2025-06-26T00:00:00",
+				"monitor_status": "Active",
+				"latitude": 35.08725100,
+				"longitude": -90.13390800,
+				"asset_or_facility": "N/A",
+				"site_info_path": "https://rjn-clarity-api.com/v1/clarity/MonitorSite/E2C40CBD-8505-4EB1-B442-5118502A0079/info?child_info=true",
+				"entities": [
+					{
+						"id": "m1",
+						"name": "*Depth",
+						"color": "Lime",
+						"unit": "in",
+						"site": "e2c40cbd-8505-4eb1-b442-5118502a0079"
+					},
+					{
+						"id": "m2",
+						"name": "*Flow",
+						"color": "Blue",
+						"unit": "MGD",
+						"site": "e2c40cbd-8505-4eb1-b442-5118502a0079"
+					},
+					{
+						"id": "m3",
+						"name": "*Rain",
+						"color": "DodgerBlue",
+						"unit": "in",
+						"site": "e2c40cbd-8505-4eb1-b442-5118502a0079"
+					},
+					{
+						"id": "m4",
+						"name": "*Velocity",
+						"color": "Red",
+						"unit": "f/s",
+						"site": "e2c40cbd-8505-4eb1-b442-5118502a0079"
+					},
+					{
+						"id": "s46",
+						"name": "Wireless Signal",
+						"color": "Gray",
+						"unit": "in",
+						"site": "e2c40cbd-8505-4eb1-b442-5118502a0079"
+					}
+				]
+			},
+			{
+				"site_id": "3dfd6baa-2e03-4e9e-85b9-4ebf64f3f4c0",
+				"name": "LO010100",
+				"description": "loosahatchie",
+				"monitor_type": "Flow Monitor",
+				"monitor_start": "2024-06-26T00:00:00",
+				"monitor_end": "2025-06-26T00:00:00",
+				"monitor_status": "Active",
+				"latitude": 35.20942800,
+				"longitude": -90.05694400,
+				"asset_or_facility": "N/A",
+				"site_info_path": "https://rjn-clarity-api.com/v1/clarity/MonitorSite/3DFD6BAA-2E03-4E9E-85B9-4EBF64F3F4C0/info?child_info=true",
+				"entities": [
+					{
+						"id": "m86",
+						"name": "*Depth",
+						"color": "Lime",
+						"unit": "in",
+						"site": "3dfd6baa-2e03-4e9e-85b9-4ebf64f3f4c0"
+					},
+					{
+						"id": "m87",
+						"name": "*Flow",
+						"color": "Blue",
+						"unit": "MGD",
+						"site": "3dfd6baa-2e03-4e9e-85b9-4ebf64f3f4c0"
+					},
+					{
+						"id": "m88",
+						"name": "*Rain",
+						"color": "DodgerBlue",
+						"unit": "in",
+						"site": "3dfd6baa-2e03-4e9e-85b9-4ebf64f3f4c0"
+					},
+					{
+						"id": "m89",
+						"name": "*Velocity",
+						"color": "Red",
+						"unit": "f/s",
+						"site": "3dfd6baa-2e03-4e9e-85b9-4ebf64f3f4c0"
+					}
+				]
+			},
+			{
+				"site_id": "0ada1475-2726-464f-b66c-da080dd51322",
+				"name": "N-9",
+				"description": "Nonconnah Interceptor",
+				"monitor_type": "Flow Monitor",
+				"monitor_start": "2024-06-26T00:00:00",
+				"monitor_end": "2025-06-26T00:00:00",
+				"monitor_status": "Active",
+				"latitude": 35.06850700,
+				"longitude": -90.13242800,
+				"asset_or_facility": "N-8",
+				"site_info_path": "https://rjn-clarity-api.com/v1/clarity/MonitorSite/0ADA1475-2726-464F-B66C-DA080DD51322/info?child_info=true",
+				"entities": [
+					{
+						"id": "m103",
+						"name": "*Depth",
+						"color": "Lime",
+						"unit": "in",
+						"site": "0ada1475-2726-464f-b66c-da080dd51322"
+					},
+					{
+						"id": "m104",
+						"name": "*Flow",
+						"color": "Blue",
+						"unit": "MGD",
+						"site": "0ada1475-2726-464f-b66c-da080dd51322"
+					},
+					{
+						"id": "m105",
+						"name": "*Rain",
+						"color": "DodgerBlue",
+						"unit": "in",
+						"site": "0ada1475-2726-464f-b66c-da080dd51322"
+					},
+					{
+						"id": "m106",
+						"name": "*Velocity",
+						"color": "Red",
+						"unit": "f/s",
+						"site": "0ada1475-2726-464f-b66c-da080dd51322"
+					}
+				]
+			},
+			{
+				"site_id": "2208a376-994b-42a0-8256-bd54f5d8312a",
+				"name": "NOI-S",
+				"description": "Nonconnah-Downstream-Of-Siphon",
+				"monitor_type": "Flow Monitor",
+				"monitor_start": "2025-02-24T00:00:00",
+				"monitor_end": "2025-06-26T00:00:00",
+				"monitor_status": "Active",
+				"latitude": 35.07080500,
+				"longitude": -90.03713000,
+				"asset_or_facility": "N/A",
+				"site_info_path": "https://rjn-clarity-api.com/v1/clarity/MonitorSite/2208A376-994B-42A0-8256-BD54F5D8312A/info?child_info=true",
+				"entities": [
+					{
+						"id": "m18",
+						"name": "*Depth",
+						"color": "Lime",
+						"unit": "in",
+						"site": "2208a376-994b-42a0-8256-bd54f5d8312a"
+					},
+					{
+						"id": "m19",
+						"name": "*Flow",
+						"color": "Blue",
+						"unit": "MGD",
+						"site": "2208a376-994b-42a0-8256-bd54f5d8312a"
+					},
+					{
+						"id": "m20",
+						"name": "*Rain",
+						"color": "DodgerBlue",
+						"unit": "in",
+						"site": "2208a376-994b-42a0-8256-bd54f5d8312a"
+					},
+					{
+						"id": "m21",
+						"name": "*Velocity",
+						"color": "Red",
+						"unit": "f/s",
+						"site": "2208a376-994b-42a0-8256-bd54f5d8312a"
+					}
+				]
+			},
+			{
+				"site_id": "0a5e9b46-9c2f-4794-88f2-96bd8279a6f5",
+				"name": "WO010110",
+				"description": "Wolf River Interceptor",
+				"monitor_type": "Flow Monitor",
+				"monitor_start": "2024-06-26T00:00:00",
+				"monitor_end": "2025-06-26T00:00:00",
+				"monitor_status": "Active",
+				"latitude": 35.19693100,
+				"longitude": -90.05237200,
+				"asset_or_facility": "N/A",
+				"site_info_path": "https://rjn-clarity-api.com/v1/clarity/MonitorSite/0A5E9B46-9C2F-4794-88F2-96BD8279A6F5/info?child_info=true",
+				"entities": [
+					{
+						"id": "m120",
+						"name": "*Depth",
+						"color": "Lime",
+						"unit": "in",
+						"site": "0a5e9b46-9c2f-4794-88f2-96bd8279a6f5"
+					},
+					{
+						"id": "m121",
+						"name": "*Flow",
+						"color": "Blue",
+						"unit": "MGD",
+						"site": "0a5e9b46-9c2f-4794-88f2-96bd8279a6f5"
+					},
+					{
+						"id": "m122",
+						"name": "*Rain",
+						"color": "DodgerBlue",
+						"unit": "in",
+						"site": "0a5e9b46-9c2f-4794-88f2-96bd8279a6f5"
+					},
+					{
+						"id": "m123",
+						"name": "*Velocity",
+						"color": "Red",
+						"unit": "f/s",
+						"site": "0a5e9b46-9c2f-4794-88f2-96bd8279a6f5"
+					}
+				]
+			},
+			{
+				"site_id": "fcecbfb0-4c58-47f2-a30a-bcbc7ebbd64b",
+				"name": "WO010175",
+				"description": "Wolf River Interceptor",
+				"monitor_type": "Flow Monitor",
+				"monitor_start": "2025-02-24T00:00:00",
+				"monitor_end": "2025-06-26T00:00:00",
+				"monitor_status": "Active",
+				"latitude": 35.18374100,
+				"longitude": -90.05132100,
+				"asset_or_facility": "N/A",
+				"site_info_path": "https://rjn-clarity-api.com/v1/clarity/MonitorSite/FCECBFB0-4C58-47F2-A30A-BCBC7EBBD64B/info?child_info=true",
+				"entities": [
+					{
+						"id": "m52",
+						"name": "*Depth",
+						"color": "Lime",
+						"unit": "in",
+						"site": "fcecbfb0-4c58-47f2-a30a-bcbc7ebbd64b"
+					},
+					{
+						"id": "m53",
+						"name": "*Flow",
+						"color": "Blue",
+						"unit": "MGD",
+						"site": "fcecbfb0-4c58-47f2-a30a-bcbc7ebbd64b"
+					},
+					{
+						"id": "m54",
+						"name": "*Rain",
+						"color": "DodgerBlue",
+						"unit": "in",
+						"site": "fcecbfb0-4c58-47f2-a30a-bcbc7ebbd64b"
+					},
+					{
+						"id": "m55",
+						"name": "*Velocity",
+						"color": "Red",
+						"unit": "f/s",
+						"site": "fcecbfb0-4c58-47f2-a30a-bcbc7ebbd64b"
+					}
+				]
+			}
+		]
+		}
+	]
+}

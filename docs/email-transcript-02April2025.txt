@@ -1,0 +1,41 @@
+Dennis,
+The primary intent of this email is to update you on the status of my progress and to share my current strategy.
+
+Status: Progress using the purpose-build PyEds2 Python package (see attached files). Ongoing discourse with Emerson.
+
+Strategy: Create a REST API wrapper for the EDS API Python functions to respond to incoming GET requests.
+
+Roadblock / reason for this strategy: I believe that the EDS API design expects installation on both ends, rather than being intended to respond to GET requests.
+
+Hurdles:
+ - I have never set up token authentication before. I will use the RJN Clarity github repo as reference.
+- ‎City of Memphis will need to set up a URL for the REST API.
+
+Prose: 
+We use what is called an EDS (Emerson Data Server), as part of our Ovation System. Emerson has provided me with an install file for their API, which includes the PyEds2 Python package, with C++ headers. The idea is that we can use this API to transmit our data out from our Maxson EDS server. We have a second EDS for the Stiles plant.
+
+Attached is some documentation I have been able to generate regarding the Python module, PyEds2. Based on my conversations with Emerson employees, it seems underutilized by the community. I am still determining the ideal intended workflow.  My impression is that it is used for two systems with the EDS API installed to talk to each other. But, we can get around that I think.
+
+Hypothetically, I can write a REST API that contains the functionality for connecting and transmitting (see example function PyEds2_doc.sourceconnection in attached file), such that you don't have to use the EDS API on your end (see example: PyEds2_doc.subscriberconnection) but can rather make GET requests to a REST wrapper.
+
+One our side, to set up the data source to feed to a purpose-built API, using the PyEds2 package, it would look basically like this:
+      import PyEds2
+      source_object = PyEds2.createLive()
+      source_object.connect(0,1,dict()) 
+      pointname1 = "M100FI.UNIT0@NET0" # influent flow
+      pointname2 = "FI8001.UNIT0@NET0" # effluent flow
+      source_object.originate(pointname1)
+      source_object.originate(pointname2)
+
+I spoke with an Emerson employee yesterday, about this use case of allowing contractors to access EDS data. While it is apparently not super common, it is reasonable, and we will continue to figure out the best approach. I have some documentation in mind to check later today.
+
+Hurdle: We have been using IP addresses on our City of Memphis network to access the EDS servers. If we are to have an outward-facing API, I can see about setting up a dedicated URL.
+
+If you're at all interested in poking around in the EDS API to see how it works, we can find a way to share a 15 mb zip file of the post-install program files. I believe it is within our rights as per the license to share it with you, though Emerson tends to play things pretty close to the chest so I'll have to take a second look. The documentation for the C++ is good.
+
+If you notice that I'm missing any low hanging fruit, don't hesitate to set me straight.
+
+Thanks,
+
+G. Clayton Bennett
+Ph: (901) 636-0306
