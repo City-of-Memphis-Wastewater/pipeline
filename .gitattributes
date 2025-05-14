@@ -10,7 +10,7 @@
 *.toml  text
 
 # CSV files are treated as text (diffable)
-*.csv text
+	*.csv text
 
 # Ignore binary treatment for log/export files we care about
 *.txt text
