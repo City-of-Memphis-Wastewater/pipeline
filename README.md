@@ -85,6 +85,7 @@ Do it. You do not want to install special requirements to your system version of
 ### Install pyenv (skip if pyenv is already installed on your system)
 How to install pyenv-win (https://github.com/pyenv-win/pyenv-win)
 ```
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
 Invoke-WebRequest -UseBasicParsing -Uri "https://raw.githubusercontent.com/pyenv-win/pyenv-win/master/pyenv-win/install-pyenv-win.ps1" -OutFile "./install-pyenv-win.ps1"; &"./install-pyenv-win.ps1"
 ```
 It is worth it to make the pyenv command persistent in PowerShell, by editing the $profile file:
