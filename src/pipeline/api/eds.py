@@ -222,7 +222,7 @@ def demo_eds_save_point_export():
     point_export_decoded_str = EdsClient.get_points_export(session_maxson)
     export_file_path = project_manager.get_exports_file_path(filename = 'export_eds_points_neo.txt')
     EdsClient.save_points_export(point_export_decoded_str, export_file_path = export_file_path)
-    print(f"Export file saved to: \n{export_file_path}")
+    print(f"Export file saved to: \n{export_file_path}") 
 
 def demo_print_license():
     print("\nStart: demo_get_license()")
