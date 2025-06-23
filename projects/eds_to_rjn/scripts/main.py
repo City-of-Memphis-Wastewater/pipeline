@@ -16,7 +16,8 @@ from src.pipeline.env import SecretsYaml
 from src.pipeline.api.eds import EdsClient
 from src.pipeline.api.rjn import RjnClient
 from src.pipeline.calls import test_connection_to_internet
-from src.pipeline.helpers import round_time_to_nearest_five_minutes
+from src.pipeline import helpers
+
 from src.pipeline.projectmanager import ProjectManager
 from src.pipeline.queriesmanager import QueriesManager
 from src.pipeline.api.rjn import send_data_to_rjn2
@@ -55,12 +56,18 @@ def sketch_maxson():
     secrets_dict = SecretsYaml.load_config(secrets_file_path = project_manager.get_configs_secrets_file_path())
     sessions = {}
 
-    session_maxson = eds.login_to_session(api_url = secrets_dict["eds_apis"]["Maxson"]["url"] ,username = secrets_dict["eds_apis"]["Maxson"]["username"], password = secrets_dict["eds_apis"]["Maxson"]["password"])
-    session_maxson.custom_dict = secrets_dict["eds_apis"]["Maxson"]
+    api_secrets_m = helpers.get_nested_config(secrets_dict, ["eds_apis", "Maxson"])
+    session_maxson = EdsClient.login_to_session(api_url = api_secrets_m["url"],
+                                      username = api_secrets_m["username"],
+                                      password = api_secrets_m["password"])
+    session_maxson.custom_dict = api_secrets_m
     sessions.update({"Maxson":session_maxson})
-    
-    session_rjn = rjn.login_to_session(api_url = secrets_dict["contractor_apis"]["RJN"]["url"] ,client_id = secrets_dict["contractor_apis"]["RJN"]["client_id"], password = secrets_dict["contractor_apis"]["RJN"]["password"])
-    session_rjn.custom_dict = secrets_dict["contractor_apis"]["RJN"]
+
+    api_secrets_r = helpers.get_nested_config(secrets_dict, ["contractor_apis","RJN"])
+    session_rjn = rjn.login_to_session(api_url = api_secrets_r["url"],
+                                       client_id = api_secrets_r["client_id"],
+                                       password = api_secrets_r["password"])
+    session_rjn.custom_dict = api_secrets_r
     sessions.update({"RJN":session_rjn})
 
     #for key, session in sessions.items():
@@ -83,7 +90,7 @@ def sketch_maxson():
         
         #for row in data_updated:
         dt = datetime.fromtimestamp(row["ts"])
-        rounded_dt = round_time_to_nearest_five_minutes(dt)
+        rounded_dt = helpers.round_time_to_nearest_five_minutes(dt)
         timestamp = rounded_dt
         timestamp_str = timestamp.strftime('%Y-%m-%d %H:%M:%S')
     

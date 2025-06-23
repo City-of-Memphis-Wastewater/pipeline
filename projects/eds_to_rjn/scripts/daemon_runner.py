@@ -4,7 +4,7 @@ import logging
 import datetime
 from ..code import collector, storage, aggregator, sanitizer
 from src.pipeline.api.eds import login_to_session # actually generalized beyond EDS
-from .main import get_eds_maxson_token_and_headers, get_rjn_tokens_and_headers
+from .main import get_rjn_tokens_and_headers
 from src.pipeline.env import SecretsYaml
 from src.pipeline.projectmanager import ProjectManager
 from src.pipeline.queriesmanager import QueriesManager
@@ -20,11 +20,21 @@ def run_live_cycle():
     queries_manager = QueriesManager(project_manager)
     sessions = {}
 
-    session_maxson = login_to_session(api_url = secrets_dict["eds_apis"]["Maxson"]["url"] ,username = secrets_dict["eds_apis"]["Maxson"]["username"], password = secrets_dict["eds_apis"]["Maxson"]["password"])
-    session_maxson.custom_dict = secrets_dict["eds_apis"]["Maxson"]
-    sessions.update({"Maxson":session_maxson})
+    try:
+        api_secrets = secrets_dict["eds_apis"]["Maxson"]
+    except KeyError as e:
+        raise KeyError(f"Missing required configuration for eds_apis['Maxson']: {e}")
 
-    queries_dictlist = load_query_rows_from_csv_files(queries_manager.get_default_query_file_paths_list())
+
+    session_maxson = login_to_session(api_url = api_secrets["url"],
+                                      username = api_secrets["username"],
+                                      password = api_secrets["password"])
+    
+    session_maxson.custom_dict = api_secrets
+    sessions.update({"Maxson":session_maxson})
+    
+    queries_file_path_list = queries_manager.get_default_query_file_paths_list()
+    queries_dictlist = load_query_rows_from_csv_files(queries_file_path_list)
     #print(f"queries_dictlist = {queries_dictlist}")
     queries_defaultdictlist = group_queries_by_api_url(queries_dictlist)
     #print(f"queries_defaultdictlist = {queries_defaultdictlist}")

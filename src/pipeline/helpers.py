@@ -48,6 +48,17 @@ def function_view(globals_passed=None):
                 print(f"  {name}")
     print("\n")
 
+def get_nested_config(dct: dict, keys: list[str]):
+    """Retrieve nested dict value by keys list; raise KeyError with full path if missing."""
+    current = dct
+    for key in keys:
+        try:
+            current = current[key]
+        except KeyError as e:
+            full_path = " -> ".join(keys)
+            raise KeyError(f"Missing required configuration at path: {full_path}") from e
+    return current
+
 
 if __name__ == "__main__":
     function_view()
