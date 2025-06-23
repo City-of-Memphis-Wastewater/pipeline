@@ -137,7 +137,7 @@ class ProjectManager:
 
         with open(default_toml_path, 'r') as f:
             data = toml.load(f)
-            #print(f"data = {data}")
+            #print(f"data = {data}") 
         try:
             return data['default-project']['project'] # This dictates the proper formatting of the TOML file.
         except KeyError as e:
