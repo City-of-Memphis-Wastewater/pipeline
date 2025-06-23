@@ -19,7 +19,6 @@ from src.pipeline.calls import test_connection_to_internet
 from src.pipeline import helpers
 
 from src.pipeline.projectmanager import ProjectManager
-from src.pipeline.queriesmanager import QueriesManager
 from src.pipeline.api.rjn import send_data_to_rjn2
 from src.pipeline.api.eds import fetch_eds_data
 #from projects.eds_to_rjn.scripts import collector
@@ -48,8 +47,7 @@ def sketch_maxson():
 
     project_name = 'eds_to_rjn' # project_name = ProjectManager.identify_default_project()
     project_manager = ProjectManager(project_name)
-    queries_manager = QueriesManager(project_manager)
-    queries_file_path_list = queries_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
+    queries_file_path_list = project_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
     logger.debug(f"queries_file_path_list = {queries_file_path_list}")
     queries_dictlist = load_query_rows_from_csv_files(queries_file_path_list)
     queries_defaultdictlist = group_queries_by_api_url(queries_dictlist)

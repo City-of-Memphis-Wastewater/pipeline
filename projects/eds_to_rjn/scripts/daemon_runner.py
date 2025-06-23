@@ -17,7 +17,6 @@ def run_live_cycle():
     project_name = 'eds_to_rjn' # project_name = ProjectManager.identify_default_project()
     project_manager = ProjectManager(project_name)
     secrets_dict = SecretsYaml.load_config(secrets_file_path = project_manager.get_configs_secrets_file_path())
-    queries_manager = QueriesManager(project_manager)
     sessions = {}
 
     try:
@@ -33,7 +32,7 @@ def run_live_cycle():
     session_maxson.custom_dict = api_secrets
     sessions.update({"Maxson":session_maxson})
     
-    queries_file_path_list = queries_manager.get_default_query_file_paths_list()
+    queries_file_path_list = project_manager.get_default_query_file_paths_list()
     queries_dictlist = load_query_rows_from_csv_files(queries_file_path_list)
     #print(f"queries_dictlist = {queries_dictlist}")
     queries_defaultdictlist = group_queries_by_api_url(queries_dictlist)
