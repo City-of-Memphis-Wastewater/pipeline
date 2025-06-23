@@ -1,13 +1,10 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 import logging
 import requests
 import sys
 import time
 
-from src.pipeline.calls import  call_ping
-from src.pipeline.env import find_urls
 from src.pipeline import helpers
-from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
 from pprint import pprint
 
 # Configure logging (adjust level as needed)
@@ -150,42 +147,16 @@ def fetch_eds_data_row(session, iess):
 
 
 def demo_get_trabular_trend():
-    print("Start: demo_show_points_tabular_trend()")
-    # typical opening, for discerning the project, the secrets files, the queries, and preparing for sessions.
-    from src.pipeline.projectmanager import ProjectManager
-    from src.pipeline.env import SecretsYaml
+    print("\nStart: demo_show_points_tabular_trend()")
+    
     from src.pipeline.queriesmanager import QueriesManager
-
-    project_name = ProjectManager.identify_default_project()
-    project_manager = ProjectManager(project_name)
+    from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
+    
+    project_manager, sessions = _demo_eds_start_session_maxson()
+    
     queries_manager = QueriesManager(project_manager)
-    secrets_dict = SecretsYaml.load_config(secrets_file_path = project_manager.get_configs_secrets_file_path())
-    sessions = {}
-
-    api_secrets_m = helpers.get_nested_config(secrets_dict, ["eds_apis", "Maxson"])
-    session_maxson = EdsClient.login_to_session(api_url = api_secrets_m["url"],
-                                      username = api_secrets_m["username"],
-                                      password = api_secrets_m["password"])
-    session_maxson.custom_dict = api_secrets_m
-    sessions.update({"Maxson":session_maxson})
-
-    api_secrets_s = helpers.get_nested_config(secrets_dict, ["eds_apis", "Maxson"])
-    session_maxson = EdsClient.login_to_session(api_url = api_secrets_m["url"],
-                                      username = api_secrets_m["username"],
-                                      password = api_secrets_m["password"])
-    session_maxson.custom_dict = api_secrets_m
-    sessions.update({"Maxson":session_maxson})
-
-    if False:
-        api_secrets_s = helpers.get_nested_config(secrets_dict, ["eds_apis", "WWTF"])
-        session_stiles = EdsClient.login_to_session(api_url = api_secrets_s["url"],
-                                      username = api_secrets_s["username"],
-                                      password = api_secrets_s["password"])
-        session_stiles.custom_dict = api_secrets_s
-        sessions.update({"WWTF":session_stiles})
-
     queries_file_path_list = queries_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
-    queries_dictlist = load_query_rows_from_csv_files(queries_file_path_list)
+    queries_dictlist = load_query_rows_from_csv_files(queries_file_path_list) # you can edit your queries files here
     queries_defaultdictlist = group_queries_by_api_url(queries_dictlist)
     
     for key, session in sessions.items():
@@ -210,7 +181,7 @@ def demo_get_trabular_trend():
                 print(s)
 
 def _demo_eds_start_session_maxson():
-    print("Start _demo_eds_start_session_maxson()")
+    print("Start: _demo_eds_start_session_maxson()")
     from src.pipeline.env import SecretsYaml
     from src.pipeline.projectmanager import ProjectManager
     project_name = ProjectManager.identify_default_project()
@@ -235,7 +206,7 @@ def _demo_eds_start_session_maxson():
 
 
 def demo_eds_print_point_export():
-    print("Start demo_eds_print_point_export()")
+    print("Start: demo_eds_print_point_export()")
     project_manager, sessions = _demo_eds_start_session_maxson()
     session_maxson = sessions["Maxson"]
 
@@ -244,7 +215,7 @@ def demo_eds_print_point_export():
     return point_export_decoded_str
 
 def demo_eds_save_point_export():
-    print("Start demo_eds_save_point_export()")
+    print("Start: demo_eds_save_point_export()")
     project_manager, sessions = _demo_eds_start_session_maxson()
     session_maxson = sessions["Maxson"]
 
@@ -253,8 +224,8 @@ def demo_eds_save_point_export():
     EdsClient.save_points_export(point_export_decoded_str, export_file_path = export_file_path)
     print(f"Export file saved to: \n{export_file_path}")
 
-def demo_get_license():
-    print("\ndemo_get_license()")
+def demo_print_license():
+    print("\nStart: demo_get_license()")
     
     project_manager, sessions = _demo_eds_start_session_maxson()
     session_maxson = sessions["Maxson"]
@@ -262,37 +233,30 @@ def demo_get_license():
     pprint(response)
     return response
 
-def ping():
-    from src.pipeline.env import SecretsYaml
-    from src.pipeline.projectmanager import ProjectManager
-
-    project_name = ProjectManager.identify_default_project()
-    project_manager = ProjectManager(project_name)
-    secrets_dict = SecretsYaml.load_config(secrets_file_path = project_manager.get_configs_secrets_file_path())
-    
+def demo_ping():
+    print("\nStart: demo_ping()")
+    from src.pipeline.calls import call_ping
     project_manager, sessions = _demo_eds_start_session_maxson()
     session_maxson = sessions["Maxson"]
     api_url = session_maxson.custom_dict["url"]
-    if "43084" in api_url or "43080" in api_url: # Expected REST or SOAP API ports for the EDS 
-        print(f"ping url: {api_url}")
-        call_ping(api_url)
+    response = call_ping(api_url)
 
 if __name__ == "__main__":
     import sys
     cmd = sys.argv[1] if len(sys.argv) > 1 else "default"
 
-    if cmd == "demo-points-export":
+    if cmd == "demo-query":
         demo_eds_save_point_export()
     elif cmd == "demo-trend":
         demo_get_trabular_trend()
-    elif cmd == "ping":
-        ping()
-    elif cmd == "license":
-        demo_get_license()
+    elif cmd == "demo-ping":
+        demo_ping()
+    elif cmd == "demo-license":
+        demo_print_license()
     else:
         print("Usage options: \n" 
-        "poetry run python -m pipeline.api.eds demo-points-export \n"  
+        "poetry run python -m pipeline.api.eds demo-query \n"  
         "poetry run python -m pipeline.api.eds demo-trend \n"
-        "poetry run python -m pipeline.api.eds ping \n"
-        "poetry run python -m pipeline.api.eds license")
+        "poetry run python -m pipeline.api.eds demo-ping \n"
+        "poetry run python -m pipeline.api.eds demo-license")
     
