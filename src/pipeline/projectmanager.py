@@ -35,6 +35,7 @@ class ProjectManager:
     
     def __init__(self, project_name):
         self.project_name = project_name
+        self.projects_dir = self.get_projects_dir()
         self.project_dir = self.get_project_dir()
         self.exports_dir = self.get_exports_dir()
         self.imports_dir = self.get_imports_dir()
@@ -153,6 +154,22 @@ class ProjectManager:
             return data['default-project']['project'] # This dictates the proper formatting of the TOML file.
         except KeyError as e:
             raise KeyError(f"Missing key in {cls.DEFAULT_PROJECT_TOML_FILE_NAME}: {e}")
+        
+    def get_default_query_file_paths_list(self):
+        
+        default_query_path = self.get_queries_dir()/ 'default-queries.toml'
+        
+        with open(default_query_path, 'r') as f:
+            query_config = toml.load(f)
+        filenames = query_config['default-query']['files']
+        if not isinstance(filenames, list):
+            raise ValueError("Expected a list under ['default-query']['files'] in default-queries.toml")
+        paths = [self.get_queries_file_path(fname) for fname in filenames]
+
+        for path in paths:
+            if not os.path.exists(path):
+                raise FileNotFoundError(f"Query file not found: {path}")
+        return paths
 
 def establish_default_project():
     project_name = ProjectManager.identify_default_project()

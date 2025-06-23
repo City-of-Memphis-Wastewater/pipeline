@@ -145,6 +145,71 @@ def fetch_eds_data_row(session, iess):
     return point_data
 
 
+def _demo_eds_start_session_maxson():
+    print("Start: _demo_eds_start_session_maxson()")
+    from src.pipeline.env import SecretsYaml
+    from src.pipeline.projectmanager import ProjectManager
+    project_name = ProjectManager.identify_default_project()
+    project_manager = ProjectManager(project_name)
+    
+    secrets_dict = SecretsYaml.load_config(secrets_file_path = project_manager.get_configs_secrets_file_path())
+    sessions = {}
+
+    api_secrets_m = helpers.get_nested_config(secrets_dict, ["eds_apis","Maxson"])
+    session_maxson = EdsClient.login_to_session(api_url = api_secrets_m["url"],
+                                                username = api_secrets_m["username"],
+                                                password = api_secrets_m["password"])
+    session_maxson.custom_dict = api_secrets_m
+    sessions.update({"Maxson":session_maxson})
+
+    # Show example of what it would be like to start a second session (though Stiles API port 43084 is not accesible at this writing)
+    if False:
+        session_stiles = EdsClient.login_to_session(api_url = secrets_dict["eds_apis"]["WWTF"]["url"] ,username = secrets_dict["eds_apis"]["WWTF"]["username"], password = secrets_dict["eds_apis"]["WWTF"]["password"])
+        session_stiles.custom_dict = secrets_dict["eds_apis"]["WWTF"]
+        sessions.update({"WWTF":session_stiles})
+
+    return project_manager, sessions
+
+def demo_eds_print_live_query():
+    from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
+
+    project_manager, sessions = _demo_eds_start_session_maxson
+    queries_file_path_list = project_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
+    queries_dictlist = load_query_rows_from_csv_files(queries_file_path_list) # you can edit your queries files here
+    queries_defaultdictlist = group_queries_by_api_url(queries_dictlist)
+
+    for key, session in sessions.items():
+        # Discern which queries to use
+        point_list = [row['iess'] for row in queries_defaultdictlist.get(key,[])]
+
+        for iess in point_list:
+            api_url = session.custom_dict["url"]
+            EdsClient.get_points_live_mod(session,iess)
+            for idx, iess in enumerate(point_list):
+                print('\n{} samples:'.format(iess))
+                for s in results[idx]:
+                    #print('{} {} {}'.format(datetime.fromtimestamp(s[0]), s[1], s[2]))
+                    print(s)
+
+def demo_eds_print_point_export():
+    print("Start: demo_eds_print_point_export()")
+    project_manager, sessions = _demo_eds_start_session_maxson()
+    session_maxson = sessions["Maxson"]
+
+    point_export_decoded_str = EdsClient.get_points_export(session_maxson)
+    pprint(point_export_decoded_str)
+    return point_export_decoded_str
+
+def demo_eds_save_point_export():
+    print("Start: demo_eds_save_point_export()")
+    project_manager, sessions = _demo_eds_start_session_maxson()
+    session_maxson = sessions["Maxson"]
+
+    point_export_decoded_str = EdsClient.get_points_export(session_maxson)
+    export_file_path = project_manager.get_exports_file_path(filename = 'export_eds_points_neo.txt')
+    EdsClient.save_points_export(point_export_decoded_str, export_file_path = export_file_path)
+    print(f"Export file saved to: \n{export_file_path}") 
+
 def demo_get_trabular_trend():
     print("\nStart: demo_show_points_tabular_trend()")
     
@@ -154,7 +219,7 @@ def demo_get_trabular_trend():
     project_manager, sessions = _demo_eds_start_session_maxson()
     
     queries_manager = QueriesManager(project_manager)
-    queries_file_path_list = queries_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
+    queries_file_path_list = project_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
     queries_dictlist = load_query_rows_from_csv_files(queries_file_path_list) # you can edit your queries files here
     queries_defaultdictlist = group_queries_by_api_url(queries_dictlist)
     
@@ -179,55 +244,19 @@ def demo_get_trabular_trend():
                 #print('{} {} {}'.format(datetime.fromtimestamp(s[0]), s[1], s[2]))
                 print(s)
 
-def _demo_eds_start_session_maxson():
-    print("Start: _demo_eds_start_session_maxson()")
-    from src.pipeline.env import SecretsYaml
-    from src.pipeline.projectmanager import ProjectManager
-    project_name = ProjectManager.identify_default_project()
-    project_manager = ProjectManager(project_name)
-    secrets_dict = SecretsYaml.load_config(secrets_file_path = project_manager.get_configs_secrets_file_path())
-    sessions = {}
-
-    api_secrets_m = helpers.get_nested_config(secrets_dict, ["eds_apis","Maxson"])
-    session_maxson = EdsClient.login_to_session(api_url = api_secrets_m["url"],
-                                                username = api_secrets_m["username"],
-                                                password = api_secrets_m["password"])
-    session_maxson.custom_dict = api_secrets_m
-    sessions.update({"Maxson":session_maxson})
-
-    # Show example of what it would be like to start a second session (though Stiles API port 43084 is not accesible at this writing)
-    if False:
-        session_stiles = EdsClient.login_to_session(api_url = secrets_dict["eds_apis"]["WWTF"]["url"] ,username = secrets_dict["eds_apis"]["WWTF"]["username"], password = secrets_dict["eds_apis"]["WWTF"]["password"])
-        session_stiles.custom_dict = secrets_dict["eds_apis"]["WWTF"]
-        sessions.update({"WWTF":session_stiles})
-
-    return project_manager, sessions
-
-
-def demo_eds_print_point_export():
-    print("Start: demo_eds_print_point_export()")
-    project_manager, sessions = _demo_eds_start_session_maxson()
-    session_maxson = sessions["Maxson"]
-
-    point_export_decoded_str = EdsClient.get_points_export(session_maxson)
-    pprint(point_export_decoded_str)
-    return point_export_decoded_str
-
-def demo_eds_save_point_export():
-    print("Start: demo_eds_save_point_export()")
-    project_manager, sessions = _demo_eds_start_session_maxson()
-    session_maxson = sessions["Maxson"]
-
-    point_export_decoded_str = EdsClient.get_points_export(session_maxson)
-    export_file_path = project_manager.get_exports_file_path(filename = 'export_eds_points_neo.txt')
-    EdsClient.save_points_export(point_export_decoded_str, export_file_path = export_file_path)
-    print(f"Export file saved to: \n{export_file_path}") 
+def demo_get_live_point_query():
+    point_data = EdsClient.get_points_live_mod(session, iess)
+    if point_data is None:
+        raise ValueError(f"No live point returned for iess {iess}")
+    ts = point_data["ts"]
+    value = point_data["value"]
+    return ts, value
 
 def demo_print_license():
     print("\nStart: demo_get_license()")
-    
     project_manager, sessions = _demo_eds_start_session_maxson()
     session_maxson = sessions["Maxson"]
+
     response = EdsClient.get_license(session_maxson, api_url = session_maxson.custom_dict["url"])
     pprint(response)
     return response
@@ -237,6 +266,7 @@ def demo_ping():
     from src.pipeline.calls import call_ping
     project_manager, sessions = _demo_eds_start_session_maxson()
     session_maxson = sessions["Maxson"]
+
     api_url = session_maxson.custom_dict["url"]
     response = call_ping(api_url)
 
@@ -244,8 +274,10 @@ if __name__ == "__main__":
     import sys
     cmd = sys.argv[1] if len(sys.argv) > 1 else "default"
 
-    if cmd == "demo-query":
-        demo_eds_save_point_export()
+    if cmd == "demo-live":
+        demo_eds_print_live_query()
+    elif cmd == "demo-export":
+        demo_eds_print_point_export()
     elif cmd == "demo-trend":
         demo_get_trabular_trend()
     elif cmd == "demo-ping":
