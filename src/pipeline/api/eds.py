@@ -1,7 +1,6 @@
 from datetime import datetime
 import logging
 import requests
-import sys
 import time
 
 from src.pipeline import helpers
