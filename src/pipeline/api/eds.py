@@ -177,30 +177,26 @@ def demo_eds_print_point_live():
     project_manager, sessions = _demo_eds_start_session_maxson()
     queries_file_path_list = project_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
     queries_dictlist_unfiltered = load_query_rows_from_csv_files(queries_file_path_list) # A scripter can edit their queries file names here - they do not need to use the default.
-    queries_defaultdictlist_grouped = group_queries_by_api_url(queries_dictlist_unfiltered)
+    queries_defaultdictlist_grouped_by_session_key = group_queries_by_api_url(queries_dictlist_unfiltered,'zd')
     
     # for key, session in sessions.items(): # Given multiple sessions, cycle through each. 
-
     key = "Maxson"
     session = sessions[key]
-    queries_dictlist_filtered = queries_defaultdictlist_grouped.get(key,[])
     # Discern which queries to use, filtered by current session key.
-
-    logging.debug(f"queries_dictlist_unfiltered = {queries_dictlist_unfiltered}\n")
-    logging.debug(f"queries_dictlist_filtered = {queries_dictlist_filtered}\n")
-    logging.debug(f"queries_defaultdictlist_grouped = {queries_defaultdictlist_grouped}\n")
-
-    point_list = [row['iess'] for row in queries_defaultdictlist_grouped.get(key,[])]
+    queries_dictlist_filtered_by_session_key = queries_defaultdictlist_grouped_by_session_key.get(key,[])
     
-    for iess in point_list:
+    logging.debug(f"queries_dictlist_unfiltered = {queries_dictlist_unfiltered}\n")
+    logging.debug(f"queries_dictlist_filtered_by_session_key = {queries_dictlist_filtered_by_session_key}\n")
+    logging.debug(f"queries_defaultdictlist_grouped_by_session_key = {queries_defaultdictlist_grouped_by_session_key}\n")
+
+    for row in queries_dictlist_filtered_by_session_key:
+        iess = str(row["iess"]) if row["iess"] not in (None, '', '\t') else None
         point_data = EdsClient.get_points_live_mod(session,iess)
         if point_data is None:
             raise ValueError(f"No live point returned for iess {iess}")
-        #ts = point_data["ts"]
-        #value = point_data["value"]
-        EdsClient.print_point_info_row(point_data)
-        
-        #return ts, value
+        else:
+            row.update(point_data) 
+        EdsClient.print_point_info_row(row)
 
 @log_function_call(level=logging.DEBUG)
 def demo_eds_print_point_live_alt():
@@ -209,15 +205,21 @@ def demo_eds_print_point_live_alt():
     project_manager, sessions = _demo_eds_start_session_maxson()
     queries_file_path_list = project_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
     queries_dictlist_unfiltered = load_query_rows_from_csv_files(queries_file_path_list) # A scripter can edit their queries file names here - they do not need to use the default.
-    queries_defaultdictlist_grouped = group_queries_by_api_url(queries_dictlist_unfiltered)
+    queries_defaultdictlist_grouped_by_session_key = group_queries_by_api_url(queries_dictlist_unfiltered)
     
     # for key, session in sessions.items(): # Given multiple sessions, cycle through each. 
     key = "Maxson"
     session = sessions[key]
-    queries_dictlist_filtered = queries_defaultdictlist_grouped.get(key,[])
-    data_updated = collector.collect_live_values(session, queries_dictlist_filtered)
+    queries_dictlist_filtered_by_session_key = queries_defaultdictlist_grouped_by_session_key.get(key,[])
+    queries_plus_responses_filtered_by_session_key = collector.collect_live_values(session, queries_dictlist_filtered_by_session_key)
     # Discern which queries to use, filtered by current session key.
-    for row in data_updated:
+
+    logging.debug(f"queries_dictlist_unfiltered = {queries_dictlist_unfiltered}\n")
+    logging.debug(f"queries_defaultdictlist_grouped_by_session_key = {queries_defaultdictlist_grouped_by_session_key}\n")
+    logging.debug(f"queries_dictlist_filtered_by_session_key = {queries_dictlist_filtered_by_session_key}\n")
+    logging.debug(f"queries_plus_responses_filtered_by_session_key = {queries_plus_responses_filtered_by_session_key}\n")
+    
+    for row in queries_plus_responses_filtered_by_session_key:
         EdsClient.print_point_info_row(row)
 
 @log_function_call(level=logging.DEBUG)
@@ -250,11 +252,11 @@ def demo_get_trabular_trend():
     queries_manager = QueriesManager(project_manager)
     queries_file_path_list = project_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
     queries_dictlist_unfiltered = load_query_rows_from_csv_files(queries_file_path_list) # you can edit your queries files here
-    queries_defaultdictlist_grouped = group_queries_by_api_url(queries_dictlist_unfiltered)
+    queries_defaultdictlist_grouped_by_session_key = group_queries_by_api_url(queries_dictlist_unfiltered,'zd')
     
     for key, session in sessions.items():
         # Discern which queries to use
-        point_list = [row['iess'] for row in queries_defaultdictlist_grouped.get(key,[])]
+        point_list = [row['iess'] for row in queries_defaultdictlist_grouped_by_session_key.get(key,[])]
 
         # Discern the time range to use
         starttime = queries_manager.get_most_recent_successful_timestamp(api_id=key)

@@ -50,7 +50,7 @@ def sketch_maxson():
     queries_file_path_list = project_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
     logger.debug(f"queries_file_path_list = {queries_file_path_list}")
     queries_dictlist_unfiltered = load_query_rows_from_csv_files(queries_file_path_list)
-    queries_defaultdictlist_grouped = group_queries_by_api_url(queries_dictlist_unfiltered)
+    queries_defaultdictlist_grouped_by_session_key = group_queries_by_api_url(queries_dictlist_unfiltered,'zd')
     secrets_dict = SecretsYaml.load_config(secrets_file_path = project_manager.get_configs_secrets_file_path())
     sessions = {}
 
@@ -72,21 +72,21 @@ def sketch_maxson():
     key = "Maxson"
     session = sessions[key] 
 
-    queries_dictlist_filtered = queries_defaultdictlist_grouped.get(key,[])
-    # data_updated should probably be  nested dictionaries rather than flattened rows, with keys for discerning source (localquery vs EDS vs RJN)
-    data_updated = collector.collect_live_values(session, queries_dictlist_filtered) # This returns everything known plus everything recieved. It is glorious. It is complete. It is not sanitized.
-    data_sanitized_for_printing = sanitizer.sanitize_data_for_printing(data_updated)
-    data_sanitized_for_aggregated_storage = sanitizer.sanitize_data_for_aggregated_storage(data_updated)
+    queries_dictlist_filtered_by_session_key = queries_defaultdictlist_grouped_by_session_key.get(key,[])
+    # queries_plus_responses_filtered_by_session_key should probably be  nested dictionaries rather than flattened rows, with keys for discerning source (localquery vs EDS vs RJN)
+    queries_plus_responses_filtered_by_session_key = collector.collect_live_values(session, queries_dictlist_filtered_by_session_key) # This returns everything known plus everything recieved. It is glorious. It is complete. It is not sanitized.
+    data_sanitized_for_printing = sanitizer.sanitize_data_for_printing(queries_plus_responses_filtered_by_session_key)
+    data_sanitized_for_aggregated_storage = sanitizer.sanitize_data_for_aggregated_storage(queries_plus_responses_filtered_by_session_key)
 
     for row in data_sanitized_for_aggregated_storage:
         EdsClient.print_point_info_row(row)
 
-        #print(f"queries_dictlist_filtered = {queries_dictlist_filtered}")
-        #print(f"data_updated = {data_updated}")
+        #print(f"queries_dictlist_filtered_by_session_key = {queries_dictlist_filtered_by_session_key}")
+        #print(f"queries_plus_responses_filtered_by_session_key = {queries_plus_responses_filtered_by_session_key}")
 
         # Process timestamp
         
-        #for row in data_updated:
+        #for row in queries_plus_responses_filtered_by_session_key:
         dt = datetime.fromtimestamp(row["ts"])
         rounded_dt = helpers.round_time_to_nearest_five_minutes(dt)
         timestamp = rounded_dt
