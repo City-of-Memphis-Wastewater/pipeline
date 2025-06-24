@@ -15,12 +15,32 @@ class EdsClient:
         return response
 
     @staticmethod
-    def print_point_info_row(row):
+    def print_point_info_row_og(row):
         # use this when unpacking after bulk retrieval, not during retrieving
         try:
             print(f'''iess:{row["iess"]}, dt:{datetime.fromtimestamp(row["ts"])}, un:{row["un"]}, av:{round(row["value"],2)}, {row["shortdesc"]}''')
         except:
             print(f'''iess:{row["iess"]}, dt:{datetime.fromtimestamp(row["ts"])}, un:{row["un"]}, av:{round(row["value"],2)}''')
+
+    @staticmethod
+    def print_point_info_row(row):
+        # Desired keys to print, with optional formatting
+        keys_to_print = {
+            "iess": lambda v: f"iess:{v}",
+            "ts": lambda v: f"dt:{datetime.fromtimestamp(v)}",
+            "un": lambda v: f"un:{v}",
+            "value": lambda v: f"av:{round(v, 2)}",
+            "shortdesc": lambda v: str(v),
+        }
+
+        parts = []
+        for key, formatter in keys_to_print.items():
+            try:
+                parts.append(formatter(row[key]))
+            except (KeyError, TypeError, ValueError):
+                continue  # Skip missing or malformed values
+
+        print(", ".join(parts))
 
     @staticmethod
     def get_points_live_mod(session, iess: str):
@@ -132,14 +152,6 @@ class EdsClient:
 
         print('request [{}] executed in: {:.3f} s\n'.format(req_id, time.time() - st))
 
-                
-def fetch_eds_data(session, iess):
-    point_data = EdsClient.get_points_live_mod(session, iess)
-    if point_data is None:
-        raise ValueError(f"No live point returned for iess {iess}")
-    ts = point_data["ts"]
-    value = point_data["value"]
-    return ts, value
 
 def fetch_eds_data_row(session, iess):
     point_data = EdsClient.get_points_live_mod(session, iess)
@@ -242,7 +254,7 @@ def demo_eds_save_point_export():
     print(f"Export file saved to: \n{export_file_path}") 
 
 @log_function_call(level=logging.DEBUG)
-def demo_print_trabular_trend():
+def demo_eds_print_trabular_trend():
     
     from src.pipeline.queriesmanager import QueriesManager
     from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
@@ -275,7 +287,7 @@ def demo_print_trabular_trend():
                 print('{} {} {}'.format(datetime.fromtimestamp(s[0]), round(s[1],2), s[2]))
 
 @log_function_call(level=logging.DEBUG)
-def demo_print_license():
+def demo_eds_print_license():
     project_manager, sessions = _demo_eds_start_session_maxson()
     session_maxson = sessions["Maxson"]
 
@@ -284,7 +296,7 @@ def demo_print_license():
     return response
 
 @log_function_call(level=logging.DEBUG)
-def demo_ping():
+def demo_eds_ping():
     from src.pipeline.calls import call_ping
     project_manager, sessions = _demo_eds_start_session_maxson()
     session_maxson = sessions["Maxson"]
@@ -314,11 +326,11 @@ if __name__ == "__main__":
         #demo_eds_print_point_export()
         demo_eds_save_point_export()
     elif cmd == "demo-trend":
-        demo_print_trabular_trend()
+        demo_eds_print_trabular_trend()
     elif cmd == "demo-ping":
-        demo_ping()
+        demo_eds_ping()
     elif cmd == "demo-license":
-        demo_print_license()
+        demo_eds_print_license()
     else:
         print("Usage options: \n" 
         "poetry run python -m pipeline.api.eds demo-export \n"

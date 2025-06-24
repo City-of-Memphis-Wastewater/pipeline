@@ -4,7 +4,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from src.pipeline.helpers import round_time_to_nearest_five_minutes
-from src.pipeline.api.eds import fetch_eds_data, EdsClient
+from src.pipeline.api.eds import EdsClient
 
 def collect_live_values(session, queries_dictlist_filtered_by_session_key):   
     data = []
