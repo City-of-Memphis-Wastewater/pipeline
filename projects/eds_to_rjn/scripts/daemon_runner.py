@@ -33,16 +33,16 @@ def run_live_cycle():
     sessions.update({"Maxson":session_maxson})
     
     queries_file_path_list = project_manager.get_default_query_file_paths_list()
-    queries_dictlist = load_query_rows_from_csv_files(queries_file_path_list)
-    #print(f"queries_dictlist = {queries_dictlist}")
-    queries_defaultdictlist = group_queries_by_api_url(queries_dictlist)
-    #print(f"queries_defaultdictlist = {queries_defaultdictlist}")
+    queries_dictlist_unfiltered = load_query_rows_from_csv_files(queries_file_path_list)
+    #print(f"queries_dictlist_unfiltered = {queries_dictlist_unfiltered}")
+    queries_defaultdictlist_grouped = group_queries_by_api_url(queries_dictlist_unfiltered)
+    #print(f"queries_defaultdictlist_grouped = {queries_defaultdictlist_grouped}")
     #for key, session in sessions.items():
     key = "Maxson"
     session = sessions[key] 
 
-    queries_defaultdict = queries_defaultdictlist.get(key,[])        
-    data = collector.collect_live_values(session, queries_defaultdict) # need a way to for the eds_api method refernce to land on the other end
+    queries_dictlist_filtered = queries_defaultdictlist_grouped.get(key,[])        
+    data = collector.collect_live_values(session, queries_dictlist_filtered) # need a way to for the eds_api method refernce to land on the other end
     #print(f"data = {data}")
     if len(data)==0:
         print("No data retrieved via collector.collect_live_values(). Skipping storage.store_live_values()")

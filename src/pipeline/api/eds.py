@@ -4,10 +4,8 @@ import requests
 import time
 
 from src.pipeline import helpers
+from src.pipeline.decorators import log_function_call
 from pprint import pprint
-
-# Configure logging (adjust level as needed)
-logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
 class EdsClient:
 
@@ -18,8 +16,11 @@ class EdsClient:
 
     @staticmethod
     def print_point_info_row(row):
-        # use theis when unpacking after bulk retrieval, not when retrieving
-        print(f'''iess:{row["iess"]}, dt:{datetime.fromtimestamp(row["ts"])}, un:{row["un"]}, av:{round(row["value"],2)}, {row["shortdesc"]}''')
+        # use this when unpacking after bulk retrieval, not during retrieving
+        try:
+            print(f'''iess:{row["iess"]}, dt:{datetime.fromtimestamp(row["ts"])}, un:{row["un"]}, av:{round(row["value"],2)}, {row["shortdesc"]}''')
+        except:
+            print(f'''iess:{row["iess"]}, dt:{datetime.fromtimestamp(row["ts"])}, un:{row["un"]}, av:{round(row["value"],2)}''')
 
     @staticmethod
     def get_points_live_mod(session, iess: str):
@@ -144,9 +145,8 @@ def fetch_eds_data_row(session, iess):
     point_data = EdsClient.get_points_live_mod(session, iess)
     return point_data
 
-
+@log_function_call(level=logging.DEBUG) 
 def _demo_eds_start_session_maxson():
-    print("Start: _demo_eds_start_session_maxson()")
     from src.pipeline.env import SecretsYaml
     from src.pipeline.projectmanager import ProjectManager
     project_name = ProjectManager.identify_default_project()
@@ -170,29 +170,58 @@ def _demo_eds_start_session_maxson():
 
     return project_manager, sessions
 
-def demo_eds_print_live_query():
+@log_function_call(level=logging.DEBUG)
+def demo_eds_print_point_live():
     from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
 
-    project_manager, sessions = _demo_eds_start_session_maxson
+    project_manager, sessions = _demo_eds_start_session_maxson()
     queries_file_path_list = project_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
-    queries_dictlist = load_query_rows_from_csv_files(queries_file_path_list) # you can edit your queries files here
-    queries_defaultdictlist = group_queries_by_api_url(queries_dictlist)
+    queries_dictlist_unfiltered = load_query_rows_from_csv_files(queries_file_path_list) # A scripter can edit their queries file names here - they do not need to use the default.
+    queries_defaultdictlist_grouped = group_queries_by_api_url(queries_dictlist_unfiltered)
+    
+    # for key, session in sessions.items(): # Given multiple sessions, cycle through each. 
 
-    for key, session in sessions.items():
-        # Discern which queries to use
-        point_list = [row['iess'] for row in queries_defaultdictlist.get(key,[])]
+    key = "Maxson"
+    session = sessions[key]
+    queries_dictlist_filtered = queries_defaultdictlist_grouped.get(key,[])
+    # Discern which queries to use, filtered by current session key.
 
-        for iess in point_list:
-            api_url = session.custom_dict["url"]
-            EdsClient.get_points_live_mod(session,iess)
-            for idx, iess in enumerate(point_list):
-                print('\n{} samples:'.format(iess))
-                for s in results[idx]:
-                    #print('{} {} {}'.format(datetime.fromtimestamp(s[0]), s[1], s[2]))
-                    print(s)
+    logging.debug(f"queries_dictlist_unfiltered = {queries_dictlist_unfiltered}\n")
+    logging.debug(f"queries_dictlist_filtered = {queries_dictlist_filtered}\n")
+    logging.debug(f"queries_defaultdictlist_grouped = {queries_defaultdictlist_grouped}\n")
 
+    point_list = [row['iess'] for row in queries_defaultdictlist_grouped.get(key,[])]
+    
+    for iess in point_list:
+        point_data = EdsClient.get_points_live_mod(session,iess)
+        if point_data is None:
+            raise ValueError(f"No live point returned for iess {iess}")
+        #ts = point_data["ts"]
+        #value = point_data["value"]
+        EdsClient.print_point_info_row(point_data)
+        
+        #return ts, value
+
+@log_function_call(level=logging.DEBUG)
+def demo_eds_print_point_live_alt():
+    from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
+    from projects.eds_to_rjn.code import collector
+    project_manager, sessions = _demo_eds_start_session_maxson()
+    queries_file_path_list = project_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
+    queries_dictlist_unfiltered = load_query_rows_from_csv_files(queries_file_path_list) # A scripter can edit their queries file names here - they do not need to use the default.
+    queries_defaultdictlist_grouped = group_queries_by_api_url(queries_dictlist_unfiltered)
+    
+    # for key, session in sessions.items(): # Given multiple sessions, cycle through each. 
+    key = "Maxson"
+    session = sessions[key]
+    queries_dictlist_filtered = queries_defaultdictlist_grouped.get(key,[])
+    data_updated = collector.collect_live_values(session, queries_dictlist_filtered)
+    # Discern which queries to use, filtered by current session key.
+    for row in data_updated:
+        EdsClient.print_point_info_row(row)
+
+@log_function_call(level=logging.DEBUG)
 def demo_eds_print_point_export():
-    print("Start: demo_eds_print_point_export()")
     project_manager, sessions = _demo_eds_start_session_maxson()
     session_maxson = sessions["Maxson"]
 
@@ -200,8 +229,8 @@ def demo_eds_print_point_export():
     pprint(point_export_decoded_str)
     return point_export_decoded_str
 
+@log_function_call(level=logging.DEBUG)
 def demo_eds_save_point_export():
-    print("Start: demo_eds_save_point_export()")
     project_manager, sessions = _demo_eds_start_session_maxson()
     session_maxson = sessions["Maxson"]
 
@@ -210,8 +239,8 @@ def demo_eds_save_point_export():
     EdsClient.save_points_export(point_export_decoded_str, export_file_path = export_file_path)
     print(f"Export file saved to: \n{export_file_path}") 
 
+@log_function_call(level=logging.DEBUG)
 def demo_get_trabular_trend():
-    print("\nStart: demo_show_points_tabular_trend()")
     
     from src.pipeline.queriesmanager import QueriesManager
     from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
@@ -220,12 +249,12 @@ def demo_get_trabular_trend():
     
     queries_manager = QueriesManager(project_manager)
     queries_file_path_list = project_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
-    queries_dictlist = load_query_rows_from_csv_files(queries_file_path_list) # you can edit your queries files here
-    queries_defaultdictlist = group_queries_by_api_url(queries_dictlist)
+    queries_dictlist_unfiltered = load_query_rows_from_csv_files(queries_file_path_list) # you can edit your queries files here
+    queries_defaultdictlist_grouped = group_queries_by_api_url(queries_dictlist_unfiltered)
     
     for key, session in sessions.items():
         # Discern which queries to use
-        point_list = [row['iess'] for row in queries_defaultdictlist.get(key,[])]
+        point_list = [row['iess'] for row in queries_defaultdictlist_grouped.get(key,[])]
 
         # Discern the time range to use
         starttime = queries_manager.get_most_recent_successful_timestamp(api_id=key)
@@ -241,19 +270,10 @@ def demo_get_trabular_trend():
         for idx, iess in enumerate(point_list):
             print('\n{} samples:'.format(iess))
             for s in results[idx]:
-                #print('{} {} {}'.format(datetime.fromtimestamp(s[0]), s[1], s[2]))
-                print(s)
+                print('{} {} {}'.format(datetime.fromtimestamp(s[0]), round(s[1],2), s[2]))
 
-def demo_get_live_point_query():
-    point_data = EdsClient.get_points_live_mod(session, iess)
-    if point_data is None:
-        raise ValueError(f"No live point returned for iess {iess}")
-    ts = point_data["ts"]
-    value = point_data["value"]
-    return ts, value
-
+@log_function_call(level=logging.DEBUG)
 def demo_print_license():
-    print("\nStart: demo_get_license()")
     project_manager, sessions = _demo_eds_start_session_maxson()
     session_maxson = sessions["Maxson"]
 
@@ -261,8 +281,8 @@ def demo_print_license():
     pprint(response)
     return response
 
+@log_function_call(level=logging.DEBUG)
 def demo_ping():
-    print("\nStart: demo_ping()")
     from src.pipeline.calls import call_ping
     project_manager, sessions = _demo_eds_start_session_maxson()
     session_maxson = sessions["Maxson"]
@@ -271,11 +291,23 @@ def demo_ping():
     response = call_ping(api_url)
 
 if __name__ == "__main__":
+
+    '''
+    - auto id current function name. solution: decorator, @log_function_call
+    - print only which vars succeed
+    '''
     import sys
+    from src.pipeline.logging_setup import setup_logging
     cmd = sys.argv[1] if len(sys.argv) > 1 else "default"
 
+    setup_logging()
+    logger = logging.getLogger(__name__)
+    logger.info("CLI started")
+
     if cmd == "demo-live":
-        demo_eds_print_live_query()
+        demo_eds_print_point_live()
+    elif cmd == "demo-live-alt":
+        demo_eds_print_point_live_alt()
     elif cmd == "demo-export":
         demo_eds_print_point_export()
     elif cmd == "demo-trend":
@@ -286,7 +318,8 @@ if __name__ == "__main__":
         demo_print_license()
     else:
         print("Usage options: \n" 
-        "poetry run python -m pipeline.api.eds demo-query \n"  
+        "poetry run python -m pipeline.api.eds demo-live \n"
+        "poetry run python -m pipeline.api.eds demo-live-alt \n"  
         "poetry run python -m pipeline.api.eds demo-trend \n"
         "poetry run python -m pipeline.api.eds demo-ping \n"
         "poetry run python -m pipeline.api.eds demo-license")

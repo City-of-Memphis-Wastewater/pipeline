@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
+*.pyc
 
 # Virtual environments
 .venv/
@@ -24,6 +25,7 @@ Thumbs.db
 .vscode/
 
 # Log files
+logs/
 *.log
 **/daemon_log.txt
 

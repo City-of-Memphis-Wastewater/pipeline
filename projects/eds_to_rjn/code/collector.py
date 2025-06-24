@@ -6,9 +6,9 @@ logger = logging.getLogger(__name__)
 from src.pipeline.helpers import round_time_to_nearest_five_minutes
 from src.pipeline.api.eds import fetch_eds_data, EdsClient
 
-def collect_live_values(session, queries_defaultdict):   
+def collect_live_values(session, queries_dictlist_filtered):   
     data = []
-    for row in queries_defaultdict:
+    for row in queries_dictlist_filtered:
         #print(f"\trow = {row}")
         # Skip empty rows (if all values in the row are empty or None)
         if not any(row.values()):
@@ -16,7 +16,8 @@ def collect_live_values(session, queries_defaultdict):
             continue
         
         # light validation - if you want to change keys, that could be cool
-        required_keys = ["iess", "rjn_siteid", "rjn_entityid"]
+        #required_keys = ["iess", "rjn_siteid", "rjn_entityid"]
+        required_keys = ["iess"]
         if any(k not in row for k in required_keys):
             raise ValueError(f"Row missing required keys: {row}")
         
@@ -42,7 +43,8 @@ def collect_live_values(session, queries_defaultdict):
             In which case, the aggregate should be JSON (or TOML, whatever), not CSV.
             However, we have something that works. It is fine for now.
             '''
-            row.update(point_data)
+            # Retrieved point data is flatly added to the existing row from the query.   
+            row.update(point_data) 
             data.append(row)
         except Exception as e:
             print(f"Error on row: {e}")
