@@ -1,6 +1,7 @@
 import logging
 from dearpygui import dearpygui as dpg
 from pathlib import Path
+import random
 
 # Setup logging as usual
 import src.pipeline.logging_setup as logging_setup
@@ -10,10 +11,36 @@ console_handler = next(h for h in logger.handlers if getattr(h, 'name', '') == '
 file_handler = next(h for h in logger.handlers if getattr(h, 'name', '') == 'file')
 
 LAYOUT_FILE = Path("config/layout.dpgini")
+import dearpygui.dearpygui as dpg
+import random
+
+dpg.create_context()
+
+#Initial data
+
+x_data = [i for i in range(10)]
+y_data = [random.random() for _ in range(10)]
+
+def update_plot_data():
+    # Simulate new data
+    new_x = x_data[-1] + 1
+    new_y = random.random()
+    x_data.append(new_x)
+    y_data.append(new_y)
+
+    # Keep a fixed window of data for scrolling effect  
+    if len(x_data) > 20:  
+        x_data.pop(0)  
+        y_data.pop(0)  
+
+
 
 def save_layout_callback():
     dpg.save_init_file(str(LAYOUT_FILE))
     print(f"Layout saved to {LAYOUT_FILE}")
+
+def update_plot_data():
+    x_data = []
 
 def set_handler_level(handler, level_name):
     level = getattr(logging, level_name.upper(), None)
@@ -28,6 +55,8 @@ def on_console_level_change(sender, data):
 
 def on_file_level_change(sender, data):
     set_handler_level(file_handler, dpg.get_value(sender))
+
+
 
 if __name__ == "__main__":
     dpg.create_context()  # <<<<< This is required before windows/widgets
@@ -60,13 +89,31 @@ if __name__ == "__main__":
             y_data = [0, 1, 4, 9, 16, 25]
             dpg.add_line_series(x_data, y_data, label="y = x^2", parent=y_axis)
 
+            dpg.add_button(label = "Freeze")
+            dpg.add_button(label = "Unfreeze")
+
     with dpg.viewport_menu_bar():
         with dpg.menu(label="File"):
             dpg.add_menu_item(label="Save Layout", callback=save_layout_callback)
             dpg.add_menu_item(label="Exit", callback=lambda: dpg.stop_dearpygui())
+
+    # Update the plot series  
+    dpg.set_value("my_line_series", [x_data, y_data])
+    with dpg.window(label="Live Plot Example"):
+        with dpg.plot(label="Live Data", height=300, width=400):
+            dpg.add_plot_axis(dpg.mvXAxis, label="X-axis")
+        with dpg.add_plot_axis(dpg.mvYAxis, label="Y-axis"):    
+            dpg.add_line_series(x_data, y_data, label="My Series", tag="my_line_series")
+
+    # Set up a timer to update the plot every 100ms
+    dpg.add_timer_handler(0.1, callback=update_plot_data)
 
     dpg.create_viewport(title='Pipeline', width=1100, height=450)
     dpg.setup_dearpygui()
     dpg.show_viewport()
     dpg.start_dearpygui()
     dpg.destroy_context()
+
+
+
+
