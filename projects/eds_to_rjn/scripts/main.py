@@ -20,7 +20,7 @@ from src.pipeline import helpers
 
 from src.pipeline.projectmanager import ProjectManager
 from src.pipeline.api.rjn import send_data_to_rjn2
-from src.pipeline.api.eds import fetch_eds_data
+
 #from projects.eds_to_rjn.scripts import collector
 from ..code import collector, storage, aggregator, sanitizer
 from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
