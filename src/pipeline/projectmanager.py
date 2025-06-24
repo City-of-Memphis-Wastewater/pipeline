@@ -141,7 +141,7 @@ class ProjectManager:
         """
          
         projects_dir = cls.ROOT_DIR / cls.PROJECTS_DIR_NAME
-        logging.info(f"projects_dir = {projects_dir}")
+        logging.info(f"projects_dir = {projects_dir}\n")
         default_toml_path = projects_dir / cls.DEFAULT_PROJECT_TOML_FILE_NAME
 
         if not default_toml_path.exists():
