@@ -53,14 +53,9 @@ def demo_secrets():
     project_manager = ProjectManager(project_name)
     config = SecretsYaml.load_config(secrets_file_path = project_manager.get_configs_secrets_file_path())
     secrets = SecretsYaml(config)
-    secrets.print_config()
     return secrets
 
 if __name__ == "__main__":
-    
     # call from the root directory using: poetry run python -m pipeline.env
-    
-    #from pipeline.helpers import function_view
-    #function_view()
-
     secrets=demo_secrets()
+    secrets.print_config()
