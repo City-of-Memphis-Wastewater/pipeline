@@ -183,7 +183,7 @@ def _demo_eds_start_session_maxson():
     return project_manager, sessions
 
 @log_function_call(level=logging.DEBUG)
-def demo_eds_print_point_live():
+def demo_eds_print_point_live_alt():
     from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
 
     project_manager, sessions = _demo_eds_start_session_maxson()
@@ -211,7 +211,7 @@ def demo_eds_print_point_live():
         EdsClient.print_point_info_row(row)
 
 @log_function_call(level=logging.DEBUG)
-def demo_eds_print_point_live_alt():
+def demo_eds_print_point_live():
     from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
     from projects.eds_to_rjn.code import collector
     project_manager, sessions = _demo_eds_start_session_maxson()
@@ -233,6 +233,70 @@ def demo_eds_print_point_live_alt():
     
     for row in queries_plus_responses_filtered_by_session_key:
         EdsClient.print_point_info_row(row)
+
+@log_function_call(level=logging.DEBUG)
+def demo_eds_plot_point_live():
+    from threading import Thread
+    from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
+    from projects.eds_to_rjn.code import collector, sanitizer
+    from src.pipeline import gui_dpg
+
+    project_manager, sessions = _demo_eds_start_session_maxson()
+    queries_file_path_list = project_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
+    queries_dictlist_unfiltered = load_query_rows_from_csv_files(queries_file_path_list) # A scripter can edit their queries file names here - they do not need to use the default.
+    queries_defaultdictlist_grouped_by_session_key = group_queries_by_api_url(queries_dictlist_unfiltered)
+    
+    # for key, session in sessions.items(): # Given multiple sessions, cycle through each. 
+    key = "Maxson"
+    session = sessions[key]
+    queries_dictlist_maxson = queries_defaultdictlist_grouped_by_session_key.get(key,[])
+    
+    data_container=[]
+    # Start GUI in background thread
+    gui_thread = Thread(target=gui_dpg.run_gui, args=(data_container,), daemon=True)
+    gui_thread.start()  
+    
+    i=0
+    while True:
+        queries_plus_responses_maxson = collector.collect_live_values(session, queries_dictlist_maxson)
+        data_sanitized_for_plotting = sanitizer.sanitize_aggregate_reponses_filtered_for_plotting(queries_plus_responses_maxson)
+        
+        # Expecting: each response to correspond to one trace (source)
+        for row in data_sanitized_for_plotting:
+            # Ensure required fields exist
+            if "iess" not in row or "av" not in row["iess"] or "ts" not in row["iess"]:
+                continue
+
+            value = float(row["av"])
+            timestamp = row.get("ts", time.time())
+
+            feed_dict = {}
+            # Ensure each response_dict has its own x/y data list
+            if "x" not in feed_dict:
+                feed_dict["x"] = []
+            if "y" not in feed_dict:
+                feed_dict["y"] = []
+
+            feed_dict["x"].append(timestamp)
+            feed_dict["y"].append(value)
+
+            # Trim to last 100 points
+            if len(feed_dict["x"]) > 100:
+                feed_dict["x"].pop(0)
+                feed_dict["y"].pop(0)
+
+            # Push the updated container to the GUI or log it
+            # update_plot_gui(responses)
+
+        # Replace the container contents atomically
+        data_container.clear()
+        data_container.extend(feed_dict)
+
+        time.sleep(1)
+
+@log_function_call(level=logging.DEBUG)    
+def demo_eds_plot_trend():
+    pass
 
 @log_function_call(level=logging.DEBUG)
 def demo_eds_print_point_export():
@@ -322,6 +386,10 @@ if __name__ == "__main__":
         demo_eds_print_point_live()
     elif cmd == "demo-live-alt":
         demo_eds_print_point_live_alt()
+    elif cmd == "demo-plot-live":
+        demo_eds_plot_point_live()
+    elif cmd == "demo-plot-trend":
+        demo_eds_plot_trend()
     elif cmd == "demo-export":
         #demo_eds_print_point_export()
         demo_eds_save_point_export()
@@ -337,6 +405,8 @@ if __name__ == "__main__":
         "poetry run python -m pipeline.api.eds demo-live \n"
         "poetry run python -m pipeline.api.eds demo-live-alt \n"  
         "poetry run python -m pipeline.api.eds demo-trend \n"
+        "poetry run python -m pipeline.api.eds demo-plot-live \n"
+        "poetry run python -m pipeline.api.eds demo-plot-trend \n"
         "poetry run python -m pipeline.api.eds demo-ping \n"
         "poetry run python -m pipeline.api.eds demo-license")
     

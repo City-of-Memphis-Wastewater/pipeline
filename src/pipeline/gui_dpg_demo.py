@@ -3,7 +3,7 @@ from dearpygui import dearpygui as dpg
 from pathlib import Path
 import random
 
-from src.pipeline import plotexporter
+from src.pipeline import plotsvg
 # Setup logging as usual
 import src.pipeline.logging_setup as logging_setup
 logging_setup.setup_logging()
@@ -104,7 +104,7 @@ def save_plot_to_png_callback_nope():
 
 def save_plot_to_png_callback(sender, app_data, user_data):
     filename = "media/plot_output.svg"
-    plotexporter.plotsvg(data_dictdict, title = "Plot 2D", filename=filename)
+    plotsvg(data_dictdict, title = "Plot 2D", filename=filename)
     logger.info(f"Plot saved to {filename}")
     dpg.set_value("status_text", f"Plot saved to {filename}")
 
