@@ -13,6 +13,7 @@ def plotsvg(data_dictdict,title=None,filename=None):
         filename = filename.replace('.png','.svg')
     Path(filename).parent.mkdir(parents=True, exist_ok=True)
 
+    x_data = data_dictdict['x']
     scatter_chart = pygal.XY(stroke=True)
     scatter_chart.title = title
     for key, y_vec in y_data_dict.items():
@@ -22,7 +23,7 @@ def plotsvg(data_dictdict,title=None,filename=None):
     #svg2png(filename)
     return scatter_chart
 
-# Cairo requires GTK binaries.
+# Cairo requires GTK binaries, not currently included in this implementation.
 def svg2png(filename):
     import cairosvg
     cairosvg.svg2png(url=filename, write_to=filename.replace('svg','png'))
