@@ -267,7 +267,7 @@ def demo_eds_plot_point_live():
                 if ts is not None and av is not None:
                     data_buffer.append(label, ts, av)
                     logger.info(f"Live: {label} → {av} @ {ts}")
-            time.sleep(1)
+            time.sleep(2)
 
     collector_thread = Thread(target=collect_loop, daemon=True)
     collector_thread.start()
