@@ -234,7 +234,7 @@ def demo_eds_print_point_live():
     for row in queries_plus_responses_filtered_by_session_key:
         EdsClient.print_point_info_row(row)
 
-@log_function_call(level=logging.DEBUG)
+@log_function_call(level=logging.INFO)
 def demo_eds_plot_point_live():
     from threading import Thread
 
@@ -246,12 +246,8 @@ def demo_eds_plot_point_live():
     # Initialize the project based on configs and defaults, in the demo initializtion script
     project_manager, sessions = _demo_eds_start_session_maxson()
     
-    # Start GUI in background thread
-    gui_thread = Thread(target=gui_dpg_live.run_gui, args=(data_buffer.get_all(),), daemon=True)
-    gui_thread.start()  
-    
     data_buffer = PlotBuffer()
-    
+
     # Load queries
     queries_file_path_list = project_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
     queries_dictlist_unfiltered = load_query_rows_from_csv_files(queries_file_path_list) # A scripter can edit their queries file names here - they do not need to use the default.
@@ -259,20 +255,25 @@ def demo_eds_plot_point_live():
     
     key = "Maxson"
     session = sessions[key]
-    queries_dictlist_maxson = queries_defaultdictlist_grouped_by_session_key.get(key,[])
-    
-    while True:
-        responses = collector.collect_live_values(session, queries_dictlist_maxson)
-        #sanitized = sanitizer.sanitize_aggregate_reponses_filtered_for_plotting(queries_plus_responses_maxson)
-        
-        # Expecting: each response to correspond to one trace (source)
-        for row in responses: # for row in sanitized:
-            label = row.get("shortdesc") or row.get("iess", "Unknown")
-            ts = row.get("ts")
-            av = row.get("av")
-            if ts is not None and av is not None:
-                data_buffer.append(label, row.get("ts"), row.get("av"))
-        time.sleep(1)
+    queries_maxson = queries_defaultdictlist_grouped_by_session_key.get(key,[])
+
+    def collect_loop():
+        while True:
+            responses = collector.collect_live_values(session, queries_maxson)
+            for row in responses:
+                label = row.get("shortdesc") or row.get("iess", "Unknown")
+                ts = row.get("ts")
+                av = row.get("value")
+                if ts is not None and av is not None:
+                    data_buffer.append(label, ts, av)
+                    logger.info(f"Live: {label} → {av} @ {ts}")
+            time.sleep(1)
+
+    collector_thread = Thread(target=collect_loop, daemon=True)
+    collector_thread.start()
+
+    # Now run the GUI in the main thread
+    gui_dpg_live.run_gui(data_buffer)
 
 @log_function_call(level=logging.DEBUG)    
 def demo_eds_plot_trend():
