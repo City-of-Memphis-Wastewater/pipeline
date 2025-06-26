@@ -2,6 +2,7 @@ import logging
 from dearpygui import dearpygui as dpg
 from pathlib import Path
 import random
+from collections import defaultdict
 
 from src.pipeline import plotexporter
 # Setup logging as usual
@@ -80,30 +81,11 @@ def unfreeze_plot_callback():
     logger.info("Plot unfrozen")
     dpg.set_value("thaw_status", "Plot unfrozen")
 
-def save_plot_to_png_callback_dead():
-    filename = "media/plot_output.png"
-    dpg.export_image("plot_2D", filename=filename)
-    logger.info(f"Plot saved to {filename}")
-    dpg.set_value("status_text", f"Plot saved to {filename}")
-    
-def save_plot_to_png_callback_fail():
+def save_plot_to_svg_callback(sender, app_data, user_data):
     #filename = f"plot_capture_{int(time.time())}.png"
-    filename = "media/plot_output.png"
-    dpg.take_screenshot(filename=filename)
-    print(f"Viewport screenshot saved to: {filename}")
-
-def save_plot_to_png_callback_nope():
-    # Create a unique filename
-    filename = f"plot_snapshot_{dpg.get_frame_count()}.png"
-    # Render plot widget to an image file
-    try:
-        dpg.capture_item("plot_2D", filename=filename)
-        print(f"Plot saved to: {filename}")
-    except Exception as e:
-        print(f"Failed to save plot: {e}")
-
-def save_plot_to_png_callback(sender, app_data, user_data):
     filename = "media/plot_output.svg"
+    data_dictdict = defaultdict({"x":user_data["x"], 
+                                 "y":user_data["y"]})
     plotexporter.plotsvg(data_dictdict, title = "Plot 2D", filename=filename)
     logger.info(f"Plot saved to {filename}")
     dpg.set_value("status_text", f"Plot saved to {filename}")
@@ -147,7 +129,7 @@ with dpg.window(label="2D Plot Viewport", width=600, height=400):
         dpg.set_value("dynamic_line_series1", [x_data, y1_data])
     dpg.add_button(label="Freeze", callback=freeze_plot_callback)
     dpg.add_button(label="Unfreeze", callback=unfreeze_plot_callback)
-    dpg.add_button(label="Save Chart to PNG", callback=save_plot_to_png_callback)
+    dpg.add_button(label="Save Chart to PNG", callback=save_plot_to_svg_callback,user_data={"x": x_data, "y": {"Y0": y0_data, "Y1": y1_data}})
     dpg.add_button(label = "Copy Values For Spreadsheet Pasting")
     dpg.add_button(label = "Adjust Time")
     dpg.add_button(label = "Adjust Queries")
