@@ -59,6 +59,8 @@ def get_nested_config(dct: dict, keys: list[str]):
             raise KeyError(f"Missing required configuration at path: {full_path}") from e
     return current
 
+def human_readable(ts):
+    return datetime.fromtimestamp(ts).strftime("%H:%M:%S")
 
 if __name__ == "__main__":
     function_view()
