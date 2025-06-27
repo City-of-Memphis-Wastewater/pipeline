@@ -234,14 +234,15 @@ def demo_eds_print_point_live():
     for row in queries_plus_responses_filtered_by_session_key:
         EdsClient.print_point_info_row(row)
 
-@log_function_call(level=logging.INFO)
+@log_function_call(level=logging.DEBUG)
 def demo_eds_plot_point_live():
     from threading import Thread
 
     from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
     from projects.eds_to_rjn.code import collector, sanitizer
     from src.pipeline.plotbuffer import PlotBuffer
-    from src.pipeline import gui_dpg_live
+    #from src.pipeline import gui_dpg_live
+    from src.pipeline import gui_mpl_live
 
     # Initialize the project based on configs and defaults, in the demo initializtion script
     project_manager, sessions = _demo_eds_start_session_maxson()
@@ -263,7 +264,7 @@ def demo_eds_plot_point_live():
             for row in responses:
                 label = row.get("shortdesc") or row.get("iess", "Unknown")
                 ts = row.get("ts")
-                #ts = helpers.iso(row.get("ts"))
+                #ts = helpers.iso(row.get("ts")) #  dpg: TypeError: must be real number, not str
                 av = row.get("value")
                 un = row.get("un")
                 if ts is not None and av is not None:
@@ -276,9 +277,10 @@ def demo_eds_plot_point_live():
     collector_thread.start()
 
     # Now run the GUI in the main thread
-    gui_dpg_live.run_gui(data_buffer)
+    #gui_dpg_live.run_gui(data_buffer)
+    gui_mpl_live.run_gui(data_buffer)
 
-@log_function_call(level=logging.INFO)
+@log_function_call(level=logging.DEBUG)
 def demo_eds_webplot_point_live():
     from threading import Thread
 
@@ -320,7 +322,6 @@ def demo_eds_webplot_point_live():
     collector_thread.start()
 
     # Now run the GUI in the main thread
-    #gui_dpg_live.run_gui(data_buffer)
     gui_flaskplotly_live.run_gui(data_buffer)
 
 

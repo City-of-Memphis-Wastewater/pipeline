@@ -1,9 +1,9 @@
 from flask import Flask, render_template_string, jsonify
 import plotly.graph_objs as go
-from plotly.utils import PlotlyJSONEncoder
+#from plotly.utils import PlotlyJSONEncoder
 from threading import Lock
-import time
-import json 
+#import time
+#import json 
 
 app = Flask(__name__)
 plot_buffer = None  # Will be set by run_gui()
