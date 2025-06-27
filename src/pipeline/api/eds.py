@@ -263,12 +263,13 @@ def demo_eds_plot_point_live():
             for row in responses:
                 label = row.get("shortdesc") or row.get("iess", "Unknown")
                 ts = row.get("ts")
+                #ts = helpers.iso(row.get("ts"))
                 av = row.get("value")
                 un = row.get("un")
                 if ts is not None and av is not None:
                     data_buffer.append(label, ts, av)
-                    #logger.info(f"Live: {label} → {av} @ {ts}")
-                    logger.info(f"Live: {label} {round(av,2)} {un}")
+                    logger.info(f"Live: {label} → {av} @ {ts}")
+                    #logger.info(f"Live: {label} {round(av,2)} {un}")
             time.sleep(1)
 
     collector_thread = Thread(target=collect_loop, daemon=True)
@@ -305,13 +306,14 @@ def demo_eds_webplot_point_live():
             responses = collector.collect_live_values(session, queries_maxson)
             for row in responses:
                 label = row.get("shortdesc") or row.get("iess", "Unknown")
-                ts = row.get("ts")
+                #ts = helpers.human_readable(row.get("ts"))
+                ts = helpers.iso(row.get("ts"))
                 av = row.get("value")
                 un = row.get("un")
                 if ts is not None and av is not None:
                     data_buffer.append(label, ts, av)
-                    #logger.info(f"Live: {label} → {av} @ {ts}")
-                    logger.info(f"Live: {label} {round(av,2)} {un}")
+                    logger.info(f"Live: {label} → {av} @ {ts}")
+                    #logger.info(f"Live: {label} {round(av,2)} {un}")
             time.sleep(1)
 
     collector_thread = Thread(target=collect_loop, daemon=True)
