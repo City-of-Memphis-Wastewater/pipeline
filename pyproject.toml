@@ -19,10 +19,10 @@ schedule = ">=1.2.2,<2.0.0"
 fastapi = ">=0.115.12,<0.116.0"
 psutil = "^7.0.0"
 urllib3 = "^2.4.0"
-pygal = "^3.0.5"
 plotly = "^6.2.0"
 matplotlib = "^3.10.3"
 uvicorn = "^0.34.3"
+pygal = "^3.0.5"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
