@@ -187,3 +187,11 @@ poetry run python -m projects.eds_to_rjn.scripts.main
 
 # References
 PEP621.toml
+
+# Installation on Termux on Android
+
+Due to `maturin` (Rust build dependency) required by newer versions of `pydantic`, use older versions of FastAPI and Pydantic that don't require Rust, to successfully install on Termux.
+
+```bash
+pip install -r requirements-termux.txt
+```
