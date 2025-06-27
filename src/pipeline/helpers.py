@@ -62,5 +62,8 @@ def get_nested_config(dct: dict, keys: list[str]):
 def human_readable(ts):
     return datetime.fromtimestamp(ts).strftime("%H:%M:%S")
 
+def iso(ts):
+    return datetime.fromtimestamp(ts).isoformat()
+
 if __name__ == "__main__":
     function_view()
