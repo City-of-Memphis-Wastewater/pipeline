@@ -241,7 +241,6 @@ def demo_eds_plot_point_live():
     from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
     from projects.eds_to_rjn.code import collector, sanitizer
     from src.pipeline.plotbuffer import PlotBuffer
-    #from src.pipeline import gui_dpg_live
     from src.pipeline import gui_mpl_live
 
     # Initialize the project based on configs and defaults, in the demo initializtion script
@@ -287,7 +286,8 @@ def demo_eds_webplot_point_live():
     from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
     from projects.eds_to_rjn.code import collector, sanitizer
     from src.pipeline.plotbuffer import PlotBuffer
-    from src.pipeline import gui_flaskplotly_live
+    #from src.pipeline import gui_flaskplotly_live
+    from src.pipeline import gui_fastapi_plotly_live
 
     # Initialize the project based on configs and defaults, in the demo initializtion script
     project_manager, sessions = _demo_eds_start_session_maxson()
@@ -322,7 +322,8 @@ def demo_eds_webplot_point_live():
     collector_thread.start()
 
     # Now run the GUI in the main thread
-    gui_flaskplotly_live.run_gui(data_buffer)
+    #gui_flaskplotly_live.run_gui(data_buffer)
+    gui_fastapi_plotly_live.run_gui(data_buffer)
 
 
 @log_function_call(level=logging.DEBUG)    
