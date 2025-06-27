@@ -192,6 +192,11 @@ PEP621.toml
 
 Due to `maturin` (Rust build dependency) required by newer versions of `pydantic`, use older versions of FastAPI and Pydantic that don't require Rust, to successfully install on Termux.
 
-```bash
+Also, Termux does not allow `poetry` or `pyenv`, so install packages directly to your generic environement with pip.
+
+```
 pip install -r requirements-termux.txt
 ```
+
+Note that Termux does not allow `numpy` or `pandas`. Nor does it allow any plotting through a pop up window, like with tkinter, freesimplegui, matplotlib, etc.
+
