@@ -264,16 +264,63 @@ def demo_eds_plot_point_live():
                 label = row.get("shortdesc") or row.get("iess", "Unknown")
                 ts = row.get("ts")
                 av = row.get("value")
+                un = row.get("un")
                 if ts is not None and av is not None:
                     data_buffer.append(label, ts, av)
-                    logger.info(f"Live: {label} → {av} @ {ts}")
-            time.sleep(2)
+                    #logger.info(f"Live: {label} → {av} @ {ts}")
+                    logger.info(f"Live: {label} {round(av,2)} {un}")
+            time.sleep(1)
 
     collector_thread = Thread(target=collect_loop, daemon=True)
     collector_thread.start()
 
     # Now run the GUI in the main thread
     gui_dpg_live.run_gui(data_buffer)
+
+@log_function_call(level=logging.INFO)
+def demo_eds_webplot_point_live():
+    from threading import Thread
+
+    from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
+    from projects.eds_to_rjn.code import collector, sanitizer
+    from src.pipeline.plotbuffer import PlotBuffer
+    from src.pipeline import gui_flaskplotly_live
+
+    # Initialize the project based on configs and defaults, in the demo initializtion script
+    project_manager, sessions = _demo_eds_start_session_maxson()
+    
+    data_buffer = PlotBuffer()
+
+    # Load queries
+    queries_file_path_list = project_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
+    queries_dictlist_unfiltered = load_query_rows_from_csv_files(queries_file_path_list) # A scripter can edit their queries file names here - they do not need to use the default.
+    queries_defaultdictlist_grouped_by_session_key = group_queries_by_api_url(queries_dictlist_unfiltered)
+    
+    key = "Maxson"
+    session = sessions[key]
+    queries_maxson = queries_defaultdictlist_grouped_by_session_key.get(key,[])
+
+    def collect_loop():
+        while True:
+            responses = collector.collect_live_values(session, queries_maxson)
+            for row in responses:
+                label = row.get("shortdesc") or row.get("iess", "Unknown")
+                ts = row.get("ts")
+                av = row.get("value")
+                un = row.get("un")
+                if ts is not None and av is not None:
+                    data_buffer.append(label, ts, av)
+                    #logger.info(f"Live: {label} → {av} @ {ts}")
+                    logger.info(f"Live: {label} {round(av,2)} {un}")
+            time.sleep(1)
+
+    collector_thread = Thread(target=collect_loop, daemon=True)
+    collector_thread.start()
+
+    # Now run the GUI in the main thread
+    #gui_dpg_live.run_gui(data_buffer)
+    gui_flaskplotly_live.run_gui(data_buffer)
+
 
 @log_function_call(level=logging.DEBUG)    
 def demo_eds_plot_trend():
@@ -369,6 +416,8 @@ if __name__ == "__main__":
         demo_eds_print_point_live_alt()
     elif cmd == "demo-plot-live":
         demo_eds_plot_point_live()
+    elif cmd == "demo-webplot-live":
+        demo_eds_webplot_point_live()
     elif cmd == "demo-plot-trend":
         demo_eds_plot_trend()
     elif cmd == "demo-export":
@@ -387,6 +436,7 @@ if __name__ == "__main__":
         "poetry run python -m pipeline.api.eds demo-live-alt \n"  
         "poetry run python -m pipeline.api.eds demo-trend \n"
         "poetry run python -m pipeline.api.eds demo-plot-live \n"
+        "poetry run python -m pipeline.api.eds demo-webplot-live \n"
         "poetry run python -m pipeline.api.eds demo-plot-trend \n"
         "poetry run python -m pipeline.api.eds demo-ping \n"
         "poetry run python -m pipeline.api.eds demo-license")

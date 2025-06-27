@@ -83,15 +83,15 @@ def run_gui(buffer: PlotBuffer):
     def update_plot():
         # throttle the speed to match the eds demo speed
         now = time.time()
-        if now - last_gui_update[0] < 2.0:  # Only update once per second - if overactive, the frame will be scheduled to skip
-            dpg.set_frame_callback(dpg.get_frame_count() + 10, update_plot)
+        if now - last_gui_update[0] < 1.0:  # Only update once per second - if overactive, the frame will be scheduled to skip
+            dpg.set_frame_callback(dpg.get_frame_count() + 5, update_plot)
             return
         last_gui_update[0] = now
         
         #print("Plot buffer:", buffer.get_all())
         data = buffer.get_all()
         if not data:
-            dpg.set_frame_callback(dpg.get_frame_count() + 10, update_plot)
+            dpg.set_frame_callback(dpg.get_frame_count() + 5, update_plot)
             return  # nothing to draw yet
         for label, series in data.items():
             x_vals = series["x"]
@@ -126,17 +126,19 @@ def run_gui(buffer: PlotBuffer):
                 )
 
                 dpg.bind_item_theme("padding_scatter", transparent_theme)
-                
+        
             else:
                 dpg.set_value("padding_scatter", [padded_x, padded_y])
                 dpg.hide_item("padding_scatter")
 
-            dpg.bind_item_theme("padding_scatter", transparent_theme)
+
+            #dpg.bind_item_theme("padding_scatter", transparent_theme)
             # Then call:
             dpg.configure_item("padding_scatter", show=True)
             dpg.fit_axis_data("x_axis")
             dpg.fit_axis_data("y_axis")
-
+        elif True:
+            pass
         elif False:
             # Allow user interaction again:
             dpg.set_axis_limits_auto("x_axis")
@@ -145,7 +147,7 @@ def run_gui(buffer: PlotBuffer):
         if False:
             apply_time_axis_ticks(data)
 
-        dpg.set_frame_callback(dpg.get_frame_count() + 10, update_plot) # only runs if the first callback did not
+        dpg.set_frame_callback(dpg.get_frame_count() + 5, update_plot) # only runs if the first callback did not
 
     update_plot()  # First update
 
