@@ -55,6 +55,7 @@ def run_hourly_cycle():
     project_manager = ProjectManager(project_name)
     secrets_dict = SecretsYaml.load_config(secrets_file_path = project_manager.get_configs_secrets_file_path())
     rjn_api, headers_rjn = get_rjn_tokens_and_headers(secrets_dict)
+    #
     aggregator.aggregate_and_send(data_file = project_manager.get_aggregate_dir()+"\live_data.csv",
                                   checkpoint_file = project_manager.get_aggregate_dir()+"\sent_data.csv",
                                   rjn_base_url=rjn_api.config['url'],
@@ -69,6 +70,7 @@ def run_hourly_cycle_manual():
     secrets_dict = SecretsYaml.load_config(secrets_file_path = project_manager.get_configs_secrets_file_path())
     print("secrets_dict, created.")
     rjn_api, headers_rjn = get_rjn_tokens_and_headers(secrets_dict)
+    #
     print("rjn_api & headers_rjn, created.")
     data_file_manual = str(input("CSV filepath (like \live_data.csv), paste: "))
     aggregator.aggregate_and_send(data_file = data_file_manual,
