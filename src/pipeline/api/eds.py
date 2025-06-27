@@ -261,7 +261,7 @@ def demo_eds_plot_point_live():
         while True:
             responses = collector.collect_live_values(session, queries_maxson)
             for row in responses:
-                label = row.get("shortdesc") or row.get("iess", "Unknown")
+                label = f"{row.get('shortdesc')} ({row.get('un')})" 
                 ts = row.get("ts")
                 #ts = helpers.iso(row.get("ts")) #  dpg: TypeError: must be real number, not str
                 av = row.get("value")
@@ -307,7 +307,7 @@ def demo_eds_webplot_point_live():
         while True:
             responses = collector.collect_live_values(session, queries_maxson)
             for row in responses:
-                label = row.get("shortdesc") or row.get("iess", "Unknown")
+                label = f"{row.get('shortdesc')} ({row.get('un')})" 
                 #ts = helpers.human_readable(row.get("ts"))
                 ts = helpers.iso(row.get("ts"))
                 av = row.get("value")
