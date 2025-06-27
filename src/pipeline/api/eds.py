@@ -268,8 +268,8 @@ def demo_eds_plot_point_live():
                 un = row.get("un")
                 if ts is not None and av is not None:
                     data_buffer.append(label, ts, av)
-                    logger.info(f"Live: {label} → {av} @ {ts}")
-                    #logger.info(f"Live: {label} {round(av,2)} {un}")
+                    #logger.info(f"Live: {label} → {av} @ {ts}")
+                    logger.info(f"Live: {label} {round(av,2)} {un}")
             time.sleep(1)
 
     collector_thread = Thread(target=collect_loop, daemon=True)
@@ -312,8 +312,8 @@ def demo_eds_webplot_point_live():
                 un = row.get("un")
                 if ts is not None and av is not None:
                     data_buffer.append(label, ts, av)
-                    logger.info(f"Live: {label} → {av} @ {ts}")
-                    #logger.info(f"Live: {label} {round(av,2)} {un}")
+                    #logger.info(f"Live: {label} → {av} @ {ts}")
+                    logger.info(f"Live: {label} {round(av,2)} {un}")
             time.sleep(1)
 
     collector_thread = Thread(target=collect_loop, daemon=True)
