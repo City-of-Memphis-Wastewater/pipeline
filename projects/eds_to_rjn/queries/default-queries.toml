@@ -1,0 +1,4 @@
+[default-query]
+# example: files=["points-maxson.csv"]
+files = ["points-maxson.csv", "points-stiles.csv"]
+use-most-recently-edited-query-file = false # while true, this will ignore the files variable list and instead use a single list of the most recent files

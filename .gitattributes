@@ -1,0 +1,26 @@
+# Normalize line endings to LF in the repo, auto-adjust for OS on checkout
+* text=auto
+
+# Ensure Python files are treated as UTF-8 text
+*.py text working-tree-encoding=UTF-8
+
+# YAML and TOML configs are plain text, keep UTF-8 handling
+*.yaml text
+*.yml   text
+*.toml  text
+
+# CSV files are treated as text (diffable)
+	*.csv text
+
+# Ignore binary treatment for log/export files we care about
+*.txt text
+
+# Never merge pycache or compiled Python files
+*.pyc binary
+*.pyo binary
+*.pyd binary
+__pycache__/* binary
+
+# Optional: if you use shell or batch scripts
+*.sh text eol=lf
+*.ps1 text eol=crlf
