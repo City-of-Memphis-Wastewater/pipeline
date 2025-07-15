@@ -23,6 +23,7 @@ plotly = "^6.2.0"
 matplotlib = "^3.10.3"
 uvicorn = "^0.34.3"
 pygal = "^3.0.5"
+wsmx = "^0.1.8"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
