@@ -6,7 +6,8 @@ STATUS_PATH = "exports/status_daemon_log.txt"
 
 def update_status(state: str, msg: str = ""):
     entry = {
-        "timestamp": datetime.now().isoformat(),
+        #"timestamp": datetime.now().isoformat(),
+        "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         "status": state,
         "message": msg,
     }

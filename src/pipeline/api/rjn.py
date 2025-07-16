@@ -163,6 +163,7 @@ class RjnClient:
             print(f"Error sending data to RJN: {e}")
             if response is not None:# and response.status_code != 500:
                 print(f"Response content: {response.text}")  # Print error response
+                
     @staticmethod
     def ping():
         from src.pipeline.env import SecretsYaml

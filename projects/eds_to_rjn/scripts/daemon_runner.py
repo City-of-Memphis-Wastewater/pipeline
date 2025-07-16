@@ -1,7 +1,7 @@
 #projects/eds_to_rjndaemon_runner.py
 import schedule, time
 import logging
-import datetime
+from datetime import datetime
 from ..code import collector, sanitizer
 from src.pipeline.api.eds import EdsClient
 from src.pipeline.api.rjn import RjnClient
@@ -49,14 +49,12 @@ def run_hourly_tabular_trend_eds_to_rjn():
     key = "Maxson"
     session = sessions[key] 
 
-    queries_dictlist_filtered_by_session_key = queries_defaultdictlist_grouped_by_session_key.get(key,[])
-    #queries_plus_responses_filtered_by_session_key = collector.collect_live_values(session, queries_dictlist_filtered_by_session_key) # This returns everything known plus everything recieved. It is glorious. It is complete. It is not sanitized.
-    #data_sanitized_for_aggregated_storage = sanitizer.sanitize_data_for_aggregated_storage(queries_plus_responses_filtered_by_session_key)
-    
     point_list = [row['iess'] for row in queries_defaultdictlist_grouped_by_session_key.get(key,[])]
 
     # Discern the time range to use
     starttime = queries_manager.get_most_recent_successful_timestamp(api_id=key)
+    logger.info(f"queries_manager.get_most_recent_successful_timestamp(), key = {key}")
+    logger.info(f"starttime = {starttime}")
     endtime = helpers.get_now_time()
 
     api_url = session.custom_dict["url"]
@@ -66,20 +64,42 @@ def run_hourly_tabular_trend_eds_to_rjn():
     session.post(api_url + 'logout', verify=False)
     print(f"len(results) = {len(results)}")
     #print(f"dir(results) = {dir(results)}")
-    if session_rjn is not None:
-    #if True:
-        for idx, rows in enumerate(results):
-            for row in rows:
-                print(f"row = {row}") 
-                EdsClient.print_point_info_row(row)
+    
+    for idx, rows in enumerate(results):
+        #print(f"rows = {rows}")
+        timestamps = []
+        values = []
+        entity_id = None
+        project_id = None
+        
+        for row in rows:
+        
+            #EdsClient.print_point_info_row(row)
 
-                # Process timestamp
-                
-                dt = datetime.datetime.fromtimestamp(row["ts"])
-                rounded_dt = helpers.round_time_to_nearest_five_minutes(dt)
-                timestamp = rounded_dt
-                timestamp_str = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+            dt = datetime.fromtimestamp(row["ts"])
+            timestamp_str = helpers.round_time_to_nearest_five_minutes(dt).strftime('%Y-%m-%d %H:%M:%S')
+
+            timestamps.append(timestamp_str)
+            values.append(round(row["value"], 2))
+
+            entity_id = row["rjn_entityid"]
+            project_id = row["rjn_siteid"]
+
+            #print(f"row = {row}") 
+            #EdsClient.print_point_info_row(row)
+
+            # Process timestamp
             
+            #dt = datetime.fromtimestamp(row["ts"])
+            #rounded_dt = helpers.round_time_to_nearest_five_minutes(dt)
+            #timestamp = rounded_dt
+            #timestamp_str = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+        
+        if timestamps and values:
+            
+            if session_rjn is not None:
+                base_url = session_rjn.custom_dict["url"]
+                
                 # Send data to RJN
                 
                 RjnClient.send_data_to_rjn2(
@@ -90,9 +110,12 @@ def run_hourly_tabular_trend_eds_to_rjn():
                     timestamps=[timestamp_str],
                     values=[round(row["value"], 2)]
                 )
-    else:
-        logger.warning("Skipping RJN transmission loop — session_rjn not established.")
-        
+                queries_manager.update_success(api_id="RJN", success_time=endtime)
+            else:
+                logger.warning("Skipping RJN transmission loop — session_rjn not established.")
+                queries_manager.update_attempt(api_id="RJN")  # Optional: track that an attempt happened
+                logger.info(f"key = {'RJN'}")
+
 def setup_schedules():
     testing = True
     if not testing:
@@ -101,7 +124,7 @@ def setup_schedules():
         schedule.every().second.do(run_hourly_tabular_trend_eds_to_rjn)
 
 def main():
-    logging.info(f"Daemon started at {datetime.datetime.now()} and running...")
+    logging.info(f"Daemon started at {datetime.now()} and running...")
     setup_schedules()
     while True:
         schedule.run_pending()
