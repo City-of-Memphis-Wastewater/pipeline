@@ -301,7 +301,7 @@ def demo_eds_plot_point_live():
 def demo_eds_webplot_point_live():
     from threading import Thread
 
-    from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
+    from src.pipeline.queriesmanager import QueriesManager, load_query_rows_from_csv_files, group_queries_by_api_url
     from projects.eds_to_rjn.code import collector, sanitizer
     from src.pipeline.plotbuffer import PlotBuffer
     #from src.pipeline import gui_flaskplotly_live
@@ -309,6 +309,8 @@ def demo_eds_webplot_point_live():
 
     # Initialize the project based on configs and defaults, in the demo initializtion script
     project_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
+
+    queries_manager = QueriesManager(project_manager)
     
     data_buffer = PlotBuffer()
 
@@ -320,6 +322,30 @@ def demo_eds_webplot_point_live():
     key = "Maxson"
     session = sessions[key]
     queries_maxson = queries_defaultdictlist_grouped_by_session_key.get(key,[])
+
+    def load_historic_data_back_to_last_success():
+        starttime = queries_manager.get_most_recent_successful_timestamp(api_id="Maxson")
+        logger.info(f"queries_manager.get_most_recent_successful_timestamp(), key = {'Maxson'}")
+        logger.info(f"starttime = {starttime}")
+        endtime = helpers.get_now_time()
+
+        point_list = [row['iess'] for row in queries_defaultdictlist_grouped_by_session_key.get(key,[])]
+        api_url = session.custom_dict["url"]
+        request_id = EdsClient.create_tabular_request(session, api_url, starttime, endtime, points=point_list)
+        EdsClient.wait_for_request_execution_session(session, api_url, request_id)
+        results = EdsClient.get_tabular_trend(session, request_id, point_list)
+        logger.info(f"len(results) = {len(results)}")
+
+        for idx, rows in enumerate(results):
+            for row in rows:
+                label = f"{row.get('rjn_entityid')} ({row.get('units')})"
+                ts = helpers.iso(row.get("ts"))
+                av = row.get("value")
+                if ts is not None and av is not None:
+                    data_buffer.append(label, ts, av)
+                    logger.debug(f"Historic: {label} {round(av,2)} @ {ts}")
+                    
+        queries_manager.update_attempt("Maxson")
 
     def collect_loop():
         while True:
@@ -335,7 +361,8 @@ def demo_eds_webplot_point_live():
                     #logger.info(f"Live: {label} → {av} @ {ts}")
                     logger.info(f"Live: {label} {round(av,2)} {un}")
             time.sleep(1)
-
+    
+    load_historic_data_back_to_last_success()
     collector_thread = Thread(target=collect_loop, daemon=True)
     collector_thread.start()
 
@@ -386,7 +413,7 @@ def demo_eds_print_trabular_trend():
         point_list = [row['iess'] for row in queries_defaultdictlist_grouped_by_session_key.get(key,[])]
 
         # Discern the time range to use
-        starttime = queries_manager.get_most_recent_successful_timestamp(api_id=key)
+        starttime = queries_manager.get_most_recent_successful_timestamp(api_id="Maxson")
         endtime = helpers.get_now_time()
 
         api_url = session.custom_dict["url"]
@@ -394,12 +421,13 @@ def demo_eds_print_trabular_trend():
         EdsClient.wait_for_request_execution_session(session, api_url, request_id)
         results = EdsClient.get_tabular_trend(session, request_id, point_list)
         session.post(api_url + 'logout', verify=False)
-        #queries_manager.update_success(api_id=key) # not appropriate here in demo without successful transmission to 3rd party API
-
+        #
         for idx, iess in enumerate(point_list):
             print('\n{} samples:'.format(iess))
             for s in results[idx]:
                 print('{} {} {}'.format(datetime.fromtimestamp(s[0]), round(s[1],2), s[2]))
+        queries_manager.update_success(api_id=key) # not appropriate here in demo without successful transmission to 3rd party API
+
 
 @log_function_call(level=logging.DEBUG)
 def demo_eds_print_license():
