@@ -52,8 +52,8 @@ def run_hourly_tabular_trend_eds_to_rjn():
     point_list = [row['iess'] for row in queries_defaultdictlist_grouped_by_session_key.get(key,[])]
 
     # Discern the time range to use
-    starttime = queries_manager.get_most_recent_successful_timestamp(api_id=key)
-    logger.info(f"queries_manager.get_most_recent_successful_timestamp(), key = {key}")
+    starttime = queries_manager.get_most_recent_successful_timestamp(api_id="RJN")
+    logger.info(f"queries_manager.get_most_recent_successful_timestamp(), key = {'RJN'}")
     logger.info(f"starttime = {starttime}")
     endtime = helpers.get_now_time()
 
@@ -85,16 +85,6 @@ def run_hourly_tabular_trend_eds_to_rjn():
             entity_id = row["rjn_entityid"]
             project_id = row["rjn_siteid"]
 
-            #print(f"row = {row}") 
-            #EdsClient.print_point_info_row(row)
-
-            # Process timestamp
-            
-            #dt = datetime.fromtimestamp(row["ts"])
-            #rounded_dt = helpers.round_time_to_nearest_five_minutes(dt)
-            #timestamp = rounded_dt
-            #timestamp_str = timestamp.strftime('%Y-%m-%d %H:%M:%S')
-        
         if timestamps and values:
             
             if session_rjn is not None:
