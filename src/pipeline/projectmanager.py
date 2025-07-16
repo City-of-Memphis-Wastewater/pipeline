@@ -127,7 +127,9 @@ class ProjectManager:
     
     def get_timestamp_success_file_path(self):
         # Return the full path to the timestamp file
-        return self.get_queries_dir() / self.TIMESTAMPS_JSON_FILE_NAME
+        filepath = self.get_queries_dir() / self.TIMESTAMPS_JSON_FILE_NAME
+        logging.info(f"ProjectManager.get_timestamp_success_file_path() = {filepath}")
+        return filepath
 
     def check_and_create_dirs(self, list_dirs):
         for dir_path in list_dirs:
