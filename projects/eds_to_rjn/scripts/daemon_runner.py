@@ -117,31 +117,34 @@ def run_hourly_tabular_trend_eds_to_rjn():
     EdsClient.wait_for_request_execution_session(session, api_url, request_id)
     results = EdsClient.get_tabular_mod(session, request_id, point_list)
     #session.post(api_url + 'logout', verify=False)
+    if session_rjn is not None:
+        for row in data_sanitized_for_aggregated_storage:
+            EdsClient.print_point_info_row(row)
 
-    for row in data_sanitized_for_aggregated_storage:
-        EdsClient.print_point_info_row(row)
+            #print(f"queries_dictlist_filtered_by_session_key = {queries_dictlist_filtered_by_session_key}")
+            #print(f"queries_plus_responses_filtered_by_session_key = {queries_plus_responses_filtered_by_session_key}")
 
-        #print(f"queries_dictlist_filtered_by_session_key = {queries_dictlist_filtered_by_session_key}")
-        #print(f"queries_plus_responses_filtered_by_session_key = {queries_plus_responses_filtered_by_session_key}")
-
-        # Process timestamp
+            # Process timestamp
+            
+            #for row in queries_plus_responses_filtered_by_session_key:
+            dt = datetime.datetime.fromtimestamp(row["ts"])
+            rounded_dt = helpers.round_time_to_nearest_five_minutes(dt)
+            timestamp = rounded_dt
+            timestamp_str = timestamp.strftime('%Y-%m-%d %H:%M:%S')
         
-        #for row in queries_plus_responses_filtered_by_session_key:
-        dt = datetime.fromtimestamp(row["ts"])
-        rounded_dt = helpers.round_time_to_nearest_five_minutes(dt)
-        timestamp = rounded_dt
-        timestamp_str = timestamp.strftime('%Y-%m-%d %H:%M:%S')
-    
-        # Send data to RJN
-        
-        RjnClient.send_data_to_rjn2(
-            session_rjn,
-            base_url = session_rjn.custom_dict["url"],
-            project_id=row["rjn_siteid"],
-            entity_id=row["rjn_entityid"],
-            timestamps=[timestamp_str],
-            values=[round(row["value"], 2)]
-        )
+            # Send data to RJN
+            
+            RjnClient.send_data_to_rjn2(
+                session_rjn,
+                base_url = session_rjn.custom_dict["url"],
+                project_id=row["rjn_siteid"],
+                entity_id=row["rjn_entityid"],
+                timestamps=[timestamp_str],
+                values=[round(row["value"], 2)]
+            )
+    else:
+        logger.warning("Skipping RJN transmission loop — session_rjn not established.")
+
 def other():
     from src.pipeline.queriesmanager import QueriesManager
     from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
@@ -203,7 +206,7 @@ def other():
         for idx, iess in enumerate(point_list):
             print('\n{} samples:'.format(iess))
             for s in results[idx]:
-                print('{} {} {}'.format(datetime.fromtimestamp(s[0]), round(s[1],2), s[2]))
+                print('{} {} {}'.format(datetime.datetime.fromtimestamp(s[0]), round(s[1],2), s[2]))
 def run_hourly_cycle_defunt(): 
     print("Running hourly cycle...")
     project_name = 'eds_to_rjn' # project_name = ProjectManager.identify_default_project()
