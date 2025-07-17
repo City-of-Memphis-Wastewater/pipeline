@@ -1,5 +1,12 @@
 import csv
 from datetime import datetime
+'''
+Mostly defunct now that eds tabular trend is working. But still interesting.
+Use: 
+    ```
+    storage.store_live_values(data, project_manager.get_aggregate_dir() / "live_data.csv") 
+    ```
+'''
 def store_live_values(data, path):
     with open(path, 'a', newline='') as f:
         writer = csv.DictWriter(f, fieldnames=data[0].keys())

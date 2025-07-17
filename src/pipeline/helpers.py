@@ -18,7 +18,7 @@ def load_toml(filepath):
         dic_toml = toml.load(f)
     return dic_toml
 
-def round_time_to_nearest_five_minutes(dt):
+def round_time_to_nearest_five_minutes(dt: datetime) -> datetime:
     #print(f"dt = {dt}")
     allowed_minutes = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]
     # Find the largest allowed minute <= current minute
@@ -48,7 +48,7 @@ def function_view(globals_passed=None):
                 print(f"  {name}")
     print("\n")
 
-def get_nested_config(dct, keys):
+def get_nested_config(dct: dict, keys: list[str]):
     """Retrieve nested dict value by keys list; raise KeyError with full path if missing."""
     current = dct
     for key in keys:

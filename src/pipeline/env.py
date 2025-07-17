@@ -7,7 +7,7 @@ from src.pipeline.projectmanager import ProjectManager
 migrate this to ConfigurationManager
 '''
 
-class SecretsYaml:
+class SecretConfig:
     def __init__(self, config):
         self.config = config
 
@@ -43,7 +43,7 @@ def find_urls(config, url_set=None):
 
 def demo_secrets():
     """
-    The defaut SecretsYaml.load_config() call 
+    The defaut SecretConfig.load_config() call 
     should load fromthe default-project 
     as defined by the configuration file in the projects directorys,
     caed defaut_project.toml - Clayton Bennett 26 April 2025.
@@ -51,8 +51,8 @@ def demo_secrets():
     """
     project_name = ProjectManager.identify_default_project()
     project_manager = ProjectManager(project_name)
-    config = SecretsYaml.load_config(secrets_file_path = project_manager.get_configs_secrets_file_path())
-    secrets = SecretsYaml(config)
+    config = SecretConfig.load_config(secrets_file_path = project_manager.get_configs_secrets_file_path())
+    secrets = SecretConfig(config)
     return secrets
 
 if __name__ == "__main__":

@@ -5,21 +5,18 @@ import sys
 from pathlib import Path
 from requests import Session # if you aren'ty using this, you should be
 
-from pipeline.api import eds
-from pipeline.api import rjn
-
 # Add the root project path so that 'src' can be found
 ROOT = Path(__file__).resolve().parents[2]  # pipeline/projects/eds_to_rjn/scripts -> pipeline
 sys.path.insert(0, str(ROOT))
 
-from src.pipeline.env import SecretsYaml
+from src.pipeline.env import SecretConfig
 from src.pipeline.api.eds import EdsClient
 from src.pipeline.api.rjn import RjnClient
 from src.pipeline.calls import test_connection_to_internet
 from src.pipeline import helpers
 
 from src.pipeline.projectmanager import ProjectManager
-from src.pipeline.api.rjn import send_data_to_rjn2
+from src.pipeline.api.rjn import RjnClient 
 
 #from projects.eds_to_rjn.scripts import collector
 from ..code import collector, storage, aggregator, sanitizer
@@ -51,7 +48,7 @@ def sketch_maxson():
     logger.debug(f"queries_file_path_list = {queries_file_path_list}")
     queries_dictlist_unfiltered = load_query_rows_from_csv_files(queries_file_path_list)
     queries_defaultdictlist_grouped_by_session_key = group_queries_by_api_url(queries_dictlist_unfiltered,'zd')
-    secrets_dict = SecretsYaml.load_config(secrets_file_path = project_manager.get_configs_secrets_file_path())
+    secrets_dict = SecretConfig.load_config(secrets_file_path = project_manager.get_configs_secrets_file_path())
     sessions = {}
 
     api_secrets_m = helpers.get_nested_config(secrets_dict, ["eds_apis", "Maxson"])
@@ -62,12 +59,15 @@ def sketch_maxson():
     sessions.update({"Maxson":session_maxson})
 
     api_secrets_r = helpers.get_nested_config(secrets_dict, ["contractor_apis","RJN"])
-    session_rjn = rjn.login_to_session(api_url = api_secrets_r["url"],
+    
+    session_rjn = RjnClient.login_to_session(api_url = api_secrets_r["url"],
                                        client_id = api_secrets_r["client_id"],
                                        password = api_secrets_r["password"])
-    session_rjn.custom_dict = api_secrets_r
-    sessions.update({"RJN":session_rjn})
-
+    if session_rjn is not None:
+        session_rjn.custom_dict = api_secrets_r
+        sessions.update({"RJN":session_rjn})
+    else:
+        logger.warning("RJN session not established. Skipping RJN-related data transmission.")
     #for key, session in sessions.items():
     key = "Maxson"
     session = sessions[key] 
@@ -94,7 +94,7 @@ def sketch_maxson():
     
         # Send data to RJN
         
-        send_data_to_rjn2(
+        RjnClient.send_data_to_rjn2(
             session_rjn,
             base_url = session_rjn.custom_dict["url"],
             project_id=row["rjn_siteid"],
@@ -103,7 +103,7 @@ def sketch_maxson():
             values=[round(row["value"], 2)]
         )
 
-
+'''
 def get_rjn_tokens_and_headers(secrets_dict):
     print("eds_to_rjn.scripts.main.get_rjn_tokens_and_headers()")
     # toml headings
@@ -111,6 +111,7 @@ def get_rjn_tokens_and_headers(secrets_dict):
     token_rjn, headers_rjn = rjn.get_token_and_headers()
     #print(f"token_rjn = {token_rjn}")
     return rjn, headers_rjn
+'''
 
 if __name__ == "__main__":
     import sys
