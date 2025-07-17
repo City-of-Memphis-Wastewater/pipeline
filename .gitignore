@@ -42,3 +42,4 @@ src/defunct/
 dist/
 build/
 *.egg-info/
+Postman*

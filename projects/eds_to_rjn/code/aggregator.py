@@ -5,9 +5,9 @@ from collections import defaultdict
 import os
 from pprint import pprint
 
-from src.pipeline.api.rjn import send_data_to_rjn2
+from src.pipeline.api.rjn import RjnClient #send_data_to_rjn2
 
-def aggregate_and_send(session_rjn, data_file, checkpoint_file, rjn_base_url, headers_rjn):
+def aggregate_and_send(session_rjn, data_file, checkpoint_file):
 
     # Prepare single timestamp (top of the hour UTC)
     #timestamp = datetime.datetime.now(datetime.timezone.utc).replace(minute=0, second=0, microsecond=0)
@@ -69,7 +69,7 @@ def aggregate_and_send(session_rjn, data_file, checkpoint_file, rjn_base_url, he
                 values=values
             )
             '''
-            send_data_to_rjn2(
+            RjnClient.send_data_to_rjn2(
             session_rjn,
             base_url = session_rjn.custom_dict["url"],
             project_id=row["rjn_siteid"],

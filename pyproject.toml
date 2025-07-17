@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pipeline"
-version = "0.1.0"
+version = "0.2.1"
 description = "API access for reading from the EDS and writing to https://rjn-clarity-api.com/v1/clarity"
 authors = ["George Clayton Bennett <george.bennett@memphistn.gov>"]
 license = "BSD-3"
@@ -17,7 +17,6 @@ pyyaml = ">=6.0.2,<7.0.0"
 certifi = ">=2025.1.31,<2026.0.0"
 schedule = ">=1.2.2,<2.0.0"
 fastapi = ">=0.115.12,<0.116.0"
-psutil = "^7.0.0"
 urllib3 = "^2.4.0"
 plotly = "^6.2.0"
 matplotlib = "^3.10.3"

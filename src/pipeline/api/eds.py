@@ -2,10 +2,12 @@ from datetime import datetime
 import logging
 import requests
 import time
+from pprint import pprint
 
 from src.pipeline import helpers
 from src.pipeline.decorators import log_function_call
-from pprint import pprint
+
+logger = logging.getLogger(__name__)
 
 class EdsClient:
 
@@ -13,14 +15,6 @@ class EdsClient:
     def get_license(session,api_url:str):
         response = session.get(api_url + 'license', json={}, verify=False).json()
         return response
-
-    @staticmethod
-    def print_point_info_row_og(row):
-        # use this when unpacking after bulk retrieval, not during retrieving
-        try:
-            print(f'''iess:{row["iess"]}, dt:{datetime.fromtimestamp(row["ts"])}, un:{row["un"]}, av:{round(row["value"],2)}, {row["shortdesc"]}''')
-        except:
-            print(f'''iess:{row["iess"]}, dt:{datetime.fromtimestamp(row["ts"])}, un:{row["un"]}, av:{round(row["value"],2)}''')
 
     @staticmethod
     def print_point_info_row(row):
@@ -86,7 +80,33 @@ class EdsClient:
                     
                 if chunk['status'] == 'LAST':
                     return results
-    
+
+    @staticmethod
+    def get_tabular_trend(session, req_id, point_list):
+        #print(f"point_list = {point_list}")
+        results = [[] for _ in range(len(point_list))]
+        while True:
+            api_url = session.custom_dict['url']
+            response = session.get(f'{api_url}trend/tabular?id={req_id}', verify=False).json()
+            
+            for chunk in response:
+                if chunk['status'] == 'TIMEOUT':
+                    raise RuntimeError('timeout')
+
+                for idx, samples in enumerate(chunk['items']):
+                    for sample in samples:
+                        #print(f"sample = {sample}")
+                        structured = {
+                            "ts": sample[0],          # Timestamp
+                            "value": sample[1],       # Measurement value
+                            "quality": sample[2],       # Optional units or label
+                        }
+                        results[idx].append(structured)
+
+                if chunk['status'] == 'LAST':
+                    return results
+
+
     @staticmethod
     def get_points_export(session,iess_filter:str=''):
         api_url = session.custom_dict["url"]
@@ -158,13 +178,13 @@ def fetch_eds_data_row(session, iess):
     return point_data
 
 @log_function_call(level=logging.DEBUG) 
-def _demo_eds_start_session_maxson():
-    from src.pipeline.env import SecretsYaml
+def _demo_eds_start_session_CoM_WWTPs():
+    from src.pipeline.env import SecretConfig
     from src.pipeline.projectmanager import ProjectManager
     project_name = ProjectManager.identify_default_project()
     project_manager = ProjectManager(project_name)
 
-    secrets_dict = SecretsYaml.load_config(secrets_file_path = project_manager.get_configs_secrets_file_path())
+    secrets_dict = SecretConfig.load_config(secrets_file_path = project_manager.get_configs_secrets_file_path())
     sessions = {}
 
     api_secrets_m = helpers.get_nested_config(secrets_dict, ["eds_apis","Maxson"])
@@ -186,7 +206,7 @@ def _demo_eds_start_session_maxson():
 def demo_eds_print_point_live_alt():
     from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
 
-    project_manager, sessions = _demo_eds_start_session_maxson()
+    project_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
     queries_file_path_list = project_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
     queries_dictlist_unfiltered = load_query_rows_from_csv_files(queries_file_path_list) # A scripter can edit their queries file names here - they do not need to use the default.
     queries_defaultdictlist_grouped_by_session_key = group_queries_by_api_url(queries_dictlist_unfiltered,'zd')
@@ -214,7 +234,7 @@ def demo_eds_print_point_live_alt():
 def demo_eds_print_point_live():
     from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
     from projects.eds_to_rjn.code import collector
-    project_manager, sessions = _demo_eds_start_session_maxson()
+    project_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
     queries_file_path_list = project_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
     queries_dictlist_unfiltered = load_query_rows_from_csv_files(queries_file_path_list) # A scripter can edit their queries file names here - they do not need to use the default.
     queries_defaultdictlist_grouped_by_session_key = group_queries_by_api_url(queries_dictlist_unfiltered)
@@ -244,7 +264,7 @@ def demo_eds_plot_point_live():
     from src.pipeline import gui_mpl_live
 
     # Initialize the project based on configs and defaults, in the demo initializtion script
-    project_manager, sessions = _demo_eds_start_session_maxson()
+    project_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
     
     data_buffer = PlotBuffer()
 
@@ -283,14 +303,16 @@ def demo_eds_plot_point_live():
 def demo_eds_webplot_point_live():
     from threading import Thread
 
-    from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
+    from src.pipeline.queriesmanager import QueriesManager, load_query_rows_from_csv_files, group_queries_by_api_url
     from projects.eds_to_rjn.code import collector, sanitizer
     from src.pipeline.plotbuffer import PlotBuffer
     #from src.pipeline import gui_flaskplotly_live
     from src.pipeline import gui_fastapi_plotly_live
 
     # Initialize the project based on configs and defaults, in the demo initializtion script
-    project_manager, sessions = _demo_eds_start_session_maxson()
+    project_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
+
+    queries_manager = QueriesManager(project_manager)
     
     data_buffer = PlotBuffer()
 
@@ -302,6 +324,30 @@ def demo_eds_webplot_point_live():
     key = "Maxson"
     session = sessions[key]
     queries_maxson = queries_defaultdictlist_grouped_by_session_key.get(key,[])
+
+    def load_historic_data_back_to_last_success():
+        starttime = queries_manager.get_most_recent_successful_timestamp(api_id="Maxson")
+        logger.info(f"queries_manager.get_most_recent_successful_timestamp(), key = {'Maxson'}")
+        logger.info(f"starttime = {starttime}")
+        endtime = helpers.get_now_time()
+
+        point_list = [row['iess'] for row in queries_defaultdictlist_grouped_by_session_key.get(key,[])]
+        api_url = session.custom_dict["url"]
+        request_id = EdsClient.create_tabular_request(session, api_url, starttime, endtime, points=point_list)
+        EdsClient.wait_for_request_execution_session(session, api_url, request_id)
+        results = EdsClient.get_tabular_trend(session, request_id, point_list)
+        logger.info(f"len(results) = {len(results)}")
+
+        for idx, rows in enumerate(results):
+            for row in rows:
+                label = f"{row.get('rjn_entityid')} ({row.get('units')})"
+                ts = helpers.iso(row.get("ts"))
+                av = row.get("value")
+                if ts is not None and av is not None:
+                    data_buffer.append(label, ts, av)
+                    logger.debug(f"Historic: {label} {round(av,2)} @ {ts}")
+                    
+        queries_manager.update_attempt("Maxson")
 
     def collect_loop():
         while True:
@@ -317,7 +363,8 @@ def demo_eds_webplot_point_live():
                     #logger.info(f"Live: {label} → {av} @ {ts}")
                     logger.info(f"Live: {label} {round(av,2)} {un}")
             time.sleep(1)
-
+    
+    load_historic_data_back_to_last_success()
     collector_thread = Thread(target=collect_loop, daemon=True)
     collector_thread.start()
 
@@ -332,7 +379,7 @@ def demo_eds_plot_trend():
 
 @log_function_call(level=logging.DEBUG)
 def demo_eds_print_point_export():
-    project_manager, sessions = _demo_eds_start_session_maxson()
+    project_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
     session_maxson = sessions["Maxson"]
 
     point_export_decoded_str = EdsClient.get_points_export(session_maxson)
@@ -341,7 +388,7 @@ def demo_eds_print_point_export():
 
 @log_function_call(level=logging.DEBUG)
 def demo_eds_save_point_export():
-    project_manager, sessions = _demo_eds_start_session_maxson()
+    project_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
     session_maxson = sessions["Maxson"]
 
     point_export_decoded_str = EdsClient.get_points_export(session_maxson)
@@ -355,10 +402,11 @@ def demo_eds_print_trabular_trend():
     from src.pipeline.queriesmanager import QueriesManager
     from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
     
-    project_manager, sessions = _demo_eds_start_session_maxson()
+    project_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
     
     queries_manager = QueriesManager(project_manager)
     queries_file_path_list = project_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
+    logger.debug(f"queries_file_path_list = {queries_file_path_list}")
     queries_dictlist_unfiltered = load_query_rows_from_csv_files(queries_file_path_list) # you can edit your queries files here
     queries_defaultdictlist_grouped_by_session_key = group_queries_by_api_url(queries_dictlist_unfiltered,'zd')
     
@@ -367,24 +415,25 @@ def demo_eds_print_trabular_trend():
         point_list = [row['iess'] for row in queries_defaultdictlist_grouped_by_session_key.get(key,[])]
 
         # Discern the time range to use
-        starttime = queries_manager.get_most_recent_successful_timestamp(api_id=key)
+        starttime = queries_manager.get_most_recent_successful_timestamp(api_id="Maxson")
         endtime = helpers.get_now_time()
 
         api_url = session.custom_dict["url"]
         request_id = EdsClient.create_tabular_request(session, api_url, starttime, endtime, points=point_list)
         EdsClient.wait_for_request_execution_session(session, api_url, request_id)
-        results = EdsClient.get_tabular_mod(session, request_id, point_list)
+        results = EdsClient.get_tabular_trend(session, request_id, point_list)
         session.post(api_url + 'logout', verify=False)
-        #queries_manager.update_success(api_id=key) # not appropriate here in demo without successful transmission to 3rd party API
-
+        #
         for idx, iess in enumerate(point_list):
             print('\n{} samples:'.format(iess))
             for s in results[idx]:
                 print('{} {} {}'.format(datetime.fromtimestamp(s[0]), round(s[1],2), s[2]))
+        queries_manager.update_success(api_id=key) # not appropriate here in demo without successful transmission to 3rd party API
+
 
 @log_function_call(level=logging.DEBUG)
 def demo_eds_print_license():
-    project_manager, sessions = _demo_eds_start_session_maxson()
+    project_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
     session_maxson = sessions["Maxson"]
 
     response = EdsClient.get_license(session_maxson, api_url = session_maxson.custom_dict["url"])
@@ -394,7 +443,7 @@ def demo_eds_print_license():
 @log_function_call(level=logging.DEBUG)
 def demo_eds_ping():
     from src.pipeline.calls import call_ping
-    project_manager, sessions = _demo_eds_start_session_maxson()
+    project_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
     session_maxson = sessions["Maxson"]
 
     api_url = session_maxson.custom_dict["url"]

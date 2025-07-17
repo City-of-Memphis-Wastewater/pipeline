@@ -1,4 +1,4 @@
-#pipeline.collector.py
+#pipeline.collectorfrom src.pipeline.api.eds import EdsClient.py
 from datetime import datetime
 import logging
 logger = logging.getLogger(__name__)
