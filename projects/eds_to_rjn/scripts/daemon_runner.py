@@ -115,7 +115,7 @@ def run_hourly_tabular_trend_eds_to_rjn():
                 logger.info(f"key = {'RJN'}")
 
 def setup_schedules():
-    testing = True
+    testing = False
     if not testing:
         schedule.every().hour.do(run_hourly_tabular_trend_eds_to_rjn)
     else:
