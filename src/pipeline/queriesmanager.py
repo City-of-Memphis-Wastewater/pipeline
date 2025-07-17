@@ -18,7 +18,7 @@ use-most-recently-edited-query-file = true # while true, this will ignore the fi
 class QueriesManager:
     def __init__(self, project_manager: object):
         self.project_manager = project_manager
-        print(f"QueriesManager using project: {self.project_manager.project_name}")
+        logger.info(f"QueriesManager using project: {self.project_manager.project_name}")
         if not project_manager:
             raise ValueError("project_manager must be provided and not None.")
         self.project_manager = project_manager
@@ -28,7 +28,7 @@ class QueriesManager:
         file_path = self.project_manager.get_timestamp_success_file_path()
         try:
             data = helpers.load_json(file_path)
-            print(f"Tracking data loaded: {data}")
+            logger.info(f"Tracking data loaded: {data}")
             return data
         except FileNotFoundError:
             return {}

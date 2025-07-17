@@ -19,7 +19,7 @@ from src.pipeline.calls import test_connection_to_internet
 from src.pipeline import helpers
 
 from src.pipeline.projectmanager import ProjectManager
-from src.pipeline.api.rjn import RjnClient #send_data_to_rjn2
+from src.pipeline.api.rjn import RjnClient 
 
 #from projects.eds_to_rjn.scripts import collector
 from ..code import collector, storage, aggregator, sanitizer

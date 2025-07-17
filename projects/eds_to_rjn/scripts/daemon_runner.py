@@ -12,6 +12,7 @@ from src.pipeline.projectmanager import ProjectManager
 from src.pipeline.queriesmanager import QueriesManager
 from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
 logger = logging.getLogger(__name__)
+#logging.basicConfig(level=logging.DEBUG)
 
 
 def run_hourly_tabular_trend_eds_to_rjn():
@@ -26,14 +27,21 @@ def run_hourly_tabular_trend_eds_to_rjn():
     queries_dictlist_unfiltered = load_query_rows_from_csv_files(queries_file_path_list)
     queries_defaultdictlist_grouped_by_session_key = group_queries_by_api_url(queries_dictlist_unfiltered,'zd')
     secrets_dict = SecretsYaml.load_config(secrets_file_path = project_manager.get_configs_secrets_file_path())
-    sessions = {}
+    #sessions_eds = {}
 
     api_secrets_m = helpers.get_nested_config(secrets_dict, ["eds_apis", "Maxson"])
     session_maxson = EdsClient.login_to_session(api_url = api_secrets_m["url"],
                                       username = api_secrets_m["username"],
                                       password = api_secrets_m["password"])
     session_maxson.custom_dict = api_secrets_m
-    sessions.update({"Maxson":session_maxson})
+    #sessions_eds.update({"Maxson":session_maxson})
+    if False:
+        api_secrets_s = helpers.get_nested_config(secrets_dict, ["eds_apis", "WWTP"])
+        session_stiles = EdsClient.login_to_session(api_url = api_secrets_s["url"],
+                                        username = api_secrets_s["username"],
+                                        password = api_secrets_s["password"])
+        session_stiles.custom_dict = api_secrets_s
+        #sessions_eds.update({"WWTP":session_stiles})
 
     api_secrets_r = helpers.get_nested_config(secrets_dict, ["contractor_apis","RJN"])
     
@@ -42,14 +50,15 @@ def run_hourly_tabular_trend_eds_to_rjn():
                                        password = api_secrets_r["password"])
     if session_rjn is not None:
         session_rjn.custom_dict = api_secrets_r
-        sessions.update({"RJN":session_rjn})
     else:
         logger.warning("RJN session not established. Skipping RJN-related data transmission.")
-    #for key, session in sessions.items():
-    key = "Maxson"
-    session = sessions[key] 
+    #for key, session in sessions_eds.items():
 
+    key = "Maxson"
+    #session = sessions_eds[key] 
     point_list = [row['iess'] for row in queries_defaultdictlist_grouped_by_session_key.get(key,[])]
+    rjn_siteid_list = [row['rjn_siteid'] for row in queries_defaultdictlist_grouped_by_session_key.get(key,[])]
+    rjn_entityid_list = [row['rjn_entityid'] for row in queries_defaultdictlist_grouped_by_session_key.get(key,[])]
 
     # Discern the time range to use
     starttime = queries_manager.get_most_recent_successful_timestamp(api_id="RJN")
@@ -57,23 +66,23 @@ def run_hourly_tabular_trend_eds_to_rjn():
     logger.info(f"starttime = {starttime}")
     endtime = helpers.get_now_time()
 
-    api_url = session.custom_dict["url"]
-    request_id = EdsClient.create_tabular_request(session, api_url, starttime, endtime, points=point_list)
-    EdsClient.wait_for_request_execution_session(session, api_url, request_id)
-    results = EdsClient.get_tabular_trend(session, request_id, point_list)
-    session.post(api_url + 'logout', verify=False)
-    print(f"len(results) = {len(results)}")
-    #print(f"dir(results) = {dir(results)}")
+    api_url = session_maxson.custom_dict["url"]
+    request_id = EdsClient.create_tabular_request(session_maxson, api_url, starttime, endtime, points=point_list)
+    EdsClient.wait_for_request_execution_session(session_maxson, api_url, request_id)
+    results = EdsClient.get_tabular_trend(session_maxson, request_id, point_list)
+    #results = EdsClient.get_tabular_mod(session_maxson, request_id, point_list)
+    session_maxson.post(api_url + 'logout', verify=False)
+    #print(f"len(results) = {len(results)}")
     
     for idx, rows in enumerate(results):
         #print(f"rows = {rows}")
         timestamps = []
         values = []
-        entity_id = None
-        project_id = None
+        entity_id = rjn_entityid_list[idx],
+        project_id = rjn_siteid_list[idx],
         
         for row in rows:
-        
+            print(f"row = {row}")
             #EdsClient.print_point_info_row(row)
 
             dt = datetime.fromtimestamp(row["ts"])
@@ -82,25 +91,24 @@ def run_hourly_tabular_trend_eds_to_rjn():
             timestamps.append(timestamp_str)
             values.append(round(row["value"], 2))
 
-            entity_id = row["rjn_entityid"]
-            project_id = row["rjn_siteid"]
-
         if timestamps and values:
             
             if session_rjn is not None:
                 base_url = session_rjn.custom_dict["url"]
                 
                 # Send data to RJN
-                
-                RjnClient.send_data_to_rjn2(
+                print(f"row = {row}")
+                rjn_data_transmission_succeeded = RjnClient.send_data_to_rjn2(
                     session_rjn,
                     base_url = session_rjn.custom_dict["url"],
-                    project_id=row["rjn_siteid"],
-                    entity_id=row["rjn_entityid"],
+                    entity_id = entity_id,
+                    project_id = project_id,
                     timestamps=[timestamp_str],
                     values=[round(row["value"], 2)]
                 )
-                queries_manager.update_success(api_id="RJN", success_time=endtime)
+                if rjn_data_transmission_succeeded:
+                    queries_manager.update_success(api_id="RJN", success_time=endtime)
+                
             else:
                 logger.warning("Skipping RJN transmission loop — session_rjn not established.")
                 queries_manager.update_attempt(api_id="RJN")  # Optional: track that an attempt happened

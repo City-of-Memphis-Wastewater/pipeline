@@ -81,6 +81,7 @@ class EdsClient:
 
     @staticmethod
     def get_tabular_trend(session, req_id, point_list):
+        #print(f"point_list = {point_list}")
         results = [[] for _ in range(len(point_list))]
         while True:
             api_url = session.custom_dict['url']
@@ -92,12 +93,11 @@ class EdsClient:
 
                 for idx, samples in enumerate(chunk['items']):
                     for sample in samples:
+                        #print(f"sample = {sample}")
                         structured = {
                             "ts": sample[0],          # Timestamp
                             "value": sample[1],       # Measurement value
-                            "units": sample[2],       # Optional units or label
-                            "rjn_siteid": point_list[idx],  # Attach point ID from input list
-                            "rjn_entityid": point_list[idx]  # Duplicate or customize if needed
+                            "quality": sample[2],       # Optional units or label
                         }
                         results[idx].append(structured)
 

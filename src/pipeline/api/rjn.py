@@ -88,13 +88,17 @@ class RjnClient:
             else:
                 response.raise_for_status()
                 print(f"Sent timestamps and values to entity {entity_id} (HTTP {response.status_code})")
+                return True
         except ConnectionError as e:
             print("Skipping RjnClient.send_data_to_rjn() due to connection error")
             print(e)
+            return False
         except requests.exceptions.RequestException as e:
             print(f"Error sending data to RJN: {e}")
             if response is not None:# and response.status_code != 500:
-                print(f"Response content: {response.text}")  # Print error response
+                logging.debug(f"Response content: {response.text}")  # Print error response
+                
+            return False
                 
     @staticmethod
     def ping():
