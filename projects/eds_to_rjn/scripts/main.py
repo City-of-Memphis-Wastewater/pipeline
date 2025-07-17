@@ -5,9 +5,6 @@ import sys
 from pathlib import Path
 from requests import Session # if you aren'ty using this, you should be
 
-#from src.pipeline.api import eds
-#from src.pipeline.api import rjn
-
 # Add the root project path so that 'src' can be found
 ROOT = Path(__file__).resolve().parents[2]  # pipeline/projects/eds_to_rjn/scripts -> pipeline
 sys.path.insert(0, str(ROOT))

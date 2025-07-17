@@ -2,10 +2,10 @@ from datetime import datetime
 import logging
 import requests
 import time
+from pprint import pprint
 
 from src.pipeline import helpers
 from src.pipeline.decorators import log_function_call
-from pprint import pprint
 
 class EdsClient:
 

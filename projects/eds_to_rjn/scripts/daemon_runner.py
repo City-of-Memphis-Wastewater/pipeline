@@ -2,15 +2,15 @@
 import schedule, time
 import logging
 from datetime import datetime
-from ..code import collector, sanitizer
+
 from src.pipeline.api.eds import EdsClient
 from src.pipeline.api.rjn import RjnClient
 from src.pipeline import helpers
-#from .main import get_rjn_tokens_and_headers
 from src.pipeline.env import SecretsYaml
 from src.pipeline.projectmanager import ProjectManager
 from src.pipeline.queriesmanager import QueriesManager
 from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
+
 logger = logging.getLogger(__name__)
 #logging.basicConfig(level=logging.DEBUG)
 

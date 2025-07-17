@@ -1,7 +1,5 @@
 import requests
 import logging
-from requests.exceptions import SSLError, ConnectionError
-import logging
 
 from src.pipeline.calls import make_request, call_ping
 from src.pipeline.env import find_urls
@@ -37,12 +35,12 @@ class RjnClient:
             print("Status code:", response.status_code)
             print("Response text:", response.text)
             return session
-        except SSLError as ssl_err:
+        except requests.exceptions.SSLError as ssl_err:
             logging.warning("SSL verification failed. Will retry on next scheduled cycle.")
             logging.debug(f"SSL error details: {ssl_err}")
             return None
 
-        except ConnectionError as conn_err:
+        except requests.exceptions.ConnectionError as conn_err:
             logging.warning("Connection error during authentication. Will retry next hour.")
             logging.debug(f"Connection error details: {conn_err}")
             return None
@@ -89,7 +87,7 @@ class RjnClient:
                 response.raise_for_status()
                 print(f"Sent timestamps and values to entity {entity_id} (HTTP {response.status_code})")
                 return True
-        except ConnectionError as e:
+        except requests.exceptions.ConnectionError as e:
             print("Skipping RjnClient.send_data_to_rjn() due to connection error")
             print(e)
             return False
