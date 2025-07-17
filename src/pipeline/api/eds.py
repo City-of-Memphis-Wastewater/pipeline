@@ -361,8 +361,8 @@ def demo_eds_webplot_point_live():
                     #logger.info(f"Live: {label} → {av} @ {ts}")
                     logger.info(f"Live: {label} {round(av,2)} {un}")
             time.sleep(1)
-    
-    load_historic_data_back_to_last_success()
+    if False:
+        load_historic_data_back_to_last_success()
     collector_thread = Thread(target=collect_loop, daemon=True)
     collector_thread.start()
 
