@@ -100,13 +100,13 @@ class RjnClient:
                 
     @staticmethod
     def ping():
-        from src.pipeline.env import SecretsYaml
+        from src.pipeline.env import SecretConfig
         from src.pipeline.projectmanager import ProjectManager
         project_name = ProjectManager.identify_default_project()
         project_manager = ProjectManager(project_name)
-        secrets_dict = SecretsYaml.load_config(secrets_file_path = project_manager.get_configs_secrets_file_path())
+        secrets_dict = SecretConfig.load_config(secrets_file_path = project_manager.get_configs_secrets_file_path())
         
-        secrets_dict = SecretsYaml.load_config(secrets_file_path = project_manager.get_configs_secrets_file_path())
+        secrets_dict = SecretConfig.load_config(secrets_file_path = project_manager.get_configs_secrets_file_path())
         sessions = {}
 
         url_set = find_urls(secrets_dict)
@@ -118,17 +118,17 @@ class RjnClient:
 @log_function_call(level=logging.DEBUG)
 def demo_eds_ping():
     from src.pipeline.calls import call_ping
-    from src.pipeline.env import SecretsYaml
+    from src.pipeline.env import SecretConfig
     from src.pipeline.projectmanager import ProjectManager
 
 
 
-    from src.pipeline.env import SecretsYaml
+    from src.pipeline.env import SecretConfig
     from src.pipeline.projectmanager import ProjectManager
     project_name = ProjectManager.identify_default_project()
     project_manager = ProjectManager(project_name)
 
-    secrets_dict = SecretsYaml.load_config(secrets_file_path = project_manager.get_configs_secrets_file_path())
+    secrets_dict = SecretConfig.load_config(secrets_file_path = project_manager.get_configs_secrets_file_path())
     
     api_secrets_r = helpers.get_nested_config(secrets_dict, ["contractor_apis","RJN"])
     session = RjnClient.login_to_session(api_url = api_secrets_r["url"],

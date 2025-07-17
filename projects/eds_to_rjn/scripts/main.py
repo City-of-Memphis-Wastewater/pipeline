@@ -9,7 +9,7 @@ from requests import Session # if you aren'ty using this, you should be
 ROOT = Path(__file__).resolve().parents[2]  # pipeline/projects/eds_to_rjn/scripts -> pipeline
 sys.path.insert(0, str(ROOT))
 
-from src.pipeline.env import SecretsYaml
+from src.pipeline.env import SecretConfig
 from src.pipeline.api.eds import EdsClient
 from src.pipeline.api.rjn import RjnClient
 from src.pipeline.calls import test_connection_to_internet
@@ -48,7 +48,7 @@ def sketch_maxson():
     logger.debug(f"queries_file_path_list = {queries_file_path_list}")
     queries_dictlist_unfiltered = load_query_rows_from_csv_files(queries_file_path_list)
     queries_defaultdictlist_grouped_by_session_key = group_queries_by_api_url(queries_dictlist_unfiltered,'zd')
-    secrets_dict = SecretsYaml.load_config(secrets_file_path = project_manager.get_configs_secrets_file_path())
+    secrets_dict = SecretConfig.load_config(secrets_file_path = project_manager.get_configs_secrets_file_path())
     sessions = {}
 
     api_secrets_m = helpers.get_nested_config(secrets_dict, ["eds_apis", "Maxson"])

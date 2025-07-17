@@ -177,12 +177,12 @@ def fetch_eds_data_row(session, iess):
 
 @log_function_call(level=logging.DEBUG) 
 def _demo_eds_start_session_CoM_WWTPs():
-    from src.pipeline.env import SecretsYaml
+    from src.pipeline.env import SecretConfig
     from src.pipeline.projectmanager import ProjectManager
     project_name = ProjectManager.identify_default_project()
     project_manager = ProjectManager(project_name)
 
-    secrets_dict = SecretsYaml.load_config(secrets_file_path = project_manager.get_configs_secrets_file_path())
+    secrets_dict = SecretConfig.load_config(secrets_file_path = project_manager.get_configs_secrets_file_path())
     sessions = {}
 
     api_secrets_m = helpers.get_nested_config(secrets_dict, ["eds_apis","Maxson"])

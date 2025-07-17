@@ -6,7 +6,7 @@ from datetime import datetime
 from src.pipeline.api.eds import EdsClient
 from src.pipeline.api.rjn import RjnClient
 from src.pipeline import helpers
-from src.pipeline.env import SecretsYaml
+from src.pipeline.env import SecretConfig
 from src.pipeline.projectmanager import ProjectManager
 from src.pipeline.queriesmanager import QueriesManager
 from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
@@ -26,7 +26,7 @@ def run_hourly_tabular_trend_eds_to_rjn():
 
     queries_dictlist_unfiltered = load_query_rows_from_csv_files(queries_file_path_list)
     queries_defaultdictlist_grouped_by_session_key = group_queries_by_api_url(queries_dictlist_unfiltered,'zd')
-    secrets_dict = SecretsYaml.load_config(secrets_file_path = project_manager.get_configs_secrets_file_path())
+    secrets_dict = SecretConfig.load_config(secrets_file_path = project_manager.get_configs_secrets_file_path())
     #sessions_eds = {}
 
     api_secrets_m = helpers.get_nested_config(secrets_dict, ["eds_apis", "Maxson"])
