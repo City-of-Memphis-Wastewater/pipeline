@@ -281,7 +281,9 @@ def demo_eds_plot_point_live():
             for row in responses:
                 label = f"{row.get('shortdesc')} ({row.get('un')})" 
                 ts = row.get("ts")
+                #ts = helpers.human_readable(row.get("ts"))
                 #ts = helpers.iso(row.get("ts")) #  dpg: TypeError: must be real number, not str
+                ts = helpers.iso(row.get("ts")) # dpg is out, mpl is in. plotly is way, way in.
                 av = row.get("value")
                 un = row.get("un")
                 if ts is not None and av is not None:

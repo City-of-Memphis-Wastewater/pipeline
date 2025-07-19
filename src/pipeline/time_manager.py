@@ -1,5 +1,7 @@
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 from typing import Union
+import click
 
 class TimeManager:
     """
@@ -20,7 +22,7 @@ class TimeManager:
 
         print(tm1.as_formatted_date_time())  # → '2025-07-19 15:00:00'
         print(tm1.as_formatted_time())  # → '15:00:00'
-        print(tm1.as_iso())                  # → '2025-07-19T15:00:00Z'
+        print(tm1.as_isoz())                  # → '2025-07-19T15:00:00Z'
         print(tm1.as_unix())                 # → 1752946800
         print(tm1.as_datetime())             # → datetime.datetime(2025, 7, 19, 15, 0)
 
@@ -30,12 +32,57 @@ class TimeManager:
         now_tm = TimeManager.now()
         now_rounded_tm = TimeManager.now_rounded_to_five()
     """
+    
+    HOW_TO_UTCZ_DOC =  """
+    # HOW TO CONVERT TIME BEFORE USING TIMEMANAGER
+    ## 1. Create a datetime in Central Time
+    central_time = datetime(2025, 7, 19, 10, 0, tzinfo=ZoneInfo("America/Chicago"))
+
+    ## 2. Convert to UTC
+    utc_time = central_time.astimezone(ZoneInfo("UTC"))
+
+    ## 3. Use the TimeManager class to ensure ISO format (with Z). 
+    utc_time_z = TimeManager(utc_time).as_isoz()
+
+    print("Central:", central_time)
+    print("UTC:    ", utc_time)
+
+    # ALTERNATIVE METHODS 
+    ## - Prepare single timestamp (top of the hour UTC)
+    ``` 
+    import datetime
+    timestamp = datetime.datetime.now(datetime.timezone.utc).replace(minute=0, second=0, microsecond=0)
+    timestamp_str = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+    ```
+
+    """
 
     def __init__(self, timestamp: Union[str, int, float, datetime]):
         if isinstance(timestamp, datetime):
             self._dt = timestamp.replace(tzinfo=timezone.utc)
         elif isinstance(timestamp, (int, float)):
             self._dt = datetime.fromtimestamp(timestamp, tz=timezone.utc)
+            '''
+        elif isinstance(timestamp, str):
+            try:
+                # Use fromisoformat (Python 3.7+)
+                self._dt = datetime.fromisoformat(timestamp).replace(tzinfo=timezone.utc)
+            except ValueError:
+                self._dt = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+            '''
+        elif isinstance(timestamp, str):
+            try:
+                if timestamp.endswith("Z"):
+                    # Strip 'Z' and parse as UTC
+                    self._dt = datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+                else:
+                    # Try ISO 8601 string with offset (e.g., +00:00)
+                    self._dt = datetime.fromisoformat(timestamp).astimezone(timezone.utc)
+            except ValueError:
+                # Fallback to "YYYY-MM-DD HH:MM:SS"
+                self._dt = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+
+            '''
         elif isinstance(timestamp, str):
             try:
                 # Try ISO 8601 with 'Z'
@@ -43,18 +90,26 @@ class TimeManager:
             except ValueError:
                 # Try formatted string without timezone
                 self._dt = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+            '''
         else:
             raise TypeError(f"Unsupported timestamp type: {type(timestamp)}")
 
     def as_datetime(self) -> datetime:
         """Return the internal datetime object (UTC)."""
         return self._dt
+    
+    def as_safe_isoformat_for_filename(self) -> str:
+        """
+        Returns an ISO 8601 formatted UTC time string safe for use in filenames.
+        Example: '2025-07-19T23-35-00Z'
+        """
+        return self.as_datetime().isoformat().replace(":", "-") + "Z"
 
     def as_unix(self) -> int:
         """Return the Unix timestamp as an integer."""
         return int(self._dt.timestamp())
 
-    def as_iso(self) -> str:
+    def as_isoz(self) -> str:
         """Return ISO 8601 string (UTC) with 'Z' suffix."""
         return self._dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -91,7 +146,36 @@ class TimeManager:
         return TimeManager(rounded)
 
     def __repr__(self):
-        return f"TimeManager({self.as_iso()})"
+        return f"TimeManager({self.as_isoz()})"
 
     def __str__(self):
         return self.as_formatted_date_time()
+
+@click.command()
+def main():
+    click.echo("WELCOME TO THE `TimeManager` CLASS")
+    click.echo("pipx install mulch")
+    click.echo("from mulch.time_manager import TimeManager")
+    click.echo("")
+    click.echo("test>> click.MultiCommand(True)")
+    click.MultiCommand(True)
+    click.echo("test>> click.MultiCommand()")
+    click.MultiCommand()
+
+    msg0 = ''' python time_manager.py             # runs 'main' by default if you set it as default command (else error)
+python time_manager.py main        # run main
+python time_manager.py easteregg   # run easteregg
+python time_manager.py howto-utcz  # show how-to UTCZ doc
+python time_manager.py license     # show license
+'''
+    click.echo(msg0)
+def easteregg():
+    click.echo("from mulch.philosophy import Philosophy")
+    click.echo("PS C:Users/user/dev/pipeline >> poetry run python -m mulch.philosphy --help # click ")
+
+def howto_utcz():
+    click.echo(TimeManager.HOW_TO_UTCZ_DOC)
+def license():
+    pass
+if __name__ == "__main__":
+    main()

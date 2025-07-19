@@ -19,7 +19,7 @@ logger.setLevel(logging.INFO)
 def save_tabular_trend_data_to_log_file(project_id, entity_id, endtime: int, project_manager, timestamps: list[int], values: list[float]):
     ### save file for log
     timestamps_str = [TimeManager(ts).as_formatted_date_time() for ts in timestamps]
-    endtime_iso = TimeManager(endtime).as_iso()
+    endtime_iso = TimeManager(endtime).as_safe_isoformat_for_filename()
     filename = f"rjn_data_{project_id}_{entity_id}_{endtime_iso}.csv"
     log_dir = project_manager.get_logs_dir()
     filepath = log_dir / filename
@@ -28,10 +28,13 @@ def save_tabular_trend_data_to_log_file(project_id, entity_id, endtime: int, pro
     with open(filepath, "w", newline="") as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(["timestamp", "value"])  # Header
-        for ts, val in zip(timestamps, values):
+        #for ts, val in zip(timestamps, values):
+        for ts, val in zip(timestamps_str, values):
             writer.writerow([ts, val])
             
-def run_hourly_tabular_trend_eds_to_rjn():
+def run_hourly_tabular_trend_eds_to_rjn(test = False):
+
+
     #test_connection_to_internet()
 
     project_name = 'eds_to_rjn' # project_name = ProjectManager.identify_default_project()
@@ -117,14 +120,18 @@ def run_hourly_tabular_trend_eds_to_rjn():
                 
                 # Send data to RJN
                 #print(f"row = {row}")
-                rjn_data_transmission_succeeded = RjnClient.send_data_to_rjn2(
-                    session_rjn,
-                    base_url = base_url,
-                    entity_id = entity_id,
-                    project_id = project_id,
-                    timestamps=timestamps,
-                    values=values
-                )
+                if not test:
+                    rjn_data_transmission_succeeded = RjnClient.send_data_to_rjn2(
+                        session_rjn,
+                        base_url = base_url,
+                        entity_id = entity_id,
+                        project_id = project_id,
+                        timestamps=timestamps,
+                        values=values
+                    )
+                else:
+                    print("[TEST] RjnClient.send_data_to_rjn2() skipped")
+                
                 if rjn_data_transmission_succeeded:
                     queries_manager.update_success(api_id="RJN", success_time=endtime)
 
@@ -157,7 +164,10 @@ if __name__ == "__main__":
         main()
     elif cmd == "once":
         run_hourly_tabular_trend_eds_to_rjn()
+    elif cmd == "test":
+        run_hourly_tabular_trend_eds_to_rjn(test=True)
     else:
         print("Usage options: \n"
         "poetry run python -m projects.eds_to_rjn.scripts.daemon_runner main \n"
-        "poetry run python -m projects.eds_to_rjn.scripts.daemon_runner once ")
+        "poetry run python -m projects.eds_to_rjn.scripts.daemon_runner once \n"
+        "poetry run python -m projects.eds_to_rjn.scripts.daemon_runner test ")

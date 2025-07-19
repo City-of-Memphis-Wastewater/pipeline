@@ -1,6 +1,5 @@
 #pipeline.aggregator.py
 import csv
-import datetime
 from collections import defaultdict
 import os
 from pprint import pprint
@@ -10,11 +9,6 @@ from src.pipeline.time_manager import TimeManager
 
 
 def aggregate_and_send(session_rjn, data_file, checkpoint_file):
-
-    # Prepare single timestamp (top of the hour UTC)
-    #timestamp = datetime.datetime.now(datetime.timezone.utc).replace(minute=0, second=0, microsecond=0)
-    #timestamp_str = timestamp.strftime('%Y-%m-%d %H:%M:%S')
-    
 
     # Check what has already been sent
     already_sent = set()
