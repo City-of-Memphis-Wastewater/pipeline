@@ -3,7 +3,9 @@ from datetime import datetime
 import csv
 import sys
 from pathlib import Path
-from requests import Session # if you aren'ty using this, you should be
+
+from src.pipeline.time_manager import TimeManager
+
 
 # Add the root project path so that 'src' can be found
 ROOT = Path(__file__).resolve().parents[2]  # pipeline/projects/eds_to_rjn/scripts -> pipeline
@@ -18,8 +20,8 @@ from src.pipeline import helpers
 from src.pipeline.projectmanager import ProjectManager
 from src.pipeline.api.rjn import RjnClient 
 
-#from projects.eds_to_rjn.scripts import collector
-from ..code import collector, storage, aggregator, sanitizer
+
+from ..code import collector, sanitizer
 from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
 
 
@@ -28,7 +30,6 @@ import logging
 logging.basicConfig(level=logging.DEBUG)  # or INFO, WARNING, ERROR
 
 logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
 logger.setLevel(logging.INFO)  
 
 def main():
@@ -87,31 +88,22 @@ def sketch_maxson():
         # Process timestamp
         
         #for row in queries_plus_responses_filtered_by_session_key:
+    
         dt = datetime.fromtimestamp(row["ts"])
-        rounded_dt = helpers.round_time_to_nearest_five_minutes(dt)
-        timestamp = rounded_dt
-        timestamp_str = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+        tm = TimeManager(dt).round_down_to_nearest_five()
+        timestamp_str = tm.as_formatted_date_time()
     
         # Send data to RJN
         
         RjnClient.send_data_to_rjn2(
             session_rjn,
             base_url = session_rjn.custom_dict["url"],
-            project_id=row["rjn_siteid"],
+            project_id=row["rjn_projectid"],
             entity_id=row["rjn_entityid"],
             timestamps=[timestamp_str],
-            values=[round(row["value"], 2)]
+            values=[round(row["value"], 5)]
         )
 
-'''
-def get_rjn_tokens_and_headers(secrets_dict):
-    print("eds_to_rjn.scripts.main.get_rjn_tokens_and_headers()")
-    # toml headings
-    rjn = RjnClient(secrets_dict['contractor_apis']['RJN'])
-    token_rjn, headers_rjn = rjn.get_token_and_headers()
-    #print(f"token_rjn = {token_rjn}")
-    return rjn, headers_rjn
-'''
 
 if __name__ == "__main__":
     import sys

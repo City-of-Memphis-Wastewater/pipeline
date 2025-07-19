@@ -4,13 +4,27 @@ from datetime import datetime
 import inspect
 import types
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def load_json(filepath):
-    # Load JSON data from the file
-    with open(filepath, 'r') as file:
-        data = json.load(file)
-    return data
+    if not os.path.exists(filepath):
+        logger.warning(f"[load_json] File not found: {filepath}")
+        return {}
+
+    if os.path.getsize(filepath) == 0:
+        logger.warning(f"[load_json] File is empty: {filepath}")
+        return {}
+
+    try:
+        with open(filepath, 'r') as file:
+            return json.load(file)
+    except json.JSONDecodeError as e:
+        logger.error(f"[load_json] Failed to decode JSON in {filepath}: {e}")
+        return {}
+
 
 def load_toml(filepath):
     # Load TOML data from the file
@@ -18,15 +32,15 @@ def load_toml(filepath):
         dic_toml = toml.load(f)
     return dic_toml
 
-def round_time_to_nearest_five_minutes(dt: datetime) -> datetime:
+def round_datetime_to_nearest_past_five_minutes(dt: datetime) -> datetime:
     #print(f"dt = {dt}")
     allowed_minutes = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]
     # Find the largest allowed minute <= current minute
     rounded_minute = max(m for m in allowed_minutes if m <= dt.minute)
     return dt.replace(minute=rounded_minute, second=0, microsecond=0)
 
-def get_now_time():
-    nowtime = round_time_to_nearest_five_minutes(datetime.now())
+def get_now_time_rounded() -> int:
+    nowtime = round_datetime_to_nearest_past_five_minutes(datetime.now())
     print(f"rounded nowtime = {nowtime}")
     nowtime =  int(nowtime.timestamp())+300
     return nowtime
@@ -67,3 +81,4 @@ def iso(ts):
 
 if __name__ == "__main__":
     function_view()
+    get_now_time_rounded()

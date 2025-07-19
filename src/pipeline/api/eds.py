@@ -136,7 +136,7 @@ class EdsClient:
         return session
     
     @staticmethod
-    def create_tabular_request(session, api_url, starttime, endtime, points):
+    def create_tabular_request(session: object, api_url: str, starttime: int, endtime: int, points: list):
         data = {
             'period': {
                 'from': starttime, 
@@ -327,7 +327,7 @@ def demo_eds_webplot_point_live():
         starttime = queries_manager.get_most_recent_successful_timestamp(api_id="Maxson")
         logger.info(f"queries_manager.get_most_recent_successful_timestamp(), key = {'Maxson'}")
         logger.info(f"starttime = {starttime}")
-        endtime = helpers.get_now_time()
+        endtime = helpers.get_now_time_rounded()
 
         point_list = [row['iess'] for row in queries_defaultdictlist_grouped_by_session_key.get(key,[])]
         api_url = session.custom_dict["url"]
@@ -361,7 +361,7 @@ def demo_eds_webplot_point_live():
                     #logger.info(f"Live: {label} → {av} @ {ts}")
                     logger.info(f"Live: {label} {round(av,2)} {un}")
             time.sleep(1)
-    if False:
+    if True:
         load_historic_data_back_to_last_success()
     collector_thread = Thread(target=collect_loop, daemon=True)
     collector_thread.start()
@@ -414,7 +414,7 @@ def demo_eds_print_trabular_trend():
 
         # Discern the time range to use
         starttime = queries_manager.get_most_recent_successful_timestamp(api_id="Maxson")
-        endtime = helpers.get_now_time()
+        endtime = helpers.get_now_time_rounded()
 
         api_url = session.custom_dict["url"]
         request_id = EdsClient.create_tabular_request(session, api_url, starttime, endtime, points=point_list)
@@ -425,7 +425,8 @@ def demo_eds_print_trabular_trend():
         for idx, iess in enumerate(point_list):
             print('\n{} samples:'.format(iess))
             for s in results[idx]:
-                print('{} {} {}'.format(datetime.fromtimestamp(s[0]), round(s[1],2), s[2]))
+                #print('{} {} {}'.format(datetime.fromtimestamp(s['ts']), round(s['value'],2), s['quality']))
+                print('{} {} {}'.format(datetime.fromtimestamp(s['ts']), s['value'], s['quality']))
         queries_manager.update_success(api_id=key) # not appropriate here in demo without successful transmission to 3rd party API
 
 

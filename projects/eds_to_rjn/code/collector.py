@@ -1,9 +1,9 @@
-#pipeline.collectorfrom src.pipeline.api.eds import EdsClient.py
+# collector.py
 from datetime import datetime
 import logging
 logger = logging.getLogger(__name__)
 
-from src.pipeline.helpers import round_time_to_nearest_five_minutes
+from src.pipeline.helpers import round_datetime_to_nearest_past_five_minutes
 from src.pipeline.api.eds import EdsClient
 
 
@@ -17,7 +17,7 @@ def collect_live_values(session, queries_dictlist_filtered_by_session_key):
             continue
         
         # light validation - if you want to change column keys, that could be cool
-        #required_cols = ["iess", "rjn_siteid", "rjn_entityid"]
+        #required_cols = ["iess", "rjn_projectid", "rjn_entityid"]
         required_cols = ["iess"]
         if any(c not in row for c in required_cols):
             raise ValueError(f"Row missing required column keys: {row}")

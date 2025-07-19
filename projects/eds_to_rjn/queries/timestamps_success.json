@@ -1,14 +1,14 @@
 {
   "Maxson": {
     "timestamps": {
-      "last_success": "2025-06-20T13:40:00",
-      "last_attempt": "2025-07-16 21:28:23"
+      "last_success": "2025-07-18 11:00:44",
+      "last_attempt": "2025-07-18 11:00:44"
     }
   },
   "RJN": {
     "timestamps": {
-      "last_success": "2025-07-16 17:24:22",
-      "last_attempt": "2025-07-16 21:50:46"
+      "last_success": "2025-07-18 15:18:24",
+      "last_attempt": "2025-07-18 15:18:24"
     }
   }
 }
