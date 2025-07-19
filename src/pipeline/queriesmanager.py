@@ -7,6 +7,7 @@ from collections import defaultdict
 import logging
 
 from src.pipeline import helpers
+from src.pipeline.time_manager import TimeManager
 
 logger = logging.getLogger(__name__)
 '''
@@ -27,6 +28,7 @@ class QueriesManager:
     def load_tracking(self):
         file_path = self.project_manager.get_timestamp_success_file_path()
         try:
+            print(f"[DEBUG] Trying to load tracking file at: {file_path}")
             data = helpers.load_json(file_path)
             logger.info(f"Tracking data loaded: {data}")
             return data
@@ -38,19 +40,35 @@ class QueriesManager:
         with open(file_path, 'w') as f:
             json.dump(data, f, indent=2)
     
-    def get_most_recent_successful_timestamp(self,api_id):
+    def get_most_recent_successful_timestamp_defunct(self,api_id) -> int:
         print("QueriesManager.get_most_recent_successful_timestamp()")
         data = self.load_tracking()
         if data == {}:
             # if no stored value is found, assume you will go back one hour
             from datetime import timedelta
-            delta = int(helpers.round_time_to_nearest_five_minutes(timedelta(hours = 1).total_seconds()))
-            starttime = helpers.get_now_time() - delta 
+            delta = int(helpers.round_datetime_to_nearest_past_five_minutes(timedelta(hours = 1).total_seconds()))
+            starttime = helpers.get_now_time_rounded() - delta 
         else:
             # if a stored most-recent value is found, use it as the starttime for your a tabular trend request, etc.
-            starttime = helpers.round_time_to_nearest_five_minutes(datetime.fromisoformat(data[api_id]["timestamps"]["last_success"]))
+            starttime = helpers.round_datetime_to_nearest_past_five_minutes(datetime.fromisoformat(data[api_id]["timestamps"]["last_success"]))
             starttime = int(starttime.timestamp())
         return starttime
+    
+    def get_most_recent_successful_timestamp(self, api_id) -> int:
+        print("QueriesManager.get_most_recent_successful_timestamp()")
+        data = self.load_tracking()
+        
+        if not data:
+            # No stored value found — go back one hour from now, rounded down to nearest 5 minutes
+            one_hour_ago = TimeManager.now().as_unix() - 3600  # now - 1 hour in unix seconds
+            tm = TimeManager(one_hour_ago).round_down_to_nearest_five()
+        else:
+            # Stored value found — parse ISO timestamp and round down to nearest 5 minutes
+            last_success_iso = data[api_id]["timestamps"]["last_success"]
+            tm = TimeManager(last_success_iso).round_down_to_nearest_five()
+            
+        return tm.as_unix()
+
     
     def update_success(self,api_id,success_time=None):
         # This should be called when data is definitely transmitted to the target API. 

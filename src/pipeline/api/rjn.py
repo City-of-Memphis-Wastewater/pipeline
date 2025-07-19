@@ -1,10 +1,12 @@
 import requests
 import logging
+from typing import Union
 
 from src.pipeline.calls import make_request, call_ping
 from src.pipeline.env import find_urls
 from src.pipeline.decorators import log_function_call
 from src.pipeline import helpers
+from src.pipeline.time_manager import TimeManager
 
 logger = logging.getLogger(__name__)
 
@@ -50,30 +52,33 @@ class RjnClient:
             return None
         
     @staticmethod
-    def send_data_to_rjn2(session, base_url:str, project_id:str, entity_id:int, timestamps, values):
+    def send_data_to_rjn2(session, base_url:str, project_id:str, entity_id:int, timestamps: list[Union[int, float, str]], values: list[float]):
         if timestamps is None:
             raise ValueError("timestamps cannot be None")
         if values is None:
             raise ValueError("values cannot be None")
         if not isinstance(timestamps, list):
-            timestamps = [timestamps]
+            raise ValueError("timestamps must be a list. If you have a single timestamp, use: [timestamp] ")
         if not isinstance(values, list):
-            values = [values]
+            raise ValueError("values must be a list. If you have a single value, use: [value] ")
         # Check for matching lengths of timestamps and values
         if len(timestamps) != len(values):
             raise ValueError(f"timestamps and values must have the same length: {len(timestamps)} vs {len(values)}")
 
+        timestamps_str = [TimeManager(ts).as_formatted_date_time() for ts in timestamps]
 
         url = f"{base_url}/projects/{project_id}/entities/{entity_id}/data"
         params = {
-            "interval": 300,
+            "interval": 300,    
             "import_mode": "OverwriteExistingData",
-            "incoming_time": "DST"
+            "incoming_time": "DST"#, # DST seemed to fail and offset by an hour into the future. UTC with central time seemed to fail and offset the data 5 hours into the past. 
+            #"local_timezone": "CST_CentralStandardTime"
         }
         body = {
         "comments": "Imported from EDS.",
-        "data": dict(zip(timestamps, values))  # Works for single or multiple entries
+        "data": dict(zip(timestamps_str, values))  # Works for single or multiple entries
         }
+        
 
         response = None
         try:

@@ -1,6 +1,7 @@
 #projects/eds_to_rjndaemon_runner.py
 import schedule, time
 import logging
+import csv
 from datetime import datetime
 
 from src.pipeline.api.eds import EdsClient
@@ -10,11 +11,26 @@ from src.pipeline.env import SecretConfig
 from src.pipeline.projectmanager import ProjectManager
 from src.pipeline.queriesmanager import QueriesManager
 from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
+from src.pipeline.time_manager import TimeManager
 
 logger = logging.getLogger(__name__)
-#logging.basicConfig(level=logging.DEBUG)
+logger.setLevel(logging.INFO)
 
+def save_tabular_trend_data_to_log_file(project_id, entity_id, endtime: int, project_manager, timestamps: list[int], values: list[float]):
+    ### save file for log
+    timestamps_str = [TimeManager(ts).as_formatted_date_time() for ts in timestamps]
+    endtime_iso = TimeManager(endtime).as_iso()
+    filename = f"rjn_data_{project_id}_{entity_id}_{endtime_iso}.csv"
+    log_dir = project_manager.get_logs_dir()
+    filepath = log_dir / filename
+    logger.info(f"filepath = {filepath}")
 
+    with open(filepath, "w", newline="") as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(["timestamp", "value"])  # Header
+        for ts, val in zip(timestamps, values):
+            writer.writerow([ts, val])
+            
 def run_hourly_tabular_trend_eds_to_rjn():
     #test_connection_to_internet()
 
@@ -57,14 +73,15 @@ def run_hourly_tabular_trend_eds_to_rjn():
     key = "Maxson"
     #session = sessions_eds[key] 
     point_list = [row['iess'] for row in queries_defaultdictlist_grouped_by_session_key.get(key,[])]
-    rjn_siteid_list = [row['rjn_siteid'] for row in queries_defaultdictlist_grouped_by_session_key.get(key,[])]
+    rjn_projectid_list = [row['rjn_projectid'] for row in queries_defaultdictlist_grouped_by_session_key.get(key,[])]
     rjn_entityid_list = [row['rjn_entityid'] for row in queries_defaultdictlist_grouped_by_session_key.get(key,[])]
 
     # Discern the time range to use
     starttime = queries_manager.get_most_recent_successful_timestamp(api_id="RJN")
     logger.info(f"queries_manager.get_most_recent_successful_timestamp(), key = {'RJN'}")
+    endtime = helpers.get_now_time_rounded()
     logger.info(f"starttime = {starttime}")
-    endtime = helpers.get_now_time()
+    logger.info(f"endtime = {endtime}")
 
     api_url = session_maxson.custom_dict["url"]
     request_id = EdsClient.create_tabular_request(session_maxson, api_url, starttime, endtime, points=point_list)
@@ -74,48 +91,52 @@ def run_hourly_tabular_trend_eds_to_rjn():
     session_maxson.post(api_url + 'logout', verify=False)
     #print(f"len(results) = {len(results)}")
     
-    for idx, rows in enumerate(results):
+    for idx, iess in enumerate(point_list):
         #print(f"rows = {rows}")
         timestamps = []
         values = []
-        entity_id = rjn_entityid_list[idx],
-        project_id = rjn_siteid_list[idx],
+        entity_id = rjn_entityid_list[idx]
+        project_id = rjn_projectid_list[idx]
+        print(f"entity_id = {entity_id}")
+        print(f"project_id = {project_id}")
         
-        for row in rows:
-            print(f"row = {row}")
+        for row in results[idx]:
+            #print(f"row = {row}")
             #EdsClient.print_point_info_row(row)
 
             dt = datetime.fromtimestamp(row["ts"])
-            timestamp_str = helpers.round_time_to_nearest_five_minutes(dt).strftime('%Y-%m-%d %H:%M:%S')
-
-            timestamps.append(timestamp_str)
-            values.append(round(row["value"], 2))
-
+            timestamp_str = helpers.round_datetime_to_nearest_past_five_minutes(dt).isoformat(timespec='seconds')
+            if row['quality'] == 'G':
+                timestamps.append(timestamp_str)
+                values.append(round(row["value"],5)) # unrounded values fail to post
+        print(f"final row = {row}")
         if timestamps and values:
             
             if session_rjn is not None:
                 base_url = session_rjn.custom_dict["url"]
                 
                 # Send data to RJN
-                print(f"row = {row}")
+                #print(f"row = {row}")
                 rjn_data_transmission_succeeded = RjnClient.send_data_to_rjn2(
                     session_rjn,
-                    base_url = session_rjn.custom_dict["url"],
+                    base_url = base_url,
                     entity_id = entity_id,
                     project_id = project_id,
-                    timestamps=[timestamp_str],
-                    values=[round(row["value"], 2)]
+                    timestamps=timestamps,
+                    values=values
                 )
                 if rjn_data_transmission_succeeded:
                     queries_manager.update_success(api_id="RJN", success_time=endtime)
-                
+
+                    save_tabular_trend_data_to_log_file(project_id, entity_id, endtime, project_manager,timestamps, values)
+
             else:
-                logger.warning("Skipping RJN transmission loop — session_rjn not established.")
+                #logger.warning("Skipping RJN transmission loop — session_rjn not established.") # redundant message
                 queries_manager.update_attempt(api_id="RJN")  # Optional: track that an attempt happened
-                logger.info(f"key = {'RJN'}")
+                save_tabular_trend_data_to_log_file(project_id, entity_id, endtime, project_manager,timestamps, values)
 
 def setup_schedules():
-    testing = False
+    testing = True
     if not testing:
         schedule.every().hour.do(run_hourly_tabular_trend_eds_to_rjn)
     else:

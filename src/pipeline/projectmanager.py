@@ -20,6 +20,7 @@ class ProjectManager:
     EXPORTS_DIR_NAME = 'exports'
     SCRIPTS_DIR_NAME = 'scripts'
     CONFIGS_DIR_NAME ='secrets'
+    LOGS_DIR_NAME = 'logs'
     SECRETS_YAML_FILE_NAME ='secrets.yaml'
     SECRETS_EXAMPLE_YAML_FILE_NAME ='secrets-example.yaml'
     DEFAULT_PROJECT_TOML_FILE_NAME = 'default-project.toml'
@@ -42,6 +43,7 @@ class ProjectManager:
         self.queries_dir = self.get_queries_dir()
         self.configs_dir = self.get_configs_dir()
         self.scripts_dir = self.get_scripts_dir()
+        self.logs_dir = self.get_logs_dir()
         self.aggregate_dir = self.get_aggregate_dir()
 
         
@@ -51,6 +53,7 @@ class ProjectManager:
                                     self.imports_dir, 
                                     self.configs_dir, 
                                     self.scripts_dir, 
+                                    self.logs_dir,
                                     self.aggregate_dir])
 
     def get_projects_dir(self):
@@ -61,7 +64,7 @@ class ProjectManager:
 
     def get_exports_dir(self):
         return self.project_dir / self.EXPORTS_DIR_NAME
-
+    
     def get_exports_file_path(self, filename):
         # Return the full path to the export file
         return self.exports_dir / filename
@@ -71,6 +74,9 @@ class ProjectManager:
         # This should become defunct once the tabular trend data request is functional 
         return self.exports_dir / 'aggregate'
     
+    def get_logs_dir(self):
+        return self.project_dir / self.LOGS_DIR_NAME
+
     def get_imports_dir(self):
         return self.project_dir / self.IMPORTS_DIR_NAME
 
