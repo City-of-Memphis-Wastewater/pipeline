@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "mulch-pipeline"
+name = "pavlovian-pipeline"
 version = "0.2.2"
 description = "The official API pipeline library for mulch-based projects. Key target: Emerson Ovation EDS REST API."
 authors = ["George Clayton Bennett <george.bennett@memphistn.gov>"]
@@ -30,7 +30,6 @@ pythonpath = ["src", "."]
 [tool.poetry.dependencies]
 python = ">=3.11,<4.0.0"
 requests = ">=2.32.3,<3.0.0"
-textual = ">=3.1.0,<4.0.0"
 toml = ">=0.10.2,<0.11.0"
 pyyaml = ">=6.0.2,<7.0.0"
 certifi = ">=2025.1.31,<2026.0.0"
@@ -38,14 +37,13 @@ schedule = ">=1.2.2,<2.0.0"
 fastapi = ">=0.115.12,<0.116.0"
 urllib3 = "^2.4.0"
 plotly = "^6.2.0"
-matplotlib = "^3.10.3"
 uvicorn = "^0.34.3"
-pygal = "^3.0.5"
 mulch = "^0.2.8"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.4.1"
 pytest-cov = "^6.2.1"
+pygal = "^3.0.5"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
