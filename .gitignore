@@ -9,6 +9,7 @@ __pycache__/
 .venv/
 venv/
 myenv/
+test-pypi-venv/
 
 # Poetry lock files (optional, but recommended to commit poetry.lock)
 # poetry.lock
