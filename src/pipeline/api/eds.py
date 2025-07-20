@@ -178,9 +178,9 @@ def fetch_eds_data_row(session, iess):
 @log_function_call(level=logging.DEBUG) 
 def _demo_eds_start_session_CoM_WWTPs():
     from src.pipeline.env import SecretConfig
-    from src.pipeline.workspace_manager import workspace_manager
-    workspace_name = workspace_manager.identify_default_workspace()
-    workspace_manager = workspace_manager(workspace_name)
+    from src.pipeline.workspace_manager import WorkspaceManager
+    workspace_name = WorkspaceManager.identify_default_workspace()
+    workspace_manager = WorkspaceManager(workspace_name)
 
     secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_configs_secrets_file_path())
     sessions = {}

@@ -1,7 +1,7 @@
 #env.__main__.py
  
 import yaml
-from src.pipeline.workspace_manager import workspace_manager 
+from src.pipeline.workspace_manager import WorkspaceManager 
 
 '''
 migrate this to ConfigurationManager
@@ -49,8 +49,8 @@ def demo_secrets():
     caed defaut_project.toml - Clayton Bennett 26 April 2025.
     However this call can also be made if another project is made the active project.
     """
-    workspace_name = workspace_manager.identify_default_workspace()
-    workspace_manager = workspace_manager(workspace_name)
+    workspace_name = WorkspaceManager.identify_default_workspace()
+    workspace_manager = WorkspaceManager(workspace_name)
     config = SecretConfig.load_config(secrets_file_path = workspace_manager.get_configs_secrets_file_path())
     secrets = SecretConfig(config)
     return secrets

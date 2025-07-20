@@ -8,7 +8,7 @@ from src.pipeline.api.eds import EdsClient
 from src.pipeline.api.rjn import RjnClient
 from src.pipeline import helpers
 from src.pipeline.env import SecretConfig
-from src.pipeline.workspace_manager import workspace_manager
+from src.pipeline.workspace_manager import WorkspaceManager
 from src.pipeline.queriesmanager import QueriesManager
 from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
 from src.pipeline.time_manager import TimeManager
@@ -37,8 +37,8 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
 
     #test_connection_to_internet()
 
-    workspace_name = 'eds_to_rjn' # workspace_name = workspace_manager.identify_default_workspace()
-    workspace_manager = workspace_manager(workspace_name)
+    workspace_name = 'eds_to_rjn' # workspace_name = WorkspaceManager.identify_default_workspace()
+    workspace_manager = WorkspaceManager(workspace_name)
     queries_manager = QueriesManager(workspace_manager)
     queries_file_path_list = workspace_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
     logger.debug(f"queries_file_path_list = {queries_file_path_list}")

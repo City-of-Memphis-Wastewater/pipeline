@@ -11,8 +11,8 @@ Implement default-workspace.toml variable: use-most-recently-edited-workspace-di
 # Configure logging (adjust level as needed)
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
-class workspace_manager:
-    # It has been chosen to not make the workspace_manager a singleton if there is to be batch processing.
+class WorkspaceManager:
+    # It has been chosen to not make the WorkspaceManager a singleton if there is to be batch processing.
 
     WORKSPACES_DIR_NAME = 'workspaces'
     QUERIES_DIR_NAME = 'queries'
@@ -134,7 +134,7 @@ class workspace_manager:
     def get_timestamp_success_file_path(self):
         # Return the full path to the timestamp file
         filepath = self.get_queries_dir() / self.TIMESTAMPS_JSON_FILE_NAME
-        logging.info(f"workspace_manager.get_timestamp_success_file_path() = {filepath}")
+        logging.info(f"WorkspaceManager.get_timestamp_success_file_path() = {filepath}")
         return filepath
 
     def check_and_create_dirs(self, list_dirs):
@@ -180,10 +180,10 @@ class workspace_manager:
         return paths
 
 def establish_default_workspace():
-    workspace_name = workspace_manager.identify_default_workspace()
+    workspace_name = WorkspaceManager.identify_default_workspace()
     logging.info(f"workspace_name = {workspace_name}")
-    workspace_manager = workspace_manager(workspace_name)
-    logging.info(f"workspace_manager.get_workspace_dir() = {workspace_manager.get_workspace_dir()}")
+    workspace_manager = WorkspaceManager(workspace_name)
+    logging.info(f"WorkspaceManager.get_workspace_dir() = {WorkspaceManager.get_workspace_dir()}")
     return 
 
 def demo_establish_default_workspace():
