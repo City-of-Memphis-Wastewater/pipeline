@@ -1,7 +1,7 @@
 #env.__main__.py
  
 import yaml
-from src.pipeline.projectmanager import ProjectManager 
+from src.pipeline.workspace_manager import workspace_manager 
 
 '''
 migrate this to ConfigurationManager
@@ -44,14 +44,14 @@ def find_urls(config, url_set=None):
 def demo_secrets():
     """
     The defaut SecretConfig.load_config() call 
-    should load fromthe default-project 
-    as defined by the configuration file in the projects directorys,
+    should load fromthe default-workspace 
+    as defined by the configuration file in the workspaces directorys,
     caed defaut_project.toml - Clayton Bennett 26 April 2025.
     However this call can also be made if another project is made the active project.
     """
-    project_name = ProjectManager.identify_default_project()
-    project_manager = ProjectManager(project_name)
-    config = SecretConfig.load_config(secrets_file_path = project_manager.get_configs_secrets_file_path())
+    workspace_name = workspace_manager.identify_default_workspace()
+    workspace_manager = workspace_manager(workspace_name)
+    config = SecretConfig.load_config(secrets_file_path = workspace_manager.get_configs_secrets_file_path())
     secrets = SecretConfig(config)
     return secrets
 

@@ -1,4 +1,4 @@
-#workspaces/eds_to_rjn/daemon_runner.py
+#workspaces/eds_to_rjndaemon_runner.py
 import schedule, time
 import logging
 import csv

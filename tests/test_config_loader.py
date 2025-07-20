@@ -7,4 +7,4 @@ Out here spoofing.
 def test_default_config_loads():
     config = config_loader.load_default_config()
     assert isinstance(config, dict)
-    assert "project" in config  # adjust key names as needed
+    assert "workspace" in config  # adjust key names as needed

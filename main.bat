@@ -7,4 +7,4 @@ REM Show Poetry version
 poetry --version
 
 REM Run the daemon runner and log output & errors
-poetry run python -m projects.eds_to_rjn.scripts.daemon_runner main>> logs/daemon_log.txt 2>&1
+poetry run python -m workspaces.eds_to_rjn.scripts.daemon_runner main>> logs/daemon_log.txt 2>&1

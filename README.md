@@ -6,7 +6,7 @@ Use-cases include data exchange with third-party contractors and also data acces
 
 ## How to run pipeline
 
-Check that the secrets.yaml file in the default-project is loading:
+Check that the secrets.yaml file in the default-workspace is loading:
 ```
 poetry run python -m src.pipeline.env
 ```
@@ -14,9 +14,9 @@ Recieve an export file of all the points known to your EDS:
 ```
 poetry run python -m src.pipeline.api.eds demo-points-export
 ```
-Run the existing eds_to_rjn project:
+Run the existing eds_to_rjn workspace:
 ```
-poetry run python -m projects.eds_to_rjn.scripts.main
+poetry run python -m workspaces.eds_to_rjn.scripts.main
 ```
 Check connectivity:
 ```
@@ -34,9 +34,9 @@ EDS Tabular Trend, blank list returned:
 poetry run python -m src.pipeline.api.eds demo-trend
 ```
 ## secrets.yaml
-Access will not work without a secrets.yaml file in /pipeline/projects/your-project-name/config/secrets.yaml
+Access will not work without a secrets.yaml file in /pipeline/workspaces/your-workspace-name/config/secrets.yaml
 
-*API keys are specific to each the project, and can be referenced in the project scripts.*
+*API keys are specific to each the workspace, and can be referenced in the workspace scripts.*
 You would edit the secrets.yaml file to specify your own EDS server and credentials.
 Important: You need to VPN onto the same network as your server, EDS or otherwise, if it is not available to the outside world.
 
@@ -58,7 +58,7 @@ contractor_apis:
     client_id: "special-user"
     password: "2685steam"
 ```
-The ***projects*** folder is designed to accomodate any custom projects that you might add. You can alter the default projet file by altering the directory name indicated in the /pipeline/projects/default-project.toml file.
+The ***workspaces*** folder is designed to accomodate any custom workspaces or projects that you might add. You can alter the default projet file by altering the directory name indicated in the /pipeline/workspaces/default-workspace.toml file.
 
 # Future goals:
 - Submit a pipeline library to PyPi.
@@ -182,7 +182,7 @@ poetry install
 poetry run python
 poetry run python -m src.pipeline.env
 poetry run python -m src.pipeline.api.eds ping
-poetry run python -m projects.eds_to_rjn.scripts.main
+poetry run python -m workspaces.eds_to_rjn.scripts.main
 ```
 
 # References

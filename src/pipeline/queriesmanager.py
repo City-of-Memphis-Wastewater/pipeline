@@ -17,16 +17,16 @@ use-most-recently-edited-query-file = true # while true, this will ignore the fi
 '''
 
 class QueriesManager:
-    def __init__(self, project_manager: object):
-        self.project_manager = project_manager
-        logger.info(f"QueriesManager using project: {self.project_manager.project_name}")
-        if not project_manager:
-            raise ValueError("project_manager must be provided and not None.")
-        self.project_manager = project_manager
+    def __init__(self, workspace_manager: object):
+        self.workspace_manager = workspace_manager
+        logger.info(f"QueriesManager using project: {self.workspace_manager.workspace_name}")
+        if not workspace_manager:
+            raise ValueError("workspace_manager must be provided and not None.")
+        self.workspace_manager = workspace_manager
 
     
     def load_tracking(self):
-        file_path = self.project_manager.get_timestamp_success_file_path()
+        file_path = self.workspace_manager.get_timestamp_success_file_path()
         try:
             print(f"[DEBUG] Trying to load tracking file at: {file_path}")
             data = helpers.load_json(file_path)
@@ -36,7 +36,7 @@ class QueriesManager:
             return {}
         
     def save_tracking(self,data):
-        file_path = self.project_manager.get_timestamp_success_file_path()
+        file_path = self.workspace_manager.get_timestamp_success_file_path()
         with open(file_path, 'w') as f:
             json.dump(data, f, indent=2)
     

@@ -67,7 +67,7 @@ class RjnClient:
 
         timestamps_str = [TimeManager(ts).as_formatted_date_time() for ts in timestamps]
 
-        url = f"{base_url}/projects/{project_id}/entities/{entity_id}/data"
+        url = f"{base_url}/workspaces/{project_id}/entities/{entity_id}/data"
         params = {
             "interval": 300,    
             "import_mode": "OverwriteExistingData",
@@ -106,12 +106,12 @@ class RjnClient:
     @staticmethod
     def ping():
         from src.pipeline.env import SecretConfig
-        from src.pipeline.projectmanager import ProjectManager
-        project_name = ProjectManager.identify_default_project()
-        project_manager = ProjectManager(project_name)
-        secrets_dict = SecretConfig.load_config(secrets_file_path = project_manager.get_configs_secrets_file_path())
+        from src.pipeline.workspace_manager import workspace_manager
+        workspace_name = workspace_manager.identify_default_workspace()
+        workspace_manager = workspace_manager(workspace_name)
+        secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_configs_secrets_file_path())
         
-        secrets_dict = SecretConfig.load_config(secrets_file_path = project_manager.get_configs_secrets_file_path())
+        secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_configs_secrets_file_path())
         sessions = {}
 
         url_set = find_urls(secrets_dict)
@@ -124,16 +124,16 @@ class RjnClient:
 def demo_eds_ping():
     from src.pipeline.calls import call_ping
     from src.pipeline.env import SecretConfig
-    from src.pipeline.projectmanager import ProjectManager
+    from src.pipeline.workspace_manager import workspace_manager
 
 
 
     from src.pipeline.env import SecretConfig
-    from src.pipeline.projectmanager import ProjectManager
-    project_name = ProjectManager.identify_default_project()
-    project_manager = ProjectManager(project_name)
+    from src.pipeline.workspace_manager import workspace_manager
+    workspace_name = workspace_manager.identify_default_workspace()
+    workspace_manager = workspace_manager(workspace_name)
 
-    secrets_dict = SecretConfig.load_config(secrets_file_path = project_manager.get_configs_secrets_file_path())
+    secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_configs_secrets_file_path())
     
     api_secrets_r = helpers.get_nested_config(secrets_dict, ["contractor_apis","RJN"])
     session = RjnClient.login_to_session(api_url = api_secrets_r["url"],

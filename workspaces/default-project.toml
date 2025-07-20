@@ -1,0 +1,3 @@
+[default-workspace]
+workspace = "eds_to_rjn"
+use-most-recently-edited-workspace-directory = false # while true, this will ignore the 'workspace' variable above and instead the most recently edited workpace folder. This is to prevent you from having to constantly edit this file to try new things.

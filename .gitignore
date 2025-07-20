@@ -35,7 +35,7 @@ logs/
 **/sent_data.csv
 
 # Other
-!projects/
+!workspaces/
 !src/
 src/defunct/
 *.sqlite3

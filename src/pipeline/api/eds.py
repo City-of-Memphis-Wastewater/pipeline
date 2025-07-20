@@ -178,11 +178,11 @@ def fetch_eds_data_row(session, iess):
 @log_function_call(level=logging.DEBUG) 
 def _demo_eds_start_session_CoM_WWTPs():
     from src.pipeline.env import SecretConfig
-    from src.pipeline.projectmanager import ProjectManager
-    project_name = ProjectManager.identify_default_project()
-    project_manager = ProjectManager(project_name)
+    from src.pipeline.workspace_manager import workspace_manager
+    workspace_name = workspace_manager.identify_default_workspace()
+    workspace_manager = workspace_manager(workspace_name)
 
-    secrets_dict = SecretConfig.load_config(secrets_file_path = project_manager.get_configs_secrets_file_path())
+    secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_configs_secrets_file_path())
     sessions = {}
 
     api_secrets_m = helpers.get_nested_config(secrets_dict, ["eds_apis","Maxson"])
@@ -198,14 +198,14 @@ def _demo_eds_start_session_CoM_WWTPs():
         session_stiles.custom_dict = secrets_dict["eds_apis"]["WWTF"]
         sessions.update({"WWTF":session_stiles})
 
-    return project_manager, sessions
+    return workspace_manager, sessions
 
 @log_function_call(level=logging.DEBUG)
 def demo_eds_print_point_live_alt():
     from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
 
-    project_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
-    queries_file_path_list = project_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
+    workspace_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
+    queries_file_path_list = workspace_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
     queries_dictlist_unfiltered = load_query_rows_from_csv_files(queries_file_path_list) # A scripter can edit their queries file names here - they do not need to use the default.
     queries_defaultdictlist_grouped_by_session_key = group_queries_by_api_url(queries_dictlist_unfiltered,'zd')
     
@@ -231,9 +231,9 @@ def demo_eds_print_point_live_alt():
 @log_function_call(level=logging.DEBUG)
 def demo_eds_print_point_live():
     from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
-    from projects.eds_to_rjn.code import collector
-    project_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
-    queries_file_path_list = project_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
+    from workspaces.eds_to_rjn.code import collector
+    workspace_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
+    queries_file_path_list = workspace_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
     queries_dictlist_unfiltered = load_query_rows_from_csv_files(queries_file_path_list) # A scripter can edit their queries file names here - they do not need to use the default.
     queries_defaultdictlist_grouped_by_session_key = group_queries_by_api_url(queries_dictlist_unfiltered)
     
@@ -257,17 +257,17 @@ def demo_eds_plot_point_live():
     from threading import Thread
 
     from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
-    from projects.eds_to_rjn.code import collector, sanitizer
+    from workspaces.eds_to_rjn.code import collector, sanitizer
     from src.pipeline.plotbuffer import PlotBuffer
     from src.pipeline import gui_mpl_live
 
-    # Initialize the project based on configs and defaults, in the demo initializtion script
-    project_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
+    # Initialize the workspace based on configs and defaults, in the demo initializtion script
+    workspace_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
     
     data_buffer = PlotBuffer()
 
     # Load queries
-    queries_file_path_list = project_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
+    queries_file_path_list = workspace_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
     queries_dictlist_unfiltered = load_query_rows_from_csv_files(queries_file_path_list) # A scripter can edit their queries file names here - they do not need to use the default.
     queries_defaultdictlist_grouped_by_session_key = group_queries_by_api_url(queries_dictlist_unfiltered)
     
@@ -304,20 +304,20 @@ def demo_eds_webplot_point_live():
     from threading import Thread
 
     from src.pipeline.queriesmanager import QueriesManager, load_query_rows_from_csv_files, group_queries_by_api_url
-    from projects.eds_to_rjn.code import collector, sanitizer
+    from workspaces.eds_to_rjn.code import collector, sanitizer
     from src.pipeline.plotbuffer import PlotBuffer
     #from src.pipeline import gui_flaskplotly_live
     from src.pipeline import gui_fastapi_plotly_live
 
-    # Initialize the project based on configs and defaults, in the demo initializtion script
-    project_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
+    # Initialize the workspace based on configs and defaults, in the demo initializtion script
+    workspace_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
 
-    queries_manager = QueriesManager(project_manager)
+    queries_manager = QueriesManager(workspace_manager)
     
     data_buffer = PlotBuffer()
 
     # Load queries
-    queries_file_path_list = project_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
+    queries_file_path_list = workspace_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
     queries_dictlist_unfiltered = load_query_rows_from_csv_files(queries_file_path_list) # A scripter can edit their queries file names here - they do not need to use the default.
     queries_defaultdictlist_grouped_by_session_key = group_queries_by_api_url(queries_dictlist_unfiltered)
     
@@ -379,7 +379,7 @@ def demo_eds_plot_trend():
 
 @log_function_call(level=logging.DEBUG)
 def demo_eds_print_point_export():
-    project_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
+    workspace_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
     session_maxson = sessions["Maxson"]
 
     point_export_decoded_str = EdsClient.get_points_export(session_maxson)
@@ -388,11 +388,11 @@ def demo_eds_print_point_export():
 
 @log_function_call(level=logging.DEBUG)
 def demo_eds_save_point_export():
-    project_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
+    workspace_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
     session_maxson = sessions["Maxson"]
 
     point_export_decoded_str = EdsClient.get_points_export(session_maxson)
-    export_file_path = project_manager.get_exports_file_path(filename = 'export_eds_points_neo.txt')
+    export_file_path = workspace_manager.get_exports_file_path(filename = 'export_eds_points_neo.txt')
     EdsClient.save_points_export(point_export_decoded_str, export_file_path = export_file_path)
     print(f"Export file saved to: \n{export_file_path}") 
 
@@ -402,10 +402,10 @@ def demo_eds_print_trabular_trend():
     from src.pipeline.queriesmanager import QueriesManager
     from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
     
-    project_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
+    workspace_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
     
-    queries_manager = QueriesManager(project_manager)
-    queries_file_path_list = project_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
+    queries_manager = QueriesManager(workspace_manager)
+    queries_file_path_list = workspace_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
     logger.debug(f"queries_file_path_list = {queries_file_path_list}")
     queries_dictlist_unfiltered = load_query_rows_from_csv_files(queries_file_path_list) # you can edit your queries files here
     queries_defaultdictlist_grouped_by_session_key = group_queries_by_api_url(queries_dictlist_unfiltered,'zd')
@@ -434,7 +434,7 @@ def demo_eds_print_trabular_trend():
 
 @log_function_call(level=logging.DEBUG)
 def demo_eds_print_license():
-    project_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
+    workspace_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
     session_maxson = sessions["Maxson"]
 
     response = EdsClient.get_license(session_maxson, api_url = session_maxson.custom_dict["url"])
@@ -444,7 +444,7 @@ def demo_eds_print_license():
 @log_function_call(level=logging.DEBUG)
 def demo_eds_ping():
     from src.pipeline.calls import call_ping
-    project_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
+    workspace_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
     session_maxson = sessions["Maxson"]
 
     api_url = session_maxson.custom_dict["url"]

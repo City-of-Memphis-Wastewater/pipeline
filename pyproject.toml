@@ -1,18 +1,18 @@
 [tool.poetry]
-name = "pipeline"
+name = "mulch-pipeline"
 version = "0.2.2"
-description = "API access for reading from the EDS and writing to https://rjn-clarity-api.com/v1/clarity"
+description = "The official API pipeline library for mulch-based projects. Key target: Emerson Ovation EDS REST API."
 authors = ["George Clayton Bennett <george.bennett@memphistn.gov>"]
 license = "BSD-3"
 readme = "README.md"
 packages = [
     { include = "pipeline", from = "src" },
-	{ include = "projects", from = "." }
+	{ include = "workspaces", from = "." }
 ] # This makes `pipeline` available as an importable top-level module
 
 [tool.poetry.scripts]
 time-manager = "pipeline.time_manager:main"
-project-manager = "pipeline.project_manager:main"
+workspace-manager = "pipeline.workspace_manager:main"
 collector = "pipeline.collector:main"
 eds-client = "pipeline.api.eds:main"
 rjn-client = "pipeline.api.rjn:main"

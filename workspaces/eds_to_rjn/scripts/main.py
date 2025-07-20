@@ -8,7 +8,7 @@ from src.pipeline.time_manager import TimeManager
 
 
 # Add the root project path so that 'src' can be found
-ROOT = Path(__file__).resolve().parents[2]  # pipeline/projects/eds_to_rjn/scripts -> pipeline
+ROOT = Path(__file__).resolve().parents[2]  # pipeline/workspaces/eds_to_rjn/scripts -> pipeline
 sys.path.insert(0, str(ROOT))
 
 from src.pipeline.env import SecretConfig
@@ -17,7 +17,7 @@ from src.pipeline.api.rjn import RjnClient
 from src.pipeline.calls import test_connection_to_internet
 from src.pipeline import helpers
 
-from src.pipeline.projectmanager import ProjectManager
+from src.pipeline.workspace_manager import workspace_manager
 from src.pipeline.api.rjn import RjnClient 
 
 
@@ -37,19 +37,19 @@ def main():
 
 def sketch_daemon_runner_main():
     #from . import daemon_runner
-    from projects.eds_to_rjn.scripts import daemon_runner
+    from workspaces.eds_to_rjn.scripts import daemon_runner
     daemon_runner.main()
 
 def sketch_maxson():
     test_connection_to_internet()
 
-    project_name = 'eds_to_rjn' # project_name = ProjectManager.identify_default_project()
-    project_manager = ProjectManager(project_name)
-    queries_file_path_list = project_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
+    workspace_name = 'eds_to_rjn' # workspace_name = workspace_manager.identify_default_workspace()
+    workspace_manager = workspace_manager(workspace_name)
+    queries_file_path_list = workspace_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
     logger.debug(f"queries_file_path_list = {queries_file_path_list}")
     queries_dictlist_unfiltered = load_query_rows_from_csv_files(queries_file_path_list)
     queries_defaultdictlist_grouped_by_session_key = group_queries_by_api_url(queries_dictlist_unfiltered,'zd')
-    secrets_dict = SecretConfig.load_config(secrets_file_path = project_manager.get_configs_secrets_file_path())
+    secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_configs_secrets_file_path())
     sessions = {}
 
     api_secrets_m = helpers.get_nested_config(secrets_dict, ["eds_apis", "Maxson"])
@@ -115,5 +115,5 @@ if __name__ == "__main__":
         sketch_daemon_runner_main()
     else:
         print("Usage options: \n"
-        "poetry run python -m projects.eds_to_rjn.scripts.main daemon_runner \n"
-        "poetry run python -m projects.eds_to_rjn.scripts.main sketch")
+        "poetry run python -m workspaces.eds_to_rjn.scripts.main daemon_runner \n"
+        "poetry run python -m workspaces.eds_to_rjn.scripts.main sketch")

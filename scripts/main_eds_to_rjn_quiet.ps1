@@ -17,7 +17,7 @@ $RequirementsFile = Join-Path $projectRoot "requirements.txt"
 	
 #Start-Process -FilePath "C:\Users\GEORGE.BENNETT\.pyenv\pyenv-win\shims\poetry.bat" `
 Start-Process -FilePath "python.exe" `
-    -ArgumentList "-m", "projects.eds_to_rjn.scripts.daemon_runner", "main" `
+    -ArgumentList "-m", "workspaces.eds_to_rjn.scripts.daemon_runner", "main" `
     -WorkingDirectory $projectRoot `
     -RedirectStandardOutput (Join-Path $LogDir "daemon_eds_to_rjn_output.log") `
     -RedirectStandardError (Join-Path $LogDir "daemon_eds_to_rjn_error.log")

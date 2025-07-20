@@ -5,16 +5,16 @@ from pathlib import Path
 
 '''
 Goal:
-Implement default-project.toml variable: use-most-recently-edited-project-directory 
+Implement default-workspace.toml variable: use-most-recently-edited-workspace-directory 
 '''
 
 # Configure logging (adjust level as needed)
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
-class ProjectManager:
-    # It has been chosen to not make the ProjectManager a singleton if there is to be batch processing.
+class workspace_manager:
+    # It has been chosen to not make the workspace_manager a singleton if there is to be batch processing.
 
-    PROJECTS_DIR_NAME = 'projects'
+    WORKSPACES_DIR_NAME = 'workspaces'
     QUERIES_DIR_NAME = 'queries'
     IMPORTS_DIR_NAME = 'imports'
     EXPORTS_DIR_NAME = 'exports'
@@ -23,7 +23,7 @@ class ProjectManager:
     LOGS_DIR_NAME = 'logs'
     SECRETS_YAML_FILE_NAME ='secrets.yaml'
     SECRETS_EXAMPLE_YAML_FILE_NAME ='secrets-example.yaml'
-    DEFAULT_PROJECT_TOML_FILE_NAME = 'default-project.toml'
+    DEFAULT_WORKSPACE_TOML_FILE_NAME = 'default-workspace.toml'
     TIMESTAMPS_JSON_FILE_NAME = 'timestamps_success.json'
     
     ROOT_DIR = Path(__file__).resolve().parents[2]  # root directory
@@ -34,10 +34,10 @@ class ProjectManager:
     # This organization anticipates PyPi packaging.
 
     
-    def __init__(self, project_name):
-        self.project_name = project_name
-        self.projects_dir = self.get_projects_dir()
-        self.project_dir = self.get_project_dir()
+    def __init__(self, workspace_name):
+        self.workspace_name = workspace_name
+        self.workspaces_dir = self.get_workspaces_dir()
+        self.workspace_dir = self.get_workspace_dir()
         self.exports_dir = self.get_exports_dir()
         self.imports_dir = self.get_imports_dir()
         self.queries_dir = self.get_queries_dir()
@@ -48,7 +48,7 @@ class ProjectManager:
 
         
         self.check_and_create_dirs(list_dirs = 
-                                    [self.project_dir, 
+                                    [self.workspace_dir, 
                                     self.exports_dir, 
                                     self.imports_dir, 
                                     self.configs_dir, 
@@ -56,14 +56,14 @@ class ProjectManager:
                                     self.logs_dir,
                                     self.aggregate_dir])
 
-    def get_projects_dir(self):
-        return self.ROOT_DIR / self.PROJECTS_DIR_NAME
+    def get_workspaces_dir(self):
+        return self.ROOT_DIR / self.WORKSPACES_DIR_NAME
 
-    def get_project_dir(self):
-        return self.get_projects_dir() / self.project_name
+    def get_workspace_dir(self):
+        return self.get_workspaces_dir() / self.workspace_name
 
     def get_exports_dir(self):
-        return self.project_dir / self.EXPORTS_DIR_NAME
+        return self.workspace_dir / self.EXPORTS_DIR_NAME
     
     def get_exports_file_path(self, filename):
         # Return the full path to the export file
@@ -75,17 +75,17 @@ class ProjectManager:
         return self.exports_dir / 'aggregate'
     
     def get_logs_dir(self):
-        return self.project_dir / self.LOGS_DIR_NAME
+        return self.workspace_dir / self.LOGS_DIR_NAME
 
     def get_imports_dir(self):
-        return self.project_dir / self.IMPORTS_DIR_NAME
+        return self.workspace_dir / self.IMPORTS_DIR_NAME
 
     def get_imports_file_path(self, filename):
         # Return the full path to the export file
         return self.imports_dir / filename
         
     def get_configs_dir(self):
-        return self.project_dir / self.CONFIGS_DIR_NAME
+        return self.workspace_dir / self.CONFIGS_DIR_NAME
 
     def get_configs_secrets_file_path(self):
         # Return the full path to the config file
@@ -115,14 +115,14 @@ class ProjectManager:
         return file_path
 
     def get_scripts_dir(self):
-        return self.project_dir / self.SCRIPTS_DIR_NAME
+        return self.workspace_dir / self.SCRIPTS_DIR_NAME
 
     def get_scripts_file_path(self, filename):
         # Return the full path to the config file
         return self.get_scripts_dir() / filename
     
     def get_queries_dir(self):
-        return self.project_dir / self.QUERIES_DIR_NAME
+        return self.workspace_dir / self.QUERIES_DIR_NAME
     
     def get_queries_file_path(self,filename): #
         # Return the full path to the config file
@@ -134,7 +134,7 @@ class ProjectManager:
     def get_timestamp_success_file_path(self):
         # Return the full path to the timestamp file
         filepath = self.get_queries_dir() / self.TIMESTAMPS_JSON_FILE_NAME
-        logging.info(f"ProjectManager.get_timestamp_success_file_path() = {filepath}")
+        logging.info(f"workspace_manager.get_timestamp_success_file_path() = {filepath}")
         return filepath
 
     def check_and_create_dirs(self, list_dirs):
@@ -143,25 +143,25 @@ class ProjectManager:
                 dir_path.mkdir(parents=True, exist_ok=True)
     
     @classmethod
-    def identify_default_project(cls):
+    def identify_default_workspace(cls):
         """
-        Class method that reads default-project.toml to identify the default-project.
+        Class method that reads default-workspace.toml to identify the default-workspace.
         """
          
-        projects_dir = cls.ROOT_DIR / cls.PROJECTS_DIR_NAME
-        logging.info(f"projects_dir = {projects_dir}\n")
-        default_toml_path = projects_dir / cls.DEFAULT_PROJECT_TOML_FILE_NAME
+        workspaces_dir = cls.ROOT_DIR / cls.WORKSPACES_DIR_NAME
+        logging.info(f"workspaces_dir = {workspaces_dir}\n")
+        default_toml_path = workspaces_dir / cls.DEFAULT_WORKSPACE_TOML_FILE_NAME
 
         if not default_toml_path.exists():
-            raise FileNotFoundError(f"Missing {cls.DEFAULT_PROJECT_TOML_FILE_NAME} in {projects_dir}")
+            raise FileNotFoundError(f"Missing {cls.DEFAULT_WORKSPACE_TOML_FILE_NAME} in {workspaces_dir}")
 
         with open(default_toml_path, 'r') as f:
             data = toml.load(f)
             logging.debug(f"data = {data}") 
         try:
-            return data['default-project']['project'] # This dictates the proper formatting of the TOML file.
+            return data['default-workspace']['workspace'] # This dictates the proper formatting of the TOML file.
         except KeyError as e:
-            raise KeyError(f"Missing key in {cls.DEFAULT_PROJECT_TOML_FILE_NAME}: {e}")
+            raise KeyError(f"Missing key in {cls.DEFAULT_WORKSPACE_TOML_FILE_NAME}: {e}")
         
     def get_default_query_file_paths_list(self):
         
@@ -179,22 +179,22 @@ class ProjectManager:
                 raise FileNotFoundError(f"Query file not found: {path}")
         return paths
 
-def establish_default_project():
-    project_name = ProjectManager.identify_default_project()
-    logging.info(f"project_name = {project_name}")
-    project_manager = ProjectManager(project_name)
-    logging.info(f"project_manager.get_project_dir() = {project_manager.get_project_dir()}")
+def establish_default_workspace():
+    workspace_name = workspace_manager.identify_default_workspace()
+    logging.info(f"workspace_name = {workspace_name}")
+    workspace_manager = workspace_manager(workspace_name)
+    logging.info(f"workspace_manager.get_workspace_dir() = {workspace_manager.get_workspace_dir()}")
     return 
 
-def demo_establish_default_project():
-    establish_default_project()
+def demo_establish_default_workspace():
+    establish_default_workspace()
 
 if __name__ == "__main__":
     import sys
     cmd = sys.argv[1] if len(sys.argv) > 1 else "default"
 
     if cmd == "demo-default":
-        demo_establish_default_project()
+        demo_establish_default_workspace()
     else:
         print("Usage options: \n" 
         "poetry run python -m pipeline.api.eds demo-default \n")  
