@@ -46,7 +46,7 @@ def demo_secrets():
     The defaut SecretConfig.load_config() call 
     should load fromthe default-workspace 
     as defined by the configuration file in the workspaces directorys,
-    caed defaut_project.toml - Clayton Bennett 26 April 2025.
+    caed defaut_workspace.toml - Clayton Bennett 26 April 2025.
     However this call can also be made if another project is made the active project.
     """
     workspace_name = WorkspaceManager.identify_default_workspace()

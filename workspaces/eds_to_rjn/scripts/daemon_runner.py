@@ -143,7 +143,7 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
                 save_tabular_trend_data_to_log_file(project_id, entity_id, endtime, workspace_manager,timestamps, values)
 
 def setup_schedules():
-    testing = True
+    testing = False
     if not testing:
         schedule.every().hour.do(run_hourly_tabular_trend_eds_to_rjn)
     else:

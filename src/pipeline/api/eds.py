@@ -7,6 +7,8 @@ from pprint import pprint
 from src.pipeline import helpers
 from src.pipeline.decorators import log_function_call
 
+logger = logging.getLogger(__name__)
+
 class EdsClient:
 
     @staticmethod
@@ -397,7 +399,7 @@ def demo_eds_save_point_export():
     print(f"Export file saved to: \n{export_file_path}") 
 
 @log_function_call(level=logging.DEBUG)
-def demo_eds_print_trabular_trend():
+def demo_eds_print_tabular_trend():
     
     from src.pipeline.queriesmanager import QueriesManager
     from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
@@ -478,7 +480,7 @@ if __name__ == "__main__":
         #demo_eds_print_point_export()
         demo_eds_save_point_export()
     elif cmd == "demo-trend":
-        demo_eds_print_trabular_trend()
+        demo_eds_print_tabular_trend()
     elif cmd == "demo-ping":
         demo_eds_ping()
     elif cmd == "demo-license":

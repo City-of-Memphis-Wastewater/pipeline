@@ -141,7 +141,39 @@ class WorkspaceManager:
         for dir_path in list_dirs:
             if not dir_path.exists():
                 dir_path.mkdir(parents=True, exist_ok=True)
-    
+
+    @classmethod
+    def get_all_workspaces_names(cls):
+        """
+        Return a list of all workspace names found in the workspaces directory.
+        """
+        workspaces_dir = cls.ROOT_DIR / cls.WORKSPACES_DIR_NAME
+        if not workspaces_dir.exists():
+            raise FileNotFoundError(f"Workspaces directory not found at: {workspaces_dir}")
+        
+        workspace_dirs = [
+            p.name for p in workspaces_dir.iterdir()
+            if p.is_dir() and not p.name.startswith('.')  # skip hidden/system folders
+        ]
+        return workspace_dirs
+
+    @classmethod
+    def get_all_workspaces(cls):
+        """
+        Return a list of WorkspaceManager instances for each workspace found.
+        """
+        workspaces_dir = cls.ROOT_DIR / cls.WORKSPACES_DIR_NAME
+        if not workspaces_dir.exists():
+            raise FileNotFoundError(f"Workspaces directory not found at: {workspaces_dir}")
+        
+        workspace_dirs = [
+            cls(p.name) for p in workspaces_dir.iterdir()
+            if p.is_dir() and not p.name.startswith('.')
+        ]
+        return workspace_dirs
+
+
+
     @classmethod
     def identify_default_workspace(cls):
         """
@@ -179,6 +211,10 @@ class WorkspaceManager:
                 raise FileNotFoundError(f"Query file not found: {path}")
         return paths
 
+    @property
+    def name(self):
+        return self.workspace_name
+    
 def establish_default_workspace():
     workspace_name = WorkspaceManager.identify_default_workspace()
     logging.info(f"workspace_name = {workspace_name}")
