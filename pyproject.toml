@@ -32,6 +32,10 @@ matplotlib = "^3.10.3"
 uvicorn = "^0.34.3"
 pygal = "^3.0.5"
 
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.4.1"
+pytest-cov = "^6.2.1"
+
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
