@@ -228,7 +228,7 @@ class EdsClient:
 
                     # Run query if 'ts' exists
                     query = f"""
-                        SELECT ts, ids, val FROM `{table_name}`
+                        SELECT ts, ids, tss, stat, val FROM `{table_name}`
                         WHERE ts BETWEEN %s AND %s
                         ORDER BY ts ASC
                     """
