@@ -6,6 +6,7 @@ from pprint import pprint
 from pathlib import Path
 import os
 import mysql.connector
+from functools import lru_cache
 
 from src.pipeline.env import SecretConfig
 from src.pipeline.workspace_manager import WorkspaceManager
@@ -204,35 +205,48 @@ class EdsClient:
             conn = mysql.connector.connect(**conn_config)
             cursor = conn.cursor(dictionary=True)
 
+            tables_in_time_range = identify_relevant_MyISM_tables(session_key, starttime, endtime, secrets_dict)
+            if not tables_in_time_range:
+                logger.warning("No tables found in time range.")
+                return [[] for _ in point]
+            
             for point_id in point:
                 logger.debug(f"Querying for sensor id {point_id}")
 
                 # Query all relevant source tables
                 full_rows = []
-                tables_in_time_range = identify_relevant_MyISM_tables(session_key, starttime, endtime, secrets_dict)
                 for table in tables_in_time_range:
                     #cursor.execute(f"SELECT ts, ids, tss, stat, val FROM `{table}`")
-                    cursor.execute(f"SELECT ts, ids, tss, stat, val FROM `{table}` WHERE ids = %s", (point_id,))
+                    #cursor.execute(f"SELECT ts, ids, tss, stat, val FROM `{table}` WHERE ids = %s", (point_id,))
                     #cursor.execute(f"SELECT ts, ids, tss, stat, val FROM `{table}` WHERE ids = %s AND ts BETWEEN %s AND %s", (point_id, starttime, endtime))
+                    cursor.execute(
+                    f"SELECT ts, ids, tss, stat, val FROM `{table}` WHERE ids = %s AND ts BETWEEN %s AND %s ORDER BY ts ASC",
+                    (point_id, starttime, endtime),
+                    )
                     for row in cursor:
                     #for row in cursor.fetchall():
-                        quality_decoded = decode_stat(row["stat"])
+                        quality_flags = decode_stat(row["stat"])
+                        quality_code = quality_flags[0][2] if quality_flags else "N"  # 'N' for no matching flag
                         full_rows.append({
+                        #full_rows.extend({
                             "ts": row["ts"],
                             "value": row["val"],
-                            "quality": quality_decoded,  # assume 'Good' since no quality flag exists
+                            "quality": quality_code,  # assume 'Good' since no quality flag exists
                         })
 
                 # Sort final results in case rows came unordered across tables
                 full_rows.sort(key=lambda x: x["ts"])
                 results.append(full_rows)
 
-            cursor.close()
-            conn.close()
-
         except Exception as e:
             logger.error(f"Failed accessing MariaDB directly: {e}")
             raise
+        finally:
+            try:
+                cursor.close()
+                conn.close()
+            except Exception:
+                pass
 
         logger.info(f"Successfully retrieved data for {len(point)} point(s)")
         return results
@@ -258,6 +272,7 @@ def identify_relevant_MyISM_tables(session_key: str, starttime: int, endtime: in
     #print("Matching tables:", matching_tables)
     return matching_tables
 
+@lru_cache()
 def get_stat_alarm_definitions():
     """
     Returns a dictionary where each key is the bitmask integer value from the EDS alarm types,
