@@ -217,14 +217,31 @@ class EdsClient:
 
                 # Query all relevant source tables
                 full_rows = []
-                for table in tables_in_time_range:
+                for table_name in tables_in_time_range:
+
+                    # Check if 'ts' column exists in this table
+                    cursor.execute(f"SHOW COLUMNS FROM `{table_name}` LIKE 'ts'")
+                    col = cursor.fetchone()
+                    if not col:
+                        logger.warning(f"Skipping table '{table_name}': no 'ts' column.")
+                        continue
+
+                    # Run query if 'ts' exists
+                    query = f"""
+                        SELECT ts, ids, val FROM `{table_name}`
+                        WHERE ts BETWEEN %s AND %s
+                        ORDER BY ts ASC
+                    """
+                    
                     #cursor.execute(f"SELECT ts, ids, tss, stat, val FROM `{table}`")
                     #cursor.execute(f"SELECT ts, ids, tss, stat, val FROM `{table}` WHERE ids = %s", (point_id,))
                     #cursor.execute(f"SELECT ts, ids, tss, stat, val FROM `{table}` WHERE ids = %s AND ts BETWEEN %s AND %s", (point_id, starttime, endtime))
-                    cursor.execute(
-                    f"SELECT ts, ids, tss, stat, val FROM `{table}` WHERE ids = %s AND ts BETWEEN %s AND %s ORDER BY ts ASC",
+                    """cursor.execute(
+                    f"SELECT ts, ids, tss, stat, val FROM `{table_name}` WHERE ids = %s AND ts BETWEEN %s AND %s ORDER BY ts ASC",
                     (point_id, starttime, endtime),
                     )
+                    """
+                    cursor.execute(query, (starttime, endtime))
                     for row in cursor:
                     #for row in cursor.fetchall():
                         quality_flags = decode_stat(row["stat"])
@@ -267,7 +284,6 @@ def identify_relevant_MyISM_tables(session_key: str, starttime: int, endtime: in
     #  to your table storage
     storage_dir = secrets_dict["eds_dbs"][session_key]["storage_path"]
     
-
     # Collect matching table names based on file mtime
     matching_tables = []
 
