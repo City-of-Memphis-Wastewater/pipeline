@@ -208,6 +208,7 @@ class EdsClient:
             cursor = conn.cursor(dictionary=True)
 
             tables_in_time_range = identify_relevant_MyISM_tables(session_key, starttime, endtime, secrets_dict)
+            logger.info(f"Tables in time range: {tables_in_time_range}")
             if not tables_in_time_range:
                 logger.warning("No tables found in time range.")
                 return [[] for _ in point]
@@ -294,7 +295,8 @@ def identify_relevant_MyISM_tables(session_key: str, starttime: int, endtime: in
         mtime = os.path.getmtime(fpath)
         if starttime <= mtime <= endtime:
             table_name, _ = os.path.splitext(fname)
-            matching_tables.append(table_name)
+            if 'pla' in table_name:
+                matching_tables.append(table_name)
 
     #print("Matching tables:", matching_tables)
     return matching_tables
@@ -633,18 +635,9 @@ def demo_eds_local_database_access():
     secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_configs_secrets_file_path())
     sessions_eds = {}
 
-
     # --- Prepare Stiles session_eds
-    try:
-        # REST API access fails due to firewall blocking the port
-        # So, alternatively, if this fails, encourage direct MariaDB access, with files at E:\SQLData\stiles\
-        api_secrets_s = helpers.get_nested_config(secrets_dict, ["eds_apis", "WWTP"])
-        session_stiles = EdsClient.login_to_session(api_url = api_secrets_s["url"],
-                                        username = api_secrets_s["username"],
-                                        password = api_secrets_s["password"])
-        session_stiles.custom_dict = api_secrets_s
-    except:
-        session_stiles = None # possible reduntant for login_to_session() output 
+
+    session_stiles = None # assume the EDS API session cannot be established
     sessions_eds.update({"WWTP":session_stiles})
 
 
@@ -653,8 +646,8 @@ def demo_eds_local_database_access():
     point_list = [row['iess'] for row in queries_defaultdictlist_grouped_by_session_key.get(key_eds,[])]
 
     # Discern the time range to use
-    starttime = queries_manager.get_most_recent_successful_timestamp(api_id="RJN")
-    logger.info(f"queries_manager.get_most_recent_successful_timestamp(), key = {'RJN'}")
+    starttime = queries_manager.get_most_recent_successful_timestamp(api_id="WWTF")
+    logger.info(f"queries_manager.get_most_recent_successful_timestamp(), key = {'WWTF'}")
     endtime = helpers.get_now_time_rounded()
     logger.info(f"starttime = {starttime}")
     logger.info(f"endtime = {endtime}")
