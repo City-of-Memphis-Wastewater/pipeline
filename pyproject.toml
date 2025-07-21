@@ -26,7 +26,6 @@ addopts = "-ra --cov=pipeline --cov-report=term-missing" # for development — f
 testpaths = ["tests"]
 pythonpath = ["src", "."]
 
-
 [tool.poetry.dependencies]
 python = ">=3.11,<4.0.0"
 requests = ">=2.32.3,<3.0.0"
@@ -39,6 +38,7 @@ urllib3 = "^2.4.0"
 plotly = "^6.2.0"
 uvicorn = "^0.34.3"
 mulch = "^0.2.8"
+mysql = "^0.0.3"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.4.1"

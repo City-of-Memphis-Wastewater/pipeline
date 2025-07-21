@@ -486,6 +486,39 @@ toml = ">=0.10.2,<0.11.0"
 typer = ">=0.12.3,<0.13.0"
 
 [[package]]
+name = "mysql"
+version = "0.0.3"
+description = "Virtual package for MySQL-python"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "mysql-0.0.3-py3-none-any.whl", hash = "sha256:8893cb143a5ac525c49ef358a23b8a0dc9721a95646f7bab6ca2f384c18a6a9a"},
+    {file = "mysql-0.0.3.tar.gz", hash = "sha256:fd7bae7d7301ce7cd3932e5ff7f77bbc8e34872108252866e08d16d6b8e8de8c"},
+]
+
+[package.dependencies]
+mysqlclient = "*"
+
+[[package]]
+name = "mysqlclient"
+version = "2.2.7"
+description = "Python interface to MySQL"
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "mysqlclient-2.2.7-cp310-cp310-win_amd64.whl", hash = "sha256:2e3c11f7625029d7276ca506f8960a7fd3c5a0a0122c9e7404e6a8fe961b3d22"},
+    {file = "mysqlclient-2.2.7-cp311-cp311-win_amd64.whl", hash = "sha256:a22d99d26baf4af68ebef430e3131bb5a9b722b79a9fcfac6d9bbf8a88800687"},
+    {file = "mysqlclient-2.2.7-cp312-cp312-win_amd64.whl", hash = "sha256:4b4c0200890837fc64014cc938ef2273252ab544c1b12a6c1d674c23943f3f2e"},
+    {file = "mysqlclient-2.2.7-cp313-cp313-win_amd64.whl", hash = "sha256:201a6faa301011dd07bca6b651fe5aaa546d7c9a5426835a06c3172e1056a3c5"},
+    {file = "mysqlclient-2.2.7-cp39-cp39-win_amd64.whl", hash = "sha256:199dab53a224357dd0cb4d78ca0e54018f9cee9bf9ec68d72db50e0a23569076"},
+    {file = "mysqlclient-2.2.7-pp310-pypy310_pp73-win_amd64.whl", hash = "sha256:92af368ed9c9144737af569c86d3b6c74a012a6f6b792eb868384787b52bb585"},
+    {file = "mysqlclient-2.2.7-pp39-pypy39_pp73-win_amd64.whl", hash = "sha256:977e35244fe6ef44124e9a1c2d1554728a7b76695598e4b92b37dc2130503069"},
+    {file = "mysqlclient-2.2.7.tar.gz", hash = "sha256:24ae22b59416d5fcce7e99c9d37548350b4565baac82f95e149cac6ce4163845"},
+]
+
+[[package]]
 name = "narwhals"
 version = "1.44.0"
 description = "Extremely lightweight compatibility layer between dataframe libraries"
@@ -1053,4 +1086,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<4.0.0"
-content-hash = "2194961a4a728bab871894475b3f61d4cfad730260aafd63f35e7785175be446"
+content-hash = "ecc5dcc4cb6e630053341e229fea1b2aa3564b80d772d6ddca11f3e648ef78b7"

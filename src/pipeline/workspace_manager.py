@@ -158,23 +158,6 @@ class WorkspaceManager:
         return workspace_dirs
 
     @classmethod
-    def get_all_workspaces(cls):
-        """
-        Return a list of WorkspaceManager instances for each workspace found.
-        """
-        workspaces_dir = cls.ROOT_DIR / cls.WORKSPACES_DIR_NAME
-        if not workspaces_dir.exists():
-            raise FileNotFoundError(f"Workspaces directory not found at: {workspaces_dir}")
-        
-        workspace_dirs = [
-            cls(p.name) for p in workspaces_dir.iterdir()
-            if p.is_dir() and not p.name.startswith('.')
-        ]
-        return workspace_dirs
-
-
-
-    @classmethod
     def identify_default_workspace(cls):
         """
         Class method that reads default-workspace.toml to identify the default-workspace.

@@ -1,5 +1,5 @@
 # Program: %SystemRoot%\system32\WindowsPowerShell\v1.0\powershell.exe
-# Add arguments: -NoProfile -ExecutionPolicy Bypass -File "C:\Users\GEORGE.BENNETT\Documents\dev\pipeline38\main_tunnel_quiet.ps1" > "C:\Users\GEORGE.BENNETT\Documents\dev\pipeline\logs\launch_log.txt" 2>&1
+# Add arguments: -NoProfile -ExecutionPolicy Bypass -File "C:\Users\GEORGE.BENNETT\Documents\dev\pipeline38\main_tunnel_quiet.ps1" > "C:\Users\GEORGE.BENNETT\Documents\dev\pipeline38\logs\launch_log.txt" 2>&1
 
 
 # Get the script directory (the folder where this script lives)

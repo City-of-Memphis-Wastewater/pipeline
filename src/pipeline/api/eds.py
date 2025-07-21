@@ -3,7 +3,12 @@ import logging
 import requests
 import time
 from pprint import pprint
+from pathlib import Path
+import os
+import mysql.connector
 
+from src.pipeline.env import SecretConfig
+from src.pipeline.workspace_manager import WorkspaceManager
 from src.pipeline import helpers
 from src.pipeline.decorators import log_function_call
 
@@ -173,14 +178,152 @@ class EdsClient:
         print('request [{}] executed in: {:.3f} s\n'.format(req_id, time.time() - st))
 
 
+
+    @staticmethod
+    #def access_database_files_locally(session_key, starttime: int, endtime: int, point: list[int]):
+    def access_database_files_locally(
+        session_key: str, starttime: int, endtime: int, point: list[int]
+    ) -> list[list[dict]]:
+        """
+        Access MariaDB data directly by querying all MyISAM tables with .MYD files
+        modified in the given time window, filtering by sensor ids in 'point'.
+
+        Returns a list (per sensor id) of dicts with keys 'ts', 'value', 'quality'.
+        """
+
+        logger.info("Accessing MariaDB directly — local SQL mode enabled.")
+        workspace_name = 'eds_to_rjn'
+        workspace_manager = WorkspaceManager(workspace_name)
+        secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_configs_secrets_file_path())
+        # Adjust this config if needed
+        conn_config = secrets_dict["eds_dbs"][session_key]
+
+        results = []
+
+        try:
+            conn = mysql.connector.connect(**conn_config)
+            cursor = conn.cursor(dictionary=True)
+
+            for point_id in point:
+                logger.debug(f"Querying for sensor id {point_id}")
+
+                # Query all relevant source tables
+                full_rows = []
+                tables_in_time_range = identify_relevant_MyISM_tables(session_key, starttime, endtime, secrets_dict)
+                for table in tables_in_time_range:
+                    #cursor.execute(f"SELECT ts, ids, tss, stat, val FROM `{table}`")
+                    cursor.execute(f"SELECT ts, ids, tss, stat, val FROM `{table}` WHERE ids = %s", (point_id,))
+                    #cursor.execute(f"SELECT ts, ids, tss, stat, val FROM `{table}` WHERE ids = %s AND ts BETWEEN %s AND %s", (point_id, starttime, endtime))
+                    for row in cursor:
+                    #for row in cursor.fetchall():
+                        quality_decoded = decode_stat(row["stat"])
+                        full_rows.append({
+                            "ts": row["ts"],
+                            "value": row["val"],
+                            "quality": quality_decoded,  # assume 'Good' since no quality flag exists
+                        })
+
+                # Sort final results in case rows came unordered across tables
+                full_rows.sort(key=lambda x: x["ts"])
+                results.append(full_rows)
+
+            cursor.close()
+            conn.close()
+
+        except Exception as e:
+            logger.error(f"Failed accessing MariaDB directly: {e}")
+            raise
+
+        logger.info(f"Successfully retrieved data for {len(point)} point(s)")
+        return results
+
+def identify_relevant_MyISM_tables(session_key: str, starttime: int, endtime: int, secrets_dict: dict) -> list:
+    #
+    #  to your table storage
+    storage_dir = secrets_dict["eds_dbs"][session_key]["storage_path"]
+    
+
+    # Collect matching table names based on file mtime
+    matching_tables = []
+
+    for fname in os.listdir(storage_dir):
+        fpath = os.path.join(storage_dir, fname)
+        if not os.path.isfile(fpath):
+            continue
+        mtime = os.path.getmtime(fpath)
+        if starttime <= mtime <= endtime:
+            table_name, _ = os.path.splitext(fname)
+            matching_tables.append(table_name)
+
+    #print("Matching tables:", matching_tables)
+    return matching_tables
+
+def get_stat_alarm_definitions():
+    """
+    Returns a dictionary where each key is the bitmask integer value from the EDS alarm types,
+    and each value is a tuple: (description, quality_code).
+
+    | Quality Flag | Meaning      | Common Interpretation                            |
+    | ------------ | ------------ | ------------------------------------------------ |
+    | `G`          | Good         | Value is reliable/valid                          |
+    | `B`          | Bad          | Value is invalid/unreliable                      |
+    | `U`          | Uncertain    | Value may be usable, but not guaranteed accurate |
+    | `S`          | Substituted  | Manually entered or filled in                    |
+    | `N`          | No Data      | No value available                               |
+    | `Q`          | Questionable | Fails some validation                            |
+
+    Source: eDocs/eDocs%203.8.0%20FP3/Index/en/OPH070.pdf
+
+    """
+    return {
+        1: ("ALMTYPE_RETURN", "G"),
+        2: ("ALMTYPE_SENSOR", "B"),
+        4: ("ALMTYPE_HIGH", "G"),
+        8: ("ALMTYPE_HI_WRS", "G"),
+        16: ("ALMTYPE_HI_BET", "G"),
+        32: ("ALMTYPE_HI_UDA", "G"),
+        64: ("ALMTYPE_HI_WRS_UDA", "G"),
+        128: ("ALMTYPE_HI_BET_UDA", "G"),
+        256: ("ALMTYPE_LOW", "G"),
+        512: ("ALMTYPE_LOW_WRS", "G"),
+        1024: ("ALMTYPE_LOW_BET", "G"),
+        2048: ("ALMTYPE_LOW_UDA", "G"),
+        4096: ("ALMTYPE_LOW_WRS_UDA", "G"),
+        8192: ("ALMTYPE_LOW_BET_UDA", "G"),
+        16384: ("ALMTYPE_SP_ALM", "B"),
+        32768: ("ALMTYPE_TIME_OUT", "U"),
+        65536: ("ALMTYPE_SID_ALM", "U"),
+        131072: ("ALMTYPE_ALARM", "B"),
+        262144: ("ALMTYPE_ST_CHG", "G"),
+        524288: ("ALMTYPE_INCR_ALARM", "G"),
+        1048576: ("ALMTYPE_HIGH_HIGH", "G"),
+        2097152: ("ALMTYPE_LOW_LOW", "G"),
+        4194304: ("ALMTYPE_DEVICE", "U"),
+    }
+def decode_stat(stat_value):
+    '''
+    Example:
+    >>> decode_stat(8192)
+    [(8192, 'ALMTYPE_LOW_BET_UDA', 'G')]
+
+    >>> decode_stat(8192 + 2)
+    [(2, 'ALMTYPE_SENSOR', 'B'), (8192, 'ALMTYPE_LOW_BET_UDA', 'G')]
+    '''
+    alarm_dict = get_stat_alarm_definitions()
+    active_flags = []
+    for bitmask, (description, quality) in alarm_dict.items():
+        if stat_value & bitmask:
+            active_flags.append((bitmask, description, quality))
+    return active_flags
+
+
 def fetch_eds_data_row(session, iess):
     point_data = EdsClient.get_points_live_mod(session, iess)
     return point_data
 
 @log_function_call(level=logging.DEBUG) 
 def _demo_eds_start_session_CoM_WWTPs():
-    from src.pipeline.env import SecretConfig
-    from src.pipeline.workspace_manager import WorkspaceManager
+    
     workspace_name = WorkspaceManager.identify_default_workspace()
     workspace_manager = WorkspaceManager(workspace_name)
 
