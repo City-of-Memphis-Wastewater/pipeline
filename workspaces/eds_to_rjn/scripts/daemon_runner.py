@@ -124,7 +124,7 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
                 if row['quality'] == 'G':
                     timestamps.append(timestamp_str)
                     values.append(round(row["value"],5)) # unrounded values fail to post
-            print(f"final row = {row}")
+
             if timestamps and values:
                 
                 if session_rjn is not None:

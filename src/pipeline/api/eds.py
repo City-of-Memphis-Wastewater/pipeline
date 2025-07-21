@@ -196,8 +196,10 @@ class EdsClient:
         workspace_name = 'eds_to_rjn'
         workspace_manager = WorkspaceManager(workspace_name)
         secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_configs_secrets_file_path())
-        # Adjust this config if needed
-        conn_config = secrets_dict["eds_dbs"][session_key]
+        full_config = secrets_dict["eds_dbs"][session_key]
+        conn_config = {k: v for k, v in full_config.items() if k not in {"storage_path"}}
+
+
 
         results = []
 
@@ -238,10 +240,19 @@ class EdsClient:
                 full_rows.sort(key=lambda x: x["ts"])
                 results.append(full_rows)
 
+        except mysql.connector.errors.DatabaseError as db_err:
+            if "Can't connect to MySQL server" in str(db_err):
+                logger.error("Local database access failed: Please run this code on the proper EDS server where the local MariaDB is accessible.")
+                # Optionally:
+                print("ERROR: This code must be run on the proper EDS server for local database access to work.")
+                return [[] for _ in point]  # return list of empty lists, one per point
+            else:
+                raise  # re-raise other DB errors
         except Exception as e:
-            logger.error(f"Failed accessing MariaDB directly: {e}")
+            logger.error(f"Unexpected error accessing local database: {e}")
             raise
         finally:
+            # cleanup cursor/connection if they exist
             try:
                 cursor.close()
                 conn.close()
@@ -591,6 +602,72 @@ def demo_eds_print_tabular_trend():
                 print('{} {} {}'.format(datetime.fromtimestamp(s['ts']), s['value'], s['quality']))
         queries_manager.update_success(api_id=key) # not appropriate here in demo without successful transmission to 3rd party API
 
+@log_function_call(level=logging.DEBUG)
+def demo_eds_local_database_access():
+    from src.pipeline.queriesmanager import QueriesManager
+    from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
+    workspace_name = 'eds_to_rjn' # workspace_name = workspace_manager.identify_default_workspace()
+    workspace_manager = WorkspaceManager(workspace_name)
+    queries_manager = QueriesManager(workspace_manager)
+    queries_file_path_list = workspace_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
+    logger.debug(f"queries_file_path_list = {queries_file_path_list}")
+
+    queries_dictlist_unfiltered = load_query_rows_from_csv_files(queries_file_path_list)
+    queries_defaultdictlist_grouped_by_session_key = group_queries_by_api_url(queries_dictlist_unfiltered,'zd')
+    secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_configs_secrets_file_path())
+    sessions_eds = {}
+
+
+    # --- Prepare Stiles session_eds
+    try:
+        # REST API access fails due to firewall blocking the port
+        # So, alternatively, if this fails, encourage direct MariaDB access, with files at E:\SQLData\stiles\
+        api_secrets_s = helpers.get_nested_config(secrets_dict, ["eds_apis", "WWTP"])
+        session_stiles = EdsClient.login_to_session(api_url = api_secrets_s["url"],
+                                        username = api_secrets_s["username"],
+                                        password = api_secrets_s["password"])
+        session_stiles.custom_dict = api_secrets_s
+    except:
+        session_stiles = None # possible reduntant for login_to_session() output 
+    sessions_eds.update({"WWTP":session_stiles})
+
+
+    key_eds = "WWTF"
+    session_eds = session_stiles
+    point_list = [row['iess'] for row in queries_defaultdictlist_grouped_by_session_key.get(key_eds,[])]
+
+    # Discern the time range to use
+    starttime = queries_manager.get_most_recent_successful_timestamp(api_id="RJN")
+    logger.info(f"queries_manager.get_most_recent_successful_timestamp(), key = {'RJN'}")
+    endtime = helpers.get_now_time_rounded()
+    logger.info(f"starttime = {starttime}")
+    logger.info(f"endtime = {endtime}")
+
+    
+    results = EdsClient.access_database_files_locally(key_eds, starttime, endtime, point=point_list)
+
+    print(f"len(results) = {len(results)}")
+    print(f"len(results[0]) = {len(results[0])}")
+    print(f"len(results[1]) = {len(results[1])}")
+    
+    for idx, iess in enumerate(point_list):
+        if results[idx]:
+            #print(f"rows = {rows}")
+            timestamps = []
+            values = []
+            
+            for row in results[idx]:
+                #print(f"row = {row}")
+                EdsClient.print_point_info_row(row)
+
+                dt = datetime.fromtimestamp(row["ts"])
+                timestamp_str = helpers.round_datetime_to_nearest_past_five_minutes(dt).isoformat(timespec='seconds')
+                if row['quality'] == 'G':
+                    timestamps.append(timestamp_str)
+                    values.append(round(row["value"],5)) # unrounded values fail to post
+            print(f"final row = {row}")
+        else:
+            print("No data rows for this point")
 
 @log_function_call(level=logging.DEBUG)
 def demo_eds_print_license():
@@ -637,6 +714,8 @@ if __name__ == "__main__":
     elif cmd == "demo-export":
         #demo_eds_print_point_export()
         demo_eds_save_point_export()
+    elif cmd =="demo-db":
+        demo_eds_local_database_access()
     elif cmd == "demo-trend":
         demo_eds_print_tabular_trend()
     elif cmd == "demo-ping":
@@ -652,6 +731,7 @@ if __name__ == "__main__":
         "poetry run python -m pipeline.api.eds demo-plot-live \n"
         "poetry run python -m pipeline.api.eds demo-webplot-live \n"
         "poetry run python -m pipeline.api.eds demo-plot-trend \n"
+        "poetry run python -m pipeline.api.eds demo-db \n"
         "poetry run python -m pipeline.api.eds demo-ping \n"
         "poetry run python -m pipeline.api.eds demo-license")
     
