@@ -199,8 +199,6 @@ class EdsClient:
         full_config = secrets_dict["eds_dbs"][session_key]
         conn_config = {k: v for k, v in full_config.items() if k not in {"storage_path"}}
 
-
-
         results = []
 
         try:
@@ -222,6 +220,8 @@ class EdsClient:
 
                     # Check if 'ts' column exists in this table
                     cursor.execute(f"SHOW COLUMNS FROM `{table_name}` LIKE 'ts'")
+                    cursor.execute(f"PRAGMA table_info(table_name);")
+
                     col = cursor.fetchone()
                     if not col:
                         logger.warning(f"Skipping table '{table_name}': no 'ts' column.")
@@ -288,15 +288,41 @@ def identify_relevant_MyISM_tables(session_key: str, starttime: int, endtime: in
     # Collect matching table names based on file mtime
     matching_tables = []
 
-    for fname in os.listdir(storage_dir):
-        fpath = os.path.join(storage_dir, fname)
-        if not os.path.isfile(fpath):
-            continue
-        mtime = os.path.getmtime(fpath)
-        if starttime <= mtime <= endtime:
-            table_name, _ = os.path.splitext(fname)
-            if 'pla' in table_name:
-                matching_tables.append(table_name)
+    if False:
+        for fname in os.listdir(storage_dir):
+            fpath = os.path.join(storage_dir, fname)
+            if not os.path.isfile(fpath):
+                continue
+            mtime = os.path.getmtime(fpath)
+            if starttime <= mtime <= endtime:
+                table_name, _ = os.path.splitext(fname)
+                if 'pla' in table_name:
+                    matching_tables.append(table_name)
+
+    '''
+    # Instead of os.path.join + isfile + getmtime every time...
+    # Use `os.scandir`, which gives all of that in one go and is much faster:
+    with os.scandir(storage_dir) as it:
+        for entry in it:
+            if entry.is_file():
+                mtime = entry.stat().st_mtime
+                if starttime <= mtime <= endtime and 'pla' in entry.name:
+                    table_name, _ = os.path.splitext(entry.name)
+                    matching_tables.append(table_name)
+    '''
+    # Efficient, sorted, filtered scan
+    sorted_entries = sorted(
+        (entry for entry in os.scandir(storage_dir) if entry.is_file()),
+        key=lambda e: e.stat().st_mtime,
+        reverse=True
+    )
+
+    for entry in sorted_entries:
+        mtime = entry.stat().st_mtime
+        if starttime <= mtime <= endtime and 'pla' in entry.name:
+            table_name, _ = os.splitext(entry.name)
+            matching_tables.append(table_name)
+
 
     #print("Matching tables:", matching_tables)
     return matching_tables
