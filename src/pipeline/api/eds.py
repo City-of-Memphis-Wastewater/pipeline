@@ -231,7 +231,7 @@ class EdsClient:
                 full_rows = []
                 for table_name in tables_in_time_range:
                     # Check if 'ts' column exists in this table
-                    if not table_has_ts_column(cursor, table_name, db_type="mysql"):
+                    if not table_has_ts_column(conn, table_name, db_type="mysql"):
                         logger.warning(f"Skipping table '{table_name}': no 'ts' column.")
                         continue
                     #----- START PSUEDO CODE
