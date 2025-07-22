@@ -61,14 +61,14 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
     try:
         # REST API access fails due to firewall blocking the port
         # So, alternatively, if this fails, encourage direct MariaDB access, with files at E:\SQLData\stiles\
-        api_secrets_s = helpers.get_nested_config(secrets_dict, ["eds_apis", "WWTP"])
+        api_secrets_s = helpers.get_nested_config(secrets_dict, ["eds_apis", "WWTF"])
         session_stiles = EdsClient.login_to_session(api_url = api_secrets_s["url"],
                                         username = api_secrets_s["username"],
                                         password = api_secrets_s["password"])
         session_stiles.custom_dict = api_secrets_s
     except:
         session_stiles = None # possible reduntant for login_to_session() output 
-    sessions_eds.update({"WWTP":session_stiles})
+    sessions_eds.update({"WWTF":session_stiles})
 
     api_secrets_r = helpers.get_nested_config(secrets_dict, ["contractor_apis","RJN"])
     

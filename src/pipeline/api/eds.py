@@ -695,7 +695,7 @@ def demo_eds_local_database_access():
     # --- Prepare Stiles session_eds
 
     session_stiles = None # assume the EDS API session cannot be established
-    sessions_eds.update({"WWTP":session_stiles})
+    sessions_eds.update({"WWTF":session_stiles})
 
 
     key_eds = "WWTF"
