@@ -217,10 +217,11 @@ class EdsClient:
 
                 query = f"""
                     SELECT ts, ids, tss, stat, val FROM `{most_recent_table}`
-                    WHERE ts BETWEEN %s AND %s
+                    WHERE ts BETWEEN %s AND %s AND ids = %s
                     ORDER BY ts ASC
                 """
-                cursor.execute(query, (starttime, endtime))
+                #cursor.execute(query, (starttime, endtime))
+                cursor.execute(query, (starttime, endtime, point_id))
                 
                 full_rows = []
                 for row in cursor:
