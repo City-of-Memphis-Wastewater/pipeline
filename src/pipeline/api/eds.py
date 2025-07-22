@@ -296,7 +296,7 @@ def identify_relevant_MyISM_tables(session_key: str, starttime: int, endtime: in
             mtime = os.path.getmtime(fpath)
             if starttime <= mtime <= endtime:
                 table_name, _ = os.path.splitext(fname)
-                if 'pla' in table_name:
+                if 'pla' in table_name: 
                     matching_tables.append(table_name)
 
     '''
