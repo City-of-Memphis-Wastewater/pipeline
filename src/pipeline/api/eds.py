@@ -181,7 +181,6 @@ class EdsClient:
 
 
     @staticmethod
-    #def access_database_files_locally(session_key, starttime: int, endtime: int, point: list[int]):
     def access_database_files_locally(
         session_key: str, starttime: int, endtime: int, point: list[int]
     ) -> list[list[dict]]:
