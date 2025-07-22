@@ -217,16 +217,10 @@ class EdsClient:
                 # Query all relevant source tables
                 full_rows = []
                 for table_name in tables_in_time_range:
-
                     # Check if 'ts' column exists in this table
-                    cursor.execute(f"SHOW COLUMNS FROM `{table_name}` LIKE 'ts'")
-                    cursor.execute(f"PRAGMA table_info(table_name);")
-
-                    col = cursor.fetchone()
-                    if not col:
+                    if not table_has_ts_column(cursor, table_name, db_type="mysql"):
                         logger.warning(f"Skipping table '{table_name}': no 'ts' column.")
                         continue
-
                     # Run query if 'ts' exists
                     query = f"""
                         SELECT ts, ids, tss, stat, val FROM `{table_name}`
@@ -279,7 +273,33 @@ class EdsClient:
 
         logger.info(f"Successfully retrieved data for {len(point)} point(s)")
         return results
+    
+    
+def table_has_ts_column_(cursor, table_name, db_type = "mysql"):
+    if db_type =="sqlite":
+    
+        cursor 
+        cursor.execute(f"PRAGMA table_info({table_name});")
+        return any(row[1] == "ts" for row in cursor.fetchall())
+    elif db_type =="mysql":
+        cursor.execute(f"SHOW COLUMNS FROM `{table_name}` LIKE 'ts'")
+                    
+    else: 
+        raise ValueError(f"Unsupported database type: {db_type}")
 
+def table_has_ts_column(cursor, table_name, db_type="mysql"):
+    if db_type == "sqlite":
+        cursor.execute(f"PRAGMA table_info({table_name});")
+        return any(row[1] == "ts" for row in cursor.fetchall())
+
+    elif db_type == "mysql":
+        cursor.execute(f"SHOW COLUMNS FROM `{table_name}` LIKE 'ts'")
+        return cursor.fetchone() is not None  # ✅ Return True if found, False if not
+
+    else:
+        raise ValueError(f"Unsupported database type: {db_type}")
+
+    
 def identify_relevant_MyISM_tables(session_key: str, starttime: int, endtime: int, secrets_dict: dict) -> list:
     #
     #  to your table storage
