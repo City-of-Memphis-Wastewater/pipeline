@@ -218,13 +218,13 @@ class EdsClient:
 
                 most_recent_table = get_most_recent_table(cursor, 'stiles')
                 
-                if most_recent_table:
-                    cursor.execute(f"SELECT MIN(ts), MAX(ts) FROM `{most_recent_table}`")
+                #if most_recent_table:
+                    #cursor.execute(f"SELECT MIN(ts), MAX(ts) FROM `{most_recent_table}`")
                     # min_ts, max_ts = cursor.fetchone().values()
                     # Now you have the date range, and can run your queries on this table only
-                else:
+                #else:
                     # Handle the case of no matching tables
-                    logger.warning("No recent tables found")
+                #    logger.warning("No recent tables found")
                 
                 tables_in_time_range = [most_recent_table]
                 # Query all relevant source tables
