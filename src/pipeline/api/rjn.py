@@ -67,7 +67,7 @@ class RjnClient:
 
         timestamps_str = [TimeManager(ts).as_formatted_date_time() for ts in timestamps]
 
-        url = f"{base_url}/workspaces/{project_id}/entities/{entity_id}/data"
+        url = f"{base_url}/projects/{project_id}/entities/{entity_id}/data"
         params = {
             "interval": 300,    
             "import_mode": "OverwriteExistingData",
