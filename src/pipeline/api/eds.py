@@ -195,9 +195,9 @@ class EdsClient:
         logger.info("Accessing MariaDB directly — local SQL mode enabled.")
         workspace_name = 'eds_to_rjn'
         workspace_manager = WorkspaceManager(workspace_name)
-        secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_configs_secrets_file_path())
+        secrets_dict = SecretConfig.load_config(secrets_file_path=workspace_manager.get_configs_secrets_file_path())
         full_config = secrets_dict["eds_dbs"][session_key]
-        conn_config = {k: v for k, v in full_config.items() if k not in {"storage_path"}}
+        conn_config = {k: v for k, v in full_config.items() if k != "storage_path"}
 
         results = []
 
@@ -205,81 +205,40 @@ class EdsClient:
             conn = mysql.connector.connect(**conn_config)
             cursor = conn.cursor(dictionary=True)
 
-            tables_in_time_range = identify_relevant_MyISM_tables(session_key, starttime, endtime, secrets_dict)
-            logger.info(f"Tables in time range: {tables_in_time_range}")
-            if not tables_in_time_range:
-                logger.warning("No tables found in time range.")
+            most_recent_table = get_most_recent_table(cursor, 'stiles')
+            if not most_recent_table:
+                logger.warning("No recent tables found.")
                 return [[] for _ in point]
-            
+
+            # Verify the 'ts' column exists in the most recent table
+            if not table_has_ts_column(conn, most_recent_table, db_type="mysql"):
+                logger.warning(f"Skipping table '{most_recent_table}': no 'ts' column.")
+                return [[] for _ in point]
+
             for point_id in point:
                 logger.debug(f"Querying for sensor id {point_id}")
 
-                 
-
-                most_recent_table = get_most_recent_table(cursor, 'stiles')
+                query = f"""
+                    SELECT ts, ids, tss, stat, val FROM `{most_recent_table}`
+                    WHERE ts BETWEEN %s AND %s
+                    ORDER BY ts ASC
+                """
+                cursor.execute(query, (starttime, endtime))
                 
-                #if most_recent_table:  
-                    #cursor.execute(f"SELECT MIN(ts), MAX(ts) FROM `{most_recent_table}`")
-                    # min_ts, max_ts = cursor.fetchone().values()
-                    # Now you have the date range, and can run your queries on this table only
-                #else:
-                    # Handle the case of no matching tables
-                #    logger.warning("No recent tables found")
-                
-                tables_in_time_range = [most_recent_table]
-                # Query all relevant source tables
                 full_rows = []
-                for table_name in tables_in_time_range:
-                    # Check if 'ts' column exists in this table
-                    if not table_has_ts_column(conn, table_name, db_type="mysql"):
-                        logger.warning(f"Skipping table '{table_name}': no 'ts' column.")
-                        continue
-                    #----- START PSUEDO CODE
-                    cursor.execute("""
-                        SELECT TABLE_NAME
-                        FROM INFORMATION_SCHEMA.TABLES
-                        WHERE TABLE_SCHEMA = %s AND TABLE_NAME LIKE 'pla_%%'
-                        ORDER BY TABLE_NAME DESC
-                        LIMIT 1
-                    """, ('stiles',))
+                for row in cursor:
+                    quality_flags = decode_stat(row["stat"])
+                    quality_code = quality_flags[0][2] if quality_flags else "N"
+                    full_rows.append({
+                        "ts": row["ts"],
+                        "value": row["val"],
+                        "quality": quality_code,
+                    })
 
-                    latest_table = cursor.fetchone()['TABLE_NAME']
-
-                    query = f"SELECT ts, val FROM `{latest_table}` WHERE ts BETWEEN %s AND %s ORDER BY ts ASC"
-                    cursor.execute(query, (starttime, endtime))
-                    rows = cursor.fetchall()
-                    #----- END PSUEDO CODE
-
-                    # Run query if 'ts' exists
-                    query = f"""
-                        SELECT ts, ids, tss, stat, val FROM `{table_name}`
-                        WHERE ts BETWEEN %s AND %s
-                        ORDER BY ts ASC
-                    """
-                    
-                    #cursor.execute(f"SELECT ts, ids, tss, stat, val FROM `{table}`")
-                    #cursor.execute(f"SELECT ts, ids, tss, stat, val FROM `{table}` WHERE ids = %s", (point_id,))
-                    #cursor.execute(f"SELECT ts, ids, tss, stat, val FROM `{table}` WHERE ids = %s AND ts BETWEEN %s AND %s", (point_id, starttime, endtime))
-                    """cursor.execute(
-                    f"SELECT ts, ids, tss, stat, val FROM `{table_name}` WHERE ids = %s AND ts BETWEEN %s AND %s ORDER BY ts ASC",
-                    (point_id, starttime, endtime),
-                    )
-                    """
-                    cursor.execute(query, (starttime, endtime))
-                    for row in cursor:
-                    #for row in cursor.fetchall():
-                        quality_flags = decode_stat(row["stat"])
-                        quality_code = quality_flags[0][2] if quality_flags else "N"  # 'N' for no matching flag
-                        full_rows.append({
-                        #full_rows.extend({
-                            "ts": row["ts"],
-                            "value": row["val"],
-                            "quality": quality_code,  # assume 'Good' since no quality flag exists
-                        })
-
-                # Sort final results in case rows came unordered across tables
+                # Sort final results in case rows came unordered
                 full_rows.sort(key=lambda x: x["ts"])
                 results.append(full_rows)
+
 
         except mysql.connector.errors.DatabaseError as db_err:
             if "Can't connect to MySQL server" in str(db_err):
@@ -302,8 +261,8 @@ class EdsClient:
 
         logger.info(f"Successfully retrieved data for {len(point)} point(s)")
         return results
-    
-    
+        
+            
 def table_has_ts_column_(cursor, table_name, db_type = "mysql"):
     if db_type =="sqlite":
     
