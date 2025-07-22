@@ -121,9 +121,9 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
 
                 dt = datetime.fromtimestamp(row["ts"])
                 timestamp_str = helpers.round_datetime_to_nearest_past_five_minutes(dt).isoformat(timespec='seconds')
-                if row['quality'] == 'G':
-                    timestamps.append(timestamp_str)
-                    values.append(round(row["value"],5)) # unrounded values fail to post
+                #if row['quality'] == 'G':
+                timestamps.append(timestamp_str)
+                values.append(round(row["value"],5)) # unrounded values fail to post
 
             if timestamps and values:
                 
@@ -141,14 +141,14 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
                             timestamps=timestamps,
                             values=values
                         )
+                    
+                        if rjn_data_transmission_succeeded:
+                            queries_manager.update_success(api_id="RJN", success_time=endtime)
+
+                            save_tabular_trend_data_to_log_file(project_id, entity_id, endtime, workspace_manager,timestamps, values)
                     else:
                         print("[TEST] RjnClient.send_data_to_rjn2() skipped")
                     
-                    if rjn_data_transmission_succeeded:
-                        queries_manager.update_success(api_id="RJN", success_time=endtime)
-
-                        save_tabular_trend_data_to_log_file(project_id, entity_id, endtime, workspace_manager,timestamps, values)
-
                 else:
                     #logger.warning("Skipping RJN transmission loop — session_rjn not established.") # redundant message
                     queries_manager.update_attempt(api_id="RJN")  # Optional: track that an attempt happened
