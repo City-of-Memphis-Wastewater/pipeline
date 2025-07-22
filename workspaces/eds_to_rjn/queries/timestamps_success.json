@@ -10,5 +10,11 @@
       "last_success": "2025-07-18 15:18:24",
       "last_attempt": "2025-07-20 15:26:03"
     }
+  },
+  "WWTF": {
+    "timestamps": {
+      "last_success": "2025-07-20 15:18:24",
+      "last_attempt": "2025-07-20 15:26:03"
+    }
   }
 }
