@@ -178,8 +178,6 @@ class EdsClient:
 
         print('request [{}] executed in: {:.3f} s\n'.format(req_id, time.time() - st))
 
-
-
     @staticmethod
     def access_database_files_locally(
         session_key: str, starttime: int, endtime: int, point: list[int]
