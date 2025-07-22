@@ -214,11 +214,11 @@ class EdsClient:
             for point_id in point:
                 logger.debug(f"Querying for sensor id {point_id}")
 
-                
+                 
 
                 most_recent_table = get_most_recent_table(cursor, 'stiles')
                 
-                #if most_recent_table:
+                #if most_recent_table:  
                     #cursor.execute(f"SELECT MIN(ts), MAX(ts) FROM `{most_recent_table}`")
                     # min_ts, max_ts = cursor.fetchone().values()
                     # Now you have the date range, and can run your queries on this table only
