@@ -51,7 +51,7 @@ def demo_secrets():
     """
     workspace_name = WorkspaceManager.identify_default_workspace()
     workspace_manager = WorkspaceManager(workspace_name)
-    config = SecretConfig.load_config(secrets_file_path = workspace_manager.get_configs_secrets_file_path())
+    config = SecretConfig.load_config(secrets_file_path = workspace_manager.get_secrets_file_path())
     secrets = SecretConfig(config)
     return secrets
 

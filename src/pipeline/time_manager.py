@@ -136,7 +136,28 @@ class TimeManager:
     def now() -> "TimeManager":
         """Return current UTC time as a TimeManager."""
         return TimeManager(datetime.now(timezone.utc))
+    
 
+    @staticmethod
+    def from_local(dt: datetime, zone_name: str) -> "TimeManager":
+        """
+        Convert a local datetime in the given time zone to UTC and return a TimeManager instance.
+
+        Args:
+            dt (datetime): The local datetime (can be naive or aware).
+            zone_name (str): A valid IANA time zone string, e.g. 'America/Chicago'.
+
+        Returns:
+            TimeManager: A new instance based on the UTC version of the datetime.
+        """
+        if dt.tzinfo is None:
+            local_dt = dt.replace(tzinfo=ZoneInfo(zone_name))
+        else:
+            local_dt = dt.astimezone(ZoneInfo(zone_name))
+        utc_dt = local_dt.astimezone(timezone.utc)
+        return TimeManager(utc_dt)
+
+        
     @staticmethod
     def now_rounded_to_five() -> "TimeManager":
         """Return current UTC time rounded down to nearest 5 minutes."""

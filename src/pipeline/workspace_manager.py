@@ -19,8 +19,10 @@ class WorkspaceManager:
     IMPORTS_DIR_NAME = 'imports'
     EXPORTS_DIR_NAME = 'exports'
     SCRIPTS_DIR_NAME = 'scripts'
-    CONFIGS_DIR_NAME ='secrets'
+    CONFIGURATIONS_DIR_NAME = 'configurations'
+    SECRETS_DIR_NAME ='secrets'
     LOGS_DIR_NAME = 'logs'
+    CONFIGURATION_FILE_NAME = 'configuration.toml'
     SECRETS_YAML_FILE_NAME ='secrets.yaml'
     SECRETS_EXAMPLE_YAML_FILE_NAME ='secrets-example.yaml'
     DEFAULT_WORKSPACE_TOML_FILE_NAME = 'default-workspace.toml'
@@ -38,10 +40,11 @@ class WorkspaceManager:
         self.workspace_name = workspace_name
         self.workspaces_dir = self.get_workspaces_dir()
         self.workspace_dir = self.get_workspace_dir()
+        self.configurations_dir = self.get_configurations_dir()
         self.exports_dir = self.get_exports_dir()
         self.imports_dir = self.get_imports_dir()
         self.queries_dir = self.get_queries_dir()
-        self.configs_dir = self.get_configs_dir()
+        self.secrets_dir = self.get_secrets_dir()
         self.scripts_dir = self.get_scripts_dir()
         self.logs_dir = self.get_logs_dir()
         self.aggregate_dir = self.get_aggregate_dir()
@@ -51,7 +54,7 @@ class WorkspaceManager:
                                     [self.workspace_dir, 
                                     self.exports_dir, 
                                     self.imports_dir, 
-                                    self.configs_dir, 
+                                    self.secrets_dir, 
                                     self.scripts_dir, 
                                     self.logs_dir,
                                     self.aggregate_dir])
@@ -74,6 +77,14 @@ class WorkspaceManager:
         # This should become defunct once the tabular trend data request is functional 
         return self.exports_dir / 'aggregate'
     
+    def get_configurations_dir(self):
+        return self.workspace_dir / self.CONFIGURATIONS_DIR_NAME
+    
+    def get_configuration_file_path(self):
+        # Return the full path to the config file or create it from the fallback copy if it exists
+        file_path = self.get_configurations_dir() / self.CONFIGURATION_FILE_NAME
+        return file_path
+    
     def get_logs_dir(self):
         return self.workspace_dir / self.LOGS_DIR_NAME
 
@@ -84,34 +95,34 @@ class WorkspaceManager:
         # Return the full path to the export file
         return self.imports_dir / filename
         
-    def get_configs_dir(self):
-        return self.workspace_dir / self.CONFIGS_DIR_NAME
+    def get_secrets_dir(self):
+        return self.workspace_dir / self.SECRETS_DIR_NAME
 
-    def get_configs_secrets_file_path(self):
+    def get_secrets_file_path(self):
         # Return the full path to the config file
-        file_path = self.configs_dir / self.SECRETS_YAML_FILE_NAME
+        file_path = self.secrets_dir / self.SECRETS_YAML_FILE_NAME
         if not file_path.exists():
-            logging.warning(f"Configuration file {self.SECRETS_YAML_FILE_NAME} not found in:\n{self.configs_dir}.\nHint: Copy and edit the {self.SECRETS_YAML_FILE_NAME}.")
+            logging.warning(f"Secrets sonfiguration file {self.SECRETS_YAML_FILE_NAME} not found in:\n{self.secrets_dir}.\nHint: Copy and edit the {self.SECRETS_YAML_FILE_NAME}.")
             print("\n")
             choice = str(input(f"Auto-copy {self.SECRETS_EXAMPLE_YAML_FILE_NAME} [Y] or sys.exit() [n] ? "))
             if choice.lower().startswith("y"):
-                file_path = self.get_configs_secrets_file_path_or_copy()
+                file_path = self.get_secrets_file_path_or_copy()
             else:
                 # edge case, expected once per machine, or less, if the user knows to set up a secrets.yaml file.
                 import sys 
                 sys.exit()
         return file_path
     
-    def get_configs_secrets_file_path_or_copy(self):
+    def get_secrets_file_path_or_copy(self):
         # Return the full path to the config file or create it from the fallback copy if it exists
-        file_path = self.configs_dir / self.SECRETS_YAML_FILE_NAME
-        fallback_file_path = self.configs_dir / self.SECRETS_EXAMPLE_YAML_FILE_NAME
+        file_path = self.secrets_dir / self.SECRETS_YAML_FILE_NAME
+        fallback_file_path = self.secrets_dir / self.SECRETS_EXAMPLE_YAML_FILE_NAME
         if not file_path.exists() and fallback_file_path.exists():
             import shutil
             shutil.copy(fallback_file_path, file_path)
             print(f"{self.SECRETS_YAML_FILE_NAME} not found, copied from {self.SECRETS_YAML_FILE_NAME}")
         elif not file_path.exists() and not fallback_file_path.exists():
-            raise FileNotFoundError(f"Configuration file {self.SECRETS_YAML_FILE_NAME} nor {self.SECRETS_EXAMPLE_YAML_FILE_NAME} not found in directory '{self.configs_dir}'.")
+            raise FileNotFoundError(f"Configuration file {self.SECRETS_YAML_FILE_NAME} nor {self.SECRETS_EXAMPLE_YAML_FILE_NAME} not found in directory '{self.secrets_dir}'.")
         return file_path
 
     def get_scripts_dir(self):

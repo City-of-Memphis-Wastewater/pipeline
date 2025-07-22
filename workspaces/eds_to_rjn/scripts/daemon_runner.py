@@ -45,7 +45,7 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
 
     queries_dictlist_unfiltered = load_query_rows_from_csv_files(queries_file_path_list)
     queries_defaultdictlist_grouped_by_session_key = group_queries_by_api_url(queries_dictlist_unfiltered,'zd')
-    secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_configs_secrets_file_path())
+    secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_secrets_file_path())
     sessions_eds = {}
 
     # --- Prepare Maxson session_eds
@@ -83,7 +83,7 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
     # Discern the time range to use
     starttime = queries_manager.get_most_recent_successful_timestamp(api_id="RJN")
     logger.info(f"queries_manager.get_most_recent_successful_timestamp(), key = {'RJN'}")
-    endtime = helpers.get_now_time_rounded()
+    endtime = helpers.get_now_time_rounded(workspace_manager)
     logger.info(f"starttime = {starttime}")
     logger.info(f"endtime = {endtime}")
     

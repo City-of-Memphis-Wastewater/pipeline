@@ -109,9 +109,9 @@ class RjnClient:
         from src.pipeline.workspace_manager import WorkspaceManager
         workspace_name = workspace_manager.identify_default_workspace()
         workspace_manager = WorkspaceManager(workspace_name)
-        secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_configs_secrets_file_path())
+        secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_secrets_file_path())
         
-        secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_configs_secrets_file_path())
+        secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_secrets_file_path())
         sessions = {}
 
         url_set = find_urls(secrets_dict)
@@ -133,7 +133,7 @@ def demo_eds_ping():
     workspace_name = workspace_manager.identify_default_workspace()
     workspace_manager = WorkspaceManager(workspace_name)
 
-    secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_configs_secrets_file_path())
+    secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_secrets_file_path())
     
     api_secrets_r = helpers.get_nested_config(secrets_dict, ["contractor_apis","RJN"])
     session = RjnClient.login_to_session(api_url = api_secrets_r["url"],

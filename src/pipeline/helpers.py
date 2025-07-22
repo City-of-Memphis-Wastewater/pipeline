@@ -6,6 +6,8 @@ import types
 import os
 import logging
 
+from pipeline.time_manager import TimeManager
+
 logger = logging.getLogger(__name__)
 
 
@@ -39,11 +41,20 @@ def round_datetime_to_nearest_past_five_minutes(dt: datetime) -> datetime:
     rounded_minute = max(m for m in allowed_minutes if m <= dt.minute)
     return dt.replace(minute=rounded_minute, second=0, microsecond=0)
 
-def get_now_time_rounded() -> int:
+def get_now_time_rounded(workspace_manager) -> int:
+    
     nowtime = round_datetime_to_nearest_past_five_minutes(datetime.now())
     print(f"rounded nowtime = {nowtime}")
-    nowtime =  int(nowtime.timestamp())+300
-    return nowtime
+    nowtime_local =  int(nowtime.timestamp())+300
+    nowtime_local = TimeManager(nowtime_local).as_datetime()
+    try:
+        config = load_toml(workspace_manager.get_configuration_file_path())
+        timezone_config = config["settings"]["timezone"]
+    except:
+        timezone_config = "America/Chicago"
+    nowtime_utc = TimeManager.from_local(nowtime_local, zone_name = timezone_config).as_datetime()
+
+    return nowtime_utc
 
 def function_view(globals_passed=None):
     # Use the calling frame to get info about the *caller* module
@@ -82,4 +93,3 @@ def iso(ts):
 
 if __name__ == "__main__":
     function_view()
-    get_now_time_rounded()

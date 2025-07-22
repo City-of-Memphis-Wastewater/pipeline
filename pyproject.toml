@@ -39,6 +39,8 @@ plotly = "^6.2.0"
 uvicorn = "^0.34.3"
 mulch = "^0.2.8"
 mysql-connector-python = "^9.3.0"
+pyodbc = "^5.2.0"
+tzdata = "^2025.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.4.1"

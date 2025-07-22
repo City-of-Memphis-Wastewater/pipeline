@@ -40,32 +40,28 @@ class QueriesManager:
         with open(file_path, 'w') as f:
             json.dump(data, f, indent=2)
     
-    def get_most_recent_successful_timestamp_defunct(self,api_id) -> int:
-        print("QueriesManager.get_most_recent_successful_timestamp()")
-        data = self.load_tracking()
-        if data == {}:
-            # if no stored value is found, assume you will go back one hour
-            from datetime import timedelta
-            delta = int(helpers.round_datetime_to_nearest_past_five_minutes(timedelta(hours = 1).total_seconds()))
-            starttime = helpers.get_now_time_rounded() - delta 
-        else:
-            # if a stored most-recent value is found, use it as the starttime for your a tabular trend request, etc.
-            starttime = helpers.round_datetime_to_nearest_past_five_minutes(datetime.fromisoformat(data[api_id]["timestamps"]["last_success"]))
-            starttime = int(starttime.timestamp())
-        return starttime
-    
     def get_most_recent_successful_timestamp(self, api_id) -> int:
         print("QueriesManager.get_most_recent_successful_timestamp()")
+        from pipeline.helpers import load_toml
+        try:
+            config = load_toml(self.workspace_manager.get_configuration_file_path())
+            timezone_config = config["settings"]["timezone"]
+        except:
+            timezone_config = "America/Chicago"
+            
         data = self.load_tracking()
         
         if not data:
             # No stored value found — go back one hour from now, rounded down to nearest 5 minutes
-            one_hour_ago = TimeManager.now().as_unix() - 3600  # now - 1 hour in unix seconds
-            tm = TimeManager(one_hour_ago).round_down_to_nearest_five()
+            one_hour_ago_local = TimeManager.now().as_unix() - 3600  # now - 1 hour in unix seconds
+            one_hour_ago_local = TimeManager(one_hour_ago_local).as_datetime()
+            one_hour_ago_utc = TimeManager.from_local(one_hour_ago_local, zone_name = timezone_config)
+            tm = TimeManager(one_hour_ago_utc).round_down_to_nearest_five()
         else:
             # Stored value found — parse ISO timestamp and round down to nearest 5 minutes
-            last_success_iso = data[api_id]["timestamps"]["last_success"]
-            tm = TimeManager(last_success_iso).round_down_to_nearest_five()
+            last_success_iso = TimeManager(data[api_id]["timestamps"]["last_success"]).as_datetime()
+            last_success_utc = TimeManager.from_local(last_success_iso, zone_name = timezone_config).as_datetime()
+            tm = TimeManager(last_success_utc).round_down_to_nearest_five()
             
         return tm.as_unix()
 

@@ -192,7 +192,7 @@ class EdsClient:
         logger.info("Accessing MariaDB directly — local SQL mode enabled.")
         workspace_name = 'eds_to_rjn'
         workspace_manager = WorkspaceManager(workspace_name)
-        secrets_dict = SecretConfig.load_config(secrets_file_path=workspace_manager.get_configs_secrets_file_path())
+        secrets_dict = SecretConfig.load_config(secrets_file_path=workspace_manager.get_secrets_file_path())
         full_config = secrets_dict["eds_dbs"][session_key]
         conn_config = {k: v for k, v in full_config.items() if k != "storage_path"}
 
@@ -260,34 +260,13 @@ class EdsClient:
         logger.info(f"Successfully retrieved data for {len(point)} point(s)")
         return results
         
-            
-def table_has_ts_column_(cursor, table_name, db_type = "mysql"):
-    if db_type =="sqlite":
-    
-        cursor 
-        cursor.execute(f"PRAGMA table_info({table_name});")
-        return any(row[1] == "ts" for row in cursor.fetchall())
-    elif db_type =="mysql":
-        cursor.execute(f"SHOW COLUMNS FROM `{table_name}` LIKE 'ts'")
-                    
-    else: 
-        raise ValueError(f"Unsupported database type: {db_type}")
-
-def table_has_ts_column__(cursor, table_name, db_type="mysql"):
-    if db_type == "sqlite":
-        cursor.execute(f"PRAGMA table_info({table_name});")
-        return any(row[1] == "ts" for row in cursor.fetchall())
-
-    elif db_type == "mysql":
-        cursor.execute(f"SHOW COLUMNS FROM `{table_name}` LIKE 'ts'")
-        return cursor.fetchone() is not None  # ✅ Return True if found, False if not
-
-    else:
-        raise ValueError(f"Unsupported database type: {db_type}")
 
 def table_has_ts_column(conn, table_name, db_type="mysql"):
     if db_type == "sqlite":
-        # your sqlite logic here
+        with conn.cursor() as cur:
+            # your sqlite logic here
+            cur.execute(f"PRAGMA table_info({table_name});")
+            return any(row[1] == "ts" for row in cur.fetchall())
         pass
     elif db_type == "mysql":
         with conn.cursor() as cur:
@@ -427,7 +406,7 @@ def _demo_eds_start_session_CoM_WWTPs():
     workspace_name = WorkspaceManager.identify_default_workspace()
     workspace_manager = WorkspaceManager(workspace_name)
 
-    secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_configs_secrets_file_path())
+    secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_secrets_file_path())
     sessions = {}
 
     api_secrets_m = helpers.get_nested_config(secrets_dict, ["eds_apis","Maxson"])
@@ -574,7 +553,7 @@ def demo_eds_webplot_point_live():
         starttime = queries_manager.get_most_recent_successful_timestamp(api_id="Maxson")
         logger.info(f"queries_manager.get_most_recent_successful_timestamp(), key = {'Maxson'}")
         logger.info(f"starttime = {starttime}")
-        endtime = helpers.get_now_time_rounded()
+        endtime = helpers.get_now_time_rounded(workspace_manager)
 
         point_list = [row['iess'] for row in queries_defaultdictlist_grouped_by_session_key.get(key,[])]
         api_url = session.custom_dict["url"]
@@ -661,7 +640,7 @@ def demo_eds_print_tabular_trend():
 
         # Discern the time range to use
         starttime = queries_manager.get_most_recent_successful_timestamp(api_id="Maxson")
-        endtime = helpers.get_now_time_rounded()
+        endtime = helpers.get_now_time_rounded(workspace_manager)
 
         api_url = session.custom_dict["url"]
         request_id = EdsClient.create_tabular_request(session, api_url, starttime, endtime, points=point_list)
@@ -688,7 +667,7 @@ def demo_eds_local_database_access():
 
     queries_dictlist_unfiltered = load_query_rows_from_csv_files(queries_file_path_list)
     queries_defaultdictlist_grouped_by_session_key = group_queries_by_api_url(queries_dictlist_unfiltered,'zd')
-    secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_configs_secrets_file_path())
+    secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_secrets_file_path())
     sessions_eds = {}
 
     # --- Prepare Stiles session_eds
@@ -704,7 +683,7 @@ def demo_eds_local_database_access():
     # Discern the time range to use
     starttime = queries_manager.get_most_recent_successful_timestamp(api_id="WWTF")
     logger.info(f"queries_manager.get_most_recent_successful_timestamp(), key = {'WWTF'}")
-    endtime = helpers.get_now_time_rounded()
+    endtime = helpers.get_now_time_rounded(workspace_manager)
     logger.info(f"starttime = {starttime}")
     logger.info(f"endtime = {endtime}")
 

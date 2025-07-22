@@ -49,7 +49,7 @@ def sketch_maxson():
     logger.debug(f"queries_file_path_list = {queries_file_path_list}")
     queries_dictlist_unfiltered = load_query_rows_from_csv_files(queries_file_path_list)
     queries_defaultdictlist_grouped_by_session_key = group_queries_by_api_url(queries_dictlist_unfiltered,'zd')
-    secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_configs_secrets_file_path())
+    secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_secrets_file_path())
     sessions = {}
 
     api_secrets_m = helpers.get_nested_config(secrets_dict, ["eds_apis", "Maxson"])
