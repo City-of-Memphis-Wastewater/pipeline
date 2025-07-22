@@ -713,7 +713,7 @@ def demo_eds_local_database_access():
             
             for row in results[idx]:
                 #print(f"row = {row}")
-                EdsClient.print_point_info_row(row)
+                #EdsClient.print_point_info_row(row)
 
                 dt = datetime.fromtimestamp(row["ts"])
                 timestamp_str = helpers.round_datetime_to_nearest_past_five_minutes(dt).isoformat(timespec='seconds')
