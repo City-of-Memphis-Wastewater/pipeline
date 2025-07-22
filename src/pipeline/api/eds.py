@@ -214,6 +214,19 @@ class EdsClient:
             for point_id in point:
                 logger.debug(f"Querying for sensor id {point_id}")
 
+                
+
+                most_recent_table = get_most_recent_table(cursor, 'stiles')
+                
+                if most_recent_table:
+                    cursor.execute(f"SELECT MIN(ts), MAX(ts) FROM `{most_recent_table}`")
+                    # min_ts, max_ts = cursor.fetchone().values()
+                    # Now you have the date range, and can run your queries on this table only
+                else:
+                    # Handle the case of no matching tables
+                    logger.warning("No recent tables found")
+                
+                tables_in_time_range = [most_recent_table]
                 # Query all relevant source tables
                 full_rows = []
                 for table_name in tables_in_time_range:
@@ -221,6 +234,22 @@ class EdsClient:
                     if not table_has_ts_column(cursor, table_name, db_type="mysql"):
                         logger.warning(f"Skipping table '{table_name}': no 'ts' column.")
                         continue
+                    #----- START PSUEDO CODE
+                    cursor.execute("""
+                        SELECT TABLE_NAME
+                        FROM INFORMATION_SCHEMA.TABLES
+                        WHERE TABLE_SCHEMA = %s AND TABLE_NAME LIKE 'pla_%%'
+                        ORDER BY TABLE_NAME DESC
+                        LIMIT 1
+                    """, ('stiles',))
+
+                    latest_table = cursor.fetchone()['TABLE_NAME']
+
+                    query = f"SELECT ts, val FROM `{latest_table}` WHERE ts BETWEEN %s AND %s ORDER BY ts ASC"
+                    cursor.execute(query, (starttime, endtime))
+                    rows = cursor.fetchall()
+                    #----- END PSUEDO CODE
+
                     # Run query if 'ts' exists
                     query = f"""
                         SELECT ts, ids, tss, stat, val FROM `{table_name}`
@@ -346,6 +375,18 @@ def identify_relevant_MyISM_tables(session_key: str, starttime: int, endtime: in
 
     #print("Matching tables:", matching_tables)
     return matching_tables
+def get_most_recent_table(cursor, db_name, prefix='pla_'):
+    query = f"""
+        SELECT TABLE_NAME
+        FROM INFORMATION_SCHEMA.TABLES
+        WHERE TABLE_SCHEMA = %s AND TABLE_NAME LIKE %s
+        ORDER BY TABLE_NAME DESC
+        LIMIT 1;
+    """
+    cursor.execute(query, (db_name, f'{prefix}%'))
+    result = cursor.fetchone()
+    return result['TABLE_NAME'] if result else None
+
 
 @lru_cache()
 def get_stat_alarm_definitions():
