@@ -80,20 +80,19 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
     else:
         logger.warning("RJN session not established. Skipping RJN-related data transmission.")
     
+    # Discern the time range to use
+    starttime = queries_manager.get_most_recent_successful_timestamp(api_id="RJN")
+    logger.info(f"queries_manager.get_most_recent_successful_timestamp(), key = {'RJN'}")
+    endtime = helpers.get_now_time_rounded()
+    logger.info(f"starttime = {starttime}")
+    logger.info(f"endtime = {endtime}")
+    
     #key = "Maxson"
     #session = sessions_eds[key] 
     for key_eds, session_eds in sessions_eds.items():
         point_list = [row['iess'] for row in queries_defaultdictlist_grouped_by_session_key.get(key_eds,[])]
         rjn_projectid_list = [row['rjn_projectid'] for row in queries_defaultdictlist_grouped_by_session_key.get(key_eds,[])]
         rjn_entityid_list = [row['rjn_entityid'] for row in queries_defaultdictlist_grouped_by_session_key.get(key_eds,[])]
-
-        # Discern the time range to use
-        starttime = queries_manager.get_most_recent_successful_timestamp(api_id="RJN")
-        logger.info(f"queries_manager.get_most_recent_successful_timestamp(), key = {'RJN'}")
-        endtime = helpers.get_now_time_rounded()
-        logger.info(f"starttime = {starttime}")
-        logger.info(f"endtime = {endtime}")
-
         
         if session_eds is None:
             results = EdsClient.access_database_files_locally(key_eds, starttime, endtime, point=point_list)
