@@ -320,7 +320,7 @@ def identify_relevant_MyISM_tables(session_key: str, starttime: int, endtime: in
     for entry in sorted_entries:
         mtime = entry.stat().st_mtime
         if starttime <= mtime <= endtime and 'pla' in entry.name:
-            table_name, _ = os.splitext(entry.name)
+            table_name, _ = os.path.splitext(entry.name)
             matching_tables.append(table_name)
 
 
