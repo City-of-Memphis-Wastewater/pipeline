@@ -23,3 +23,22 @@ def set_handler_level(handler_name: str, level_name: str):
             break
     else:
         raise ValueError(f"Handler '{handler_name}' not found")
+    
+# Custom JSON formatter
+class JSONFormatter(logging.Formatter):
+    def format(self, record):
+        log_record = {
+            "time": self.formatTime(record, "%Y-%m-%d %H:%M:%S"),
+            "level": record.levelname,
+            "message": record.getMessage(),
+        }
+        return json.dumps(log_record, indent=4)
+    
+class PrettyJSONFormatter(logging.Formatter):
+    def format(self, record):
+        if isinstance(record.msg, (dict, list)):
+            try:
+                record.msg = json.dumps(record.msg, indent=2, ensure_ascii=False)
+            except Exception:
+                pass  # fallback to default formatting
+        return super().format(record)

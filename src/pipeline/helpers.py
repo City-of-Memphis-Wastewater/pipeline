@@ -27,7 +27,6 @@ def load_json(filepath):
         logger.error(f"[load_json] Failed to decode JSON in {filepath}: {e}")
         return {}
 
-
 def load_toml(filepath):
     # Load TOML data from the file
     with open(filepath, 'r') as f:

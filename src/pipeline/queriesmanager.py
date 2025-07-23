@@ -28,9 +28,18 @@ class QueriesManager:
     def load_tracking(self):
         file_path = self.workspace_manager.get_timestamp_success_file_path()
         try:
-            print(f"[DEBUG] Trying to load tracking file at: {file_path}")
+            #logger.info({"Trying to load tracking file at": file_path})
+            logger.info({
+                "event": "Loading tracking file",
+                "path": str(file_path)
+            })
             data = helpers.load_json(file_path)
-            logger.info(f"Tracking data loaded: {data}")
+            #logger.info({"Tracking data loaded": data})
+            logger.info({
+                "event": "Tracking data loaded",
+                "data": data
+            })
+
             return data
         except FileNotFoundError:
             return {}

@@ -12,8 +12,10 @@ from src.pipeline.env import SecretConfig
 from src.pipeline.workspace_manager import WorkspaceManager
 from src.pipeline import helpers
 from src.pipeline.decorators import log_function_call
+from src.pipeline.time_manager import TimeManager
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 class EdsClient:
 
@@ -193,15 +195,16 @@ class EdsClient:
         workspace_name = 'eds_to_rjn'
         workspace_manager = WorkspaceManager(workspace_name)
         secrets_dict = SecretConfig.load_config(secrets_file_path=workspace_manager.get_secrets_file_path())
-        full_config = secrets_dict["eds_dbs"][session_key]
-        conn_config = {k: v for k, v in full_config.items() if k != "storage_path"}
-
+        #full_config = secrets_dict["eds_dbs"][session_key]
+        #conn_config = {k: v for k, v in full_config.items() if k != "storage_path"}
+        conn_config = secrets_dict["eds_dbs"][session_key]
         results = []
 
         try:
+            logger.info("Attempting: mysql.connector.connect(**conn_config)")
             conn = mysql.connector.connect(**conn_config)
+            logger.debug({"conn": conn})
             cursor = conn.cursor(dictionary=True)
-
             most_recent_table = get_most_recent_table(cursor, 'stiles')
             if not most_recent_table:
                 logger.warning("No recent tables found.")
@@ -213,7 +216,7 @@ class EdsClient:
                 return [[] for _ in point]
 
             for point_id in point:
-                logger.debug(f"Querying for sensor id {point_id}")
+                logger.info(f"Querying for sensor id {point_id}")
 
                 query = f"""
                     SELECT ts, ids, tss, stat, val FROM `{most_recent_table}`
@@ -280,7 +283,7 @@ def table_has_ts_column(conn, table_name, db_type="mysql"):
 def identify_relevant_MyISM_tables(session_key: str, starttime: int, endtime: int, secrets_dict: dict) -> list:
     #
     #  to your table storage
-    storage_dir = secrets_dict["eds_dbs"][session_key]["storage_path"]
+    storage_dir = secrets_dict["eds_dbs"][str(session_key+"-config")]["storage_path"]
     
     # Collect matching table names based on file mtime
     matching_tables = []
@@ -680,10 +683,13 @@ def demo_eds_local_database_access():
     session_eds = session_stiles
     point_list = [row['iess'] for row in queries_defaultdictlist_grouped_by_session_key.get(key_eds,[])]
 
+    logger.info(f"point_list = {point_list}")
     # Discern the time range to use
     starttime = queries_manager.get_most_recent_successful_timestamp(api_id="WWTF")
     logger.info(f"queries_manager.get_most_recent_successful_timestamp(), key = {'WWTF'}")
     endtime = helpers.get_now_time_rounded(workspace_manager)
+    starttime = TimeManager(starttime).as_unix()
+    endtime = TimeManager(endtime).as_unix() 
     logger.info(f"starttime = {starttime}")
     logger.info(f"endtime = {endtime}")
 
