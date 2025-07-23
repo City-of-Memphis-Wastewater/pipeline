@@ -42,9 +42,9 @@ def round_datetime_to_nearest_past_five_minutes(dt: datetime) -> datetime:
     return dt.replace(minute=rounded_minute, second=0, microsecond=0)
 
 def get_now_time_rounded(workspace_manager) -> int:
-    
+    logger.debug(f"helpers.get_now_time_rounded(workspace_manager)")
     nowtime = round_datetime_to_nearest_past_five_minutes(datetime.now())
-    print(f"rounded nowtime = {nowtime}")
+    logger.debug(f"rounded nowtime = {nowtime}")
     nowtime_local =  int(nowtime.timestamp())+300
     nowtime_local = TimeManager(nowtime_local).as_datetime()
     try:
@@ -53,7 +53,7 @@ def get_now_time_rounded(workspace_manager) -> int:
     except:
         timezone_config = "America/Chicago"
     nowtime_utc = TimeManager.from_local(nowtime_local, zone_name = timezone_config).as_datetime()
-
+    logger.debug(f"return nowtime_utc")
     return nowtime_utc
 
 def function_view(globals_passed=None):
