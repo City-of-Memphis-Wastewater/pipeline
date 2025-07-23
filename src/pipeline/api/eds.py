@@ -685,6 +685,7 @@ def demo_eds_local_database_access():
     key_eds = "WWTF"
     session_eds = session_stiles
     point_list = [row['iess'] for row in queries_defaultdictlist_grouped_by_session_key.get(key_eds,[])]
+    point_list_sid = [row['sid'] for row in queries_defaultdictlist_grouped_by_session_key.get(key_eds,[])]
 
     logger.info(f"point_list = {point_list}")
     # Discern the time range to use
@@ -697,7 +698,7 @@ def demo_eds_local_database_access():
     logger.info(f"endtime = {endtime}")
 
     
-    results = EdsClient.access_database_files_locally(key_eds, starttime, endtime, point=point_list)
+    results = EdsClient.access_database_files_locally(key_eds, starttime, endtime, point=point_list_sid)
 
     print(f"len(results) = {len(results)}")
     print(f"len(results[0]) = {len(results[0])}")
