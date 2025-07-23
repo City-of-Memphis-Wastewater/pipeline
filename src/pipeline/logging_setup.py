@@ -7,7 +7,7 @@ def setup_logging(config_file="config/logging.json"): # relative to root
         os.makedirs("logs")
     with open(config_file, 'r') as f:
         config = json.load(f)
-        logging.config.dictConfig(config)
+        logging.config.dictConfig(config) 
 
 # Dynamically set logging level, per handler, like when using a GUI
 def set_handler_level(handler_name: str, level_name: str):
