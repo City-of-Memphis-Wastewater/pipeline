@@ -19,7 +19,7 @@
     },
     "file": {
       "class": "logging.handlers.RotatingFileHandler",
-      "level": "DEBUG",
+      "level": "DEBUG", 
       "formatter": "default",
       "filename": "logs/pipeline.log",
       "maxBytes": 10485760,
