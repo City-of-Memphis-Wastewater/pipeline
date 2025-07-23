@@ -282,9 +282,12 @@ def table_has_ts_column(conn, table_name, db_type="mysql"):
     
 def identify_relevant_MyISM_tables(session_key: str, starttime: int, endtime: int, secrets_dict: dict) -> list:
     #
-    #  to your table storage
-    storage_dir = secrets_dict["eds_dbs"][str(session_key+"-config")]["storage_path"]
-    
+    # Use the secrets file to control where your database can be found
+    try:
+        storage_dir = secrets_dict["eds_dbs"][str(session_key+"-config")]["storage_path"]
+    except:
+        logging.warning(f"User the secrets.yaml file to set the local database folder. Something like, storage_path: 'E:/SQLData/wwtf/'")
+        return []
     # Collect matching table names based on file mtime
     matching_tables = []
 
