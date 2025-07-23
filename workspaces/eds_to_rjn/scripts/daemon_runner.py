@@ -84,6 +84,8 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
     starttime = queries_manager.get_most_recent_successful_timestamp(api_id="RJN")
     logger.info(f"queries_manager.get_most_recent_successful_timestamp(), key = {'RJN'}")
     endtime = helpers.get_now_time_rounded(workspace_manager)
+    starttime_ts = TimeManager(starttime).as_unix()
+    endtime_ts = TimeManager(endtime).as_unix() 
     logger.info(f"starttime = {starttime}")
     logger.info(f"endtime = {endtime}")
     
@@ -95,10 +97,10 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
         rjn_entityid_list = [row['rjn_entityid'] for row in queries_defaultdictlist_grouped_by_session_key.get(key_eds,[])]
         
         if session_eds is None:
-            results = EdsClient.access_database_files_locally(key_eds, starttime, endtime, point=point_list)
+            results = EdsClient.access_database_files_locally(key_eds, starttime_ts, endtime_ts, point=point_list)
         else:
             api_url = session_eds.custom_dict["url"]
-            request_id = EdsClient.create_tabular_request(session_eds, api_url, starttime, endtime, points=point_list)
+            request_id = EdsClient.create_tabular_request(session_eds, api_url, starttime_ts, endtime_ts, points=point_list)
             EdsClient.wait_for_request_execution_session(session_eds, api_url, request_id)
             results = EdsClient.get_tabular_trend(session_eds, request_id, point_list)
             #results = EdsClient.get_tabular_mod(session_eds, request_id, point_list)
