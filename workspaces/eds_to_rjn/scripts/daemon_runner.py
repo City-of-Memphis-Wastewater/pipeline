@@ -127,14 +127,15 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
                 #if row['quality'] == 'G':
                 timestamps.append(timestamp_str)
                 values.append(round(row["value"],5)) # unrounded values fail to post
-
+            logger.info(f"len(timestamps) = {len(timestamps)}")
+            logger.info(f"timestamps[0] = {timestamps[0]}")
+            logger.info(f"timestamps[-1] = {timestamps[-1]}")
             if timestamps and values:
                 
                 if session_rjn is not None:
                     base_url = session_rjn.custom_dict["url"]
                     
                     # Send data to RJN
-                    print(f"row = {row}")
                     if not test:
                         rjn_data_transmission_succeeded = RjnClient.send_data_to_rjn2(
                             session_rjn,
