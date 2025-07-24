@@ -93,11 +93,13 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
     #session = sessions_eds[key] 
     for key_eds, session_eds in sessions_eds.items():
         point_list = [row['iess'] for row in queries_defaultdictlist_grouped_by_session_key.get(key_eds,[])]
+        point_list_sid = [row['sid'] for row in queries_defaultdictlist_grouped_by_session_key.get(key_eds,[])]
+        
         rjn_projectid_list = [row['rjn_projectid'] for row in queries_defaultdictlist_grouped_by_session_key.get(key_eds,[])]
         rjn_entityid_list = [row['rjn_entityid'] for row in queries_defaultdictlist_grouped_by_session_key.get(key_eds,[])]
         
         if session_eds is None:
-            results = EdsClient.access_database_files_locally(key_eds, starttime_ts, endtime_ts, point=point_list)
+            results = EdsClient.access_database_files_locally(key_eds, starttime_ts, endtime_ts, point=point_list_sid)
         else:
             api_url = session_eds.custom_dict["url"]
             request_id = EdsClient.create_tabular_request(session_eds, api_url, starttime_ts, endtime_ts, points=point_list)
@@ -132,7 +134,7 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
                     base_url = session_rjn.custom_dict["url"]
                     
                     # Send data to RJN
-                    #print(f"row = {row}")
+                    print(f"row = {row}")
                     if not test:
                         rjn_data_transmission_succeeded = RjnClient.send_data_to_rjn2(
                             session_rjn,
