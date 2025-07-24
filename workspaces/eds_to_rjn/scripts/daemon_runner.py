@@ -128,6 +128,8 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
                 timestamps.append(timestamp_str)
                 values.append(round(row["value"],5)) # unrounded values fail to post
             logger.info(f"len(timestamps) = {len(timestamps)}")
+            logger.info(f"timestamps[0] = {timestamps[0]}")
+            logger.info(f"timestamps[-1] = {timestamps[-1]}")
             if timestamps and values:
                 
                 if session_rjn is not None:
