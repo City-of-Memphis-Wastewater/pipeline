@@ -29,6 +29,7 @@ class WorkspaceManager:
     TIMESTAMPS_JSON_FILE_NAME = 'timestamps_success.json'
     
     ROOT_DIR = Path(__file__).resolve().parents[2]  # root directory
+    ROOT_DIR = get_cwd()
     # This climbs out of /src/pipeline/ to find the root.
     # parents[0] → The directory that contains the (this) Python file.
     # parents[1] → The parent of that directory.
@@ -152,6 +153,15 @@ class WorkspaceManager:
         for dir_path in list_dirs:
             if not dir_path.exists():
                 dir_path.mkdir(parents=True, exist_ok=True)
+
+    @classmethod
+    def get_cwd(cls) -> Path:
+        """Return current workspace directory, not the source code root, as a Path instance."""
+        # Quick and dirty, not representative of the complex truth or opportunity.
+        #cls.ROOT_DIR / 'workspaces' / cls.identify_default_workspace()
+        
+        # Pre-Exisiting function, generated some time before July 24, 2025. May as well use that instead. It is good to use your own library. Benefit from having built it.
+        return cls.identify_default_workspace()
 
     @classmethod
     def get_all_workspaces_names(cls):

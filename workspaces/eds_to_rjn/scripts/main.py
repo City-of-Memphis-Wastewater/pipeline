@@ -9,7 +9,7 @@ from src.pipeline.time_manager import TimeManager
 
 # Add the root project path so that 'src' can be found
 ROOT = Path(__file__).resolve().parents[2]  # pipeline/workspaces/eds_to_rjn/scripts -> pipeline
-sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT)) # 
 
 from src.pipeline.env import SecretConfig
 from src.pipeline.api.eds import EdsClient

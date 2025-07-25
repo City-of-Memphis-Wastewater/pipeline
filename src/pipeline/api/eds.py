@@ -5,6 +5,8 @@ import time
 from pprint import pprint
 from pathlib import Path
 import os
+import subprocess
+import platform
 import mysql.connector
 from functools import lru_cache
 
@@ -776,6 +778,11 @@ if __name__ == "__main__":
         demo_eds_ping()
     elif cmd == "demo-license":
         demo_eds_print_license()
+    elif cmd == "access-workspace""":
+        if platform.system().lower() == "windows":
+            # run the Open-FileBrowser command, registered with: git clone https://github.com/city-of-memphis-wastewater/powershell-tools.git ## run `notepad $profile` #noobs 
+            command = ["Open-FileBrowser", WorkspaceManager.get_cwd()]
+            subprocess.call(command) 
     else:
         print("Usage options: \n" 
         "poetry run python -m pipeline.api.eds demo-export \n"
@@ -787,5 +794,6 @@ if __name__ == "__main__":
         "poetry run python -m pipeline.api.eds demo-plot-trend \n"
         "poetry run python -m pipeline.api.eds demo-db \n"
         "poetry run python -m pipeline.api.eds demo-ping \n"
-        "poetry run python -m pipeline.api.eds demo-license")
+        "poetry run python -m pipeline.api.eds demo-license \n"
+        "poetry run python -m pipeline.api.eds access-workspace")
     
