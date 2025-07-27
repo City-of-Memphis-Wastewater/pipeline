@@ -781,7 +781,8 @@ if __name__ == "__main__":
     elif cmd == "access-workspace""":
         if platform.system().lower() == "windows":
             # run the Open-FileBrowser command, registered with: git clone https://github.com/city-of-memphis-wastewater/powershell-tools.git ## run `notepad $profile` #noobs 
-            command = ["Open-FileBrowser", WorkspaceManager.get_cwd()]
+            #command = ["Open-FileBrowser", WorkspaceManager.get_cwd()]
+            command = ["explorer", str(WorkspaceManager.get_cwd())]
             subprocess.call(command) 
     else:
         print("Usage options: \n" 

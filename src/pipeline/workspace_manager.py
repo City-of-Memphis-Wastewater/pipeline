@@ -27,9 +27,9 @@ class WorkspaceManager:
     SECRETS_EXAMPLE_YAML_FILE_NAME ='secrets-example.yaml'
     DEFAULT_WORKSPACE_TOML_FILE_NAME = 'default-workspace.toml'
     TIMESTAMPS_JSON_FILE_NAME = 'timestamps_success.json'
-    
     ROOT_DIR = Path(__file__).resolve().parents[2]  # root directory
-    ROOT_DIR = get_cwd()
+    
+    
     # This climbs out of /src/pipeline/ to find the root.
     # parents[0] → The directory that contains the (this) Python file.
     # parents[1] → The parent of that directory.
