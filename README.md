@@ -1,5 +1,5 @@
 # pipeline
-The primary purpose of this project is to ease API access to Enterprise Data Server (EDS) machines set up by Emerson to complement an Emerson Ovation local system. 
+The primary purpose of this project is to ease API access to Enterprise Data Server (EDS) machines set up by Emerson to compliment an Emerson Ovation local system. 
 Use-cases include data exchange with third-party contractors and also data access for in-house employees on work and personal devices.
 
 *Scroll down to ***Rollout, setup, etc.*** to see information about dependencies, Poetry, and pyenv.*
