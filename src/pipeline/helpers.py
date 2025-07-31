@@ -6,6 +6,7 @@ import types
 import os
 import logging
 
+
 from pipeline.time_manager import TimeManager
 
 logger = logging.getLogger(__name__)
@@ -46,14 +47,18 @@ def get_now_time_rounded(workspace_manager) -> int:
     logger.debug(f"rounded nowtime = {nowtime}")
     nowtime_local =  int(nowtime.timestamp())+300
     nowtime_local = TimeManager(nowtime_local).as_datetime()
-    try:
-        config = load_toml(workspace_manager.get_configuration_file_path())
-        timezone_config = config["settings"]["timezone"]
-    except:
-        timezone_config = "America/Chicago"
-    nowtime_utc = TimeManager.from_local(nowtime_local, zone_name = timezone_config).as_datetime()
-    logger.debug(f"return nowtime_utc")
-    return nowtime_utc
+    if False:
+        try:
+            config = load_toml(workspace_manager.get_configuration_file_path())
+            timezone_config = config["settings"]["timezone"]
+        except:
+            timezone_config = "America/Chicago"
+        nowtime_utc = TimeManager.from_local(nowtime_local, zone_name = timezone_config).as_unix()
+        logger.debug(f"return nowtime_utc")
+        return nowtime_utc
+    else:
+        logger.debug(f"return nowtime_local")
+        return nowtime_local # nowtime_utc
 
 def function_view(globals_passed=None):
     # Use the calling frame to get info about the *caller* module
@@ -88,7 +93,6 @@ def human_readable(ts):
 
 def iso(ts):
     return datetime.fromtimestamp(ts).isoformat()
-
 
 if __name__ == "__main__":
     function_view()
