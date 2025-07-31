@@ -64,15 +64,15 @@ class QueriesManager:
             # No stored value found — go back one hour from now, rounded down to nearest 5 minutes
             one_hour_ago_local = TimeManager.now().as_unix() - 3600  # now - 1 hour in unix seconds
             one_hour_ago_local = TimeManager(one_hour_ago_local).as_datetime()
-            one_hour_ago_utc = TimeManager.from_local(one_hour_ago_local, zone_name = timezone_config)
-            tm = TimeManager(one_hour_ago_utc).round_down_to_nearest_five()
+            #one_hour_ago_utc = TimeManager.from_local(one_hour_ago_local, zone_name = timezone_config)
+            tm = TimeManager(one_hour_ago_local).round_down_to_nearest_five()
         else:
             # Stored value found — parse ISO timestamp and round down to nearest 5 minutes
             last_success_iso = TimeManager(data[api_id]["timestamps"]["last_success"]).as_datetime()
-            last_success_utc = TimeManager.from_local(last_success_iso, zone_name = timezone_config).as_datetime()
-            tm = TimeManager(last_success_utc).round_down_to_nearest_five()
+            #last_success_utc = TimeManager.from_local(last_success_iso, zone_name = timezone_config).as_datetime()
+            tm = TimeManager(last_success_iso).round_down_to_nearest_five()
             
-        return tm.as_unix()
+        return tm
 
     
     def update_success(self,api_id,success_time=None):

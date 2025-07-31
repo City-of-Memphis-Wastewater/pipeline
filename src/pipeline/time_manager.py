@@ -130,12 +130,12 @@ class TimeManager:
         """Return new TimeManager rounded down to nearest 5-minute mark."""
         minute = (self._dt.minute // 5) * 5
         rounded_dt = self._dt.replace(minute=minute, second=0, microsecond=0)
-        return TimeManager(rounded_dt)
+        return TimeManager(rounded_dt).as_unix()
 
     @staticmethod
     def now() -> "TimeManager":
         """Return current UTC time as a TimeManager."""
-        return TimeManager(datetime.now(timezone.utc))
+        return TimeManager(datetime.now(timezone.utc)).as_unix()
     
 
     @staticmethod
@@ -164,13 +164,14 @@ class TimeManager:
         now = datetime.now(timezone.utc)
         minute = (now.minute // 5) * 5
         rounded = now.replace(minute=minute, second=0, microsecond=0)
-        return TimeManager(rounded)
+        return TimeManager(rounded).as_unix()
 
     def __repr__(self):
         return f"TimeManager({self.as_isoz()})"
 
     def __str__(self):
         return self.as_formatted_date_time()
+
 
 @click.command()
 def main():

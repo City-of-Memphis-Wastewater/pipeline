@@ -5,6 +5,7 @@ import time
 from pprint import pprint
 from pathlib import Path
 import os
+import inspect
 import subprocess
 import platform
 import mysql.connector
@@ -162,9 +163,15 @@ class EdsClient:
                 'function': 'AVG'
             } for p in points],
         }
-        response = session.post(api_url + 'trend/tabular', json=data, verify=False).json()
-        #print(f"response = {response}")
-        return response['id']
+        try:
+            response = session.post(api_url + 'trend/tabular', json=data, verify=False).json()
+            return response['id']
+            #print(f"response = {response}")
+        except:
+            #raise ValueError(f"JSON not returned with {inspect.currentframe().f_code.co_name} response")
+            response = session.post(api_url + 'trend/tabular', json=data, verify=False)
+            print(f"response = {response}")
+        
 
     @staticmethod
     def wait_for_request_execution_session(session, api_url, req_id):
@@ -562,6 +569,10 @@ def demo_eds_webplot_point_live():
         logger.info(f"queries_manager.get_most_recent_successful_timestamp(), key = {'Maxson'}")
         logger.info(f"starttime = {starttime}")
         endtime = helpers.get_now_time_rounded(workspace_manager)
+        starttime = TimeManager(starttime).as_unix()
+        endtime = TimeManager(endtime).as_unix() 
+        logger.info(f"starttime = {starttime}")
+        logger.info(f"endtime = {endtime}")
 
         point_list = [row['iess'] for row in queries_defaultdictlist_grouped_by_session_key.get(key,[])]
         api_url = session.custom_dict["url"]
@@ -595,7 +606,7 @@ def demo_eds_webplot_point_live():
                     #logger.info(f"Live: {label} → {av} @ {ts}")
                     logger.info(f"Live: {label} {round(av,2)} {un}")
             time.sleep(1)
-    if True:
+    if False:
         load_historic_data_back_to_last_success()
     collector_thread = Thread(target=collect_loop, daemon=True)
     collector_thread.start()
