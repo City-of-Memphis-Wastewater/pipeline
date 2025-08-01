@@ -107,7 +107,7 @@ class RjnClient:
     def ping():
         from src.pipeline.env import SecretConfig
         from src.pipeline.workspace_manager import WorkspaceManager
-        workspace_name = workspace_manager.identify_default_workspace()
+        workspace_name = WorkspaceManager.identify_default_workspace()
         workspace_manager = WorkspaceManager(workspace_name)
         secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_secrets_file_path())
         
@@ -130,7 +130,7 @@ def demo_eds_ping():
 
     from src.pipeline.env import SecretConfig
     from src.pipeline.workspace_manager import WorkspaceManager
-    workspace_name = workspace_manager.identify_default_workspace()
+    workspace_name = WorkspaceManager.identify_default_workspace()
     workspace_manager = WorkspaceManager(workspace_name)
 
     secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_secrets_file_path())

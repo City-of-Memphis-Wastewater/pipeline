@@ -677,7 +677,7 @@ def demo_eds_print_tabular_trend():
 def demo_eds_local_database_access():
     from src.pipeline.queriesmanager import QueriesManager
     from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
-    workspace_name = 'eds_to_rjn' # workspace_name = workspace_manager.identify_default_workspace()
+    workspace_name = 'eds_to_rjn' # workspace_name = WorkspaceManager.identify_default_workspace()
     workspace_manager = WorkspaceManager(workspace_name)
     queries_manager = QueriesManager(workspace_manager)
     queries_file_path_list = workspace_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
