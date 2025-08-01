@@ -135,7 +135,7 @@ def demo_eds_ping():
     
     api_secrets_r = helpers.get_nested_config(secrets_dict, ["contractor_apis","RJN"])
     session = RjnClient.login_to_session(api_url = api_secrets_r["url"],
-                                                username = api_secrets_r["client_id"],
+                                                client_id = api_secrets_r["client_id"],
                                                 password = api_secrets_r["password"])
     session.custom_dict = api_secrets_r
     
