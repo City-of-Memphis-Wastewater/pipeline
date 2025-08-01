@@ -520,8 +520,6 @@ def demo_eds_plot_point_live():
             for row in responses:
                 label = f"{row.get('shortdesc')} ({row.get('un')})" 
                 ts = row.get("ts")
-                #ts = helpers.human_readable(row.get("ts"))
-                #ts = helpers.iso(row.get("ts")) #  dpg: TypeError: must be real number, not str
                 ts = helpers.iso(row.get("ts")) # dpg is out, mpl is in. plotly is way, way in.
                 av = row.get("value")
                 un = row.get("un")
@@ -566,8 +564,7 @@ def demo_eds_webplot_point_live():
 
     def load_historic_data_back_to_last_success():
         starttime = queries_manager.get_most_recent_successful_timestamp(api_id="Maxson")
-        logger.info(f"queries_manager.get_most_recent_successful_timestamp(), key = {'Maxson'}")
-        logger.info(f"starttime = {starttime}")
+        logger.debug(f"queries_manager.get_most_recent_successful_timestamp(), key = {'Maxson'}")
         endtime = helpers.get_now_time_rounded(workspace_manager)
         starttime = TimeManager(starttime).as_unix()
         endtime = TimeManager(endtime).as_unix() 
@@ -579,7 +576,7 @@ def demo_eds_webplot_point_live():
         request_id = EdsClient.create_tabular_request(session, api_url, starttime, endtime, points=point_list)
         EdsClient.wait_for_request_execution_session(session, api_url, request_id)
         results = EdsClient.get_tabular_trend(session, request_id, point_list)
-        logger.info(f"len(results) = {len(results)}")
+        logger.debug(f"len(results) = {len(results)}")
 
         for idx, rows in enumerate(results):
             for row in rows:
@@ -597,8 +594,9 @@ def demo_eds_webplot_point_live():
             responses = collector.collect_live_values(session, queries_maxson)
             for row in responses:
                 label = f"{row.get('shortdesc')} ({row.get('un')})" 
-                #ts = helpers.human_readable(row.get("ts"))
-                ts = helpers.iso(row.get("ts"))
+                #ts = TimeManager(row.get("ts")).as_formatted_time()
+                ts = TimeManager(row.get("ts")).as_iso()
+                #ts = helpers.iso(row.get("ts"))
                 av = row.get("value")
                 un = row.get("un")
                 if ts is not None and av is not None:
