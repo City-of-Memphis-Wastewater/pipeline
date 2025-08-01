@@ -58,7 +58,7 @@ def get_now_time_rounded(workspace_manager) -> int:
         return nowtime_utc
     else:
         logger.debug(f"return nowtime_local")
-        return nowtime_local # nowtime_utc
+        return TimeManager(nowtime_local).as_unix() # nowtime_utc
 
 def function_view(globals_passed=None):
     # Use the calling frame to get info about the *caller* module
