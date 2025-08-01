@@ -43,7 +43,7 @@ def sketch_daemon_runner_main():
 def sketch_maxson():
     test_connection_to_internet()
 
-    workspace_name = 'eds_to_rjn' # workspace_name = workspace_manager.identify_default_workspace()
+    workspace_name = 'eds_to_rjn' # workspace_name = WorkspaceManager.identify_default_workspace()
     workspace_manager = WorkspaceManager(workspace_name)
     queries_file_path_list = workspace_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
     logger.debug(f"queries_file_path_list = {queries_file_path_list}")
