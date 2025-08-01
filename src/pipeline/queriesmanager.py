@@ -29,13 +29,13 @@ class QueriesManager:
         file_path = self.workspace_manager.get_timestamp_success_file_path()
         try:
             #logger.info({"Trying to load tracking file at": file_path})
-            logger.info({
+            logger.debug({
                 "event": "Loading tracking file",
                 "path": str(file_path)
             })
             data = helpers.load_json(file_path)
             #logger.info({"Tracking data loaded": data})
-            logger.info({
+            logger.debug({
                 "event": "Tracking data loaded",
                 "data": data
             })

@@ -18,7 +18,7 @@ from src.pipeline.decorators import log_function_call
 from src.pipeline.time_manager import TimeManager
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+#logger.setLevel(logging.INFO)
 
 class EdsClient:
 
