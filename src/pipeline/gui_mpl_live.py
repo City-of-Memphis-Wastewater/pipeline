@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from pipeline import helpers
 from src.pipeline.plotbuffer import PlotBuffer  # Adjust import path as needed
+from src.pipeline.time_manager import TimeManager
 
 logger = logging.getLogger(__name__)
 
@@ -89,10 +90,10 @@ def run_gui(buffer: PlotBuffer, update_interval_ms=1000):
         # Tick positions are x values at those indices
         #tick_positions = x_vals[indices]
         tick_positions = np.array(x_vals)[indices]
-        tick_labels = [helpers.human_readable(ts) for ts in tick_positions]
+        tick_labels = [TimeManager(ts).as_formatted_time() for ts in tick_positions]
         # Convert UNIX timestamps to formatted strings on x-axis
         #xticks = ax.get_xticks()
-        #xtick_labels = [helpers.human_readable(x) for x in xticks]
+        #xtick_labels = [TimeManager(x).as_formatted_time() for x in xticks]
         ax.set_xticks(tick_positions)
         #ax.set_xticklabels(xtick_labels, rotation=45, ha='right')
         ax.set_xticklabels(tick_labels, rotation=45, ha='right')
