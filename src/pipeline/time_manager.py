@@ -115,7 +115,7 @@ class TimeManager:
     
     def as_iso(self) -> str:
         """Return ISO 8601, like datetime.fromtimestamp(ts).isoformat()."""
-        return datetime.fromtimestamp(self._dt).isoformat()
+        return self._dt.isoformat()
 
     def as_formatted_date_time(self) -> str:
         """Return formatted string 'YYYY-MM-DD HH:MM:SS'."""

@@ -206,7 +206,6 @@ class EdsClient:
         secrets_dict = SecretConfig.load_config(secrets_file_path=workspace_manager.get_secrets_file_path())
         #full_config = secrets_dict["eds_dbs"][session_key]
         #conn_config = {k: v for k, v in full_config.items() if k != "storage_path"}
-        logger.info(f"secrets_dict = {secrets_dict}")
         conn_config = secrets_dict["eds_dbs"][session_key]
         results = []
 
@@ -261,6 +260,7 @@ class EdsClient:
                 raise  # re-raise other DB errors
         except Exception as e:
             logger.error(f"Unexpected error accessing local database: {e}")
+            # hitting this in termux
             raise
         finally:
             # cleanup cursor/connection if they exist
