@@ -126,8 +126,6 @@ def demo_eds_ping():
     from src.pipeline.env import SecretConfig
     from src.pipeline.workspace_manager import WorkspaceManager
 
-
-
     from src.pipeline.env import SecretConfig
     from src.pipeline.workspace_manager import WorkspaceManager
     workspace_name = WorkspaceManager.identify_default_workspace()
@@ -150,7 +148,8 @@ if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else "default"
 
     if cmd == "ping":
-        RjnClient.ping()
+        #RjnClient.ping()
+        demo_eds_ping()
     else:
         print("Usage options: \n"
         "poetry run python -m pipeline.api.rjn ping")
