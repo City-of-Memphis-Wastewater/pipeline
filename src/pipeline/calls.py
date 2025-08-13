@@ -87,5 +87,5 @@ def call_ping(url):
     return subprocess.call(command) == 0  # True if ping succeeds
 
 if __name__ == "__main__":
-    from pipeline.helpers import function_view
+    from src.pipeline.helpers import function_view
     function_view()

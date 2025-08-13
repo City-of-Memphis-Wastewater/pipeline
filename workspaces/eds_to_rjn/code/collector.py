@@ -52,6 +52,6 @@ def collect_live_values(session, queries_dictlist_filtered_by_session_key):
     return data
 
 if __name__ == "__main__":
-    print("[x] from pipeline import collector")
-    print("[x] from pipeline import collector.collector_live_vales(session,query_list)")
-    print("[ ] from pipeline import collector.collector_live_vales(session,query_dict)")
+    print("[x] from src.pipeline import collector")
+    print("[x] from src.pipeline import collector.collector_live_vales(session,query_list)")
+    print("[ ] from src.pipeline import collector.collector_live_vales(session,query_dict)")
