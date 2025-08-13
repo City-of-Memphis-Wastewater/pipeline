@@ -1,5 +1,5 @@
 # tests/test_sys_path_debug.py
-from pipeline import helpers, philosophy  # Make sure at least one real module is used
+from src.pipeline import helpers, philosophy  # Make sure at least one real module is used
 
 def test_show_sys_path():
     import sys
