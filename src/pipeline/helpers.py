@@ -7,7 +7,7 @@ import os
 import logging
 
 
-from pipeline.time_manager import TimeManager
+from src.pipeline.time_manager import TimeManager
 
 logger = logging.getLogger(__name__)
 

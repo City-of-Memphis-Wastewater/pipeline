@@ -1,4 +1,4 @@
-from pipeline import helpers
+from src.pipeline import helpers
 
 def test_helpers_module_exists():
     assert hasattr(helpers, "__file__")

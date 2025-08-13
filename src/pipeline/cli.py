@@ -34,7 +34,7 @@ def inspect(workspace: Path):
 
 import typer
 import importlib
-from pipeline.workspace_manager import WorkspaceManager
+from src.pipeline.workspace_manager import WorkspaceManager
 
 app = typer.Typer(help="CLI for running pipeline workspaces.")
 
