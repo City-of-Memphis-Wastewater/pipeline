@@ -91,6 +91,8 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
     
     #key = "Maxson"
     #session = sessions_eds[key] 
+
+    ## To do: start using pandas, for the sake of clarity of manipulation 15 Aug 2025
     for key_eds, session_eds in sessions_eds.items():
         point_list = [row['iess'] for row in queries_defaultdictlist_grouped_by_session_key.get(key_eds,[])]
         point_list_sid = [row['sid'] for row in queries_defaultdictlist_grouped_by_session_key.get(key_eds,[])]
@@ -126,7 +128,12 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
                 timestamp_str = helpers.round_datetime_to_nearest_past_five_minutes(dt).isoformat(timespec='seconds')
                 #if row['quality'] == 'G':
                 timestamps.append(timestamp_str)
-                values.append(round(row["value"],5)) # unrounded values fail to post
+                value = round(row["value"],5)
+                # QUICK AND DIRTY CONVERSION FOR WWTF WETWELL LEVEL TO FEET 
+                if iess == "M310LI.UNIT0@NET0":
+                    value = (value/12)+181.25 # convert inches of wetwell to feet above mean sealevel
+                values.append(value) # unrounded values fail to post
+
             logger.info(f"len(timestamps) = {len(timestamps)}")
             logger.info(f"timestamps[0] = {timestamps[0]}")
             logger.info(f"timestamps[-1] = {timestamps[-1]}")
