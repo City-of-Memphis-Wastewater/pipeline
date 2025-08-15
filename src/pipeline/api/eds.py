@@ -584,6 +584,7 @@ def demo_eds_webplot_point_live():
                 label = f"{row.get('rjn_entityid')} ({row.get('units')})"
                 ts = helpers.iso(row.get("ts"))
                 av = row.get("value")
+                
                 if ts is not None and av is not None:
                     data_buffer.append(label, ts, av)
                     logger.debug(f"Historic: {label} {round(av,2)} @ {ts}")
@@ -600,6 +601,10 @@ def demo_eds_webplot_point_live():
                 #ts = helpers.iso(row.get("ts"))
                 av = row.get("value")
                 un = row.get("un")
+                # QUICK AND DIRTY CONVERSION FOR WWTF WETWELL LEVEL TO FEET 
+                if row.get('iess') == "M310LI.UNIT0@NET0":
+                    av = (av/12)+181.25 # convert inches of wetwell to feet above mean sealevel
+                    un = "ft"
                 if ts is not None and av is not None:
                     data_buffer.append(label, ts, av)
                     #logger.info(f"Live: {label} → {av} @ {ts}")
