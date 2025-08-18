@@ -78,7 +78,7 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
     if session_rjn is not None:
         session_rjn.custom_dict = api_secrets_r
     else:
-        logger.warning("RJN session not established. Skipping RJN-related data transmission.")
+        logger.warning("RJN session not established. Skipping RJN-related data transmission.\n")
     
     # Discern the time range to use
     starttime = queries_manager.get_most_recent_successful_timestamp(api_id="RJN")
@@ -100,7 +100,10 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
         rjn_projectid_list = [row['rjn_projectid'] for row in queries_defaultdictlist_grouped_by_session_key.get(key_eds,[])]
         rjn_entityid_list = [row['rjn_entityid'] for row in queries_defaultdictlist_grouped_by_session_key.get(key_eds,[])]
         
-        if session_eds is None:
+        if session_eds is None and not EdsClient.this_computer_is_an_enterprise_database_server(secrets_dict, key_eds):
+            logger.warning(f"Skipping EDS session for {key_eds} — session_eds is None and this computer is not an enterprise database server.")
+            return
+        if session_eds is None and EdsClient.this_computer_is_an_enterprise_database_server(secrets_dict, key_eds):
             results = EdsClient.access_database_files_locally(key_eds, starttime_ts, endtime_ts, point=point_list_sid)
         else:
             api_url = session_eds.custom_dict["url"]

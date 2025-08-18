@@ -5,7 +5,7 @@ import inspect
 import types
 import os
 import logging
-
+import socket
 
 from src.pipeline.time_manager import TimeManager
 
@@ -94,5 +94,14 @@ def human_readable(ts):
 def iso(ts):
     return datetime.fromtimestamp(ts).isoformat()
 
+def get_lan_ip_address_of_current_machine():
+    """Get the LAN IP address of the current machine."""
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        # Doesn't need to be reachable; just picks the active interface
+        s.connect(("8.8.8.8", 80))
+        return s.getsockname()[0]
+    finally:
+        s.close()
 if __name__ == "__main__":
     function_view()

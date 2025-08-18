@@ -190,6 +190,24 @@ class EdsClient:
         print('request [{}] executed in: {:.3f} s\n'.format(req_id, time.time() - st))
 
     @staticmethod
+    def this_computer_is_an_enterprise_database_server(secrets_dict: dict, session_key: str) -> bool:
+        """
+        Check if the current computer is an enterprise database server.
+        This is determined by checking if the ip address matches the configured EDS database key.
+        """
+        import socket
+        from urllib.parse import urlparse
+        from pipeline.helpers import get_lan_ip_address_of_current_machine
+        # Check if the session_key exists in the secrets_dict
+        url = secrets_dict["eds_apis"][session_key]["url"]
+        parsed = urlparse(url)
+        hostname = parsed.hostname  # extracts just "172.19.4.128"
+        ip = socket.gethostbyname(hostname)
+        bool_ip = (ip == get_lan_ip_address_of_current_machine())
+        logger.info(f"Checking if this computer is enterprise database server: {bool_ip}")
+        return bool_ip
+
+    @staticmethod
     def access_database_files_locally(
         session_key: str, starttime: int, endtime: int, point: list[int]
     ) -> list[list[dict]]:
@@ -206,6 +224,7 @@ class EdsClient:
         secrets_dict = SecretConfig.load_config(secrets_file_path=workspace_manager.get_secrets_file_path())
         #full_config = secrets_dict["eds_dbs"][session_key]
         #conn_config = {k: v for k, v in full_config.items() if k != "storage_path"}
+        
         conn_config = secrets_dict["eds_dbs"][session_key]
         results = []
 
@@ -715,9 +734,11 @@ def demo_eds_local_database_access():
     logger.info(f"starttime = {starttime}")
     logger.info(f"endtime = {endtime}")
 
-    
-    results = EdsClient.access_database_files_locally(key_eds, starttime, endtime, point=point_list_sid)
-
+    if EdsClient.this_computer_is_an_enterprise_database_server(secrets_dict, key_eds):
+        results = EdsClient.access_database_files_locally(key_eds, starttime, endtime, point=point_list_sid)
+    else:
+        logger.warning("This computer is not an enterprise database server. Local database access will not work.")
+        results = [[] for _ in point_list]
     print(f"len(results) = {len(results)}")
     print(f"len(results[0]) = {len(results[0])}")
     print(f"len(results[1]) = {len(results[1])}")
