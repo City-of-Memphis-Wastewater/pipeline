@@ -102,7 +102,7 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
         
         if session_eds is None and not EdsClient.this_computer_is_an_enterprise_database_server(secrets_dict, key_eds):
             logger.warning(f"Skipping EDS session for {key_eds} — session_eds is None and this computer is not an enterprise database server.")
-            return
+            continue
         if session_eds is None and EdsClient.this_computer_is_an_enterprise_database_server(secrets_dict, key_eds):
             results = EdsClient.access_database_files_locally(key_eds, starttime_ts, endtime_ts, point=point_list_sid)
         else:
