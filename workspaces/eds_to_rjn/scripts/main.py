@@ -68,7 +68,7 @@ def sketch_maxson():
         session_rjn.custom_dict = api_secrets_r
         sessions.update({"RJN":session_rjn})
     else:
-        logger.warning("RJN session not established. Skipping RJN-related data transmission.")
+        logger.warning("RJN session not established. Skipping RJN-related data transmission.\n")
     #for key, session in sessions.items():
     key = "Maxson"
     session = sessions[key] 
