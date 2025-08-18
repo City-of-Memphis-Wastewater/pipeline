@@ -121,7 +121,7 @@ class RjnClient:
                 call_ping(url)
 
 @log_function_call(level=logging.DEBUG)
-def demo_eds_ping():
+def demo_rjn_ping():
     from src.pipeline.calls import call_ping
     from src.pipeline.env import SecretConfig
     from src.pipeline.workspace_manager import WorkspaceManager
@@ -137,19 +137,21 @@ def demo_eds_ping():
     session = RjnClient.login_to_session(api_url = api_secrets_r["url"],
                                                 client_id = api_secrets_r["client_id"],
                                                 password = api_secrets_r["password"])
-    session.custom_dict = api_secrets_r
-    
-    
-    api_url = session.custom_dict["url"]
-    response = call_ping(api_url)
+    if session is None:
+        logger.warning("RJN session not established. Skipping RJN-related data transmission.\n")
+        return
+    else:
+        logger.info("RJN session established successfully.")
+        session.custom_dict = api_secrets_r
+        api_url = session.custom_dict["url"]
+        response = call_ping(api_url)
 
 if __name__ == "__main__":
     import sys
     cmd = sys.argv[1] if len(sys.argv) > 1 else "default"
 
     if cmd == "ping":
-        #RjnClient.ping()
-        demo_eds_ping()
+        demo_rjn_ping()
     else:
         print("Usage options: \n"
         "poetry run python -m pipeline.api.rjn ping")
