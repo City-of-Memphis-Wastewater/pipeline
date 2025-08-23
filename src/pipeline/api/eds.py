@@ -242,9 +242,9 @@ class EdsClient:
             all_tables = [list(row.values())[0] for row in cursor.fetchall()]
             logger.info(f"All tables in database: {all_tables}")
             
-            # DEBUG: Show tables matching 'plp_' pattern (the actual data tables)
-            data_tables = [t for t in all_tables if t.startswith('plp_')]
-            logger.info(f"Data tables (plp_*): {len(data_tables)} tables found")
+            # DEBUG: Show tables matching 'pla_' pattern (the actual data tables)
+            data_tables = [t for t in all_tables if t.startswith('pla_')]
+            logger.info(f"Data tables (pla_*): {len(data_tables)} tables found")
             logger.info(f"Sample data tables: {data_tables[:5]}")
             
             # DEBUG: For each data table, check its time range (check a few samples)
@@ -271,9 +271,9 @@ class EdsClient:
                     logger.warning(f"Could not check table {table}: {e}")
             
             # Now get relevant tables using correct prefix
-            relevant_tables = get_tables_for_timerange_debug(cursor, 'plp_', starttime, endtime)
+            relevant_tables = get_tables_for_timerange_debug(cursor, 'pla_', starttime, endtime)
             if not relevant_tables:
-                logger.warning("No relevant plp_ tables found for the given time range.")
+                logger.warning("No relevant pla_ tables found for the given time range.")
                 # Fallback to most recent table
                 most_recent_table = get_most_recent_table(cursor, 'stiles')  # This should return pla_* table
                 if most_recent_table:
@@ -564,7 +564,7 @@ def access_database_files_locally_ten_tables_fixed(
         db_name = db_result['db_name']
         
         # Get 10 most recent tables - this returns a LIST of table names
-        recent_tables = get_ten_most_recent_tables(cursor, db_name, 'plp_')
+        recent_tables = get_ten_most_recent_tables(cursor, db_name, 'pla_')
         
         if not recent_tables:
             logger.warning("No recent tables found.")
@@ -675,7 +675,7 @@ def get_ten_most_recent_tables(cursor, db_name, prefix='pla_') -> list[str]:
     table_names = [result['TABLE_NAME'] for result in results]
     
     logger.info(f"Found {len(table_names)} recent tables with prefix '{prefix}': {table_names}")
-    return table_names  # This is a LIST of strings: ['plp_68a98310', 'plp_68a97500', ...]
+    return table_names  # This is a LIST of strings: ['pla_68a98310', 'pla_68a97500', ...]
 
 
 # Simplified version of get_tables_for_timerange for debugging
@@ -684,8 +684,8 @@ def get_tables_for_timerange_debug(cursor, table_prefix: str, starttime: int, en
     Debug version to see what's happening with table discovery
     """
     try:
-        # Get all tables with the prefix - use 'plp_' instead of 'stiles'
-        actual_prefix = 'plp_' if table_prefix == 'stiles' else table_prefix
+        # Get all tables with the prefix - use 'pla_' instead of 'stiles'
+        actual_prefix = 'pla_' if table_prefix == 'stiles' else table_prefix
         cursor.execute("SHOW TABLES")
         all_tables = [list(row.values())[0] for row in cursor.fetchall()]
         
