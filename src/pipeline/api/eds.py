@@ -507,11 +507,159 @@ def get_most_recent_table(cursor, db_name, prefix='pla_'):
     result = cursor.fetchone()
     return result['TABLE_NAME'] if result else None
 
+def table_has_ts_column_fixed(conn, table_name, db_type="mysql"):
+    """
+    Check if a SINGLE table has a 'ts' column.
+    Fixed to handle only one table at a time.
+    """
+    # SAFETY CHECK: Make sure we got a string, not a list
+    if isinstance(table_name, list):
+        logger.error(f"table_has_ts_column received list instead of string: {table_name}")
+        raise ValueError("table_has_ts_column expects a single table name (string), not a list")
+    
+    cursor = conn.cursor(dictionary=True)
+    try:
+        # Use parameterized query to be safe, but DESCRIBE needs the table name directly
+        cursor.execute(f"DESCRIBE `{table_name}`")
+        columns_result = cursor.fetchall()  # FETCH ALL IMMEDIATELY
+        
+        column_names = [row['Field'] for row in columns_result]
+        has_ts = 'ts' in column_names
+        
+        logger.debug(f"Table {table_name} columns: {column_names}, has 'ts': {has_ts}")
+        return has_ts
+        
+    except Exception as e:
+        logger.error(f"Error checking columns for table {table_name}: {e}")
+        return False
+    finally:
+        cursor.close()
 
-def get_ten_most_recent_tables(cursor, db_name, prefix='plp_'):
+
+@staticmethod
+def access_database_files_locally_ten_tables_fixed(
+    session_key: str, starttime: int, endtime: int, point: list[int]
+) -> list[list[dict]]:
+    """
+    Access MariaDB data by querying the 10 most recent tables.
+    Fixed to properly handle individual table names.
+    """
+
+    logger.info("Accessing MariaDB directly — local SQL mode enabled (10 recent tables).")
+    workspace_name = 'eds_to_rjn'
+    workspace_manager = WorkspaceManager(workspace_name)
+    secrets_dict = SecretConfig.load_config(secrets_file_path=workspace_manager.get_secrets_file_path())
+    
+    conn_config = secrets_dict["eds_dbs"][session_key]
+    results = []
+
+    try:
+        logger.info("Attempting: mysql.connector.connect(**conn_config)")
+        conn = mysql.connector.connect(**conn_config)
+        cursor = conn.cursor(dictionary=True)
+        
+        # Get database name
+        cursor.execute("SELECT DATABASE() as db_name")
+        db_result = cursor.fetchone()
+        db_name = db_result['db_name']
+        
+        # Get 10 most recent tables - this returns a LIST of table names
+        recent_tables = get_ten_most_recent_tables(cursor, db_name, 'plp_')
+        
+        if not recent_tables:
+            logger.warning("No recent tables found.")
+            return [[] for _ in point]
+
+        logger.info(f"Will query {len(recent_tables)} recent tables: {recent_tables}")
+
+        # Initialize results structure
+        point_results = {point_id: [] for point_id in point}
+
+        # Query each table individually
+        for table_name in recent_tables:  # table_name is a STRING here
+            logger.info(f"Processing table: {table_name}")
+            
+            # Check if this individual table has 'ts' column
+            if not table_has_ts_column_fixed(conn, table_name, db_type="mysql"):
+                logger.warning(f"Skipping table '{table_name}': no 'ts' column.")
+                continue
+
+            # Optional: Check time range for this table
+            try:
+                cursor.execute(f"SELECT MIN(ts) as min_ts, MAX(ts) as max_ts FROM `{table_name}` LIMIT 1")
+                range_check = cursor.fetchone()
+                
+                if range_check and range_check['min_ts'] and range_check['max_ts']:
+                    table_min = range_check['min_ts']
+                    table_max = range_check['max_ts']
+                    
+                    if table_max < starttime or table_min > endtime:
+                        logger.debug(f"Table {table_name} outside time range ({table_min}-{table_max}), skipping")
+                        continue
+                    else:
+                        logger.info(f"Table {table_name} overlaps time range ({table_min}-{table_max})")
+                        
+            except Exception as e:
+                logger.warning(f"Could not check time range for {table_name}: {e}")
+
+            # Query this table for each point
+            for point_id in point:
+                logger.debug(f"Querying table {table_name} for sensor id {point_id}")
+
+                query = f"""
+                    SELECT ts, ids, tss, stat, val FROM `{table_name}`
+                    WHERE ts BETWEEN %s AND %s AND ids = %s
+                    ORDER BY ts ASC
+                """
+                cursor.execute(query, (starttime, endtime, point_id))
+                
+                # Fetch all results immediately
+                data_rows = cursor.fetchall()
+                
+                for row in data_rows:
+                    quality_flags = decode_stat(row["stat"])
+                    quality_code = quality_flags[0][2] if quality_flags else "N"
+                    point_results[point_id].append({
+                        "ts": row["ts"],
+                        "value": row["val"],
+                        "quality": quality_code,
+                    })
+
+                logger.debug(f"Found {len(data_rows)} rows in {table_name} for point {point_id}")
+
+        # Prepare final results
+        for point_id in point:
+            point_results[point_id].sort(key=lambda x: x["ts"])
+            results.append(point_results[point_id])
+            logger.info(f"Total rows for point {point_id}: {len(point_results[point_id])}")
+
+    except mysql.connector.errors.DatabaseError as db_err:
+        if "Can't connect to MySQL server" in str(db_err):
+            logger.error("Local database access failed: Please run this code on the proper EDS server where the local MariaDB is accessible.")
+            print("ERROR: This code must be run on the proper EDS server for local database access to work.")
+            return [[] for _ in point]
+        else:
+            raise
+    except Exception as e:
+        logger.error(f"Unexpected error accessing local database: {e}")
+        raise
+    finally:
+        try:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+        except Exception:
+            pass
+
+    logger.info(f"Successfully retrieved data for {len(point)} point(s) from {len(recent_tables)} recent tables")
+    return results
+
+
+def get_ten_most_recent_tables(cursor, db_name, prefix='pla_') -> list[str]:
     """
     Get the 10 most recent tables with the given prefix.
-    Fixed to properly handle MySQL cursor results.
+    Returns a LIST OF STRINGS, not a single string.
     """
     query = f"""
         SELECT TABLE_NAME
@@ -521,15 +669,13 @@ def get_ten_most_recent_tables(cursor, db_name, prefix='plp_'):
         LIMIT 10;
     """
     cursor.execute(query, (db_name, f'{prefix}%'))
-    
-    # IMPORTANT: Fetch ALL results immediately to avoid "Unread result found" error
     results = cursor.fetchall()
     
-    # Extract table names from the result dictionaries
+    # Extract table names as individual strings
     table_names = [result['TABLE_NAME'] for result in results]
     
     logger.info(f"Found {len(table_names)} recent tables with prefix '{prefix}': {table_names}")
-    return table_names
+    return table_names  # This is a LIST of strings: ['plp_68a98310', 'plp_68a97500', ...]
 
 
 # Simplified version of get_tables_for_timerange for debugging
@@ -1035,7 +1181,9 @@ def demo_eds_local_database_access():
     logger.info(f"endtime = {endtime}")
 
     if EdsClient.this_computer_is_an_enterprise_database_server(secrets_dict, key_eds):
-        results = EdsClient.access_database_files_locally(key_eds, starttime, endtime, point=point_list_sid)
+        #results = EdsClient.access_database_files_locally(key_eds, starttime, endtime, point=point_list_sid)
+        results = EdsClient.access_database_files_locally_ten_tables_fixed(key_eds, starttime, endtime, point=point_list_sid)
+        
     else:
         logger.warning("This computer is not an enterprise database server. Local database access will not work.")
         results = [[] for _ in point_list]
