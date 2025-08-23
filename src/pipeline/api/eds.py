@@ -507,7 +507,12 @@ def get_most_recent_table(cursor, db_name, prefix='pla_'):
     result = cursor.fetchone()
     return result['TABLE_NAME'] if result else None
 
-def get_ten_most_recent_tables(cursor, db_name, prefix='pla_'):
+
+def get_ten_most_recent_tables(cursor, db_name, prefix='plp_'):
+    """
+    Get the 10 most recent tables with the given prefix.
+    Fixed to properly handle MySQL cursor results.
+    """
     query = f"""
         SELECT TABLE_NAME
         FROM INFORMATION_SCHEMA.TABLES
@@ -516,9 +521,15 @@ def get_ten_most_recent_tables(cursor, db_name, prefix='pla_'):
         LIMIT 10;
     """
     cursor.execute(query, (db_name, f'{prefix}%'))
-    result = cursor.fetchone()
-    return result['TABLE_NAME'] if result else None
-
+    
+    # IMPORTANT: Fetch ALL results immediately to avoid "Unread result found" error
+    results = cursor.fetchall()
+    
+    # Extract table names from the result dictionaries
+    table_names = [result['TABLE_NAME'] for result in results]
+    
+    logger.info(f"Found {len(table_names)} recent tables with prefix '{prefix}': {table_names}")
+    return table_names
 
 
 # Simplified version of get_tables_for_timerange for debugging
