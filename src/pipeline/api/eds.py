@@ -222,6 +222,97 @@ class EdsClient:
         workspace_name = 'eds_to_rjn'
         workspace_manager = WorkspaceManager(workspace_name)
         secrets_dict = SecretConfig.load_config(secrets_file_path=workspace_manager.get_secrets_file_path())
+        
+        conn_config = secrets_dict["eds_dbs"][session_key]
+        results = []
+
+        try:
+            logger.info("Attempting: mysql.connector.connect(**conn_config)")
+            conn = mysql.connector.connect(**conn_config)
+            logger.debug({"conn": conn})
+            cursor = conn.cursor(dictionary=True)
+            
+            # Get all tables that might contain data in our time window
+            relevant_tables = get_tables_for_timerange(cursor, 'stiles', starttime, endtime)
+            if not relevant_tables:
+                logger.warning("No relevant tables found for the given time range.")
+                return [[] for _ in point]
+
+            logger.info(f"Found {len(relevant_tables)} relevant tables: {relevant_tables}")
+
+            # Initialize results structure - one list per point_id
+            point_results = {point_id: [] for point_id in point}
+
+            # Query each relevant table
+            for table_name in relevant_tables:
+                logger.info(f"Querying table: {table_name}")
+                
+                # Verify the 'ts' column exists in this table
+                if not table_has_ts_column(conn, table_name, db_type="mysql"):
+                    logger.warning(f"Skipping table '{table_name}': no 'ts' column.")
+                    continue
+
+                for point_id in point:
+                    logger.debug(f"Querying table {table_name} for sensor id {point_id}")
+
+                    query = f"""
+                        SELECT ts, ids, tss, stat, val FROM `{table_name}`
+                        WHERE ts BETWEEN %s AND %s AND ids = %s
+                        ORDER BY ts ASC
+                    """
+                    cursor.execute(query, (starttime, endtime, point_id))
+                    
+                    for row in cursor:
+                        quality_flags = decode_stat(row["stat"])
+                        quality_code = quality_flags[0][2] if quality_flags else "N"
+                        point_results[point_id].append({
+                            "ts": row["ts"],
+                            "value": row["val"],
+                            "quality": quality_code,
+                        })
+
+            # Sort and prepare final results
+            for point_id in point:
+                # Sort all data for this point by timestamp
+                point_results[point_id].sort(key=lambda x: x["ts"])
+                results.append(point_results[point_id])
+
+        except mysql.connector.errors.DatabaseError as db_err:
+            if "Can't connect to MySQL server" in str(db_err):
+                logger.error("Local database access failed: Please run this code on the proper EDS server where the local MariaDB is accessible.")
+                print("ERROR: This code must be run on the proper EDS server for local database access to work.")
+                return [[] for _ in point]
+            else:
+                raise
+        except Exception as e:
+            logger.error(f"Unexpected error accessing local database: {e}")
+            raise
+        finally:
+            try:
+                cursor.close()
+                conn.close()
+            except Exception:
+                pass
+
+        logger.info(f"Successfully retrieved data for {len(point)} point(s) across {len(relevant_tables)} tables")
+        return results
+
+
+    @staticmethod
+    def access_database_files_locally_(
+        session_key: str, starttime: int, endtime: int, point: list[int]
+    ) -> list[list[dict]]:
+        """
+        Access MariaDB data directly by querying all MyISAM tables with .MYD files
+        modified in the given time window, filtering by sensor ids in 'point'.
+
+        Returns a list (per sensor id) of dicts with keys 'ts', 'value', 'quality'.
+        """
+
+        logger.info("Accessing MariaDB directly — local SQL mode enabled.")
+        workspace_name = 'eds_to_rjn'
+        workspace_manager = WorkspaceManager(workspace_name)
+        secrets_dict = SecretConfig.load_config(secrets_file_path=workspace_manager.get_secrets_file_path())
         #full_config = secrets_dict["eds_dbs"][session_key]
         #conn_config = {k: v for k, v in full_config.items() if k != "storage_path"}
         
@@ -370,6 +461,86 @@ def get_most_recent_table(cursor, db_name, prefix='pla_'):
     result = cursor.fetchone()
     return result['TABLE_NAME'] if result else None
 
+
+def get_tables_for_timerange(cursor, table_prefix: str, starttime: int, endtime: int) -> list[str]:
+    """
+    Get all tables that might contain data within the specified time range.
+    This could be based on table names, file modification times, or actual data ranges.
+    """
+    try:
+        # Method 1: Get all tables with the prefix and check their data ranges
+        cursor.execute("SHOW TABLES LIKE %s", (f"{table_prefix}%",))
+        all_tables = [row[f"Tables_in_{cursor._connection.database} (stiles%)"] for row in cursor.fetchall()]
+        
+        relevant_tables = []
+        
+        for table in all_tables:
+            # Check if table has data in our time range
+            if table_has_ts_column(cursor._connection, table, db_type="mysql"):
+                cursor.execute(f"SELECT MIN(ts) as min_ts, MAX(ts) as max_ts FROM `{table}` LIMIT 1")
+                result = cursor.fetchone()
+                
+                if result and result['min_ts'] is not None and result['max_ts'] is not None:
+                    table_min = result['min_ts']
+                    table_max = result['max_ts']
+                    
+                    # Check if there's any overlap between table range and query range
+                    if table_max >= starttime and table_min <= endtime:
+                        relevant_tables.append(table)
+                        logger.debug(f"Table {table} contains data in range ({table_min} - {table_max})")
+                    else:
+                        logger.debug(f"Table {table} outside range ({table_min} - {table_max})")
+        
+        return sorted(relevant_tables)
+        
+    except Exception as e:
+        logger.error(f"Error finding relevant tables: {e}")
+        # Fallback to most recent table
+        most_recent = get_most_recent_table(cursor, table_prefix)
+        return [most_recent] if most_recent else []
+
+
+def get_tables_for_timerange_by_file_time(cursor, table_prefix: str, starttime: int, endtime: int) -> list[str]:
+    """
+    Alternative approach: Get tables based on file modification times.
+    This would require access to the filesystem where .MYD files are stored.
+    """
+    import os
+    import glob
+    from datetime import datetime
+    
+    try:
+        # You'll need to get the data directory path from your MariaDB config
+        # This is just an example - adjust the path as needed
+        cursor.execute("SHOW VARIABLES LIKE 'datadir'")
+        result = cursor.fetchone()
+        data_dir = result['Value'] if result else '/var/lib/mysql/'
+        
+        # Get database name
+        cursor.execute("SELECT DATABASE()")
+        db_name = cursor.fetchone()['DATABASE()']
+        
+        db_path = os.path.join(data_dir, db_name)
+        pattern = os.path.join(db_path, f"{table_prefix}*.MYD")
+        
+        relevant_tables = []
+        
+        for file_path in glob.glob(pattern):
+            file_mtime = os.path.getmtime(file_path)
+            
+            # Check if file was modified within a reasonable window of our query time
+            # You might need to adjust this logic based on how your data is organized
+            if starttime <= file_mtime <= endtime + 86400:  # +1 day buffer
+                table_name = os.path.basename(file_path).replace('.MYD', '')
+                relevant_tables.append(table_name)
+        
+        return sorted(relevant_tables)
+        
+    except Exception as e:
+        logger.error(f"Error finding tables by file time: {e}")
+        # Fallback to most recent table
+        most_recent = get_most_recent_table(cursor, table_prefix)
+        return [most_recent] if most_recent else []
 
 @lru_cache()
 def get_stat_alarm_definitions():
