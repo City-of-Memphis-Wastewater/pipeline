@@ -208,7 +208,7 @@ class EdsClient:
         return bool_ip
 
     @staticmethod
-    def access_database_files_locally(
+    def access_database_files_locally__(
         session_key: str, starttime: int, endtime: int, point: list[int]
     ) -> list[list[dict]]:
         """
@@ -343,7 +343,7 @@ class EdsClient:
 
 
     @staticmethod
-    def access_database_files_locally_(
+    def access_database_files_locally(
         session_key: str, starttime: int, endtime: int, point: list[int]
     ) -> list[list[dict]]:
         """
@@ -368,7 +368,8 @@ class EdsClient:
             conn = mysql.connector.connect(**conn_config)
             logger.debug({"conn": conn})
             cursor = conn.cursor(dictionary=True)
-            most_recent_table = get_most_recent_table(cursor, 'stiles')
+            #most_recent_table = get_most_recent_table(cursor, 'stiles')
+            most_recent_table = get_ten_most_recent_tables(cursor, 'stiles')
             if not most_recent_table:
                 logger.warning("No recent tables found.")
                 return [[] for _ in point]
@@ -493,6 +494,7 @@ def identify_relevant_MyISM_tables(session_key: str, starttime: int, endtime: in
 
     #print("Matching tables:", matching_tables)
     return matching_tables
+
 def get_most_recent_table(cursor, db_name, prefix='pla_'):
     query = f"""
         SELECT TABLE_NAME
@@ -505,6 +507,17 @@ def get_most_recent_table(cursor, db_name, prefix='pla_'):
     result = cursor.fetchone()
     return result['TABLE_NAME'] if result else None
 
+def get_ten_most_recent_tables(cursor, db_name, prefix='pla_'):
+    query = f"""
+        SELECT TABLE_NAME
+        FROM INFORMATION_SCHEMA.TABLES
+        WHERE TABLE_SCHEMA = %s AND TABLE_NAME LIKE %s
+        ORDER BY TABLE_NAME DESC
+        LIMIT 10;
+    """
+    cursor.execute(query, (db_name, f'{prefix}%'))
+    result = cursor.fetchone()
+    return result['TABLE_NAME'] if result else None
 
 
 
@@ -600,7 +613,8 @@ def get_tables_for_timerange(cursor, table_prefix: str, starttime: int, endtime:
     except Exception as e:
         logger.error(f"Error finding relevant tables: {e}")
         # Fallback to most recent table
-        most_recent = get_most_recent_table(cursor, table_prefix)
+        ##most_recent = get_most_recent_table(cursor, table_prefix)
+        most_recent = get_ten_most_recent_tables(cursor, table_prefix)
         return [most_recent] if most_recent else []
 
 
