@@ -86,6 +86,23 @@ def call_ping(url):
     command = ["ping", param, "1", parsed.hostname]
     return subprocess.call(command) == 0  # True if ping succeeds
 
+def find_urls(config_dict):
+    url_set = set()
+
+    def recursive_search(d):
+        if isinstance(d, dict):
+            for k, v in d.items():
+                if isinstance(v, str) and v.startswith("http"):
+                    url_set.add(v)
+                elif isinstance(v, dict):
+                    recursive_search(v)
+                elif isinstance(v, list):
+                    for item in v:
+                        recursive_search(item)
+
+    recursive_search(config_dict)
+    return url_set
+
 if __name__ == "__main__":
     from src.pipeline.helpers import function_view
     function_view()

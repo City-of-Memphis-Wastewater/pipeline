@@ -804,7 +804,7 @@ if __name__ == "__main__":
         demo_eds_webplot_point_live()
     elif cmd == "demo-plot-trend":
         demo_eds_plot_trend()
-    elif cmd == "demo-export":
+    elif cmd == "demo-point-export":
         #demo_eds_print_point_export()
         demo_eds_save_point_export()
     elif cmd =="demo-db":
@@ -823,7 +823,8 @@ if __name__ == "__main__":
             subprocess.call(command) 
     else:
         print("Usage options: \n" 
-        "poetry run python -m pipeline.api.eds demo-export \n"
+        "poetry run python -m pipeline.api.eds demo-point-export \n"
+        "poetry run python -m pipeline.api.eds demo-tabular-export \n"
         "poetry run python -m pipeline.api.eds demo-live \n"
         "poetry run python -m pipeline.api.eds demo-live-alt \n"  
         "poetry run python -m pipeline.api.eds demo-trend \n"
