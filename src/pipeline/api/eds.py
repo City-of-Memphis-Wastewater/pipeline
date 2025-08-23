@@ -242,12 +242,14 @@ class EdsClient:
             all_tables = [list(row.values())[0] for row in cursor.fetchall()]
             logger.info(f"All tables in database: {all_tables}")
             
-            # DEBUG: Show tables matching 'stiles' pattern
-            stiles_tables = [t for t in all_tables if 'stiles' in t.lower()]
-            logger.info(f"Tables matching 'stiles': {stiles_tables}")
+            # DEBUG: Show tables matching 'plp_' pattern (the actual data tables)
+            data_tables = [t for t in all_tables if t.startswith('plp_')]
+            logger.info(f"Data tables (plp_*): {len(data_tables)} tables found")
+            logger.info(f"Sample data tables: {data_tables[:5]}")
             
-            # DEBUG: For each stiles table, check its time range
-            for table in stiles_tables:
+            # DEBUG: For each data table, check its time range (check a few samples)
+            sample_tables = data_tables[:5] if len(data_tables) > 5 else data_tables
+            for table in sample_tables:
                 try:
                     cursor.execute(f"SELECT MIN(ts) as min_ts, MAX(ts) as max_ts, COUNT(*) as row_count FROM `{table}`")
                     result = cursor.fetchone()
@@ -268,42 +270,55 @@ class EdsClient:
                 except Exception as e:
                     logger.warning(f"Could not check table {table}: {e}")
             
-            # Now use the original approach to get most recent table as fallback
-            most_recent_table = get_most_recent_table(cursor, 'stiles')
-            if not most_recent_table:
-                logger.warning("No recent tables found.")
-                return [[] for _ in point]
+            # Now get relevant tables using correct prefix
+            relevant_tables = get_tables_for_timerange_debug(cursor, 'plp_', starttime, endtime)
+            if not relevant_tables:
+                logger.warning("No relevant plp_ tables found for the given time range.")
+                # Fallback to most recent table
+                most_recent_table = get_most_recent_table(cursor, 'stiles')  # This should return pla_* table
+                if most_recent_table:
+                    logger.info(f"Using fallback table: {most_recent_table}")
+                    relevant_tables = [most_recent_table]
+                else:
+                    return [[] for _ in point]
             
-            logger.info(f"Using most recent table: {most_recent_table}")
+            logger.info(f"Using tables: {relevant_tables}")
 
-            # Verify the 'ts' column exists in the most recent table
-            if not table_has_ts_column(conn, most_recent_table, db_type="mysql"):
-                logger.warning(f"Skipping table '{most_recent_table}': no 'ts' column.")
-                return [[] for _ in point]
+            # Query all relevant tables
+            point_results = {point_id: [] for point_id in point}
 
-            for point_id in point:
-                logger.info(f"Querying for sensor id {point_id}")
-
-                query = f"""
-                    SELECT ts, ids, tss, stat, val FROM `{most_recent_table}`
-                    WHERE ts BETWEEN %s AND %s AND ids = %s
-                    ORDER BY ts ASC
-                """
-                cursor.execute(query, (starttime, endtime, point_id))
+            for table_name in relevant_tables:
+                logger.info(f"Querying table: {table_name}")
                 
-                full_rows = []
-                for row in cursor:
-                    quality_flags = decode_stat(row["stat"])
-                    quality_code = quality_flags[0][2] if quality_flags else "N"
-                    full_rows.append({
-                        "ts": row["ts"],
-                        "value": row["val"],
-                        "quality": quality_code,
-                    })
+                # Verify the 'ts' column exists in this table
+                if not table_has_ts_column(conn, table_name, db_type="mysql"):
+                    logger.warning(f"Skipping table '{table_name}': no 'ts' column.")
+                    continue
 
-                # Sort final results in case rows came unordered
-                full_rows.sort(key=lambda x: x["ts"])
-                results.append(full_rows)
+                for point_id in point:
+                    logger.debug(f"Querying table {table_name} for sensor id {point_id}")
+
+                    query = f"""
+                        SELECT ts, ids, tss, stat, val FROM `{table_name}`
+                        WHERE ts BETWEEN %s AND %s AND ids = %s
+                        ORDER BY ts ASC
+                    """
+                    cursor.execute(query, (starttime, endtime, point_id))
+                    
+                    for row in cursor:
+                        quality_flags = decode_stat(row["stat"])
+                        quality_code = quality_flags[0][2] if quality_flags else "N"
+                        point_results[point_id].append({
+                            "ts": row["ts"],
+                            "value": row["val"],
+                            "quality": quality_code,
+                        })
+
+            # Convert to list format and sort
+            results = []
+            for point_id in point:
+                point_results[point_id].sort(key=lambda x: x["ts"])
+                results.append(point_results[point_id])
 
         except mysql.connector.errors.DatabaseError as db_err:
             if "Can't connect to MySQL server" in str(db_err):
@@ -491,19 +506,22 @@ def get_most_recent_table(cursor, db_name, prefix='pla_'):
     return result['TABLE_NAME'] if result else None
 
 
+
+
 # Simplified version of get_tables_for_timerange for debugging
 def get_tables_for_timerange_debug(cursor, table_prefix: str, starttime: int, endtime: int) -> list[str]:
     """
     Debug version to see what's happening with table discovery
     """
     try:
-        # Get all tables with the prefix
+        # Get all tables with the prefix - use 'plp_' instead of 'stiles'
+        actual_prefix = 'plp_' if table_prefix == 'stiles' else table_prefix
         cursor.execute("SHOW TABLES")
         all_tables = [list(row.values())[0] for row in cursor.fetchall()]
         
-        # Filter by prefix (case insensitive)
-        prefix_tables = [t for t in all_tables if table_prefix.lower() in t.lower()]
-        logger.info(f"Tables matching prefix '{table_prefix}': {prefix_tables}")
+        # Filter by actual prefix
+        prefix_tables = [t for t in all_tables if t.startswith(actual_prefix)]
+        logger.info(f"Tables matching prefix '{actual_prefix}': {prefix_tables[:10]}...")  # Show first 10
         
         if not prefix_tables:
             logger.warning(f"No tables found with prefix '{table_prefix}'")
@@ -547,7 +565,6 @@ def get_tables_for_timerange_debug(cursor, table_prefix: str, starttime: int, en
     except Exception as e:
         logger.error(f"Error in get_tables_for_timerange_debug: {e}")
         return []
-
 
 def get_tables_for_timerange(cursor, table_prefix: str, starttime: int, endtime: int) -> list[str]:
     """
