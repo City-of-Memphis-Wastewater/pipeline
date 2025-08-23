@@ -232,50 +232,78 @@ class EdsClient:
             logger.debug({"conn": conn})
             cursor = conn.cursor(dictionary=True)
             
-            # Get all tables that might contain data in our time window
-            relevant_tables = get_tables_for_timerange(cursor, 'stiles', starttime, endtime)
-            if not relevant_tables:
-                logger.warning("No relevant tables found for the given time range.")
+            # DEBUG: Let's see what we're working with
+            logger.info(f"Query time range: {starttime} to {endtime}")
+            from datetime import datetime
+            logger.info(f"Query time range (human): {datetime.fromtimestamp(starttime)} to {datetime.fromtimestamp(endtime)}")
+            
+            # DEBUG: Show all tables first
+            cursor.execute("SHOW TABLES")
+            all_tables = [list(row.values())[0] for row in cursor.fetchall()]
+            logger.info(f"All tables in database: {all_tables}")
+            
+            # DEBUG: Show tables matching 'stiles' pattern
+            stiles_tables = [t for t in all_tables if 'stiles' in t.lower()]
+            logger.info(f"Tables matching 'stiles': {stiles_tables}")
+            
+            # DEBUG: For each stiles table, check its time range
+            for table in stiles_tables:
+                try:
+                    cursor.execute(f"SELECT MIN(ts) as min_ts, MAX(ts) as max_ts, COUNT(*) as row_count FROM `{table}`")
+                    result = cursor.fetchone()
+                    if result:
+                        min_ts = result['min_ts']
+                        max_ts = result['max_ts']
+                        row_count = result['row_count']
+                        
+                        min_human = datetime.fromtimestamp(min_ts) if min_ts else "NULL"
+                        max_human = datetime.fromtimestamp(max_ts) if max_ts else "NULL"
+                        
+                        logger.info(f"Table {table}: {row_count} rows, time range {min_ts}-{max_ts} ({min_human} to {max_human})")
+                        
+                        # Check overlap
+                        if min_ts is not None and max_ts is not None:
+                            has_overlap = max_ts >= starttime and min_ts <= endtime
+                            logger.info(f"Table {table} overlaps with query range: {has_overlap}")
+                except Exception as e:
+                    logger.warning(f"Could not check table {table}: {e}")
+            
+            # Now use the original approach to get most recent table as fallback
+            most_recent_table = get_most_recent_table(cursor, 'stiles')
+            if not most_recent_table:
+                logger.warning("No recent tables found.")
+                return [[] for _ in point]
+            
+            logger.info(f"Using most recent table: {most_recent_table}")
+
+            # Verify the 'ts' column exists in the most recent table
+            if not table_has_ts_column(conn, most_recent_table, db_type="mysql"):
+                logger.warning(f"Skipping table '{most_recent_table}': no 'ts' column.")
                 return [[] for _ in point]
 
-            logger.info(f"Found {len(relevant_tables)} relevant tables: {relevant_tables}")
-
-            # Initialize results structure - one list per point_id
-            point_results = {point_id: [] for point_id in point}
-
-            # Query each relevant table
-            for table_name in relevant_tables:
-                logger.info(f"Querying table: {table_name}")
-                
-                # Verify the 'ts' column exists in this table
-                if not table_has_ts_column(conn, table_name, db_type="mysql"):
-                    logger.warning(f"Skipping table '{table_name}': no 'ts' column.")
-                    continue
-
-                for point_id in point:
-                    logger.debug(f"Querying table {table_name} for sensor id {point_id}")
-
-                    query = f"""
-                        SELECT ts, ids, tss, stat, val FROM `{table_name}`
-                        WHERE ts BETWEEN %s AND %s AND ids = %s
-                        ORDER BY ts ASC
-                    """
-                    cursor.execute(query, (starttime, endtime, point_id))
-                    
-                    for row in cursor:
-                        quality_flags = decode_stat(row["stat"])
-                        quality_code = quality_flags[0][2] if quality_flags else "N"
-                        point_results[point_id].append({
-                            "ts": row["ts"],
-                            "value": row["val"],
-                            "quality": quality_code,
-                        })
-
-            # Sort and prepare final results
             for point_id in point:
-                # Sort all data for this point by timestamp
-                point_results[point_id].sort(key=lambda x: x["ts"])
-                results.append(point_results[point_id])
+                logger.info(f"Querying for sensor id {point_id}")
+
+                query = f"""
+                    SELECT ts, ids, tss, stat, val FROM `{most_recent_table}`
+                    WHERE ts BETWEEN %s AND %s AND ids = %s
+                    ORDER BY ts ASC
+                """
+                cursor.execute(query, (starttime, endtime, point_id))
+                
+                full_rows = []
+                for row in cursor:
+                    quality_flags = decode_stat(row["stat"])
+                    quality_code = quality_flags[0][2] if quality_flags else "N"
+                    full_rows.append({
+                        "ts": row["ts"],
+                        "value": row["val"],
+                        "quality": quality_code,
+                    })
+
+                # Sort final results in case rows came unordered
+                full_rows.sort(key=lambda x: x["ts"])
+                results.append(full_rows)
 
         except mysql.connector.errors.DatabaseError as db_err:
             if "Can't connect to MySQL server" in str(db_err):
@@ -294,8 +322,9 @@ class EdsClient:
             except Exception:
                 pass
 
-        logger.info(f"Successfully retrieved data for {len(point)} point(s) across {len(relevant_tables)} tables")
+        logger.info(f"Successfully retrieved data for {len(point)} point(s)")
         return results
+
 
 
     @staticmethod
@@ -460,6 +489,64 @@ def get_most_recent_table(cursor, db_name, prefix='pla_'):
     cursor.execute(query, (db_name, f'{prefix}%'))
     result = cursor.fetchone()
     return result['TABLE_NAME'] if result else None
+
+
+# Simplified version of get_tables_for_timerange for debugging
+def get_tables_for_timerange_debug(cursor, table_prefix: str, starttime: int, endtime: int) -> list[str]:
+    """
+    Debug version to see what's happening with table discovery
+    """
+    try:
+        # Get all tables with the prefix
+        cursor.execute("SHOW TABLES")
+        all_tables = [list(row.values())[0] for row in cursor.fetchall()]
+        
+        # Filter by prefix (case insensitive)
+        prefix_tables = [t for t in all_tables if table_prefix.lower() in t.lower()]
+        logger.info(f"Tables matching prefix '{table_prefix}': {prefix_tables}")
+        
+        if not prefix_tables:
+            logger.warning(f"No tables found with prefix '{table_prefix}'")
+            return []
+        
+        relevant_tables = []
+        
+        for table in prefix_tables:
+            try:
+                # Check if table has ts column first
+                cursor.execute(f"DESCRIBE `{table}`")
+                columns = [row['Field'] for row in cursor.fetchall()]
+                
+                if 'ts' not in columns:
+                    logger.warning(f"Table {table} has no 'ts' column. Columns: {columns}")
+                    continue
+                
+                # Check data range
+                cursor.execute(f"SELECT MIN(ts) as min_ts, MAX(ts) as max_ts FROM `{table}` LIMIT 1")
+                result = cursor.fetchone()
+                
+                if result and result['min_ts'] is not None and result['max_ts'] is not None:
+                    table_min = result['min_ts']
+                    table_max = result['max_ts']
+                    
+                    # Check for overlap
+                    if table_max >= starttime and table_min <= endtime:
+                        relevant_tables.append(table)
+                        logger.info(f"✓ Table {table} is relevant: {table_min} - {table_max}")
+                    else:
+                        logger.info(f"✗ Table {table} outside range: {table_min} - {table_max}")
+                else:
+                    logger.warning(f"Table {table} has no timestamp data")
+                    
+            except Exception as e:
+                logger.error(f"Error checking table {table}: {e}")
+        
+        logger.info(f"Found {len(relevant_tables)} relevant tables: {relevant_tables}")
+        return relevant_tables
+        
+    except Exception as e:
+        logger.error(f"Error in get_tables_for_timerange_debug: {e}")
+        return []
 
 
 def get_tables_for_timerange(cursor, table_prefix: str, starttime: int, endtime: int) -> list[str]:
