@@ -209,11 +209,18 @@ class EdsClient:
 
     @staticmethod
     def access_database_files_locally(
-        session_key: str, starttime: int, endtime: int, point: list[int]
+        session_key: str,
+        starttime: int,
+        endtime: int,
+        point: list[int],
+        tables: list[str] | None = None
     ) -> list[list[dict]]:
         """
         Access MariaDB data directly by querying all MyISAM tables with .MYD files
         modified in the given time window, filtering by sensor ids in 'point'.
+
+        If 'tables' is provided, only query those tables; otherwise fall back to most recent table.
+    
 
         Returns a list (per sensor id) of dicts with keys 'ts', 'value', 'quality'.
         """
@@ -231,43 +238,42 @@ class EdsClient:
         try:
             logger.info("Attempting: mysql.connector.connect(**conn_config)")
             conn = mysql.connector.connect(**conn_config)
-            logger.debug({"conn": conn})
             cursor = conn.cursor(dictionary=True)
-            most_recent_table = get_most_recent_table(cursor, 'stiles')
-            if not most_recent_table:
-                logger.warning("No recent tables found.")
-                return [[] for _ in point]
 
-            # Verify the 'ts' column exists in the most recent table
-            if not table_has_ts_column(conn, most_recent_table, db_type="mysql"):
-                logger.warning(f"Skipping table '{most_recent_table}': no 'ts' column.")
-                return [[] for _ in point]
+            # Determine which tables to query
+            if tables is None:
+                most_recent_table = get_most_recent_table(cursor, session_key.lower())
+                if not most_recent_table:
+                    logger.warning("No recent tables found.")
+                    return [[] for _ in point]
+                tables_to_query = [most_recent_table]
+            else:
+                tables_to_query = tables
 
-            for point_id in point:
-                logger.info(f"Querying for sensor id {point_id}")
+            for table_name in tables_to_query:
+                if not table_has_ts_column(conn, table_name, db_type="mysql"):
+                    logger.warning(f"Skipping table '{table_name}': no 'ts' column.")
+                    continue
 
-                query = f"""
-                    SELECT ts, ids, tss, stat, val FROM `{most_recent_table}`
-                    WHERE ts BETWEEN %s AND %s AND ids = %s
-                    ORDER BY ts ASC
-                """
-                #cursor.execute(query, (starttime, endtime))
-                cursor.execute(query, (starttime, endtime, point_id))
-                
-                full_rows = []
-                for row in cursor:
-                    quality_flags = decode_stat(row["stat"])
-                    quality_code = quality_flags[0][2] if quality_flags else "N"
-                    full_rows.append({
-                        "ts": row["ts"],
-                        "value": row["val"],
-                        "quality": quality_code,
-                    })
-
-                # Sort final results in case rows came unordered
-                full_rows.sort(key=lambda x: x["ts"])
-                results.append(full_rows)
-
+                for point_id in point:
+                    logger.info(f"Querying table {table_name} for sensor id {point_id}")
+                    query = f"""
+                        SELECT ts, ids, tss, stat, val FROM `{table_name}`
+                        WHERE ts BETWEEN %s AND %s AND ids = %s
+                        ORDER BY ts ASC
+                    """
+                    cursor.execute(query, (starttime, endtime, point_id))
+                    full_rows = []
+                    for row in cursor:
+                        quality_flags = decode_stat(row["stat"])
+                        quality_code = quality_flags[0][2] if quality_flags else "N"
+                        full_rows.append({
+                            "ts": row["ts"],
+                            "value": row["val"],
+                            "quality": quality_code,
+                        })
+                    full_rows.sort(key=lambda x: x["ts"])
+                    results.append(full_rows)
 
         except mysql.connector.errors.DatabaseError as db_err:
             if "Can't connect to MySQL server" in str(db_err):
@@ -358,6 +364,18 @@ def identify_relevant_MyISM_tables(session_key: str, starttime: int, endtime: in
 
     #print("Matching tables:", matching_tables)
     return matching_tables
+
+def identify_relevant_tables(session_key, starttime, endtime, secrets_dict):
+    try:
+        conn_config = secrets_dict["eds_dbs"][session_key]
+        conn = mysql.connector.connect(**conn_config)
+        cursor = conn.cursor(dictionary=True)
+        # Use INFORMATION_SCHEMA instead of filesystem
+        return get_ten_most_recent_tables(cursor, conn_config["database"])
+    except mysql.connector.Error:
+        logger.warning("Falling back to filesystem scan — DB not accessible.")
+        return identify_relevant_MyISM_tables(session_key, starttime, endtime, secrets_dict)
+
 def get_most_recent_table(cursor, db_name, prefix='pla_'):
     query = f"""
         SELECT TABLE_NAME
@@ -369,6 +387,28 @@ def get_most_recent_table(cursor, db_name, prefix='pla_'):
     cursor.execute(query, (db_name, f'{prefix}%'))
     result = cursor.fetchone()
     return result['TABLE_NAME'] if result else None
+
+def get_ten_most_recent_tables(cursor, db_name, prefix='pla_') -> list[str]:
+    """
+    Get the 10 most recent tables with the given prefix.
+    Returns a LIST OF STRINGS, not a single string.
+    """
+    query = f"""
+        SELECT TABLE_NAME
+        FROM INFORMATION_SCHEMA.TABLES
+        WHERE TABLE_SCHEMA = %s AND TABLE_NAME LIKE %s
+        ORDER BY TABLE_NAME DESC
+        LIMIT 10;
+    """
+    cursor.execute(query, (db_name, f'{prefix}%'))
+    results = cursor.fetchall()
+    
+    # Extract table names as individual strings
+    table_names = [result['TABLE_NAME'] for result in results]
+    
+    logger.info(f"Found {len(table_names)} recent tables with prefix '{prefix}': {table_names}")
+    return table_names  # This is a LIST of strings: ['pla_68a98310', 'pla_68a97500', ...]
+
 
 
 @lru_cache()
@@ -735,7 +775,8 @@ def demo_eds_local_database_access():
     logger.info(f"endtime = {endtime}")
 
     if EdsClient.this_computer_is_an_enterprise_database_server(secrets_dict, key_eds):
-        results = EdsClient.access_database_files_locally(key_eds, starttime, endtime, point=point_list_sid)
+        tables = identify_relevant_tables(session_eds, starttime, endtime, secrets_dict)
+        results = EdsClient.access_database_files_locally(key_eds, starttime, endtime, point=point_list_sid, tables=tables)
     else:
         logger.warning("This computer is not an enterprise database server. Local database access will not work.")
         results = [[] for _ in point_list]
