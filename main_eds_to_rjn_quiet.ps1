@@ -43,7 +43,7 @@ Start-Process -FilePath $venvPython `
     -Wait -NoNewWindow
 	
 # Set PYTHONPATH to the 'src' folder relative to this script
-$env:PYTHONPATH = Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Definition) "src"
+$env:PYTHONPATH = Join-Path $projectRoot "src"
 $envDict = @{ "PYTHONPATH" = Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Definition) "src" }
 
 # --- Run daemon using venv Python ---
