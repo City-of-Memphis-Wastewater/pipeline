@@ -9,6 +9,7 @@ importlib-metadata==4.8.3
 linkify-it-py==2.0.3 
 mdit-py-plugins==0.4.2 
 mdurl==0.1.2 
+mysql-connector-python==8.1.0
 narwhals>=1.42.1,<2.0.0
 packaging==25.0 
 platformdirs>=4.3.6,<5.0.0
