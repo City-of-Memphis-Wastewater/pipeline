@@ -760,6 +760,7 @@ def demo_eds_local_database_access():
 
 
     key_eds = "WWTF"
+    session_key = key_eds
     session_eds = session_stiles
     point_list = [row['iess'] for row in queries_defaultdictlist_grouped_by_session_key.get(key_eds,[])]
     point_list_sid = [row['sid'] for row in queries_defaultdictlist_grouped_by_session_key.get(key_eds,[])]
@@ -775,7 +776,7 @@ def demo_eds_local_database_access():
     logger.info(f"endtime = {endtime}")
 
     if EdsClient.this_computer_is_an_enterprise_database_server(secrets_dict, key_eds):
-        tables = identify_relevant_tables(session_eds, starttime, endtime, secrets_dict)
+        tables = identify_relevant_tables(session_key, starttime, endtime, secrets_dict)
         results = EdsClient.access_database_files_locally(key_eds, starttime, endtime, point=point_list_sid, tables=tables)
     else:
         logger.warning("This computer is not an enterprise database server. Local database access will not work.")
