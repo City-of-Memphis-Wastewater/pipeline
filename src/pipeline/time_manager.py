@@ -1,7 +1,11 @@
 from datetime import datetime, timezone
-from zoneinfo import ZoneInfo
 from typing import Union
 import click
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
+
 
 class TimeManager:
     """
