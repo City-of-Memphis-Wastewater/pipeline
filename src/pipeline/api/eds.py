@@ -200,7 +200,7 @@ class EdsClient:
         """
         import socket
         from urllib.parse import urlparse
-        from pipeline.helpers import get_lan_ip_address_of_current_machine
+        from src.pipeline.helpers import get_lan_ip_address_of_current_machine
         # Check if the session_key exists in the secrets_dict
         url = secrets_dict["eds_apis"][session_key]["url"]
         parsed = urlparse(url)
