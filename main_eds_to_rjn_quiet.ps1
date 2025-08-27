@@ -41,6 +41,10 @@ Start-Process -FilePath $venvPython `
     -ArgumentList "-m", "pip", "install", "-r", "$requirementsFile" `
     -WorkingDirectory $workingDir `
     -Wait -NoNewWindow
+	
+# Set PYTHONPATH to the 'src' folder relative to this script
+$env:PYTHONPATH = Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Definition) "src"
+
 
 # --- Run daemon using venv Python ---
 Start-Process -FilePath $venvPython `
