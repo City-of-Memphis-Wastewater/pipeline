@@ -105,45 +105,46 @@ class TimeManager:
         """
         return self.as_datetime().isoformat().replace(":", "-") + "Z"
 
-    def as_unix(self) -> int:
+    def as_unix(self):# -> int:
         """Return the Unix timestamp as an integer."""
         return int(self._dt.timestamp())
 
-    def as_isoz(self) -> str:
+    def as_isoz(self):# -> str:
         """Return ISO 8601 string (UTC) with 'Z' suffix."""
         return self._dt.strftime("%Y-%m-%dT%H:%M:%SZ")
     
-    def as_iso(self) -> str:
+    def as_iso(self):# -> str:
         """Return ISO 8601, like datetime.fromtimestamp(ts).isoformat()."""
         return self._dt.isoformat()
 
-    def as_formatted_date_time(self) -> str:
+    def as_formatted_date_time(self):# -> str:
         """Return formatted string 'YYYY-MM-DD HH:MM:SS'."""
         return self._dt.strftime("%Y-%m-%d %H:%M:%S")
 
-    def as_formatted_time(self) -> str:
+    def as_formatted_time(self):# -> str:
         """Return formatted string 'HH:MM:SS'."""
         return self._dt.strftime("%H:%M:%S")
     
-    def as_excel(self) -> float:
+    def as_excel(self):# -> float:
         """Returns Excel serial number for Windows (based on 1899-12-30 epoch)."""
         unix_ts = self.as_unix()
         return unix_ts / 86400 + 25569  # 86400 seconds in a day
 
-    def round_down_to_nearest_five(self) -> "TimeManager":
+    def round_down_to_nearest_five(self):# -> "TimeManager":
         """Return new TimeManager rounded down to nearest 5-minute mark."""
         minute = (self._dt.minute // 5) * 5
         rounded_dt = self._dt.replace(minute=minute, second=0, microsecond=0)
         return TimeManager(rounded_dt).as_unix()
 
     @staticmethod
-    def now() -> "TimeManager":
+    def now():# -> "TimeManager":
         """Return current UTC time as a TimeManager."""
         return TimeManager(datetime.now(timezone.utc)).as_unix()
     
 
     @staticmethod
-    def from_local(dt: datetime, zone_name: str) -> "TimeManager":
+    #def from_local(dt: datetime, zone_name: str) -> "TimeManager":
+    def from_local(dt, zone_name):
         """
         Convert a local datetime in the given time zone to UTC and return a TimeManager instance.
 
@@ -163,7 +164,7 @@ class TimeManager:
 
         
     @staticmethod
-    def now_rounded_to_five() -> "TimeManager":
+    def now_rounded_to_five():# -> "TimeManager":
         """Return current UTC time rounded down to nearest 5 minutes."""
         now = datetime.now(timezone.utc)
         minute = (now.minute // 5) * 5

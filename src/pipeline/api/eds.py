@@ -48,7 +48,8 @@ class EdsClient:
         print(", ".join(parts))
 
     @staticmethod
-    def get_points_live_mod(session, iess: str):
+    #def get_points_live_mod(session, iess: str):
+    def get_points_live_mod(session, iess):
         # please make this session based rather than header based
         "Access live value of point from the EDS, based on zs/api_id value (i.e. Maxson, WWTF, Server)"
         api_url = str(session.custom_dict["url"]) 
@@ -149,7 +150,8 @@ class EdsClient:
         return session
     
     @staticmethod
-    def create_tabular_request(session: object, api_url: str, starttime: int, endtime: int, points: list):
+    #def create_tabular_request(session: object, api_url: str, starttime: int, endtime: int, points: list):
+    def create_tabular_request(session, api_url, starttime, endtime, points):
         data = {
             'period': {
                 'from': starttime, 
@@ -190,7 +192,8 @@ class EdsClient:
         print('request [{}] executed in: {:.3f} s\n'.format(req_id, time.time() - st))
 
     @staticmethod
-    def this_computer_is_an_enterprise_database_server(secrets_dict: dict, session_key: str) -> bool:
+    #def this_computer_is_an_enterprise_database_server(secrets_dict: dict, session_key: str) -> bool:
+    def this_computer_is_an_enterprise_database_server(secrets_dict, session_key):
         """
         Check if the current computer is an enterprise database server.
         This is determined by checking if the ip address matches the configured EDS database key.
@@ -208,13 +211,20 @@ class EdsClient:
         return bool_ip
 
     @staticmethod
+    #def access_database_files_locally(
+    #    session_key: str,
+    #    starttime: int,
+    #    endtime: int,
+    #    point: list[int],
+    #    tables: list[str] | None = None
+    #) -> list[list[dict]]:
     def access_database_files_locally(
-        session_key: str,
-        starttime: int,
-        endtime: int,
-        point: list[int],
-        tables: list[str] | None = None
-    ) -> list[list[dict]]:
+        session_key,
+        starttime,
+        endtime,
+        point,
+        tables
+    ):
         """
         Access MariaDB data directly by querying all MyISAM tables with .MYD files
         modified in the given time window, filtering by sensor ids in 'point'.
@@ -315,7 +325,9 @@ def table_has_ts_column(conn, table_name, db_type="mysql"):
         raise ValueError(f"Unsupported database type: {db_type}")
 
     
-def identify_relevant_MyISM_tables(session_key: str, starttime: int, endtime: int, secrets_dict: dict) -> list:
+#def identify_relevant_MyISM_tables(session_key: str, starttime: int, endtime: int, secrets_dict: dict) -> list:
+# 3.8-safe, no hints
+def identify_relevant_MyISM_tables(session_key, starttime, endtime, secrets_dict):
     #
     # Use the secrets file to control where your database can be found
     try:
@@ -388,7 +400,8 @@ def get_most_recent_table(cursor, db_name, prefix='pla_'):
     result = cursor.fetchone()
     return result['TABLE_NAME'] if result else None
 
-def get_ten_most_recent_tables(cursor, db_name, prefix='pla_') -> list[str]:
+#def get_ten_most_recent_tables(cursor, db_name, prefix='pla_') -> list[str]:
+def get_ten_most_recent_tables(cursor, db_name, prefix='pla_'):
     """
     Get the 10 most recent tables with the given prefix.
     Returns a LIST OF STRINGS, not a single string.

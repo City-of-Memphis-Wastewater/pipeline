@@ -17,7 +17,8 @@ use-most-recently-edited-query-file = true # while true, this will ignore the fi
 '''
 
 class QueriesManager:
-    def __init__(self, workspace_manager: object):
+    #def __init__(self, workspace_manager: object):
+    def __init__(self, workspace_manager):
         self.workspace_manager = workspace_manager
         logger.info(f"QueriesManager using project: {self.workspace_manager.workspace_name}")
         if not workspace_manager:
@@ -49,7 +50,7 @@ class QueriesManager:
         with open(file_path, 'w') as f:
             json.dump(data, f, indent=2)
     
-    def get_most_recent_successful_timestamp(self, api_id) -> int:
+    def get_most_recent_successful_timestamp(self, api_id):# -> int:
         print("QueriesManager.get_most_recent_successful_timestamp()")
         from src.pipeline.helpers import load_toml
         try:

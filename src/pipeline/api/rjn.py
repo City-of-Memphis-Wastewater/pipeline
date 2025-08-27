@@ -52,7 +52,8 @@ class RjnClient:
             return None
         
     @staticmethod
-    def send_data_to_rjn2(session, base_url:str, project_id:str, entity_id:int, timestamps: list[Union[int, float, str]], values: list[float]):
+    #def send_data_to_rjn2(session, base_url:str, project_id:str, entity_id:int, timestamps: list[Union[int, float, str]], values: list[float]):
+    def send_data_to_rjn2(session, base_url, project_id, entity_id, timestamps, values):
         if timestamps is None:
             raise ValueError("timestamps cannot be None")
         if values is None:
