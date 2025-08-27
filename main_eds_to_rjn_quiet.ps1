@@ -44,7 +44,7 @@ Start-Process -FilePath $venvPython `
 
 # --- Run daemon using venv Python ---
 Start-Process -FilePath $venvPython `
-    -ArgumentList "-m", "projects.eds_to_rjn.scripts.daemon_runner", "main" `
+    -ArgumentList "-m", "workspaces.eds_to_rjn.scripts.daemon_runner", "main" `
     -WorkingDirectory $workingDir `
     -WindowStyle Hidden `
     -RedirectStandardOutput (Join-Path $logDir "daemon_eds_to_rjn_output.log") `
