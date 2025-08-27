@@ -34,14 +34,15 @@ def load_toml(filepath):
         dic_toml = toml.load(f)
     return dic_toml
 
-def round_datetime_to_nearest_past_five_minutes(dt: datetime) -> datetime:
+#def round_datetime_to_nearest_past_five_minutes(dt: datetime) -> datetime:
+def round_datetime_to_nearest_past_five_minutes(dt):
     #print(f"dt = {dt}")
     allowed_minutes = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]
     # Find the largest allowed minute <= current minute
     rounded_minute = max(m for m in allowed_minutes if m <= dt.minute)
     return dt.replace(minute=rounded_minute, second=0, microsecond=0)
 
-def get_now_time_rounded(workspace_manager) -> int:
+def get_now_time_rounded(workspace_manager):# -> int:
     logger.debug(f"helpers.get_now_time_rounded(workspace_manager)")
     nowtime = round_datetime_to_nearest_past_five_minutes(datetime.now())
     logger.debug(f"rounded nowtime = {nowtime}")
@@ -77,7 +78,8 @@ def function_view(globals_passed=None):
                 print(f"  {name}")
     print("\n")
 
-def get_nested_config(dct: dict, keys: list[str]):
+#def get_nested_config(dct: dict, keys: list[str]):
+def get_nested_config(dct, keys):
     """Retrieve nested dict value by keys list; raise KeyError with full path if missing."""
     current = dct
     for key in keys:

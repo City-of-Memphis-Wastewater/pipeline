@@ -10,7 +10,8 @@ def setup_logging(config_file="config/logging.json"): # relative to root
         logging.config.dictConfig(config) 
 
 # Dynamically set logging level, per handler, like when using a GUI
-def set_handler_level(handler_name: str, level_name: str):
+#def set_handler_level(handler_name: str, level_name: str):
+def set_handler_level(handler_name, level_name):
     logger = logging.getLogger()  # root logger
     level = getattr(logging, level_name.upper(), None)
     if level is None:

@@ -16,7 +16,8 @@ from src.pipeline.time_manager import TimeManager
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-def save_tabular_trend_data_to_log_file(project_id, entity_id, endtime: int, workspace_manager, timestamps: list[int], values: list[float]):
+#def save_tabular_trend_data_to_log_file(project_id, entity_id, endtime: int, workspace_manager, timestamps: list[int], values: list[float]):
+def save_tabular_trend_data_to_log_file(project_id, entity_id, endtime, workspace_manager, timestamps, values):
     ### save file for log
     timestamps_str = [TimeManager(ts).as_formatted_date_time() for ts in timestamps]
     endtime_iso = TimeManager(endtime).as_safe_isoformat_for_filename()
