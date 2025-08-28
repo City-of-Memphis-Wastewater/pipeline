@@ -144,7 +144,7 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
                 logger.info(f"timestamps[0] = {timestamps[0]}")
                 logger.info(f"timestamps[-1] = {timestamps[-1]}")
             else:
-                logger.info("No timestamps retrieved. Transmission to RJN skipped for this point.")
+                logger.info(f"No timestamps retrieved. Transmission to RJN skipped for {iess}.")
             if timestamps and values:
                 
                 base_url = api_secrets_r["url"]
