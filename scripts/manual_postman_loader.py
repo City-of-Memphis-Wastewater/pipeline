@@ -1,12 +1,18 @@
-import pandas as pd
+import csv
 import json
 
-# Read your Excel file
+# Read your CSV file
+# hardcoded filth
 filepath = r"C:\Users\george.bennett\dev\pipeline\workspaces\eds_to_rjn\exports\manual_effluent.csv"
-df = pd.read_csv(filepath, header=None, names=["datetime", "value"])
 
-# Convert to dict {datetime: value}
-data_dict = dict(zip(df["datetime"].astype(str), df["value"]))
+data_dict = {}
+with open(filepath, newline='') as csvfile:
+    reader = csv.reader(csvfile)
+    for row in reader:
+        if not row:
+            continue  # skip empty rows
+        datetime_str, value_str = row
+        data_dict[datetime_str.strip()] = float(value_str)
 
 # Wrap it in your desired format
 output = {
