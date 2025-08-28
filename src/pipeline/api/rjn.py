@@ -50,10 +50,42 @@ class RjnClient:
         except Exception as general_err:
             logging.error("Unexpected error during login.", exc_info=True)
             return None
-        
+
     @staticmethod
-    #def send_data_to_rjn2(session, base_url:str, project_id:str, entity_id:int, timestamps: list[Union[int, float, str]], values: list[float]):
-    def send_data_to_rjn2(session, base_url, project_id, entity_id, timestamps, values):
+    def send_csv_data_to_rjn(session, base_url, project_id, entity_id, csv_file_path):
+        if csv_file_path is None:
+            raise ValueError("csv_file_path cannot be None")
+        url = f"{base_url}/projects/{project_id}/entities/{entity_id}/data"
+        params = {
+            "interval": 300,    
+            "import_mode": "OverwriteExistingData",
+            "incoming_time": "DST"#, # DST seemed to fail and offset by an hour into the future. UTC with central time seemed to fail and offset the data 5 hours into the past. 
+            #"local_timezone": "CST_CentralStandardTime"
+        }
+        files = {'file': open(csv_file_path, 'rb')}
+        
+        response = None
+        try:
+            response = session.post(url=url, json = data, params = params)
+
+            print("Status code:", response.status_code)
+            print("Response text:", response.text)
+            if response is None:
+                print("Response = None, job cancelled")
+            else:
+                response.raise_for_status()
+                print(f"Sent CSV data from {csv_file_path} to entity {entity_id} (HTTP {response.status_code})")
+                return True
+        except requests.exceptions.ConnectionError as e:
+            print("Skipping RjnClient.send_csv_data_to_rjn() due to connection error")
+            print(e)
+            return False
+        except requests.exceptions.RequestException as e:
+            print(f"Error sending CSV data to RJN: {e}")
+
+    @staticmethod
+    #def send_data_to_rjn(session, base_url:str, project_id:str, entity_id:int, timestamps: list[Union[int, float, str]], values: list[float]):
+    def send_data_to_rjn(session, base_url, project_id, entity_id, timestamps, values):
         if timestamps is None:
             raise ValueError("timestamps cannot be None")
         if values is None:
