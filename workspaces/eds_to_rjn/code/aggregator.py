@@ -65,7 +65,7 @@ def aggregate_and_send(session_rjn, data_file, checkpoint_file):
                 values=values
             )
             '''
-            RjnClient.send_data_to_rjn2(
+            RjnClient.send_data_to_rjn(
             session_rjn,
             base_url = session_rjn.custom_dict["url"],
             project_id=row["rjn_projectid"],

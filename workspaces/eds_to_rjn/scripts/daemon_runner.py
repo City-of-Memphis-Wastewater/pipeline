@@ -152,7 +152,7 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
                 
                 # Send data to RJN
                 if not test:
-                    rjn_data_transmission_succeeded = RjnClient.send_data_to_rjn2(
+                    rjn_data_transmission_succeeded = RjnClient.send_data_to_rjn(
                         session_rjn,
                         base_url = base_url,
                         entity_id = entity_id,
@@ -166,7 +166,7 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
                         logger.info(f"RJN data transmission succeeded for entity_id {entity_id}, project_id {project_id}.")
                         save_tabular_trend_data_to_log_file(project_id, entity_id, endtime, workspace_manager,timestamps, values)
                 else:
-                    print("[TEST] RjnClient.send_data_to_rjn2() skipped")
+                    print("[TEST] RjnClient.send_data_to_rjn() skipped")
             
                     
 def setup_schedules():
