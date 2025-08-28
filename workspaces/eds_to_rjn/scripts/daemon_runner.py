@@ -122,7 +122,8 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
             values = []
             entity_id = rjn_entityid_list[idx]
             project_id = rjn_projectid_list[idx]
-            print(f"entity_id = {entity_id}")
+            print(f"/nentity_id = {entity_id}")
+            print(f"iess = {iess}")
             print(f"project_id = {project_id}")
             
             for row in results[idx]:
