@@ -178,7 +178,7 @@ def setup_schedules():
 
 def main():
     #logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-    task_scheduler_is_ready_to_handle_hourly_task_scheduling = False
+    task_scheduler_is_ready_to_handle_hourly_task_scheduling = True
     if task_scheduler_is_ready_to_handle_hourly_task_scheduling:
         run_hourly_tabular_trend_eds_to_rjn()
     else:
