@@ -383,7 +383,8 @@ def identify_relevant_tables(session_key, starttime, endtime, secrets_dict):
         conn = mysql.connector.connect(**conn_config)
         cursor = conn.cursor(dictionary=True)
         # Use INFORMATION_SCHEMA instead of filesystem
-        return get_ten_most_recent_tables(cursor, conn_config["database"])
+        #return get_ten_most_recent_tables(cursor, conn_config["database"])
+        return get_n_most_recent_tables(cursor, conn_config["database"], n=80)
     except mysql.connector.Error:
         logger.warning("Falling back to filesystem scan — DB not accessible.")
         return identify_relevant_MyISM_tables(session_key, starttime, endtime, secrets_dict)
@@ -422,6 +423,27 @@ def get_ten_most_recent_tables(cursor, db_name, prefix='pla_'):
     logger.info(f"Found {len(table_names)} recent tables with prefix '{prefix}': {table_names}")
     return table_names  # This is a LIST of strings: ['pla_68a98310', 'pla_68a97500', ...]
 
+
+def get_n_most_recent_tables(cursor, db_name, n, prefix='pla_'):
+    """
+    Get the 10 most recent tables with the given prefix.
+    Returns a LIST OF STRINGS, not a single string.
+    """
+    query = f"""
+        SELECT TABLE_NAME
+        FROM INFORMATION_SCHEMA.TABLES
+        WHERE TABLE_SCHEMA = %s AND TABLE_NAME LIKE %s
+        ORDER BY TABLE_NAME DESC
+        LIMIT {n};
+    """
+    cursor.execute(query, (db_name, f'{prefix}%'))
+    results = cursor.fetchall()
+    
+    # Extract table names as individual strings
+    table_names = [result['TABLE_NAME'] for result in results]
+    
+    logger.info(f"Found {len(table_names)} recent tables with prefix '{prefix}': {table_names}")
+    return table_names  # This is a LIST of strings: ['pla_68a98310', 'pla_68a97500', ...]
 
 
 @lru_cache()
