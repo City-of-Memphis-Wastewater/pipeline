@@ -177,6 +177,14 @@ def setup_schedules():
         schedule.every().second.do(run_hourly_tabular_trend_eds_to_rjn)
 
 def main():
+    #logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    task_scheduler_is_ready_to_handle_hourly_task_scheduling = False
+    if task_scheduler_is_ready_to_handle_hourly_task_scheduling:
+        run_hourly_tabular_trend_eds_to_rjn()
+    else:
+        setup_schedules()
+
+def start_daemon():
     logging.info(f"Daemon started at {datetime.now()} and running...")
     setup_schedules()
     while True:
