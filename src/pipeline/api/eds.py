@@ -266,7 +266,7 @@ class EdsClient:
                     continue
 
                 for point_id in point:
-                    logger.info(f"Querying table {table_name} for sensor id {point_id}")
+                    #logger.info(f"Querying table {table_name} for sensor id {point_id}")
                     query = f"""
                         SELECT ts, ids, tss, stat, val FROM `{table_name}`
                         WHERE ts BETWEEN %s AND %s AND ids = %s
