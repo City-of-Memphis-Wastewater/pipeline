@@ -143,6 +143,8 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
             if len(timestamps)>0:
                 logger.info(f"timestamps[0] = {timestamps[0]}")
                 logger.info(f"timestamps[-1] = {timestamps[-1]}")
+            else:
+                logger.info("No timestamps retrieved. Transmission to RJN skipped for this point.")
             if timestamps and values:
                 
                 base_url = api_secrets_r
@@ -160,10 +162,11 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
                 
                     if rjn_data_transmission_succeeded:
                         queries_manager.update_success(api_id="RJN", success_time=endtime)
-
+                        logger.info(f"RJN data transmission succeeded for entity_id {entity_id}, project_id {project_id}.")
                         save_tabular_trend_data_to_log_file(project_id, entity_id, endtime, workspace_manager,timestamps, values)
                 else:
                     print("[TEST] RjnClient.send_data_to_rjn2() skipped")
+            
                     
 def setup_schedules():
     testing = False
