@@ -553,24 +553,22 @@ def _demo_eds_start_session_CoM_WWTPs():
     secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_secrets_file_path())
     sessions = {}
 
-    api_secrets_m = helpers.get_nested_config(secrets_dict, ["eds_apis","Maxson"])
-    session_maxson = EdsClient.login_to_session(api_url = api_secrets_m["url"].rstrip("/"),
-                                                username = api_secrets_m["username"],
-                                                password = api_secrets_m["password"])
-    #session_maxson.custom_dict = api_secrets_m
-    session_maxson.base_url = api_secrets_m["url"].rstrip("/")
-    session_maxson.zd = api_secrets_m["zd"]
-    session_maxson.base_url = secrets_dict.get("eds_apis", {}).get("Maxson", {}).get("url").rstrip("/")
+    base_url_maxson = secrets_dict.get("eds_apis", {}).get("Maxson", {}).get("url").rstrip("/")
+
+    session_maxson = EdsClient.login_to_session(api_url = base_url_maxson,
+                                                username = secrets_dict.get("eds_apis", {}).get("Maxson", {}).get("username"),
+                                                password = secrets_dict.get("eds_apis", {}).get("Maxson", {}).get("password"))
+    session_maxson.base_url = base_url_maxson
     session_maxson.zd = secrets_dict.get("eds_apis", {}).get("Maxson", {}).get("zd")
 
     sessions.update({"Maxson":session_maxson})
 
     # Show example of what it would be like to start a second session (though Stiles API port 43084 is not accesible at this writing)
     if False:
-        session_stiles = EdsClient.login_to_session(api_url = secrets_dict["eds_apis"]["WWTF"]["url"] ,username = secrets_dict["eds_apis"]["WWTF"]["username"], password = secrets_dict["eds_apis"]["WWTF"]["password"])
-        #session_stiles.custom_dict = secrets_dict["eds_apis"]["WWTF"]
-        session_stiles.base_url = secrets_dict["eds_apis"]["WWTF"]["url"].rstrip("/")
-        session_stiles.zd = secrets_dict["eds_apis"]["WWTF"]["zd"]
+        base_url_stiles = secrets_dict.get("eds_apis", {}).get("WWTF", {}).get("url").rstrip("/")
+        session_stiles = EdsClient.login_to_session(api_url = base_url_stiles ,username = secrets_dict.get("eds_apis", {}).get("WWTF", {}).get("username"), password = secrets_dict.get("eds_apis", {}).get("WWTF", {}).get("password"))
+        session_stiles.base_url = base_url_stiles
+        session_stiles.zd = secrets_dict.get("eds_apis", {}).get("WWTF", {}).get("zd")
         sessions.update({"WWTF":session_stiles})
 
     return workspace_manager, sessions
@@ -708,7 +706,6 @@ def demo_eds_webplot_point_live():
         logger.info(f"endtime = {endtime}")
 
         point_list = [row['iess'] for row in queries_defaultdictlist_grouped_by_session_key.get(key,[])]
-        #api_url = session.custom_dict["url"]
         api_url = str(session.base_url) 
         request_id = EdsClient.create_tabular_request(session, api_url, starttime, endtime, points=point_list)
         EdsClient.wait_for_request_execution_session(session, api_url, request_id)
