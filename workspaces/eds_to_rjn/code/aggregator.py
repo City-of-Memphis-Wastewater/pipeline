@@ -67,7 +67,7 @@ def aggregate_and_send(session_rjn, data_file, checkpoint_file):
             '''
             RjnClient.send_data_to_rjn(
             session_rjn,
-            base_url = session_rjn.custom_dict["url"],
+            base_url = session_rjn.base_url,
             project_id=row["rjn_projectid"],
             entity_id=row["rjn_entityid"],
             timestamps=timestamps,

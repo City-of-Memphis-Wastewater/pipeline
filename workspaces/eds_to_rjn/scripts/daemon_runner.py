@@ -54,7 +54,8 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
     session_maxson = EdsClient.login_to_session(api_url = api_secrets_m["url"],
                                       username = api_secrets_m["username"],
                                       password = api_secrets_m["password"])
-    session_maxson.custom_dict = api_secrets_m
+    #session_maxson.custom_dict = api_secrets_m
+    session_maxson.base_url = api_secrets_m["url"].rstrip("/")
     sessions_eds.update({"Maxson":session_maxson})
 
 
@@ -66,7 +67,8 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
         session_stiles = EdsClient.login_to_session(api_url = api_secrets_s["url"],
                                         username = api_secrets_s["username"],
                                         password = api_secrets_s["password"])
-        session_stiles.custom_dict = api_secrets_s
+        #session_stiles.custom_dict = api_secrets_s
+        session_stiles.base_url = api_secrets_s["url"].rstrip("/")
     except:
         session_stiles = None # possible reduntant for login_to_session() output 
     sessions_eds.update({"WWTF":session_stiles})
@@ -77,7 +79,8 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
                                        client_id = api_secrets_r["client_id"],
                                        password = api_secrets_r["password"])
     if session_rjn is not None:
-        session_rjn.custom_dict = api_secrets_r
+        #session_rjn.custom_dict = api_secrets_r
+        session_rjn.base_url = api_secrets_r["url"].rstrip("/")
     else:
         logger.warning("RJN session not established. Skipping RJN-related data transmission.\n")
     
@@ -108,7 +111,7 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
             relevant_tables = identify_relevant_tables(key_eds, starttime_ts, endtime_ts, secrets_dict)
             results = EdsClient.access_database_files_locally(key_eds, starttime_ts, endtime_ts, point=point_list_sid, tables=relevant_tables)
         else:
-            api_url = session_eds.custom_dict["url"]
+            api_url = session_eds.base_url
             request_id = EdsClient.create_tabular_request(session_eds, api_url, starttime_ts, endtime_ts, points=point_list)
             EdsClient.wait_for_request_execution_session(session_eds, api_url, request_id)
             results = EdsClient.get_tabular_trend(session_eds, request_id, point_list)
@@ -147,14 +150,12 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
             else:
                 logger.info(f"No timestamps retrieved. Transmission to RJN skipped for {iess}.")
             if timestamps and values:
-                
-                base_url = api_secrets_r["url"]
-                
+            
                 # Send data to RJN
                 if not test:
                     rjn_data_transmission_succeeded = RjnClient.send_data_to_rjn(
                         session_rjn,
-                        base_url = base_url,
+                        base_url = session_rjn.base_url,
                         entity_id = entity_id,
                         project_id = project_id,
                         timestamps=timestamps,
