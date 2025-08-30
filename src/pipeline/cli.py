@@ -110,9 +110,9 @@ def demo_rjn_ping():
     secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_secrets_file_path())
     
     api_secrets_r = helpers.get_nested_config(secrets_dict, ["contractor_apis","RJN"])
-    session = RjnClient.login_to_session(api_url = api_secrets_r["url"],
-                                                client_id = api_secrets_r["client_id"],
-                                                password = api_secrets_r["password"])
+    session = RjnClient.login_to_session(api_url = api_secrets_r["url"].rstrip("/"),
+                                        client_id = api_secrets_r["client_id"],
+                                        password = api_secrets_r["password"])
     if session is None:
         logger.warning("RJN session not established. Skipping RJN-related data transmission.\n")
         return

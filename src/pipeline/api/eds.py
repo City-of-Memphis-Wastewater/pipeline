@@ -554,7 +554,7 @@ def _demo_eds_start_session_CoM_WWTPs():
     sessions = {}
 
     api_secrets_m = helpers.get_nested_config(secrets_dict, ["eds_apis","Maxson"])
-    session_maxson = EdsClient.login_to_session(api_url = api_secrets_m["url"],
+    session_maxson = EdsClient.login_to_session(api_url = api_secrets_m["url"].rstrip("/"),
                                                 username = api_secrets_m["username"],
                                                 password = api_secrets_m["password"])
     #session_maxson.custom_dict = api_secrets_m
