@@ -22,7 +22,7 @@ from src.pipeline.api.rjn import RjnClient
 
 
 from ..code import collector, sanitizer
-from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
+from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_col
 
 
 import logging
@@ -48,7 +48,7 @@ def sketch_maxson():
     queries_file_path_list = workspace_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
     logger.debug(f"queries_file_path_list = {queries_file_path_list}")
     queries_dictlist_unfiltered = load_query_rows_from_csv_files(queries_file_path_list)
-    queries_defaultdictlist_grouped_by_session_key = group_queries_by_api_url(queries_dictlist_unfiltered,'zd')
+    queries_defaultdictlist_grouped_by_session_key = group_queries_by_col(queries_dictlist_unfiltered,'zd')
     secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_secrets_file_path())
     sessions = {}
 

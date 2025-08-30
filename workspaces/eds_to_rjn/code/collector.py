@@ -31,9 +31,13 @@ def collect_live_values(session, queries_dictlist_filtered_by_session_key):
         except ValueError as e:
             print(f"Invalid data in row: {e}")
             continue
-
+        
         try:
             point_data = EdsClient.get_points_live_mod(session, iess)
+            if point_data is None:
+                print(f"No data returned for iess={iess}")
+                continue
+            print(f"session.custom_dict = {session.custom_dict}")
             conflicts = set(row.keys()) & set(point_data.keys())
             if conflicts:
                 logger.debug(f"Warning: column key collision on {conflicts}, for iess = {iess}. This is expected.")

@@ -108,11 +108,11 @@ def load_query_rows_from_csv_files(csv_paths_list):
                 queries_dictlist_unfiltered.append(row)
     return queries_dictlist_unfiltered
 
-def group_queries_by_api_url(queries_array,grouping_var_str='zd'):
+def group_queries_by_col(queries_array,grouping_var_str='zd'):
     queries_array_grouped = defaultdict(list)
     for row in queries_array:
-        api_id = row[grouping_var_str] 
-        queries_array_grouped[api_id].append(row)
+        row_filter = row[grouping_var_str] 
+        queries_array_grouped[row_filter].append(row)
     return queries_array_grouped
 
 if __name__ ==  "__main__":

@@ -15,7 +15,7 @@ class RjnClient:
         self.config = config
     
     def send_point(self, payload: dict):
-        request_url = self.api_url + 'data/point'  # Adjust this if needed
+        request_url = f"{self.api_url}/data/point"  # Adjust this if needed
         response = make_request(url=request_url, headers=self.headers, data=payload, method="POST")
         if response.status_code == 200:
             print(f"Successfully posted point {payload.get('rjn_name')}")
@@ -30,7 +30,7 @@ class RjnClient:
         data = {'client_id': client_id, 'password': password, 'type': 'script'}
         
         try:
-            response = session.post(api_url + 'auth', json=data, verify=True)
+            response = session.post(f'{api_url}/auth', json=data, verify=True)
             response.raise_for_status() # catch 4xx/5xx html status
             token = response.json().get('token')
             session.headers['Authorization'] = f'Bearer {token}'
