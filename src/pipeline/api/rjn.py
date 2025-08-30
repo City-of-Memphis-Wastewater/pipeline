@@ -143,9 +143,9 @@ def demo_rjn_ping():
         return
     else:
         logger.info("RJN session established successfully.")
-        session.custom_dict = api_secrets_r
-        api_url = session.custom_dict["url"]
-        response = call_ping(api_url)
+        #session.custom_dict = api_secrets_r
+        session.base_url = api_secrets_r["url"].rstrip("/")
+        response = call_ping(session.base_url)
 
 if __name__ == "__main__":
     import sys

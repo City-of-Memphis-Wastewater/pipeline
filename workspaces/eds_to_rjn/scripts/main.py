@@ -56,7 +56,8 @@ def sketch_maxson():
     session_maxson = EdsClient.login_to_session(api_url = api_secrets_m["url"],
                                       username = api_secrets_m["username"],
                                       password = api_secrets_m["password"])
-    session_maxson.custom_dict = api_secrets_m
+    #session_maxson.custom_dict = api_secrets_m
+    session_maxson.base_url = api_secrets_m["url"].rstrip("/")
     sessions.update({"Maxson":session_maxson})
 
     api_secrets_r = helpers.get_nested_config(secrets_dict, ["contractor_apis","RJN"])
@@ -65,7 +66,8 @@ def sketch_maxson():
                                        client_id = api_secrets_r["client_id"],
                                        password = api_secrets_r["password"])
     if session_rjn is not None:
-        session_rjn.custom_dict = api_secrets_r
+        #session_rjn.custom_dict = api_secrets_r
+        session_rjn.base_url = api_secrets_r["url"].rstrip("/")
         sessions.update({"RJN":session_rjn})
     else:
         logger.warning("RJN session not established. Skipping RJN-related data transmission.\n")
@@ -97,7 +99,7 @@ def sketch_maxson():
         
         RjnClient.send_data_to_rjn(
             session_rjn,
-            base_url = session_rjn.custom_dict["url"],
+            base_url = session_rjn.base_url,
             project_id=row["rjn_projectid"],
             entity_id=row["rjn_entityid"],
             timestamps=[timestamp_str],

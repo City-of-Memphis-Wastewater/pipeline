@@ -52,7 +52,8 @@ class EdsClient:
     def get_points_live_mod(session, iess):
         # please make this session based rather than header based
         "Access live value of point from the EDS, based on zs/api_id value (i.e. Maxson, WWTF, Server)"
-        api_url = str(session.custom_dict["url"]) 
+        #api_url = str(session.custom_dict["url"]) 
+        api_url = str(session.base_url) 
 
         query = {
             'filters' : [{
@@ -89,7 +90,8 @@ class EdsClient:
     def get_tabular_mod(session, req_id, point_list):
         results = [[] for _ in range(len(point_list))]
         while True:
-            api_url = session.custom_dict['url']
+            #api_url = session.custom_dict["url"]
+            api_url = str(session.base_url) 
             response = session.get(f'{api_url}/trend/tabular?id={req_id}', verify=False).json()
             for chunk in response:
                 if chunk['status'] == 'TIMEOUT':
@@ -106,7 +108,8 @@ class EdsClient:
         #print(f"point_list = {point_list}")
         results = [[] for _ in range(len(point_list))]
         while True:
-            api_url = session.custom_dict['url']
+            #api_url = session.custom_dict["url"]
+            api_url = str(session.base_url) 
             response = session.get(f'{api_url}/trend/tabular?id={req_id}', verify=False).json()
             
             for chunk in response:
@@ -128,9 +131,12 @@ class EdsClient:
 
 
     @staticmethod
-    def get_points_export(session,iess_filter:str=''):
-        api_url = session.custom_dict["url"]
-        zd = session.custom_dict["zd"]
+    #def get_points_export(session,iess_filter:str=''):
+    def get_points_export(session,iess_filter=''):
+        #api_url = session.custom_dict["url"]
+        #zd = session.custom_dict["zd"]
+        api_url = str(session.base_url) 
+        zd = str(session.zd)  
         order = 'iess'
         query = '?zd={}&iess={}&order={}'.format(zd, iess_filter, order)
         request_url = f"{api_url}/points/export" + query
@@ -181,7 +187,6 @@ class EdsClient:
             #raise ValueError(f"JSON not returned with {inspect.currentframe().f_code.co_name} response")
             response = session.post(f"{api_url}/trend/tabular", json=data, verify=False)
             #print(f"response = {response}")
-        
 
     @staticmethod
     def wait_for_request_execution_session(session, api_url, req_id):
@@ -552,13 +557,20 @@ def _demo_eds_start_session_CoM_WWTPs():
     session_maxson = EdsClient.login_to_session(api_url = api_secrets_m["url"],
                                                 username = api_secrets_m["username"],
                                                 password = api_secrets_m["password"])
-    session_maxson.custom_dict = api_secrets_m
+    #session_maxson.custom_dict = api_secrets_m
+    session_maxson.base_url = api_secrets_m["url"].rstrip("/")
+    session_maxson.zd = api_secrets_m["zd"]
+    session_maxson.base_url = secrets_dict.get("eds_apis", {}).get("Maxson", {}).get("url").rstrip("/")
+    session_maxson.zd = secrets_dict.get("eds_apis", {}).get("Maxson", {}).get("zd")
+
     sessions.update({"Maxson":session_maxson})
 
     # Show example of what it would be like to start a second session (though Stiles API port 43084 is not accesible at this writing)
     if False:
         session_stiles = EdsClient.login_to_session(api_url = secrets_dict["eds_apis"]["WWTF"]["url"] ,username = secrets_dict["eds_apis"]["WWTF"]["username"], password = secrets_dict["eds_apis"]["WWTF"]["password"])
-        session_stiles.custom_dict = secrets_dict["eds_apis"]["WWTF"]
+        #session_stiles.custom_dict = secrets_dict["eds_apis"]["WWTF"]
+        session_stiles.base_url = secrets_dict["eds_apis"]["WWTF"]["url"].rstrip("/")
+        session_stiles.zd = secrets_dict["eds_apis"]["WWTF"]["zd"]
         sessions.update({"WWTF":session_stiles})
 
     return workspace_manager, sessions
@@ -696,7 +708,8 @@ def demo_eds_webplot_point_live():
         logger.info(f"endtime = {endtime}")
 
         point_list = [row['iess'] for row in queries_defaultdictlist_grouped_by_session_key.get(key,[])]
-        api_url = session.custom_dict["url"]
+        #api_url = session.custom_dict["url"]
+        api_url = str(session.base_url) 
         request_id = EdsClient.create_tabular_request(session, api_url, starttime, endtime, points=point_list)
         EdsClient.wait_for_request_execution_session(session, api_url, request_id)
         results = EdsClient.get_tabular_trend(session, request_id, point_list)
@@ -774,7 +787,7 @@ def demo_eds_save_graphics_export():
     session_maxson = sessions["Maxson"]
 
     # Get list of graphics from the EDS session
-    graphics_list = EdsClient.get_graphics_list(session_maxson, session_maxson.custom_dict["url"])
+    graphics_list = EdsClient.get_graphics_list(session_maxson, session_maxson.base_url)
     print(f"Found {len(graphics_list)} graphics to export.")
 
     # Loop through each graphic and save it
@@ -784,7 +797,7 @@ def demo_eds_save_graphics_export():
         output_file_path = workspace_manager.get_exports_file_path(filename=f"{safe_name}.png")
 
         # Fetch and save the graphic
-        graphic_bytes = EdsClient.get_graphic_export(session_maxson, session_maxson.custom_dict["url"], graphic["file"])
+        graphic_bytes = EdsClient.get_graphic_export(session_maxson, session_maxson.base_url, graphic["file"])
         EdsClient.save_graphic_export(graphic_bytes, output_file_path)
 
         print(f"Saved graphic: {graphic_name} → {output_file_path}")
@@ -813,7 +826,8 @@ def demo_eds_print_tabular_trend():
         starttime = queries_manager.get_most_recent_successful_timestamp(api_id="Maxson")
         endtime = helpers.get_now_time_rounded(workspace_manager)
 
-        api_url = session.custom_dict["url"]
+        #api_url = session.custom_dict["url"]
+        api_url = str(session.base_url) 
         request_id = EdsClient.create_tabular_request(session, api_url, starttime, endtime, points=point_list)
         EdsClient.wait_for_request_execution_session(session, api_url, request_id)
         results = EdsClient.get_tabular_trend(session, request_id, point_list)
@@ -897,7 +911,7 @@ def demo_eds_print_license():
     workspace_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
     session_maxson = sessions["Maxson"]
 
-    response = EdsClient.get_license(session_maxson, api_url = session_maxson.custom_dict["url"])
+    response = EdsClient.get_license(session_maxson, api_url = session_maxson.base_url)
     pprint(response)
     return response
 
@@ -907,8 +921,8 @@ def demo_eds_ping():
     workspace_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
     session_maxson = sessions["Maxson"]
 
-    api_url = session_maxson.custom_dict["url"]
-    response = call_ping(api_url)
+    #api_url = session_maxson.custom_dict["url"]
+    response = call_ping(session_maxson.base_url)
 
 if __name__ == "__main__":
 
