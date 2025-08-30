@@ -10,7 +10,7 @@ from src.pipeline import helpers
 from src.pipeline.env import SecretConfig
 from src.pipeline.workspace_manager import WorkspaceManager
 from src.pipeline.queriesmanager import QueriesManager
-from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
+from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_col
 from src.pipeline.time_manager import TimeManager
 
 logger = logging.getLogger(__name__)
@@ -45,7 +45,7 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
     logger.debug(f"queries_file_path_list = {queries_file_path_list}")
 
     queries_dictlist_unfiltered = load_query_rows_from_csv_files(queries_file_path_list)
-    queries_defaultdictlist_grouped_by_session_key = group_queries_by_api_url(queries_dictlist_unfiltered,'zd')
+    queries_defaultdictlist_grouped_by_session_key = group_queries_by_col(queries_dictlist_unfiltered,'zd')
     secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_secrets_file_path())
     sessions_eds = {}
 
@@ -113,7 +113,7 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
             EdsClient.wait_for_request_execution_session(session_eds, api_url, request_id)
             results = EdsClient.get_tabular_trend(session_eds, request_id, point_list)
             #results = EdsClient.get_tabular_mod(session_eds, request_id, point_list)
-            session_eds.post(api_url + 'logout', verify=False)
+            session_eds.post(f'{api_url}/logout', verify=False)
         #print(f"len(results) = {len(results)}")
         
         for idx, iess in enumerate(point_list):

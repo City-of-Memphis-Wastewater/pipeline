@@ -24,7 +24,7 @@ class EdsClient:
 
     @staticmethod
     def get_license(session,api_url:str):
-        response = session.get(api_url + 'license', json={}, verify=False).json()
+        response = session.get(f'{api_url}/license', json={}, verify=False).json()
         return response
 
     @staticmethod
@@ -61,12 +61,19 @@ class EdsClient:
             }],
             'order' : ['iess']
             }
-        response = session.post(api_url + 'points/query', json=query, verify=False).json()
+        response = session.post(f"{api_url}/points/query", json=query, verify=False).json()
         #print(f"response = {response}")
         
-        if response is None:
+        if not response or "points" not in response:
             return None
-        
+
+        points = response["points"]
+        if len(points) != 1:
+            raise ValueError(f"Expected 1 point for iess='{iess}', got {len(points)}")
+
+        return points[0]
+
+        '''        
         points_datas = response.get("points", [])
         if not points_datas:
             raise ValueError(f"No data returned for iess='{iess}': len(points) == 0")
@@ -76,13 +83,14 @@ class EdsClient:
             point_data = points_datas[0] # You expect exactly one point usually
             #print(f"point_data = {point_data}")
         return point_data  
-    
+        '''   
+
     @staticmethod
     def get_tabular_mod(session, req_id, point_list):
         results = [[] for _ in range(len(point_list))]
         while True:
             api_url = session.custom_dict['url']
-            response = session.get(f'{api_url}trend/tabular?id={req_id}', verify=False).json()
+            response = session.get(f'{api_url}/trend/tabular?id={req_id}', verify=False).json()
             for chunk in response:
                 if chunk['status'] == 'TIMEOUT':
                     raise RuntimeError('timeout')
@@ -99,7 +107,7 @@ class EdsClient:
         results = [[] for _ in range(len(point_list))]
         while True:
             api_url = session.custom_dict['url']
-            response = session.get(f'{api_url}trend/tabular?id={req_id}', verify=False).json()
+            response = session.get(f'{api_url}/trend/tabular?id={req_id}', verify=False).json()
             
             for chunk in response:
                 if chunk['status'] == 'TIMEOUT':
@@ -125,7 +133,7 @@ class EdsClient:
         zd = session.custom_dict["zd"]
         order = 'iess'
         query = '?zd={}&iess={}&order={}'.format(zd, iess_filter, order)
-        request_url = api_url + 'points/export' + query
+        request_url = f"{api_url}/points/export" + query
         response = session.get(request_url, json={}, verify=False)
         #print(f"Status Code: {response.status_code}, Content-Type: {response.headers.get('Content-Type')}, Body: {response.text[:500]}")
         decoded_str = response.text
@@ -144,9 +152,9 @@ class EdsClient:
         session = requests.Session()
 
         data = {'username': username, 'password': password, 'type': 'script'}
-        response = session.post(api_url + 'login', json=data, verify=False).json()
+        response = session.post(f"{api_url}/login", json=data, verify=False).json()
         #print(f"response = {response}")
-        session.headers['Authorization'] = 'Bearer ' + response['sessionId']
+        session.headers['Authorization'] = f"Bearer {response['sessionId']}"
         return session
     
     @staticmethod
@@ -166,13 +174,13 @@ class EdsClient:
             } for p in points],
         }
         try:
-            response = session.post(api_url + 'trend/tabular', json=data, verify=False).json()
+            response = session.post(f"{api_url}/trend/tabular", json=data, verify=False).json()
             return response['id']
             #print(f"response = {response}")
         except:
             #raise ValueError(f"JSON not returned with {inspect.currentframe().f_code.co_name} response")
-            response = session.post(api_url + 'trend/tabular', json=data, verify=False)
-            print(f"response = {response}")
+            response = session.post(f"{api_url}/trend/tabular", json=data, verify=False)
+            #print(f"response = {response}")
         
 
     @staticmethod
@@ -180,7 +188,7 @@ class EdsClient:
         st = time.time()
         while True:
             time.sleep(1)
-            res = session.get(f'{api_url}requests?id={req_id}', verify=False).json()
+            res = session.get(f'{api_url}/requests?id={req_id}', verify=False).json()
             status = res[str(req_id)]
             if status['status'] == 'FAILURE':
                 raise RuntimeError('request [{}] failed: {}'.format(req_id, status['message']))
@@ -209,7 +217,28 @@ class EdsClient:
         bool_ip = (ip == get_lan_ip_address_of_current_machine())
         logger.info(f"Checking if this computer is enterprise database server: {bool_ip}")
         return bool_ip
+    
+    @staticmethod
+    def get_graphics_list(session, api_url):
+        """Return list of graphics from EDS session."""
+        resp = session.get(f"{api_url}/graphics")  # api_url passed in
+        resp.raise_for_status()
+        return resp.json()
 
+    @staticmethod
+    def get_graphic_export(session, api_url, graphic_file):
+        """Fetch a graphic as PNG bytes."""
+        resp = session.get(f"{api_url}/graphics/{graphic_file}/export", params={"format": "png"})
+        resp.raise_for_status()
+        return resp.content
+
+    @staticmethod
+    def save_graphic_export(graphic_bytes, output_file_path):
+        os.makedirs(os.path.dirname(output_file_path), exist_ok=True)
+        with open(output_file_path, "wb") as f:
+            f.write(graphic_bytes)
+
+    
     @staticmethod
     #def access_database_files_locally(
     #    session_key: str,
@@ -536,12 +565,12 @@ def _demo_eds_start_session_CoM_WWTPs():
 
 @log_function_call(level=logging.DEBUG)
 def demo_eds_print_point_live_alt():
-    from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
+    from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_col
 
     workspace_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
     queries_file_path_list = workspace_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
     queries_dictlist_unfiltered = load_query_rows_from_csv_files(queries_file_path_list) # A scripter can edit their queries file names here - they do not need to use the default.
-    queries_defaultdictlist_grouped_by_session_key = group_queries_by_api_url(queries_dictlist_unfiltered,'zd')
+    queries_defaultdictlist_grouped_by_session_key = group_queries_by_col(queries_dictlist_unfiltered,'zd')
     
     # for key, session in sessions.items(): # Given multiple sessions, cycle through each. 
     key = "Maxson"
@@ -564,12 +593,12 @@ def demo_eds_print_point_live_alt():
 
 @log_function_call(level=logging.DEBUG)
 def demo_eds_print_point_live():
-    from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
+    from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_col
     from workspaces.eds_to_rjn.code import collector
     workspace_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
     queries_file_path_list = workspace_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
     queries_dictlist_unfiltered = load_query_rows_from_csv_files(queries_file_path_list) # A scripter can edit their queries file names here - they do not need to use the default.
-    queries_defaultdictlist_grouped_by_session_key = group_queries_by_api_url(queries_dictlist_unfiltered)
+    queries_defaultdictlist_grouped_by_session_key = group_queries_by_col(queries_dictlist_unfiltered)
     
     # for key, session in sessions.items(): # Given multiple sessions, cycle through each. 
     key = "Maxson"
@@ -590,7 +619,7 @@ def demo_eds_print_point_live():
 def demo_eds_plot_point_live():
     from threading import Thread
 
-    from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
+    from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_col
     from workspaces.eds_to_rjn.code import collector, sanitizer
     from src.pipeline.plotbuffer import PlotBuffer
     from src.pipeline import gui_mpl_live
@@ -603,7 +632,7 @@ def demo_eds_plot_point_live():
     # Load queries
     queries_file_path_list = workspace_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
     queries_dictlist_unfiltered = load_query_rows_from_csv_files(queries_file_path_list) # A scripter can edit their queries file names here - they do not need to use the default.
-    queries_defaultdictlist_grouped_by_session_key = group_queries_by_api_url(queries_dictlist_unfiltered)
+    queries_defaultdictlist_grouped_by_session_key = group_queries_by_col(queries_dictlist_unfiltered)
     
     key = "Maxson"
     session = sessions[key]
@@ -635,7 +664,7 @@ def demo_eds_plot_point_live():
 def demo_eds_webplot_point_live():
     from threading import Thread
 
-    from src.pipeline.queriesmanager import QueriesManager, load_query_rows_from_csv_files, group_queries_by_api_url
+    from src.pipeline.queriesmanager import QueriesManager, load_query_rows_from_csv_files, group_queries_by_col
     from workspaces.eds_to_rjn.code import collector, sanitizer
     from src.pipeline.plotbuffer import PlotBuffer
     #from src.pipeline import gui_flaskplotly_live
@@ -651,7 +680,7 @@ def demo_eds_webplot_point_live():
     # Load queries
     queries_file_path_list = workspace_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
     queries_dictlist_unfiltered = load_query_rows_from_csv_files(queries_file_path_list) # A scripter can edit their queries file names here - they do not need to use the default.
-    queries_defaultdictlist_grouped_by_session_key = group_queries_by_api_url(queries_dictlist_unfiltered)
+    queries_defaultdictlist_grouped_by_session_key = group_queries_by_col(queries_dictlist_unfiltered)
     
     key = "Maxson"
     session = sessions[key]
@@ -739,10 +768,34 @@ def demo_eds_save_point_export():
     print(f"Export file saved to: \n{export_file_path}") 
 
 @log_function_call(level=logging.DEBUG)
+def demo_eds_save_graphics_export():
+    # Start sessions for your WWTPs
+    workspace_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
+    session_maxson = sessions["Maxson"]
+
+    # Get list of graphics from the EDS session
+    graphics_list = EdsClient.get_graphics_list(session_maxson, session_maxson.custom_dict["url"])
+    print(f"Found {len(graphics_list)} graphics to export.")
+
+    # Loop through each graphic and save it
+    for graphic in graphics_list:
+        graphic_name = graphic.get("name", os.path.splitext(graphic["file"])[0])
+        safe_name = "".join(c if c.isalnum() or c in "_-" else "_" for c in graphic_name)
+        output_file_path = workspace_manager.get_exports_file_path(filename=f"{safe_name}.png")
+
+        # Fetch and save the graphic
+        graphic_bytes = EdsClient.get_graphic_export(session_maxson, session_maxson.custom_dict["url"], graphic["file"])
+        EdsClient.save_graphic_export(graphic_bytes, output_file_path)
+
+        print(f"Saved graphic: {graphic_name} → {output_file_path}")
+
+    print("All graphics exported successfully.")
+
+@log_function_call(level=logging.DEBUG)
 def demo_eds_print_tabular_trend():
     
     from src.pipeline.queriesmanager import QueriesManager
-    from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
+    from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_col
     
     workspace_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
     
@@ -750,7 +803,7 @@ def demo_eds_print_tabular_trend():
     queries_file_path_list = workspace_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
     logger.debug(f"queries_file_path_list = {queries_file_path_list}")
     queries_dictlist_unfiltered = load_query_rows_from_csv_files(queries_file_path_list) # you can edit your queries files here
-    queries_defaultdictlist_grouped_by_session_key = group_queries_by_api_url(queries_dictlist_unfiltered,'zd')
+    queries_defaultdictlist_grouped_by_session_key = group_queries_by_col(queries_dictlist_unfiltered,'zd')
     
     for key, session in sessions.items():
         # Discern which queries to use
@@ -764,7 +817,7 @@ def demo_eds_print_tabular_trend():
         request_id = EdsClient.create_tabular_request(session, api_url, starttime, endtime, points=point_list)
         EdsClient.wait_for_request_execution_session(session, api_url, request_id)
         results = EdsClient.get_tabular_trend(session, request_id, point_list)
-        session.post(api_url + 'logout', verify=False)
+        session.post(f"{api_url}'/logout", verify=False)
         #
         for idx, iess in enumerate(point_list):
             print('\n{} samples:'.format(iess))
@@ -776,7 +829,7 @@ def demo_eds_print_tabular_trend():
 @log_function_call(level=logging.DEBUG)
 def demo_eds_local_database_access():
     from src.pipeline.queriesmanager import QueriesManager
-    from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_api_url
+    from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_col
     workspace_name = 'eds_to_rjn' # workspace_name = WorkspaceManager.identify_default_workspace()
     workspace_manager = WorkspaceManager(workspace_name)
     queries_manager = QueriesManager(workspace_manager)
@@ -784,7 +837,7 @@ def demo_eds_local_database_access():
     logger.debug(f"queries_file_path_list = {queries_file_path_list}")
 
     queries_dictlist_unfiltered = load_query_rows_from_csv_files(queries_file_path_list)
-    queries_defaultdictlist_grouped_by_session_key = group_queries_by_api_url(queries_dictlist_unfiltered,'zd')
+    queries_defaultdictlist_grouped_by_session_key = group_queries_by_col(queries_dictlist_unfiltered,'zd')
     secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_secrets_file_path())
     sessions_eds = {}
 
@@ -890,6 +943,8 @@ if __name__ == "__main__":
         demo_eds_print_tabular_trend()
     elif cmd == "demo-ping":
         demo_eds_ping()
+    elif cmd == "export-graphics":
+        demo_eds_save_graphics_export()
     elif cmd == "demo-license":
         demo_eds_print_license()
     elif cmd == "access-workspace""":
@@ -911,5 +966,6 @@ if __name__ == "__main__":
         "poetry run python -m pipeline.api.eds demo-db \n"
         "poetry run python -m pipeline.api.eds demo-ping \n"
         "poetry run python -m pipeline.api.eds demo-license \n"
+        "poetry run python -m pipeline.api.eds export-graphics \n"
         "poetry run python -m pipeline.api.eds access-workspace")
     

@@ -40,7 +40,7 @@ def login():
     session = requests.Session()
 
     data = {'username': 'admin', 'password': '', 'type': 'script'}
-    res = session.post(API_URL + 'login', json=data, verify=False).json()
+    res = session.post(f'{API_URL}/login', json=data, verify=False).json()
     session.headers['Authorization'] = 'Bearer ' + res['sessionId']
 
     return session
@@ -59,7 +59,7 @@ def create_tabular_request(session):
             'function': 'AVG'
         } for p in POINTS],
     }
-    res = session.post(API_URL + 'trend/tabular', json=data, verify=False).json()
+    res = session.post(f'{API_URL}/trend/tabular', json=data, verify=False).json()
     return res['id']
 
 
@@ -67,7 +67,7 @@ def wait_for_request_execution(session, req_id):
     st = time.time()
     while True:
         time.sleep(1)
-        res = session.get(f'{API_URL}requests?id={req_id}', verify=False).json()
+        res = session.get(f'{API_URL}/requests?id={req_id}', verify=False).json()
         status = res[str(req_id)]
         if status['status'] == 'FAILURE':
             raise RuntimeError('request [{}] failed: {}'.format(req_id, status['message']))
@@ -82,7 +82,7 @@ def wait_for_request_execution(session, req_id):
 def get_tabular(session, req_id):
     results = [[] for _ in range(len(POINTS))]
     while True:
-        response = session.get(f'{API_URL}trend/tabular?id={req_id}', verify=False).json()
+        response = session.get(f'{API_URL}/trend/tabular?id={req_id}', verify=False).json()
         for chunk in response:
             if chunk['status'] == 'TIMEOUT':
                 raise RuntimeError('timeout')
@@ -99,7 +99,7 @@ req_id = create_tabular_request(session)
 wait_for_request_execution(session, req_id)
 results = get_tabular(session, req_id)
 
-session.post(API_URL + 'logout', verify=False)
+session.post(f'{API_URL}/logout', verify=False)
 
 for idx, iess in enumerate(POINTS):
     print('\n{} samples:'.format(iess))
