@@ -12,34 +12,37 @@ poetry run python -m src.pipeline.env
 ```
 Recieve an export file of all the points known to your EDS:
 ```
-poetry run python -m src.pipeline.api.eds demo-points-export
+poetry run python -m src.pipeline.api.eds demo-point-export
 ```
 Run the existing eds_to_rjn workspace:
 ```
-poetry run python -m workspaces.eds_to_rjn.scripts.main
+poetry run python -m workspaces.eds_to_rjn.scripts.daemon_runner test
 ```
 Check connectivity:
 ```
 poetry run python -m src.pipeline.api.eds ping
 poetry run python -m src.pipeline.api.rjn ping
-```
+```\
 Other commands:
 ```
-.\main.bat
+.\main.bat # put the daemon into service: ill advised.
 .\main.ps1
 ```
-## Known Errors
-EDS Tabular Trend, blank list returned:
-```
-poetry run python -m src.pipeline.api.eds demo-trend
-```
+
+## Implementation
+The current ideal implementation of `pipeline` involves `Windows Task Scheduler`.
+This is installed on an `EDS` server, to pull data and send it to a third party.
+The Task is set up to call `main_eds_to_rjn_quiet.ps1` as the entry point.
+The iterative hourly timing handled is by `Windows Task Scheduler` rather than pythonically with the (no unused) `setup_schedules()` function.
+The `main` function from the `daemon_runner` file is run; this used to call the `run_hourly_tabular_trend_eds_to_rjn()` function.
+Environment managemenet is handled with `venv` rather than `pyenv` and `poetry`, because `Task Scheduler` directs the process to a different user.
+
 ## secrets.yaml
 Access will not work without a secrets.yaml file in /pipeline/workspaces/your-workspace-name/config/secrets.yaml
 
 *API keys are specific to each the workspace, and can be referenced in the workspace scripts.*
 You would edit the secrets.yaml file to specify your own EDS server and credentials.
 Important: You need to VPN onto the same network as your server, EDS or otherwise, if it is not available to the outside world.
-
 ### Example secrets.yaml: 
 ```
 eds_apis:
@@ -68,6 +71,7 @@ The ***workspaces*** folder is designed to accomodate any custom workspaces or p
 # Maintenance Notes:
 - Implement session = requests.Session(), like an adult.
 - daemon_runner.py should use both Maxson and Stiles access. 
+
 # Rollout, setup, etc.
 It is recommended that you use **pyenv** for setting the Python version and generating a virtual environment, though this is optional. 
 

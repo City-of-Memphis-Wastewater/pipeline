@@ -951,11 +951,11 @@ if __name__ == "__main__":
         demo_eds_local_database_access()
     elif cmd == "demo-trend":
         demo_eds_print_tabular_trend()
-    elif cmd == "demo-ping":
+    elif cmd == "ping":
         demo_eds_ping()
     elif cmd == "export-graphics":
         demo_eds_save_graphics_export()
-    elif cmd == "demo-license":
+    elif cmd == "license":
         demo_eds_print_license()
     elif cmd == "access-workspace""":
         if platform.system().lower() == "windows":
@@ -974,8 +974,8 @@ if __name__ == "__main__":
         "poetry run python -m pipeline.api.eds demo-webplot-live \n"
         "poetry run python -m pipeline.api.eds demo-plot-trend \n"
         "poetry run python -m pipeline.api.eds demo-db \n"
-        "poetry run python -m pipeline.api.eds demo-ping \n"
-        "poetry run python -m pipeline.api.eds demo-license \n"
+        "poetry run python -m pipeline.api.eds ping \n"
+        "poetry run python -m pipeline.api.eds license \n"
         "poetry run python -m pipeline.api.eds export-graphics \n"
         "poetry run python -m pipeline.api.eds access-workspace")
     
