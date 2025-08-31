@@ -108,19 +108,18 @@ def demo_rjn_ping():
     workspace_manager = WorkspaceManager(workspace_name)
 
     secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_secrets_file_path())
+    secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_secrets_file_path())
     
-    api_secrets_r = helpers.get_nested_config(secrets_dict, ["contractor_apis","RJN"])
-    session = RjnClient.login_to_session(api_url = api_secrets_r["url"].rstrip("/"),
-                                        client_id = api_secrets_r["client_id"],
-                                        password = api_secrets_r["password"])
+    base_url = secrets_dict.get("contractor_apis", {}).get("RJN", {}).get("url").rstrip("/")
+    session = RjnClient.login_to_session(api_url = base_url,
+                                    client_id = secrets_dict.get("contractor_apis", {}).get("RJN", {}).get("client_id"),
+                                    password = secrets_dict.get("contractor_apis", {}).get("RJN", {}).get("password"))
     if session is None:
         logger.warning("RJN session not established. Skipping RJN-related data transmission.\n")
         return
     else:
         logger.info("RJN session established successfully.")
-        #session.custom_dict = api_secrets_r
-        #api_url = session.custom_dict["url"]
-        session.base_url = api_secrets_r["url"].rstrip("/")
+        session.base_url = base_url
         response = call_ping(session.base_url)
 
 @app.command()

@@ -50,12 +50,12 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
     sessions_eds = {}
 
     # --- Prepare Maxson session_eds
-    api_secrets_m = helpers.get_nested_config(secrets_dict, ["eds_apis", "Maxson"])
-    session_maxson = EdsClient.login_to_session(api_url = api_secrets_m["url"],
-                                      username = api_secrets_m["username"],
-                                      password = api_secrets_m["password"])
-    #session_maxson.custom_dict = api_secrets_m
-    session_maxson.base_url = api_secrets_m["url"].rstrip("/")
+    base_url_maxson = secrets_dict.get("eds_apis", {}).get("Maxson", {}).get("url").rstrip("/")
+    session_maxson = EdsClient.login_to_session(api_url = base_url_maxson,
+                                                username = secrets_dict.get("eds_apis", {}).get("Maxson", {}).get("username"),
+                                                password = secrets_dict.get("eds_apis", {}).get("Maxson", {}).get("password"))
+    session_maxson.base_url = base_url_maxson
+    session_maxson.zd = secrets_dict.get("eds_apis", {}).get("Maxson", {}).get("zd")
     sessions_eds.update({"Maxson":session_maxson})
 
 
@@ -63,26 +63,27 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
     try:
         # REST API access fails due to firewall blocking the port
         # So, alternatively, if this fails, encourage direct MariaDB access, with files at E:\SQLData\stiles\
-        api_secrets_s = helpers.get_nested_config(secrets_dict, ["eds_apis", "WWTF"])
-        session_stiles = EdsClient.login_to_session(api_url = api_secrets_s["url"],
-                                        username = api_secrets_s["username"],
-                                        password = api_secrets_s["password"])
-        #session_stiles.custom_dict = api_secrets_s
-        session_stiles.base_url = api_secrets_s["url"].rstrip("/")
+        base_url_stiles = secrets_dict.get("eds_apis", {}).get("WWTP", {}).get("url").rstrip("/")
+        session_stiles = EdsClient.login_to_session(api_url = base_url_stiles,
+                                                    username = secrets_dict.get("eds_apis", {}).get("WWTP", {}).get("username"),
+                                                    password = secrets_dict.get("eds_apis", {}).get("WWTP", {}).get("password"))
+        session_stiles.base_url = base_url_stiles
+        session_stiles.zd = secrets_dict.get("eds_apis", {}).get("WWTP", {}).get("zd")
+        sessions_eds.update({"WWTP":session_stiles})
     except:
         session_stiles = None # possible reduntant for login_to_session() output 
     sessions_eds.update({"WWTF":session_stiles})
 
-    api_secrets_r = helpers.get_nested_config(secrets_dict, ["contractor_apis","RJN"])
-    
-    session_rjn = RjnClient.login_to_session(api_url = api_secrets_r["url"],
-                                       client_id = api_secrets_r["client_id"],
-                                       password = api_secrets_r["password"])
-    if session_rjn is not None:
-        #session_rjn.custom_dict = api_secrets_r
-        session_rjn.base_url = api_secrets_r["url"].rstrip("/")
-    else:
+    base_url_rjn = secrets_dict.get("contractor_apis", {}).get("RJN", {}).get("url").rstrip("/")
+    session_rjn = RjnClient.login_to_session(api_url = base_url_rjn,
+                                    client_id = secrets_dict.get("contractor_apis", {}).get("RJN", {}).get("client_id"),
+                                    password = secrets_dict.get("contractor_apis", {}).get("RJN", {}).get("password"))
+    if session_rjn is None:
         logger.warning("RJN session not established. Skipping RJN-related data transmission.\n")
+        return
+    else:
+        logger.info("RJN session established successfully.")
+        session_rjn.base_url = base_url_rjn
     
     # Discern the time range to use
     starttime = queries_manager.get_most_recent_successful_timestamp(api_id="RJN")
