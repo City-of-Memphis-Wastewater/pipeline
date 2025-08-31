@@ -554,7 +554,6 @@ def _demo_eds_start_session_CoM_WWTPs():
     sessions = {}
 
     base_url_maxson = secrets_dict.get("eds_apis", {}).get("Maxson", {}).get("url").rstrip("/")
-
     session_maxson = EdsClient.login_to_session(api_url = base_url_maxson,
                                                 username = secrets_dict.get("eds_apis", {}).get("Maxson", {}).get("username"),
                                                 password = secrets_dict.get("eds_apis", {}).get("Maxson", {}).get("password"))
