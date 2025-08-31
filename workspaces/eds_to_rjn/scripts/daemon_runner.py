@@ -80,7 +80,8 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
                                     password = secrets_dict.get("contractor_apis", {}).get("RJN", {}).get("password"))
     if session_rjn is None:
         logger.warning("RJN session not established. Skipping RJN-related data transmission.\n")
-        return
+        if test is False:
+            return
     else:
         logger.info("RJN session established successfully.")
         session_rjn.base_url = base_url_rjn
@@ -114,6 +115,7 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
         else:
             api_url = session_eds.base_url
             request_id = EdsClient.create_tabular_request(session_eds, api_url, starttime_ts, endtime_ts, points=point_list)
+            logger.info(f"request_id = {request_id}")
             EdsClient.wait_for_request_execution_session(session_eds, api_url, request_id)
             results = EdsClient.get_tabular_trend(session_eds, request_id, point_list)
             #results = EdsClient.get_tabular_mod(session_eds, request_id, point_list)
