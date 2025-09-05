@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pipeline-eds"
-version = "0.2.12"
+version = "0.2.13"
 description = "The official API pipeline library for mulch-based projects. Key target: Emerson Ovation EDS REST API."
 authors = ["George Clayton Bennett <george.bennett@memphistn.gov>"]
 license = "BSD-3"
@@ -18,7 +18,8 @@ repository = "https://github.com/city-of-memphis-wastewater/pipeline"
 #collector = "pipeline.collector:main"
 #eds-client = "pipeline.api.eds:main"
 #rjn-client = "pipeline.api.rjn:main"
-pipeline = "pipeline.cli:app" # for installation of pipeline as a cli. Ex: pipeline trend M100FI -s June3 -f June17
+pipeline = "pipeline.cli:app" # for installation of pipeline as a CLI. Ex: pipeline trend M100FI -s June3 -f June17
+eds = "pipeline.cli:app" # alias eds for pipeline CLI
 
 
 [tool.pytest.ini_options]

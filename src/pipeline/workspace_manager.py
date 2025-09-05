@@ -26,6 +26,8 @@ class WorkspaceManager:
     SECRETS_YAML_FILE_NAME ='secrets.yaml'
     SECRETS_EXAMPLE_YAML_FILE_NAME ='secrets-example.yaml'
     DEFAULT_WORKSPACE_TOML_FILE_NAME = 'default-workspace.toml'
+    APP_NAME = "pipeline"
+
     TIMESTAMPS_JSON_FILE_NAME = 'timestamps_success.json'
     ROOT_DIR = Path(__file__).resolve().parents[2]  # root directory
     
@@ -229,6 +231,29 @@ class WorkspaceManager:
     @property
     def name(self):
         return self.workspace_name
+    
+    @classmethod
+    def get_appdata_dir(cls) -> Path:
+        """Return platform-appropriate appdata folder."""
+        if os.name == "nt":  # Windows
+            base = Path(os.getenv("APPDATA", Path.home() / "AppData" / "Roaming"))
+        elif os.name == "posix" and "ANDROID_ROOT" in os.environ:  # Termux
+            base = Path.home() / ".local" / "share"
+        else:  # macOS/Linux
+            base = Path(os.getenv("XDG_DATA_HOME", Path.home() / ".local" / "share"))
+        return base / cls.APP_NAME
+
+    @classmethod
+    def ensure_workspace(cls) -> Path:
+        """Create workspace folder and default toml if missing."""
+        workspaces_dir = cls.get_appdata_dir() / "workspaces"
+        workspaces_dir.mkdir(parents=True, exist_ok=True)
+
+        default_file = workspaces_dir / cls.DEFAULT_WORKSPACE_TOML_FILE_NAME
+        if not default_file.exists():
+            default_file.write_text("# Default workspace config\n")
+        return workspaces_dir
+
     
 def establish_default_workspace():
     workspace_name = WorkspaceManager.identify_default_workspace_name()
