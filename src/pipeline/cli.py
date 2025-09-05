@@ -105,6 +105,9 @@ def trend(
     from src.pipeline.plotbuffer import PlotBuffer
     from src.pipeline import gui_fastapi_plotly_live
 
+    if zd.lower() == "stiles":
+        zd = "WWTF"
+
     if zd == "Maxson":
         idcs_to_iess_suffix = ".UNIT0@NET0"
     elif zd == "WWTF":
@@ -137,6 +140,8 @@ def trend(
     else:
         #dt_finish = parser.parse(finish)
         dt_finish = pendulum.parse(finish, strict=False)
+
+    # Should automatically choose time step granularity based on time length; map 
     
     results = load_historic_data(queries_manager, wm, session, iess_list, starttime=dt_start, endtime=dt_finish) 
     

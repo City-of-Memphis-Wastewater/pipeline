@@ -108,5 +108,18 @@ def get_lan_ip_address_of_current_machine():
         return s.getsockname()[0]
     finally:
         s.close()
+        
+def nice_step(delta_sec: int) -> int:
+    """
+    Return a "nice" step in seconds (1,2,5,10,15,30,60,120,...)
+    """
+    nice_numbers = [1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200, 14400, 28800, 86400]
+    target_step = delta_sec // 100  # aim for ~100 points
+    # find the smallest nice_number >= target_step
+    for n in nice_numbers:
+        if n >= target_step:
+            return n
+    return nice_numbers[-1]
+    
 if __name__ == "__main__":
     function_view()

@@ -16,6 +16,8 @@ workspace-manager = "pipeline.workspace_manager:main"
 collector = "pipeline.collector:main"
 eds-client = "pipeline.api.eds:main"
 rjn-client = "pipeline.api.rjn:main"
+pipeline = "pipeline.cli:app" # for installation of pipeline as a cli. Ex: pipeline trend M100FI -s June3 -f June17
+
 
 [tool.pytest.ini_options]
 markers = [
@@ -25,9 +27,6 @@ markers = [
 addopts = "-ra --cov=pipeline --cov-report=term-missing" # for development — fast and informative in terminal.
 testpaths = ["tests"]
 pythonpath = ["src", "."]
-
-[tool.poetry.scripts]
-pipeline = "pipeline.cli:app" # for installation of pipeline as a cli. Ex: pipeline trend M100FI -s June3 -f June17
 
 [tool.poetry.dependencies]
 python = ">=3.11,<4.0.0"
