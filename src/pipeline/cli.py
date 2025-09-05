@@ -20,22 +20,23 @@ from pipeline.env import SecretConfig
 from pipeline.workspace_manager import WorkspaceManager
 
 ### Versioning
+CLI_APP_NAME = "pipeline"
 def print_version(value: bool):
     if value:
         try:
-            typer.secho(f"mulch {MULCH_VERSION}",fg=typer.colors.GREEN, bold=True)
+            typer.secho(f"{CLI_APP_NAME} {PIPELINE_VERSION}",fg=typer.colors.GREEN, bold=True)
         except PackageNotFoundError:
             typer.echo("Version info not found")
         raise typer.Exit()
 try:
-    MULCH_VERSION = version("mulch")
-    __version__ = version("mulch")
+    PIPELINE_VERSION = version(CLI_APP_NAME)
+    __version__ = version(CLI_APP_NAME)
 except PackageNotFoundError:
-    MULCH_VERSION = "unknown"
+    PIPELINE_VERSION = "unknown"
 
 try:
     from importlib.metadata import version
-    __version__ = version("mulch")
+    __version__ = version(CLI_APP_NAME)
 except PackageNotFoundError:
     # fallback if running from source
     try:
@@ -102,7 +103,9 @@ def trend(
     starttime: str = typer.Option(None, "--start", "-s", help="Index from 'mulch order' to choose scaffold source."),
     endtime: str = typer.Option(None, "--end", "-end", help="Reference a known template for workspace organization."),
     zd: str = typer.Option('Maxson', "--zd", "-z", help = "Define the EDS ZD from your secrets file. This must correlate with your idcs point selection(s)."),
-    workspace: str = typer.Option(None,"--workspace","-w", help = "Provide the name of the workspace you want to use, for the secrets.yaml credentials and for the timezone config. If a start time is not provided, the workspace queries can checked for the most recent successful timestamp. ")
+    workspacename: str = typer.Option(None,"--workspace","-w", help = "Provide the name of the workspace you want to use, for the secrets.yaml credentials and for the timezone config. If a start time is not provided, the workspace queries can checked for the most recent successful timestamp. "),
+    print_csv: bool = typer.Option(False,"--print-csv","-p",help = "Print the CSV style for pasting into Excel."),
+    step_seconds: int = typer.Option(None, "--step-seconds", help="You can explicitly provide the delta between datapoints. If not, ~400 data points will be used, based on the nice_step() function.") 
     ):
     """
     Show a curve for a sensor over time.
@@ -112,16 +115,16 @@ def trend(
     from pipeline.api.eds import EdsClient, load_historic_data
     from pipeline import helpers
     from pipeline.plotbuffer import PlotBuffer
-    from pipeline import gui_fastapi_plotly_live
     from pipeline import environment
     from pipeline.workspace_manager import WorkspaceManager
-    ws_dir = WorkspaceManager.ensure_workspace()
+    workspaces_dir = WorkspaceManager.ensure_appdata_workspaces_dir()
 
     # must set up %appdata for pip/x installation. Use mulch or yeoman for this. And have a secrets filler.
-    if workspace is None:
-        WorkspaceManager.identify_default_workspace_name()
-    wm = WorkspaceManager(workspace)
-    secrets_dict = SecretConfig.load_config(secrets_file_path = wm.get_secrets_file_path())
+    if workspacename is None:
+        workspacename = WorkspaceManager.identify_default_workspace_name()
+    wm = WorkspaceManager(workspacename)
+    secrets_file_path = wm.get_secrets_file_path()
+    secrets_dict = SecretConfig.load_config(secrets_file_path)
 
     if zd.lower() == "stiles":
         zd = "WWTF"
@@ -156,22 +159,38 @@ def trend(
         dt_finish = pendulum.parse(endtime, strict=False)
 
     # Should automatically choose time step granularity based on time length; map 
-    
-    results = load_historic_data(session, iess_list, dt_start, dt_finish) 
-    
+    if step_seconds is None:
+        step_seconds = helpers.nice_step(endtime-starttime)
+    results = load_historic_data(session, iess_list, dt_start, dt_finish, step_seconds) 
+    if not results:
+        return 
+
     data_buffer = PlotBuffer()
     for idx, rows in enumerate(results):
         for row in rows:
-            label = f"{row.get('rjn_entityid')} ({row.get('units')})"
+            #label = f"({row.get('units')})"
+            label = iess_list[0]
             ts = helpers.iso(row.get("ts"))
             av = row.get("value")
+            #print(f"{round(av,2)}")
             data_buffer.append(label, ts, av) # needs to be adapted for multiple iess sensor results
-    
+    #print(f"data_buffer = {data_buffer}")
+    #print(f"data_buffer.get_all() = {data_buffer.get_all()}")
     if not environment.matplotlib_enabled():
-        gui_fastapi_plotly_live.run_gui(data_buffer)
+        from pipeline import gui_plotly_static
+        #gui_fastapi_plotly_live.run_gui(data_buffer)
+        gui_plotly_static.show_static(data_buffer)
     else:
         from pipeline import gui_mpl_live
-        gui_mpl_live.run_gui(data_buffer)
+        #gui_mpl_live.run_gui(data_buffer)
+        gui_mpl_live.show_static(data_buffer)
+    
+    if print_csv:
+        print(f"Time,\\{iess_list[0]}\\,")
+        for idx, rows in enumerate(results):
+            for row in rows:
+                print(f"{helpers.iso(row.get('ts'))},{row.get('value')},")
+    
 
 @app.command()
 def list_workspaces():

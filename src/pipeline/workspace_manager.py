@@ -2,6 +2,7 @@ import os
 import toml
 import logging
 from pathlib import Path
+import sys
 
 '''
 Goal:
@@ -29,7 +30,14 @@ class WorkspaceManager:
     APP_NAME = "pipeline"
 
     TIMESTAMPS_JSON_FILE_NAME = 'timestamps_success.json'
-    ROOT_DIR = Path(__file__).resolve().parents[2]  # root directory
+
+    # Detect if running in a dev repo vs installed package
+    if getattr(sys, "frozen", False):
+        # Running from a pipx/executable environment
+        ROOT_DIR = None
+    else:
+        # Running from a cloned repo
+        ROOT_DIR = Path(__file__).resolve().parents[2]  # root directory
     
     
     # This climbs out of /src/pipeline/ to find the root.
@@ -62,11 +70,38 @@ class WorkspaceManager:
                                     self.logs_dir,
                                     self.aggregate_dir])
 
-    def get_workspaces_dir(self):
-        return self.ROOT_DIR / self.WORKSPACES_DIR_NAME
+    
+    @classmethod
+    def get_workspaces_dir(cls):
+        """
+        Return workspaces directory depending on environment:
+        - If ROOT_DIR is defined (repo clone), use that
+        - Else use AppData/local platform-specific location
+        """
+        if cls.ROOT_DIR and (cls.ROOT_DIR / cls.WORKSPACES_DIR_NAME).exists():
+            workspaces_dir = cls.ROOT_DIR / cls.WORKSPACES_DIR_NAME
+        else:
+            workspaces_dir = cls.get_appdata_dir() / cls.WORKSPACES_DIR_NAME
+            workspaces_dir.mkdir(parents=True, exist_ok=True)
+            default_file = workspaces_dir / cls.DEFAULT_WORKSPACE_TOML_FILE_NAME
+            if not default_file.exists():
+                # auto-populate default TOML with most recent workspace
+                recent_ws = cls.most_recent_workspace_name() or "default"
+                default_file.write_text(f"[default-workspace]\nworkspace = '{recent_ws}'\n")
+        return workspaces_dir
+    
+    @classmethod
+    def most_recent_workspace_name(cls):
+        workspaces_dir = cls.get_workspaces_dir()
+        all_dirs = [p for p in workspaces_dir.iterdir() if p.is_dir() and not p.name.startswith('.')]
+        if not all_dirs:
+            return None
+        latest = max(all_dirs, key=lambda p: p.stat().st_mtime)
+        return latest.name
 
     def get_workspace_dir(self):
-        return self.get_workspaces_dir() / self.workspace_name
+        # workspace_name is established at instantiation. You want a new name? Initialize a new WorkspaceManager(). It manages one workpspace.
+        return self.get_workspaces_dir() / self.workspace_name 
 
     def get_exports_dir(self):
         return self.workspace_dir / self.EXPORTS_DIR_NAME
@@ -191,13 +226,25 @@ class WorkspaceManager:
         if not default_workspace_path.exists():
             raise FileNotFoundError(f"Default workspace directory not found: {default_workspace_path}")
         return default_workspace_path
+    
+    '''
     @classmethod
-    def identify_default_workspace_name(cls):
+    def identify_default_workspace_name(cls, workspaces_dir = None):
+        if workspaces_dir is None:
+            workspaces_dir = cls.get_workspaces_dir()
+        default_file = workspaces_dir / cls.DEFAULT_WORKSPACE_TOML_FILE_NAME
+        if not default_file.exists():
+            default_file.write_text("# Default workspace\n")
+        return str(default_file)
+    '''
+    
+    @classmethod
+    def identify_default_workspace_name(cls, workspaces_dir = None):
         """
         Class method that reads default-workspace.toml to identify the default-workspace.
         """
-         
-        workspaces_dir = cls.ROOT_DIR / cls.WORKSPACES_DIR_NAME
+        if workspaces_dir is None:
+            workspaces_dir = cls.get_workspaces_dir()
         logging.info(f"workspaces_dir = {workspaces_dir}\n")
         default_toml_path = workspaces_dir / cls.DEFAULT_WORKSPACE_TOML_FILE_NAME
 
@@ -244,16 +291,15 @@ class WorkspaceManager:
         return base / cls.APP_NAME
 
     @classmethod
-    def ensure_workspace(cls) -> Path:
+    def ensure_appdata_workspaces_dir(cls) -> Path:
         """Create workspace folder and default toml if missing."""
-        workspaces_dir = cls.get_appdata_dir() / "workspaces"
+        workspaces_dir = cls.get_appdata_dir() / cls.WORKSPACES_DIR_NAME
         workspaces_dir.mkdir(parents=True, exist_ok=True)
-
+        cls.workspaces_dir = workspaces_dir 
         default_file = workspaces_dir / cls.DEFAULT_WORKSPACE_TOML_FILE_NAME
         if not default_file.exists():
             default_file.write_text("# Default workspace config\n")
         return workspaces_dir
-
     
 def establish_default_workspace():
     workspace_name = WorkspaceManager.identify_default_workspace_name()

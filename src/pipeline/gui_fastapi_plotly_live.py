@@ -57,12 +57,32 @@ HTML_TEMPLATE = """
 async def index():
     return HTML_TEMPLATE
 
+
 @app.get("/data", response_class=JSONResponse)
 async def get_data():
+    if plot_buffer is None:
+        print("plot_buffer is None")
+        return {}
     with buffer_lock:
-        data = plot_buffer.get_all()  # Should return { label: {"x": [...], "y": [...]}, ... }
-    return data
-
+        data = plot_buffer.get_all()
+    print("Data in buffer:", data)  # <-- DEBUG
+    fixed_data = {}
+    for label, series in data.items():
+        fixed_data[label] = {
+            "x": [ts + "Z" if not ts.endswith("Z") else ts for ts in series["x"]],
+            "y": series["y"]
+        }
+    return fixed_data
+"""
+@app.get("/data", response_class=JSONResponse)
+async def get_data():
+    return {
+        "Test Series": {
+            "x": ["2025-09-05T15:00:00Z", "2025-09-05T15:05:00Z", "2025-09-05T15:10:00Z"],
+            "y": [1, 3, 2]
+        }
+    }
+"""
 def open_browser(port):
     time.sleep(1)  # Give server a moment to start
     ## Open in a new Chrome window (if installed)
@@ -71,8 +91,14 @@ def open_browser(port):
 
     webbrowser.open(f"http://127.0.0.1:{port}")
 
+#def run_gui(buffer, port=8000):
+#    global plot_buffer
+#    plot_buffer = buffer
+#    threading.Thread(target=open_browser, args=(port,), daemon=True).start()
+#    uvicorn.run("src.pipeline.gui_fastapi_plotly_live:app", host="127.0.0.1", port=port, log_level="info", reload=False)
+
 def run_gui(buffer, port=8000):
     global plot_buffer
-    plot_buffer = buffer
+    plot_buffer = buffer  # set the buffer in this process
     threading.Thread(target=open_browser, args=(port,), daemon=True).start()
-    uvicorn.run("src.pipeline.gui_fastapi_plotly_live:app", host="127.0.0.1", port=port, log_level="info", reload=False)
+    uvicorn.run(app, host="127.0.0.1", port=port, log_level="info", reload=False)  # <- reload=False

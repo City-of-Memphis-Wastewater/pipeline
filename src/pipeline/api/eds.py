@@ -165,7 +165,7 @@ class EdsClient:
     
     @staticmethod
     #def create_tabular_request(session: object, api_url: str, starttime: int, endtime: int, points: list):
-    def create_tabular_request(session, api_url, starttime, endtime, points, step_seconds = 300):
+    def create_tabular_request_(session, api_url, starttime, endtime, points, step_seconds = 300):
         
         data = {
             'period': {
@@ -188,6 +188,51 @@ class EdsClient:
             #raise ValueError(f"JSON not returned with {inspect.currentframe().f_code.co_name} response")
             response = session.post(f"{api_url}/trend/tabular", json=data, verify=False)
             #print(f"response = {response}")
+
+    @staticmethod
+    def create_tabular_request(session, api_url, starttime, endtime, points, step_seconds=300):
+        """
+        Submit a tabular trend request. Returns request id on success, or None if failed.
+        """
+
+        data = {
+            "period": {
+                "from": starttime,
+                "till": endtime,
+            },
+            "step": step_seconds,
+            "items": [
+                {
+                    "pointId": {"iess": p},
+                    "shadePriority": "DEFAULT",
+                    "function": "AVG",
+                }
+                for p in points
+            ],
+        }
+
+        try:
+            res = session.post(f"{api_url}/trend/tabular", json=data, verify=False)
+        except Exception as e:
+            logger.error(f"Request failed to {api_url}/trend/tabular: {e}")
+            return None
+
+        if res.status_code != 200:
+            logger.error(f"Bad status {res.status_code} from server: {res.text}")
+            return None
+
+        try:
+            payload = res.json()
+        except Exception:
+            logger.error(f"Non-JSON response: {res.text}")
+            return None
+
+        req_id = payload.get("id")
+        if not req_id:
+            logger.error(f"No request id in response: {payload}")
+            return None
+
+        return req_id
 
     @staticmethod
     def wait_for_request_execution_session(session, api_url, req_id):
@@ -726,7 +771,7 @@ def demo_eds_webplot_point_live():
     gui_fastapi_plotly_live.run_gui(data_buffer)
 
 @log_function_call(level=logging.DEBUG)    
-def load_historic_data(session, iess_list, starttime, endtime):    
+def load_historic_data(session, iess_list, starttime, endtime, step_seconds):    
     
 
     starttime = TimeManager(starttime).as_unix()
@@ -734,11 +779,13 @@ def load_historic_data(session, iess_list, starttime, endtime):
     logger.info(f"starttime = {starttime}")
     logger.info(f"endtime = {endtime}")
 
-    step_seconds = helpers.nice_step(endtime-starttime)
 
     point_list = iess_list
     api_url = str(session.base_url) 
     request_id = EdsClient.create_tabular_request(session, api_url, starttime, endtime, points=point_list, step_seconds=step_seconds)
+    if not request_id:
+        logger.warning(f"Could not create tabular request for points: {point_list}")
+        return []  # or None, depending on how you want the CLI to behave
     EdsClient.wait_for_request_execution_session(session, api_url, request_id)
     results = EdsClient.get_tabular_trend(session, request_id, point_list)
     logger.debug(f"len(results) = {len(results)}")
@@ -951,10 +998,9 @@ if __name__ == "__main__":
         demo_eds_save_graphics_export()
     elif cmd == "license":
         demo_eds_print_license()
-    elif cmd == "access-workspace""":
+    elif cmd == "access-workspace":
         if platform.system().lower() == "windows":
-            # run the Open-FileBrowser command, registered with: git clone https://github.com/city-of-memphis-wastewater/powershell-tools.git ## run `notepad $profile` #noobs 
-            #command = ["Open-FileBrowser", WorkspaceManager.get_cwd()]
+            # at this level it is correct but the get_cwd() command only knows the default workspace.
             command = ["explorer", str(WorkspaceManager.get_cwd())]
             subprocess.call(command) 
     else:
