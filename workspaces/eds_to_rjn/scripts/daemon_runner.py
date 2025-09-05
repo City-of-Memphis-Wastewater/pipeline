@@ -4,14 +4,14 @@ import logging
 import csv
 from datetime import datetime
 
-from src.pipeline.api.eds import EdsClient, identify_relevant_tables
-from src.pipeline.api.rjn import RjnClient
-from src.pipeline import helpers
-from src.pipeline.env import SecretConfig
-from src.pipeline.workspace_manager import WorkspaceManager
-from src.pipeline.queriesmanager import QueriesManager
-from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_col
-from src.pipeline.time_manager import TimeManager
+from pipeline.api.eds import EdsClient, identify_relevant_tables
+from pipeline.api.rjn import RjnClient
+from pipeline import helpers
+from pipeline.env import SecretConfig
+from pipeline.workspace_manager import WorkspaceManager
+from pipeline.queriesmanager import QueriesManager
+from pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_col
+from pipeline.time_manager import TimeManager
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)

@@ -1,7 +1,7 @@
 #env.__main__.py
  
 import yaml
-from src.pipeline.workspace_manager import WorkspaceManager 
+from pipeline.workspace_manager import WorkspaceManager 
 
 '''
 migrate this to ConfigurationManager

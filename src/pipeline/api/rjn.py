@@ -2,11 +2,11 @@ import requests
 import logging
 from typing import Union
 
-from src.pipeline.calls import make_request, call_ping
-from src.pipeline.env import find_urls
-from src.pipeline.decorators import log_function_call
-from src.pipeline import helpers
-from src.pipeline.time_manager import TimeManager
+from pipeline.calls import make_request, call_ping
+from pipeline.env import find_urls
+from pipeline.decorators import log_function_call
+from pipeline import helpers
+from pipeline.time_manager import TimeManager
 
 logger = logging.getLogger(__name__)
 
@@ -106,8 +106,8 @@ class RjnClient:
                 
     @staticmethod
     def ping():
-        from src.pipeline.env import SecretConfig
-        from src.pipeline.workspace_manager import WorkspaceManager
+        from pipeline.env import SecretConfig
+        from pipeline.workspace_manager import WorkspaceManager
         workspace_name = WorkspaceManager.identify_default_workspace_name()
         workspace_manager = WorkspaceManager(workspace_name)
         secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_secrets_file_path())
@@ -123,12 +123,12 @@ class RjnClient:
 
 @log_function_call(level=logging.DEBUG)
 def demo_rjn_ping():
-    from src.pipeline.calls import call_ping
-    from src.pipeline.env import SecretConfig
-    from src.pipeline.workspace_manager import WorkspaceManager
+    from pipeline.calls import call_ping
+    from pipeline.env import SecretConfig
+    from pipeline.workspace_manager import WorkspaceManager
 
-    from src.pipeline.env import SecretConfig
-    from src.pipeline.workspace_manager import WorkspaceManager
+    from pipeline.env import SecretConfig
+    from pipeline.workspace_manager import WorkspaceManager
     workspace_name = WorkspaceManager.identify_default_workspace_name()
     workspace_manager = WorkspaceManager(workspace_name)
 

@@ -36,9 +36,9 @@ import typer
 import importlib
 from pathlib import Path
 
-from src.pipeline.env import SecretConfig
-#from src.pipeline.helpers import setup_logging
-from src.pipeline.workspace_manager import WorkspaceManager
+from pipeline.env import SecretConfig
+#from pipeline.helpers import setup_logging
+from pipeline.workspace_manager import WorkspaceManager
 
 app = typer.Typer(help="CLI for running pipeline workspaces.")
 
@@ -102,9 +102,9 @@ def trend(
     from pipeline.api.eds import EdsClient, load_historic_data
     from pipeline import helpers
     from pipeline.queriesmanager import QueriesManager
-    from src.pipeline.plotbuffer import PlotBuffer
-    from src.pipeline import gui_fastapi_plotly_live
-    from src.pipeline import environment
+    from pipeline.plotbuffer import PlotBuffer
+    from pipeline import gui_fastapi_plotly_live
+    from pipeline import environment
 
     if zd.lower() == "stiles":
         zd = "WWTF"
@@ -179,11 +179,11 @@ def demo_rjn_ping():
     """
     Demo function to ping RJN service.
     """
-    from src.pipeline.api.rjn import RjnClient
-    from src.pipeline.calls import call_ping
-    from src.pipeline.env import SecretConfig
-    from src.pipeline.workspace_manager import WorkspaceManager
-    from src.pipeline import helpers
+    from pipeline.api.rjn import RjnClient
+    from pipeline.calls import call_ping
+    from pipeline.env import SecretConfig
+    from pipeline.workspace_manager import WorkspaceManager
+    from pipeline import helpers
     import logging
 
     logger = logging.getLogger(__name__)
@@ -208,9 +208,9 @@ def ping_rjn_services():
     """
     Ping all RJN services found in the secrets configuration.
     """
-    from src.pipeline.calls import find_urls, call_ping
-    from src.pipeline.env import SecretConfig
-    from src.pipeline.workspace_manager import WorkspaceManager
+    from pipeline.calls import find_urls, call_ping
+    from pipeline.env import SecretConfig
+    from pipeline.workspace_manager import WorkspaceManager
     import logging
 
     logger = logging.getLogger(__name__)
@@ -232,9 +232,9 @@ def ping_eds_services():
     """
     Ping all EDS services found in the secrets configuration.
     """
-    from src.pipeline.calls import find_urls, call_ping
-    from src.pipeline.env import SecretConfig
-    from src.pipeline.workspace_manager import WorkspaceManager
+    from pipeline.calls import find_urls, call_ping
+    from pipeline.env import SecretConfig
+    from pipeline.workspace_manager import WorkspaceManager
     import logging
 
     logger = logging.getLogger(__name__)

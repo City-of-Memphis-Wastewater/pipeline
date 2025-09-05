@@ -6,8 +6,8 @@ import csv
 from collections import defaultdict
 import logging
 
-from src.pipeline import helpers
-from src.pipeline.time_manager import TimeManager
+from pipeline import helpers
+from pipeline.time_manager import TimeManager
 
 logger = logging.getLogger(__name__)
 '''
@@ -52,7 +52,7 @@ class QueriesManager:
     
     def get_most_recent_successful_timestamp(self, api_id):# -> int:
         print("QueriesManager.get_most_recent_successful_timestamp()")
-        from src.pipeline.helpers import load_toml
+        from pipeline.helpers import load_toml
         try:
             config = load_toml(self.workspace_manager.get_configuration_file_path())
             timezone_config = config["settings"]["timezone"]

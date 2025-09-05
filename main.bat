@@ -1,7 +1,7 @@
 @echo off
 
 REM Log current timestamp with TimeManager formatting
-poetry run python -c "from src.pipeline.time_manager import TimeManager; print('----', TimeManager.now().as_formatted_date_time(), '----')" >> logs/daemon_log.txt
+poetry run python -c "from pipeline.time_manager import TimeManager; print('----', TimeManager.now().as_formatted_date_time(), '----')" >> logs/daemon_log.txt
 
 REM Show Poetry version
 poetry --version
