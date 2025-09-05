@@ -104,5 +104,5 @@ def find_urls(config_dict):
     return url_set
 
 if __name__ == "__main__":
-    from src.pipeline.helpers import function_view
+    from pipeline.helpers import function_view
     function_view()

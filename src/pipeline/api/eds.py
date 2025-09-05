@@ -11,11 +11,11 @@ import platform
 import mysql.connector
 from functools import lru_cache
 
-from src.pipeline.env import SecretConfig
-from src.pipeline.workspace_manager import WorkspaceManager
-from src.pipeline import helpers
-from src.pipeline.decorators import log_function_call
-from src.pipeline.time_manager import TimeManager
+from pipeline.env import SecretConfig
+from pipeline.workspace_manager import WorkspaceManager
+from pipeline import helpers
+from pipeline.decorators import log_function_call
+from pipeline.time_manager import TimeManager
 
 logger = logging.getLogger(__name__)
 #logger.setLevel(logging.INFO)
@@ -214,7 +214,7 @@ class EdsClient:
         """
         import socket
         from urllib.parse import urlparse
-        from src.pipeline.helpers import get_lan_ip_address_of_current_machine
+        from pipeline.helpers import get_lan_ip_address_of_current_machine
         # Check if the session_key exists in the secrets_dict
         url = secrets_dict["eds_apis"][session_key]["url"]
         parsed = urlparse(url)
@@ -575,7 +575,7 @@ def _demo_eds_start_session_CoM_WWTPs():
 
 @log_function_call(level=logging.DEBUG)
 def demo_eds_print_point_live_alt():
-    from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_col
+    from pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_col
 
     workspace_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
     queries_file_path_list = workspace_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
@@ -603,7 +603,7 @@ def demo_eds_print_point_live_alt():
 
 @log_function_call(level=logging.DEBUG)
 def demo_eds_print_point_live():
-    from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_col
+    from pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_col
     from workspaces.eds_to_rjn.code import collector
     workspace_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
     queries_file_path_list = workspace_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
@@ -629,10 +629,10 @@ def demo_eds_print_point_live():
 def demo_eds_plot_point_live():
     from threading import Thread
 
-    from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_col
+    from pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_col
     from workspaces.eds_to_rjn.code import collector, sanitizer
-    from src.pipeline.plotbuffer import PlotBuffer
-    from src.pipeline import gui_mpl_live
+    from pipeline.plotbuffer import PlotBuffer
+    from pipeline import gui_mpl_live
 
     # Initialize the workspace based on configs and defaults, in the demo initializtion script
     workspace_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
@@ -674,11 +674,11 @@ def demo_eds_plot_point_live():
 def demo_eds_webplot_point_live():
     from threading import Thread
 
-    from src.pipeline.queriesmanager import QueriesManager, load_query_rows_from_csv_files, group_queries_by_col
+    from pipeline.queriesmanager import QueriesManager, load_query_rows_from_csv_files, group_queries_by_col
     from workspaces.eds_to_rjn.code import collector, sanitizer
-    from src.pipeline.plotbuffer import PlotBuffer
-    #from src.pipeline import gui_flaskplotly_live
-    from src.pipeline import gui_fastapi_plotly_live
+    from pipeline.plotbuffer import PlotBuffer
+    #from pipeline import gui_flaskplotly_live
+    from pipeline import gui_fastapi_plotly_live
 
     # Initialize the workspace based on configs and defaults, in the demo initializtion script
     workspace_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
@@ -801,8 +801,8 @@ def demo_eds_save_graphics_export():
 @log_function_call(level=logging.DEBUG)
 def demo_eds_print_tabular_trend():
     
-    from src.pipeline.queriesmanager import QueriesManager
-    from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_col
+    from pipeline.queriesmanager import QueriesManager
+    from pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_col
     
     workspace_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
     
@@ -837,8 +837,8 @@ def demo_eds_print_tabular_trend():
 
 @log_function_call(level=logging.DEBUG)
 def demo_eds_local_database_access():
-    from src.pipeline.queriesmanager import QueriesManager
-    from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_col
+    from pipeline.queriesmanager import QueriesManager
+    from pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_col
     workspace_name = 'eds_to_rjn' # workspace_name = WorkspaceManager.identify_default_workspace_name()
     workspace_manager = WorkspaceManager(workspace_name)
     queries_manager = QueriesManager(workspace_manager)
@@ -912,7 +912,7 @@ def demo_eds_print_license():
 
 @log_function_call(level=logging.DEBUG)
 def demo_eds_ping():
-    from src.pipeline.calls import call_ping
+    from pipeline.calls import call_ping
     workspace_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
     session_maxson = sessions["Maxson"]
 
@@ -926,7 +926,7 @@ if __name__ == "__main__":
     - print only which vars succeed
     '''
     import sys
-    from src.pipeline.logging_setup import setup_logging
+    from pipeline.logging_setup import setup_logging
     cmd = sys.argv[1] if len(sys.argv) > 1 else "default"
 
     setup_logging()

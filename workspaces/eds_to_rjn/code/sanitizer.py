@@ -8,7 +8,7 @@ I like it when data gathered is data returned. Sanitization should not happen du
 So. We need explicit and discernible sanitization scenarios, called a scripted approach, following the preparation, collection, and aggregation, insert buzz words here, etc.
 '''
 from datetime import datetime
-from src.pipeline.helpers import round_datetime_to_nearest_past_five_minutes
+from pipeline.helpers import round_datetime_to_nearest_past_five_minutes
 
 def sanitize_data_for_printing(data):
     #data_sanitized_for_printing = data

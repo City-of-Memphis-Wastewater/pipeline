@@ -3,9 +3,9 @@ import time
 import logging
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from src.pipeline import helpers
-from src.pipeline.plotbuffer import PlotBuffer  # Adjust import path as needed
-from src.pipeline.time_manager import TimeManager
+from pipeline import helpers
+from pipeline.plotbuffer import PlotBuffer  # Adjust import path as needed
+from pipeline.time_manager import TimeManager
 
 logger = logging.getLogger(__name__)
 

@@ -4,8 +4,8 @@ from collections import defaultdict
 import os
 from pprint import pprint
 
-from src.pipeline.api.rjn import RjnClient #send_data_to_rjn2
-from src.pipeline.time_manager import TimeManager
+from pipeline.api.rjn import RjnClient #send_data_to_rjn2
+from pipeline.time_manager import TimeManager
 
 
 def aggregate_and_send(session_rjn, data_file, checkpoint_file):
