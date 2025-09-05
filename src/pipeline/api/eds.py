@@ -547,7 +547,7 @@ def fetch_eds_data_row(session, iess):
 @log_function_call(level=logging.DEBUG) 
 def _demo_eds_start_session_CoM_WWTPs():
     
-    workspace_name = WorkspaceManager.identify_default_workspace()
+    workspace_name = WorkspaceManager.identify_default_workspace_name()
     workspace_manager = WorkspaceManager(workspace_name)
 
     secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_secrets_file_path())
@@ -695,34 +695,6 @@ def demo_eds_webplot_point_live():
     session = sessions[key]
     queries_maxson = queries_defaultdictlist_grouped_by_session_key.get(key,[])
 
-    def load_historic_data_back_to_last_success():
-        starttime = queries_manager.get_most_recent_successful_timestamp(api_id="Maxson")
-        logger.debug(f"queries_manager.get_most_recent_successful_timestamp(), key = {'Maxson'}")
-        endtime = helpers.get_now_time_rounded(workspace_manager)
-        starttime = TimeManager(starttime).as_unix()
-        endtime = TimeManager(endtime).as_unix() 
-        logger.info(f"starttime = {starttime}")
-        logger.info(f"endtime = {endtime}")
-
-        point_list = [row['iess'] for row in queries_defaultdictlist_grouped_by_session_key.get(key,[])]
-        api_url = str(session.base_url) 
-        request_id = EdsClient.create_tabular_request(session, api_url, starttime, endtime, points=point_list)
-        EdsClient.wait_for_request_execution_session(session, api_url, request_id)
-        results = EdsClient.get_tabular_trend(session, request_id, point_list)
-        logger.debug(f"len(results) = {len(results)}")
-
-        for idx, rows in enumerate(results):
-            for row in rows:
-                label = f"{row.get('rjn_entityid')} ({row.get('units')})"
-                ts = helpers.iso(row.get("ts"))
-                av = row.get("value")
-                
-                if ts is not None and av is not None:
-                    data_buffer.append(label, ts, av)
-                    logger.debug(f"Historic: {label} {round(av,2)} @ {ts}")
-                    
-        queries_manager.update_attempt("Maxson")
-
     def collect_loop():
         while True:
             responses = collector.collect_live_values(session, queries_maxson)
@@ -744,7 +716,7 @@ def demo_eds_webplot_point_live():
                     logger.info(f"Live: {label} {round(av,2)} {un}")
             time.sleep(1)
     if False:
-        load_historic_data_back_to_last_success()
+        load_historic_data()
     collector_thread = Thread(target=collect_loop, daemon=True)
     collector_thread.start()
 
@@ -752,6 +724,29 @@ def demo_eds_webplot_point_live():
     #gui_flaskplotly_live.run_gui(data_buffer)
     gui_fastapi_plotly_live.run_gui(data_buffer)
 
+@log_function_call(level=logging.DEBUG)    
+def load_historic_data(queries_manager, workspace_manager, session, iess_list, starttime=None, endtime=None):    
+    if starttime is None:
+        # back_to_last_success = True
+        starttime = queries_manager.get_most_recent_successful_timestamp(api_id=zd)
+
+    if endtime is None:
+        endtime = helpers.get_now_time_rounded(workspace_manager)
+
+    starttime = TimeManager(starttime).as_unix()
+    endtime = TimeManager(endtime).as_unix() 
+    logger.info(f"starttime = {starttime}")
+    logger.info(f"endtime = {endtime}")
+
+    point_list = iess_list
+    api_url = str(session.base_url) 
+    request_id = EdsClient.create_tabular_request(session, api_url, starttime, endtime, points=point_list)
+    EdsClient.wait_for_request_execution_session(session, api_url, request_id)
+    results = EdsClient.get_tabular_trend(session, request_id, point_list)
+    logger.debug(f"len(results) = {len(results)}")
+    return results
+    
+                
 
 @log_function_call(level=logging.DEBUG)    
 def demo_eds_plot_trend():
@@ -812,6 +807,7 @@ def demo_eds_print_tabular_trend():
     queries_file_path_list = workspace_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file
     logger.debug(f"queries_file_path_list = {queries_file_path_list}")
     queries_dictlist_unfiltered = load_query_rows_from_csv_files(queries_file_path_list) # you can edit your queries files here
+    
     queries_defaultdictlist_grouped_by_session_key = group_queries_by_col(queries_dictlist_unfiltered,'zd')
     
     for key, session in sessions.items():
@@ -840,7 +836,7 @@ def demo_eds_print_tabular_trend():
 def demo_eds_local_database_access():
     from src.pipeline.queriesmanager import QueriesManager
     from src.pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_col
-    workspace_name = 'eds_to_rjn' # workspace_name = WorkspaceManager.identify_default_workspace()
+    workspace_name = 'eds_to_rjn' # workspace_name = WorkspaceManager.identify_default_workspace_name()
     workspace_manager = WorkspaceManager(workspace_name)
     queries_manager = QueriesManager(workspace_manager)
     queries_file_path_list = workspace_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file

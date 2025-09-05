@@ -49,7 +49,7 @@ def demo_secrets():
     caed defaut_workspace.toml - Clayton Bennett 26 April 2025.
     However this call can also be made if another project is made the active project.
     """
-    workspace_name = WorkspaceManager.identify_default_workspace()
+    workspace_name = WorkspaceManager.identify_default_workspace_name()
     workspace_manager = WorkspaceManager(workspace_name)
     config = SecretConfig.load_config(secrets_file_path = workspace_manager.get_secrets_file_path())
     secrets = SecretConfig(config)
