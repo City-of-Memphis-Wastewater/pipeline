@@ -1,9 +1,4 @@
 '''
-import typer
-from pathlib import Path
-
-app = typer.Typer()
-
 @app.command()
 def list_workspaces(workspaces_dir: Path = Path("workspaces")):
     """List valid mulch workspaces in the given directory."""
@@ -14,43 +9,58 @@ def list_workspaces(workspaces_dir: Path = Path("workspaces")):
         if path.is_dir() and (path / ".mulch").is_dir():
             typer.echo(f"🪴 {path.name}")
 
-@app.command()
-def list_mulch_folders(start: Path = Path(".")):
-    """Recursively find folders containing a .mulch/ directory."""
-    for path in start.rglob(".mulch"):
-        typer.echo(f"📁 {path.parent}")
-
-@app.command()
-def inspect(workspace: Path):
-    """Show scaffold or metadata info from a workspace."""
-    metadata = workspace / ".mulch" / "mulch-scaffold.json"
-    if metadata.exists():
-        typer.echo(f"🔍 {workspace.name}: {metadata}")
-        typer.echo(metadata.read_text())
-    else:
-        typer.echo(f"No scaffold found in {workspace}")
 '''
-# src/pipeline/cli.py
-
 import typer
 import importlib
 from pathlib import Path
+from importlib.metadata import version, PackageNotFoundError
 
 from pipeline.env import SecretConfig
 #from pipeline.helpers import setup_logging
 from pipeline.workspace_manager import WorkspaceManager
 
+### Versioning
+def print_version(value: bool):
+    if value:
+        try:
+            typer.secho(f"mulch {MULCH_VERSION}",fg=typer.colors.GREEN, bold=True)
+        except PackageNotFoundError:
+            typer.echo("Version info not found")
+        raise typer.Exit()
+try:
+    MULCH_VERSION = version("mulch")
+    __version__ = version("mulch")
+except PackageNotFoundError:
+    MULCH_VERSION = "unknown"
+
+try:
+    from importlib.metadata import version
+    __version__ = version("mulch")
+except PackageNotFoundError:
+    # fallback if running from source
+    try:
+        with open(Path(__file__).parent / "VERSION") as f:
+            __version__ = f.read().strip()
+    except FileNotFoundError:
+        __version__ = "dev"
+
+### Pipeline CLI
+
 app = typer.Typer(help="CLI for running pipeline workspaces.")
 
 
 @app.callback(invoke_without_command=True)
-def main(ctx: typer.Context):
+def main(
+    ctx: typer.Context,
+    version: bool = typer.Option(None, "--version", callback=lambda v: print_version(v), is_eager=True, help="Show the version and exit.")
+    ):
     """
     Pipeline CLI – run workspaces built on the pipeline framework.
     """
     if ctx.invoked_subcommand is None:
         typer.echo(ctx.get_help())
         raise typer.Exit()
+
 
 @app.command()
 def run(
@@ -104,6 +114,8 @@ def trend(
     from pipeline.plotbuffer import PlotBuffer
     from pipeline import gui_fastapi_plotly_live
     from pipeline import environment
+    from pipeline.workspace_manager import WorkspaceManager
+    ws_dir = WorkspaceManager.ensure_workspace()
 
     # must set up %appdata for pip/x installation. Use mulch or yeoman for this. And have a secrets filler.
     if workspace is None:
