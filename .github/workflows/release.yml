@@ -1,0 +1,44 @@
+name: Build and Publish to PyPI
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Install Poetry
+        run: |
+          python -m pip install --upgrade pip
+          pip install poetry
+
+      - name: Configure Poetry (disable virtualenv)
+        run: poetry config virtualenvs.create false
+
+      - name: Install dependencies (without dev dependencies)
+        run: poetry install --without dev
+
+      - name: Build package
+        run: poetry build
+
+      - name: Publish package
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        run: |
+          python -m pip install --upgrade twine
+          twine upload dist/*
+          if [ -d "dist" ]; then
+            rm -rf dist/ # bash
+          fi
+
