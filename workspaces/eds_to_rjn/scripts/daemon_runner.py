@@ -38,7 +38,7 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
 
     #test_connection_to_internet()
 
-    workspace_name = 'eds_to_rjn' # workspace_name = WorkspaceManager.identify_default_workspace()
+    workspace_name = 'eds_to_rjn' # workspace_name = WorkspaceManager.identify_default_workspace_name()
     workspace_manager = WorkspaceManager(workspace_name)
     queries_manager = QueriesManager(workspace_manager)
     queries_file_path_list = workspace_manager.get_default_query_file_paths_list() # use default identified by the default-queries.toml file

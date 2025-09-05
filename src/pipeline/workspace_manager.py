@@ -158,10 +158,10 @@ class WorkspaceManager:
     def get_cwd(cls) -> Path:
         """Return current workspace directory, not the source code root, as a Path instance."""
         # Quick and dirty, not representative of the complex truth or opportunity.
-        #cls.ROOT_DIR / 'workspaces' / cls.identify_default_workspace()
+        #cls.ROOT_DIR / 'workspaces' / cls.identify_default_workspace_name()
         
         # Pre-Exisiting function, generated some time before July 24, 2025. May as well use that instead. It is good to use your own library. Benefit from having built it.
-        return cls.identify_default_workspace()
+        return cls.identify_default_workspace_name()
 
     @classmethod
     def get_all_workspaces_names(cls):
@@ -179,7 +179,18 @@ class WorkspaceManager:
         return workspace_dirs
 
     @classmethod
-    def identify_default_workspace(cls):
+    def identify_default_workspace_path(cls):
+        """
+        Class method that reads default-workspace.toml to identify the default-workspace path.
+        """
+        workspace_name = cls.identify_default_workspace_name()
+        workspaces_dir = cls.ROOT_DIR / cls.WORKSPACES_DIR_NAME
+        default_workspace_path = workspaces_dir / workspace_name
+        if not default_workspace_path.exists():
+            raise FileNotFoundError(f"Default workspace directory not found: {default_workspace_path}")
+        return default_workspace_path
+    @classmethod
+    def identify_default_workspace_name(cls):
         """
         Class method that reads default-workspace.toml to identify the default-workspace.
         """
@@ -220,7 +231,7 @@ class WorkspaceManager:
         return self.workspace_name
     
 def establish_default_workspace():
-    workspace_name = WorkspaceManager.identify_default_workspace()
+    workspace_name = WorkspaceManager.identify_default_workspace_name()
     logging.info(f"workspace_name = {workspace_name}")
     workspace_manager = WorkspaceManager(workspace_name)
     logging.info(f"WorkspaceManager.get_workspace_dir() = {WorkspaceManager.get_workspace_dir()}")

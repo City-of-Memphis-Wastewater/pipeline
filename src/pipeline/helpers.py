@@ -43,6 +43,9 @@ def round_datetime_to_nearest_past_five_minutes(dt):
     return dt.replace(minute=rounded_minute, second=0, microsecond=0)
 
 def get_now_time_rounded(workspace_manager):# -> int:
+    '''
+    workspace_manager is included here so that references can be made to the configured timezone
+    '''
     logger.debug(f"helpers.get_now_time_rounded(workspace_manager)")
     nowtime = round_datetime_to_nearest_past_five_minutes(datetime.now())
     logger.debug(f"rounded nowtime = {nowtime}")
