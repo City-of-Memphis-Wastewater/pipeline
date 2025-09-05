@@ -9,13 +9,15 @@ packages = [
     { include = "pipeline", from = "src" },
 	{ include = "workspaces", from = "." }
 ] # This makes `pipeline` available as an importable top-level module
+homepage = "https://github.com/city-of-memphis-wastewater/pipeline"
+repository = "https://github.com/city-of-memphis-wastewater/pipeline"
 
 [tool.poetry.scripts]
-time-manager = "pipeline.time_manager:main"
-workspace-manager = "pipeline.workspace_manager:main"
-collector = "pipeline.collector:main"
-eds-client = "pipeline.api.eds:main"
-rjn-client = "pipeline.api.rjn:main"
+#time-manager = "pipeline.time_manager:main"
+#workspace-manager = "pipeline.workspace_manager:main" # included in init
+#collector = "pipeline.collector:main"
+#eds-client = "pipeline.api.eds:main"
+#rjn-client = "pipeline.api.rjn:main"
 pipeline = "pipeline.cli:app" # for installation of pipeline as a cli. Ex: pipeline trend M100FI -s June3 -f June17
 
 

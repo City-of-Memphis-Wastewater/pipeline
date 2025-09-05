@@ -468,14 +468,14 @@ files = [
 
 [[package]]
 name = "mulch"
-version = "0.2.8"
-description = "Workspace Factory CLI for initializing standard workspace folders in /workspaces/ and generating an introspective WorkspaceManager class in /src/."
+version = "0.2.53"
+description = "Pythonic Typer CLI for bootstrapping standard and templated workspaces and projects. Generate introspective sourcecode workspace_manager.py Path quarterback. Controlled per-directory scaffolds using the mulch.toml file. Stealth options available for directories shared between dev and non-dev team members."
 optional = false
-python-versions = ">=3.11"
+python-versions = "<4.0,>=3.11"
 groups = ["main"]
 files = [
-    {file = "mulch-0.2.8-py3-none-any.whl", hash = "sha256:4b221aa62b225e421cd98688a5e520200f0683d01ced89bb6ceb35c15f1727f7"},
-    {file = "mulch-0.2.8.tar.gz", hash = "sha256:0ddae540675a5715266b3a35440b838c987ac33d451a521dfb09a2961e24b967"},
+    {file = "mulch-0.2.53-py3-none-any.whl", hash = "sha256:b4a31ec712fb89ccc42dc80b380a9bc23b4b555834ef1c03c98d2936a807c159"},
+    {file = "mulch-0.2.53.tar.gz", hash = "sha256:f39f02912b2ee9a9c5d176dabee5a43661cd5a364e02335161fa03be616f3ca1"},
 ]
 
 [package.dependencies]
