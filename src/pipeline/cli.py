@@ -89,8 +89,8 @@ def typical(zd: str):
 @app.command()
 def trend(
     idcs: list[str] = typer.Argument(..., help="Provide known idcs values that match the given zd."), # , "--idcs", "-i"
-    start: str = typer.Option(None, "--start", "-s", help="Index from 'mulch order' to choose scaffold source."),
-    finish: str = typer.Option(None, "--finish", "-f", help="Reference a known template for workspace organization."),
+    starttime: str = typer.Option(None, "--start", "-s", help="Index from 'mulch order' to choose scaffold source."),
+    endtime: str = typer.Option(None, "--end", "-end", help="Reference a known template for workspace organization."),
     zd: str = typer.Option('Maxson', "--zd", "-z", help = "Define the EDS ZD from your secrets file. This must correlate with your idcs point selection(s)."),
     workspace: str = typer.Option(WorkspaceManager.identify_default_workspace_name(),"--workspace","-w", help = "Provide the name of the workspace you want to use, for the secrets.yaml credentials and for the timezone config. If a start time is not provided, the workspace queries can checked for the most recent successful timestamp. ")
     ):
@@ -104,6 +104,7 @@ def trend(
     from pipeline.queriesmanager import QueriesManager
     from src.pipeline.plotbuffer import PlotBuffer
     from src.pipeline import gui_fastapi_plotly_live
+    from src.pipeline import environment
 
     if zd.lower() == "stiles":
         zd = "WWTF"
@@ -129,21 +130,19 @@ def trend(
     session.zd = secrets_dict.get("eds_apis", {}).get(zd, {}).get("zd")
     queries_manager = QueriesManager(wm)
 
-    if start is None:
+    if starttime is None:
         # back_to_last_success = True
         dt_start = queries_manager.get_most_recent_successful_timestamp(api_id=zd)
     else:
-        #dt_start = parser.parse(start)
-        dt_start = pendulum.parse(start, strict=False)
-    if finish is None:
+        dt_start = pendulum.parse(starttime, strict=False)
+    if endtime is None:
         dt_finish = helpers.get_now_time_rounded(wm)
     else:
-        #dt_finish = parser.parse(finish)
-        dt_finish = pendulum.parse(finish, strict=False)
+        dt_finish = pendulum.parse(endtime, strict=False)
 
     # Should automatically choose time step granularity based on time length; map 
     
-    results = load_historic_data(queries_manager, wm, session, iess_list, starttime=dt_start, endtime=dt_finish) 
+    results = load_historic_data(queries_manager, wm, session, iess_list, dt_start, dt_finish) 
     
     data_buffer = PlotBuffer()
     for idx, rows in enumerate(results):
@@ -153,7 +152,12 @@ def trend(
             av = row.get("value")
             data_buffer.append(label, ts, av)
     
-    gui_fastapi_plotly_live.run_gui(data_buffer)
+    if not environment.matplotlib_enabled():
+        gui_fastapi_plotly_live.run_gui(data_buffer)
+    else:
+        from pipeline import gui_mpl_live
+        gui_mpl_live.run_gui(data_buffer)
+
 
 
 @app.command()
