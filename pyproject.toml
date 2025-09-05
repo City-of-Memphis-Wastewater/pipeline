@@ -27,7 +27,7 @@ testpaths = ["tests"]
 pythonpath = ["src", "."]
 
 [tool.poetry.scripts]
-pipeline = "pipeline.cli:app" # for installation of pipeline as a cli. Ex: pipeline M100FI -s June3 -f June17
+pipeline = "pipeline.cli:app" # for installation of pipeline as a cli. Ex: pipeline trend M100FI -s June3 -f June17
 
 [tool.poetry.dependencies]
 python = ">=3.11,<4.0.0"
