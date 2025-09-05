@@ -3,6 +3,8 @@ import time
 import logging
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import matplotlib.dates as mdates
+from datetime import datetime, timedelta
 from pipeline import helpers
 from pipeline.plotbuffer import PlotBuffer  # Adjust import path as needed
 from pipeline.time_manager import TimeManager
@@ -10,28 +12,6 @@ from pipeline.time_manager import TimeManager
 logger = logging.getLogger(__name__)
 
 PADDING_RATIO = 0.25
-
-def compute_padded_bounds(data):
-    all_x_vals = []
-    all_y_vals = []
-
-    for series in data.values():
-        all_x_vals.extend(series["x"])
-        all_y_vals.extend(series["y"])
-
-    if not all_x_vals or not all_y_vals:
-        return (0, 1), (0, 1)
-
-    x_min, x_max = min(all_x_vals), max(all_x_vals)
-    y_min, y_max = min(all_y_vals), max(all_y_vals)
-
-    x_pad = max((x_max - x_min) * PADDING_RATIO, 1.0)
-    y_pad = max((y_max - y_min) * PADDING_RATIO, 1.0)
-
-    padded_x = (x_min - x_pad, x_max + x_pad)
-    padded_y = (y_min - y_pad, y_max + y_pad)
-
-    return padded_x, padded_y
 
 def run_gui(buffer: PlotBuffer, update_interval_ms=1000):
     """
@@ -45,6 +25,11 @@ def run_gui(buffer: PlotBuffer, update_interval_ms=1000):
     ax.set_title("Live Pipeline Data")
     ax.set_xlabel("Time")
     ax.set_ylabel("Value")
+    # Auto-locate ticks and auto-format dates
+    locator = mdates.AutoDateLocator()
+    formatter = mdates.AutoDateFormatter(locator)
+    ax.xaxis.set_major_locator(locator)
+    ax.xaxis.set_major_formatter(formatter)
 
     lines = {}
     legend_labels = []
@@ -80,11 +65,6 @@ def run_gui(buffer: PlotBuffer, update_interval_ms=1000):
             else:
                 lines[label].set_data(x_vals, y_vals)
 
-        # Adjust axes limits with padding
-        padded_x, padded_y = compute_padded_bounds(data)
-        ax.set_xlim(padded_x)
-        ax.set_ylim(padded_y)
-
         # Format x-axis ticks as human readable time strings
 
         # Tick positions are x values at those indices
@@ -111,3 +91,37 @@ def run_gui(buffer: PlotBuffer, update_interval_ms=1000):
     plt.tight_layout()
     plt.show()
 
+def show_static(buffer: PlotBuffer):
+    """
+    Show a static matplotlib plot of the current PlotBuffer contents,
+    with automatic date formatting based on time span.
+    """
+    plt.style.use('ggplot')
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.set_title("Static Pipeline Data")
+    ax.set_xlabel("Time")
+    ax.set_ylabel("Value")
+
+    data = buffer.get_all()
+    if not data:
+        ax.text(0.5, 0.5, "No data to display", ha='center', va='center')
+        plt.show()
+        return
+
+    for label, series in data.items():
+        # Convert strings to datetime objects for better handling
+        x_vals = [TimeManager(ts).as_datetime() for ts in series["x"]]
+        y_vals = series["y"]
+
+        ax.plot(x_vals, y_vals, marker='o', linestyle='-', label=label)
+
+    # Let matplotlib auto-locate ticks and auto-format
+    locator = mdates.AutoDateLocator()
+    formatter = mdates.AutoDateFormatter(locator)
+    ax.xaxis.set_major_locator(locator)
+    ax.xaxis.set_major_formatter(formatter)
+
+    plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
+    ax.legend()
+    plt.tight_layout()
+    plt.show()

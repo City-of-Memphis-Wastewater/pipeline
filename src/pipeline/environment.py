@@ -12,11 +12,13 @@ def vercel():
     return False # hard code this
 
 def matplotlib_enabled():
+    #print(f"is_termux() = {is_termux()}")
     if is_termux():
         return False
     else:
         try:
             import matplotlib
+            return True
         except ImportError:
             return False
         
