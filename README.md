@@ -22,7 +22,7 @@ Check connectivity:
 ```
 poetry run python -m src.pipeline.api.eds ping
 poetry run python -m src.pipeline.api.rjn ping
-```\
+```
 Other commands:
 ```
 .\main.bat # put the daemon into service: ill advised.
