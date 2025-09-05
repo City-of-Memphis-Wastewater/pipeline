@@ -92,7 +92,7 @@ def trend(
     starttime: str = typer.Option(None, "--start", "-s", help="Index from 'mulch order' to choose scaffold source."),
     endtime: str = typer.Option(None, "--end", "-end", help="Reference a known template for workspace organization."),
     zd: str = typer.Option('Maxson', "--zd", "-z", help = "Define the EDS ZD from your secrets file. This must correlate with your idcs point selection(s)."),
-    workspace: str = typer.Option(WorkspaceManager.identify_default_workspace_name(),"--workspace","-w", help = "Provide the name of the workspace you want to use, for the secrets.yaml credentials and for the timezone config. If a start time is not provided, the workspace queries can checked for the most recent successful timestamp. ")
+    workspace: str = typer.Option(None,"--workspace","-w", help = "Provide the name of the workspace you want to use, for the secrets.yaml credentials and for the timezone config. If a start time is not provided, the workspace queries can checked for the most recent successful timestamp. ")
     ):
     """
     Show a curve for a sensor over time.
@@ -101,10 +101,15 @@ def trend(
     import pendulum
     from pipeline.api.eds import EdsClient, load_historic_data
     from pipeline import helpers
-    from pipeline.queriesmanager import QueriesManager
     from pipeline.plotbuffer import PlotBuffer
     from pipeline import gui_fastapi_plotly_live
     from pipeline import environment
+
+    # must set up %appdata for pip/x installation. Use mulch or yeoman for this. And have a secrets filler.
+    if workspace is None:
+        WorkspaceManager.identify_default_workspace_name()
+    wm = WorkspaceManager(workspace)
+    secrets_dict = SecretConfig.load_config(secrets_file_path = wm.get_secrets_file_path())
 
     if zd.lower() == "stiles":
         zd = "WWTF"
@@ -118,20 +123,18 @@ def trend(
         idcs_to_iess_suffix = ".UNIT0@NET0"
     iess_list = [x+idcs_to_iess_suffix for x in idcs]
 
-
-    wm = WorkspaceManager(workspace)
-    secrets_dict = SecretConfig.load_config(secrets_file_path = wm.get_secrets_file_path())
-
     base_url = secrets_dict.get("eds_apis", {}).get(zd, {}).get("url").rstrip("/")
     session = EdsClient.login_to_session(api_url = base_url,
                                                 username = secrets_dict.get("eds_apis", {}).get(zd, {}).get("username"),
                                                 password = secrets_dict.get("eds_apis", {}).get(zd, {}).get("password"))
     session.base_url = base_url
     session.zd = secrets_dict.get("eds_apis", {}).get(zd, {}).get("zd")
-    queries_manager = QueriesManager(wm)
+    
 
     if starttime is None:
         # back_to_last_success = True
+        from pipeline.queriesmanager import QueriesManager
+        queries_manager = QueriesManager(wm)
         dt_start = queries_manager.get_most_recent_successful_timestamp(api_id=zd)
     else:
         dt_start = pendulum.parse(starttime, strict=False)
@@ -142,7 +145,7 @@ def trend(
 
     # Should automatically choose time step granularity based on time length; map 
     
-    results = load_historic_data(queries_manager, wm, session, iess_list, dt_start, dt_finish) 
+    results = load_historic_data(session, iess_list, dt_start, dt_finish) 
     
     data_buffer = PlotBuffer()
     for idx, rows in enumerate(results):
@@ -150,15 +153,13 @@ def trend(
             label = f"{row.get('rjn_entityid')} ({row.get('units')})"
             ts = helpers.iso(row.get("ts"))
             av = row.get("value")
-            data_buffer.append(label, ts, av)
+            data_buffer.append(label, ts, av) # needs to be adapted for multiple iess sensor results
     
     if not environment.matplotlib_enabled():
         gui_fastapi_plotly_live.run_gui(data_buffer)
     else:
         from pipeline import gui_mpl_live
         gui_mpl_live.run_gui(data_buffer)
-
-
 
 @app.command()
 def list_workspaces():

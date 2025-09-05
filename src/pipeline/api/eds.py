@@ -726,13 +726,8 @@ def demo_eds_webplot_point_live():
     gui_fastapi_plotly_live.run_gui(data_buffer)
 
 @log_function_call(level=logging.DEBUG)    
-def load_historic_data(queries_manager, workspace_manager, session, iess_list, starttime=None, endtime=None):    
-    if starttime is None:
-        # back_to_last_success = True
-        starttime = queries_manager.get_most_recent_successful_timestamp(api_id=zd)
-
-    if endtime is None:
-        endtime = helpers.get_now_time_rounded(workspace_manager)
+def load_historic_data(session, iess_list, starttime, endtime):    
+    
 
     starttime = TimeManager(starttime).as_unix()
     endtime = TimeManager(endtime).as_unix() 
