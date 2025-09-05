@@ -39,6 +39,7 @@ logs/
 !workspaces/
 !src/
 src/defunct/
+src/example/
 *.sqlite3
 dist/
 build/
