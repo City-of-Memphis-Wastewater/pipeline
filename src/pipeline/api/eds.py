@@ -165,14 +165,15 @@ class EdsClient:
     
     @staticmethod
     #def create_tabular_request(session: object, api_url: str, starttime: int, endtime: int, points: list):
-    def create_tabular_request(session, api_url, starttime, endtime, points):
+    def create_tabular_request(session, api_url, starttime, endtime, points, step_seconds = 300):
+        
         data = {
             'period': {
                 'from': starttime, 
                 'till': endtime, # must be of type int, like: int(datetime(YYYY, MM, DD, HH).timestamp()),
             },
 
-            'step': 300, # five minutes
+            'step': step_seconds, # five minutes
             'items': [{
                 'pointId': {'iess': p},
                 'shadePriority': 'DEFAULT',
@@ -738,9 +739,11 @@ def load_historic_data(queries_manager, workspace_manager, session, iess_list, s
     logger.info(f"starttime = {starttime}")
     logger.info(f"endtime = {endtime}")
 
+    step_seconds = helpers.nice_step(endtime-starttime)
+
     point_list = iess_list
     api_url = str(session.base_url) 
-    request_id = EdsClient.create_tabular_request(session, api_url, starttime, endtime, points=point_list)
+    request_id = EdsClient.create_tabular_request(session, api_url, starttime, endtime, points=point_list, step_seconds=step_seconds)
     EdsClient.wait_for_request_execution_session(session, api_url, request_id)
     results = EdsClient.get_tabular_trend(session, request_id, point_list)
     logger.debug(f"len(results) = {len(results)}")

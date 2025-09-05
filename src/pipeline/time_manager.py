@@ -180,8 +180,7 @@ class TimeManager:
 
     def __str__(self):
         return self.as_formatted_date_time()
-
-
+   
 @click.command()
 def main():
     click.echo("WELCOME TO THE `TimeManager` CLASS")
