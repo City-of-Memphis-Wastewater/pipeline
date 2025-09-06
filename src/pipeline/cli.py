@@ -162,7 +162,7 @@ def trend(
 
     # Should automatically choose time step granularity based on time length; map 
     if step_seconds is None:
-        step_seconds = helpers.nice_step(TimeManager(dt_finish).as_unix()-TimeManager(dt_start.as_unix())) # TimeManager(starttime).as_unix()
+        step_seconds = helpers.nice_step(TimeManager(dt_finish).as_unix()-TimeManager(dt_start).as_unix()) # TimeManager(starttime).as_unix()
     results = load_historic_data(session, iess_list, dt_start, dt_finish, step_seconds) 
     if not results:
         return 
