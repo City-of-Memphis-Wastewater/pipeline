@@ -844,10 +844,11 @@ name = "mulch"
 version = "0.2.58"
 description = "Pythonic Typer CLI for bootstrapping standard and templated workspaces and projects. Generate introspective sourcecode workspace_manager.py Path quarterback. Controlled per-directory scaffolds using the mulch.toml file. Stealth options available for directories shared between dev and non-dev team members."
 optional = false
-python-versions = ">=3.11,<4.0"
+python-versions = "<4.0,>=3.11"
 groups = ["main"]
 files = [
     {file = "mulch-0.2.58-py3-none-any.whl", hash = "sha256:3d8f9d31996e6d0c8c00c51bd307d87f51f6e58b630ce52411f7ba0a43420df0"},
+    {file = "mulch-0.2.58.tar.gz", hash = "sha256:2e25f520e2b67571b45c5afbcdf94e57f77e6c2f5c9da206d5cb17fc156f8cf3"},
 ]
 
 [package.dependencies]
@@ -856,10 +857,6 @@ jinja2 = ">=3.1.6,<4.0.0"
 rich = "<13.7.0"
 toml = ">=0.10.2,<0.11.0"
 typer = ">=0.12.3,<0.13.0"
-
-[package.source]
-type = "file"
-url = "../mulch/dist/mulch-0.2.58-py3-none-any.whl"
 
 [[package]]
 name = "mysql-connector-python"
@@ -1724,4 +1721,4 @@ windb = []
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<4.0.0"
-content-hash = "75cfe9c4145efba52ffd255866b35b3119a551d8edd690fb90ef478fd8c115ae"
+content-hash = "9ee788cf53468c7a2fcb2d014958dbe2e89b47d2983c0193aaca2ec1b656766d"
