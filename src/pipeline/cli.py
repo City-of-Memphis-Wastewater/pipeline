@@ -16,6 +16,7 @@ from pathlib import Path
 from importlib.metadata import version, PackageNotFoundError
 
 from pipeline.env import SecretConfig
+from pipeline.time_manager import TimeManager
 #from pipeline.helpers import setup_logging
 #from pipeline.workspace_manager import WorkspaceManager
 
