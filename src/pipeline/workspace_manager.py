@@ -267,8 +267,10 @@ class WorkspaceManager:
         try:
             return data['default-workspace']['workspace'] # This dictates the proper formatting of the TOML file.
         except KeyError as e:
-            raise KeyError(f"Missing key in {cls.DEFAULT_WORKSPACE_TOML_FILE_NAME}: {e}")
-        
+            recent_ws = cls.most_recent_workspace_name() or "default"
+            default_toml_path.write_text(f"[default-workspace]\nworkspace = '{recent_ws}'\n")
+            #raise KeyError(f"Missing key in {cls.DEFAULT_WORKSPACE_TOML_FILE_NAME}: {e}")
+            return recent_ws
     def get_default_query_file_paths_list(self):
         
         default_query_path = self.get_queries_dir()/ 'default-queries.toml'
