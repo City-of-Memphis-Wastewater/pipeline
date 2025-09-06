@@ -3,6 +3,7 @@ import toml
 import logging
 from pathlib import Path
 import sys
+import mulch
 
 '''
 Goal:
@@ -220,12 +221,20 @@ class WorkspaceManager:
         """
         Class method that reads default-workspace.toml to identify the default-workspace path.
         """
-        workspace_name = cls.identify_default_workspace_name()
+
         workspaces_dir = cls.ROOT_DIR / cls.WORKSPACES_DIR_NAME
-        default_workspace_path = workspaces_dir / workspace_name
-        if not default_workspace_path.exists():
-            raise FileNotFoundError(f"Default workspace directory not found: {default_workspace_path}")
-        return default_workspace_path
+        workspace_name = cls.identify_default_workspace_name()
+        if workspace_name is None:
+            workspace_name = cls.most_recent_workspace_name() # if 
+        if workspace_name is None:
+            mulch.workspace(target_dir = workspaces_dir, scaffold = workspaces_dir / '.mulch' / 'mulch.toml', workspace_name = 'eds') # allow date based default if no workspace_name is provided
+            workspace_name = 'eds'    
+        workspace_path = workspaces_dir / workspace_name
+        if not workspace_path.exists():
+            #raise FileNotFoundError(f"Workspace directory not found: {default_workspace_path}")
+            print("No default_workspace.toml file to identify a default workspace folder, so the most recently edited folder will be used.")
+            
+        return workspace_path
     
     '''
     @classmethod
@@ -249,7 +258,8 @@ class WorkspaceManager:
         default_toml_path = workspaces_dir / cls.DEFAULT_WORKSPACE_TOML_FILE_NAME
 
         if not default_toml_path.exists():
-            raise FileNotFoundError(f"Missing {cls.DEFAULT_WORKSPACE_TOML_FILE_NAME} in {workspaces_dir}")
+            return None
+            #raise FileNotFoundError(f"Missing {cls.DEFAULT_WORKSPACE_TOML_FILE_NAME} in {workspaces_dir}")
 
         with open(default_toml_path, 'r') as f:
             data = toml.load(f)
@@ -298,7 +308,11 @@ class WorkspaceManager:
         cls.workspaces_dir = workspaces_dir 
         default_file = workspaces_dir / cls.DEFAULT_WORKSPACE_TOML_FILE_NAME
         if not default_file.exists():
-            default_file.write_text("# Default workspace config\n")
+            pass
+            #default_file.write_text("# Default workspace config\n")
+        mulch_scaffold_toml = []
+        mulch.seed(target_dir = workspaces_dir,scaffold = mulch_scaffold_toml)
+        mulch.workspace(base_dir = workspaces_dir.parent, scaffold_file = workspaces_dir / '.mulch' / 'mulch.toml', workspace_name = 'eds') # allow date based default if no workspace_name is provided
         return workspaces_dir
     
 def establish_default_workspace():
