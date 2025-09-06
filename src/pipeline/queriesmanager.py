@@ -63,6 +63,7 @@ class QueriesManager:
         
         if not data:
             # No stored value found — go back one hour from now, rounded down to nearest 5 minutes
+            one_hour_ago_local = TimeManager(datetime.now()).as_unix() - 3600  # now - 1 hour in unix seconds
             one_hour_ago_local = TimeManager(one_hour_ago_local).as_datetime()
             #one_hour_ago_utc = TimeManager.from_local(one_hour_ago_local, zone_name = timezone_config)
             tm = TimeManager(one_hour_ago_local).round_down_to_nearest_five()
