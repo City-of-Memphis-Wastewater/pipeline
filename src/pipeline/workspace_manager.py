@@ -3,7 +3,22 @@ import toml
 import logging
 from pathlib import Path
 import sys
-import mulch
+#import mulch
+import importlib.util
+import sys
+from pathlib import Path
+
+# current_dir = this pipeline repo
+repo_root = Path(__file__).resolve().parents[3]  # adjust if needed
+mulch_path = repo_root / "mulch" / "src" / "mulch" / "__init__.py"
+
+if not mulch_path.exists():
+    raise FileNotFoundError(f"Expected mulch at {mulch_path}")
+
+spec = importlib.util.spec_from_file_location("mulch", str(mulch_path))
+mulch = importlib.util.module_from_spec(spec)
+sys.modules["mulch"] = mulch
+spec.loader.exec_module(mulch)
 
 '''
 Goal:
@@ -313,7 +328,7 @@ class WorkspaceManager:
             pass
             #default_file.write_text("# Default workspace config\n")
         mulch_scaffold = []
-        mulch.seed(target_dir = workspaces_dir,scaffold_dict = mulch_scaffold)
+        mulch.seed(target_dir = workspaces_dir,scaffold_dict = mulch_scaffold, skip_if_exists=True)
         workspace_path = workspaces_dir / "eds"
         mulch.workspace(base_path = workspaces_dir.parent, scaffold_filepath = workspaces_dir / '.mulch' / 'mulch.toml', workspace_path = workspace_path) # allow date based default if no workspace_name is provided
         return workspaces_dir

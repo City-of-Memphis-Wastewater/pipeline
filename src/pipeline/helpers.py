@@ -6,6 +6,7 @@ import types
 import os
 import logging
 import socket
+import re
 
 from pipeline.time_manager import TimeManager
 
@@ -120,6 +121,20 @@ def nice_step(delta_sec: int) -> int:
         if n >= target_step:
             return n
     return nice_numbers[-1]
+
+
+
+def sanitize_date_input(date_str: str) -> str:
+    '''Sanitize date input strings by adding spaces where needed, to overcome error in fuzzy date parsing by the pendulum library.'''
+    # 1. Add space between letters and numbers
+    date_str = re.sub(r'([A-Za-z])(\d)', r'\1 \2', date_str)
+    # 2. Ensure a space after commas
+    date_str = re.sub(r',\s*', ', ', date_str)
+    # 3. Normalize multiple spaces
+    date_str = re.sub(r'\s+', ' ', date_str).strip()
+    return date_str
     
 if __name__ == "__main__":
     function_view()
+    # Example
+    sanitize_date_input("December12,2024")  # -> "December 12,2024"
