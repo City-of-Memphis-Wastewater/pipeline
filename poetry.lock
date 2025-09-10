@@ -841,14 +841,14 @@ files = [
 
 [[package]]
 name = "mulch"
-version = "0.2.59"
+version = "0.2.62"
 description = "Pythonic Typer CLI for bootstrapping standard and templated workspaces and projects. Generate introspective sourcecode workspace_manager.py Path quarterback. Controlled per-directory scaffolds using the mulch.toml file. Stealth options available for directories shared between dev and non-dev team members."
 optional = false
 python-versions = "<4.0,>=3.11"
 groups = ["main"]
 files = [
-    {file = "mulch-0.2.59-py3-none-any.whl", hash = "sha256:6e5b32ad62b3e37e656eac52193d1c9a61155fb56ebb82f74325e2536fa1b848"},
-    {file = "mulch-0.2.59.tar.gz", hash = "sha256:5d8e8576472490248243559717d69db64fd651f419dd9cb6f2f1ededa9e6270d"},
+    {file = "mulch-0.2.62-py3-none-any.whl", hash = "sha256:c6e1c9e8ecb3af2839e2988bebc03a8be0493873347ea03a196a2fb7a57a6ee0"},
+    {file = "mulch-0.2.62.tar.gz", hash = "sha256:3b9bb854564912f5448416210f159fd4322f2da16bdea7c980c9efc2d35b706d"},
 ]
 
 [package.dependencies]
@@ -1721,4 +1721,4 @@ windb = []
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<4.0.0"
-content-hash = "9a7fb9ff3d5433199764a013defa4e20a98dee0f812f1ff87641c3eecede9168"
+content-hash = "f557840a90f8a9f2aad56556e9f244cfe55b962e66c658979c6d516420a665c2"

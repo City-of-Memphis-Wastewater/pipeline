@@ -154,11 +154,11 @@ def trend(
         queries_manager = QueriesManager(wm)
         dt_start = queries_manager.get_most_recent_successful_timestamp(api_id=zd)
     else:
-        dt_start = pendulum.parse(starttime, strict=False)
+        dt_start = pendulum.parse(helpers.sanitize_date_input(starttime), strict=False)
     if endtime is None:
         dt_finish = helpers.get_now_time_rounded(wm)
     else:
-        dt_finish = pendulum.parse(endtime, strict=False)
+        dt_finish = pendulum.parse(helpers.sanitize_date_input(endtime), strict=False)
 
     # Should automatically choose time step granularity based on time length; map 
     if step_seconds is None:
