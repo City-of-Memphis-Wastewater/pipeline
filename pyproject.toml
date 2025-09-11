@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pipeline-eds"
-version = "0.2.26"
+version = "0.2.27"
 description = "The official API pipeline library for mulch-based projects. Key target: Emerson Ovation EDS REST API."
 authors = ["George Clayton Bennett <george.bennett@memphistn.gov>"]
 license = "BSD-3"
@@ -11,8 +11,11 @@ packages = [
 ] # This makes `pipeline` available as an importable top-level module
 homepage = "https://github.com/city-of-memphis-wastewater/pipeline"
 repository = "https://github.com/city-of-memphis-wastewater/pipeline"
-
-[tool.poetry.scripts]
+include = [
+    "src/pipeline/data/*"
+]
+	
+[tool.poetry.scripts]	
 #time-manager = "pipeline.time_manager:main"
 #workspace-manager = "pipeline.workspace_manager:main" # included in init
 #collector = "pipeline.collector:main"

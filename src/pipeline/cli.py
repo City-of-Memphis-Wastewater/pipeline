@@ -10,6 +10,10 @@ def list_workspaces(workspaces_dir: Path = Path("workspaces")):
             typer.echo(f"🪴 {path.name}")
 
 '''
+
+import sqlite3
+from rich.table import Table
+from rich.console import Console
 import typer
 import importlib
 from pathlib import Path
@@ -17,6 +21,7 @@ from importlib.metadata import version, PackageNotFoundError
 
 from pipeline.env import SecretConfig
 from pipeline.time_manager import TimeManager
+from pipeline.create_sensors_db import get_user_db_path, ensure_user_db, get_db_connection
 #from pipeline.helpers import setup_logging
 #from pipeline.workspace_manager import WorkspaceManager
 
@@ -49,7 +54,7 @@ except PackageNotFoundError:
 ### Pipeline CLI
 
 app = typer.Typer(help="CLI for running pipeline workspaces.")
-
+console = Console()
 
 @app.callback(invoke_without_command=True)
 def main(
@@ -92,12 +97,60 @@ def run(
         typer.echo(f"💥 Error while running {workspace}: {e}")
         raise typer.Exit(1)
 
+# -----------------------------
+# CLI commands
+# -----------------------------
 @app.command()
-def typical(zd: str):
-    """
-    Print the typical idcs list for an EDS zd.
-    """
-    pass
+def list_sensors():
+    """Print all sensors from the database."""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT idcs, iess, zd FROM sensors")
+    rows = cur.fetchall()
+    conn.close()
+
+    table = Table(title="Sensor Correlations")
+    table.add_column("IDCS", style="cyan")
+    table.add_column("IESS", style="magenta")
+    table.add_column("ZD", style="green")
+
+    for idcs, iess, zd in rows:
+        table.add_row(idcs, iess, zd)
+
+    console.print(table)
+
+@app.command()
+def reset_db():
+    """Reset the user DB from the packaged default."""
+    user_db = get_user_db_path()
+    if user_db.exists():
+        user_db.unlink()
+    ensure_user_db()
+    typer.echo(f"✅ User DB reset to default at {user_db}")
+
+
+@app.command()
+def sensors(db_path: str = None):
+    # db_path: str = "sensors.db"
+    if db_path is not None:
+        conn = sqlite3.connect(db_path)
+    else:  
+        conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT idcs, iess, zd FROM sensors")
+    rows = cur.fetchall()
+    conn.close()
+
+    table = Table(title="Sensor Correlations")
+    table.add_column("IDCS", style="cyan")
+    table.add_column("IESS", style="magenta")
+    table.add_column("ZD", style="green")
+
+    for idcs, iess, zd in rows:
+        table.add_row(idcs, iess, zd)
+
+    console.print(table)
+
 
 @app.command()
 def trend(
