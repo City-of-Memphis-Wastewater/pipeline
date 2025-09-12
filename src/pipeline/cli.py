@@ -97,27 +97,6 @@ def run(
         typer.echo(f"💥 Error while running {workspace}: {e}")
         raise typer.Exit(1)
 
-# -----------------------------
-# CLI commands
-# -----------------------------
-@app.command()
-def list_sensors():
-    """Print all sensors from the database."""
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT idcs, iess, zd FROM sensors")
-    rows = cur.fetchall()
-    conn.close()
-
-    table = Table(title="Sensor Correlations")
-    table.add_column("IDCS", style="cyan")
-    table.add_column("IESS", style="magenta")
-    table.add_column("ZD", style="green")
-
-    for idcs, iess, zd in rows:
-        table.add_row(idcs, iess, zd)
-
-    console.print(table)
 
 @app.command()
 def reset_db():
@@ -131,13 +110,14 @@ def reset_db():
 
 @app.command()
 def sensors(db_path: str = None):
+    """ See a cheatsheet of commonly used sensors from the database."""
     # db_path: str = "sensors.db"
     if db_path is not None:
         conn = sqlite3.connect(db_path)
     else:  
         conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("SELECT idcs, iess, zd FROM sensors")
+    cur.execute("SELECT idcs, iess, zd, units, description FROM sensors")
     rows = cur.fetchall()
     conn.close()
 
@@ -145,9 +125,12 @@ def sensors(db_path: str = None):
     table.add_column("IDCS", style="cyan")
     table.add_column("IESS", style="magenta")
     table.add_column("ZD", style="green")
+    table.add_column("UNITS", style="white")
+    table.add_column("DESCRIPTION", style="white")
 
-    for idcs, iess, zd in rows:
-        table.add_row(idcs, iess, zd)
+
+    for idcs, iess, zd, units, description in rows:
+        table.add_row(idcs, iess, zd,units, description)
 
     console.print(table)
 
