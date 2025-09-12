@@ -10,11 +10,11 @@ from importlib import resources
 
 # Your sensor data here:
 sensors_data = [
-    # (idcs, iess, zd)
-    ("M310LI", "M310L0I.UNIT0@NET0", "Maxson"),
-    ("M100FI", "M100FI.UNIT0@NET0", "Maxson"),
-    ("FI8001", "FI8001.UNIT0@NET0", "Maxson"),
-    ("I-0201A", "I-0201A.UNIT1@NET1", "WWTF"),
+    # (idcs, iess, zd, units, description)
+    ("M310LI", "M310L0I.UNIT0@NET0", "Maxson", "inches", "Wet well level sensor"),
+    ("M100FI", "M100FI.UNIT0@NET0", "Maxson", "MGD", "Influent Flow"),
+    ("FI8001", "FI8001.UNIT0@NET0", "Maxson", "MGD", "Influent Flow"),
+    ("I-0201A", "I-0201A.UNIT1@NET1", "WWTF", "", ""),
     # add as many as you like...
 ]
 
@@ -80,12 +80,14 @@ def create_packaged_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             idcs TEXT NOT NULL,
             iess TEXT NOT NULL,
-            zd TEXT NOT NULL
+            zd TEXT NOT NULL,
+            units TEXT NOT NULL,
+            description TEXT NOT NULL
         )
     """)
 
     cur.executemany(
-        "INSERT INTO sensors (idcs, iess, zd) VALUES (?, ?, ?)",
+        "INSERT INTO sensors (idcs, iess, zd, units, description) VALUES (?, ?, ?, ?, ?)",
         sensors_data
     )
 
