@@ -143,7 +143,8 @@ def trend(
     zd: str = typer.Option('Maxson', "--zd", "-z", help = "Define the EDS ZD from your secrets file. This must correlate with your idcs point selection(s)."),
     workspacename: str = typer.Option(None,"--workspace","-w", help = "Provide the name of the workspace you want to use, for the secrets.yaml credentials and for the timezone config. If a start time is not provided, the workspace queries can checked for the most recent successful timestamp. "),
     print_csv: bool = typer.Option(False,"--print-csv","-p",help = "Print the CSV style for pasting into Excel."),
-    step_seconds: int = typer.Option(None, "--step-seconds", help="You can explicitly provide the delta between datapoints. If not, ~400 data points will be used, based on the nice_step() function.") 
+    step_seconds: int = typer.Option(None, "--step-seconds", help="You can explicitly provide the delta between datapoints. If not, ~400 data points will be used, based on the nice_step() function."), 
+    webplot: bool = typer.Option(False,"--webplot","-w",help = "Use a web-based plot (plotly) instead of matplotlib. Useful for remote servers without display.")
     ):
     """
     Show a curve for a sensor over time.
@@ -183,7 +184,6 @@ def trend(
     session.base_url = base_url
     session.zd = secrets_dict.get("eds_apis", {}).get(zd, {}).get("zd")
     
-
     if starttime is None:
         # back_to_last_success = True
         from pipeline.queriesmanager import QueriesManager
@@ -214,7 +214,7 @@ def trend(
             data_buffer.append(label, ts, av) # needs to be adapted for multiple iess sensor results
     #print(f"data_buffer = {data_buffer}")
     #print(f"data_buffer.get_all() = {data_buffer.get_all()}")
-    if not environment.matplotlib_enabled():
+    if not environment.matplotlib_enabled() or webplot:
         from pipeline import gui_plotly_static
         #gui_fastapi_plotly_live.run_gui(data_buffer)
         gui_plotly_static.show_static(data_buffer)
