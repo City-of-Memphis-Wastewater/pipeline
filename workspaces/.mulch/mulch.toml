@@ -1,0 +1,3 @@
+[scaffold]
+dirs = [ "code", "configuration", "exports", "imports", "logs", "queries","scripts","secrets"]
+files = [ "queries/default-queries.toml", "secrets/secrets-example.yml",]
