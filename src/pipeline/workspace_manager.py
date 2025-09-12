@@ -314,10 +314,21 @@ class WorkspaceManager:
         if not default_file.exists():
             pass
             #default_file.write_text("# Default workspace config\n")
-        mulch_scaffold = []
+        
+        mulch_scaffold = {
+            "scaffold": {
+            "dirs": [ "code", "configuration", "exports", "imports", "logs", "queries","scripts","secrets"
+                     ],
+            "files": [ "queries/default-queries.toml", "secrets/secrets-example.yml"
+                     ],
+            }
+        }
+
         mulch.seed(target_dir = workspaces_dir,scaffold_dict = mulch_scaffold, skip_if_exists=True)
         workspace_path = workspaces_dir / "eds"
-        mulch.workspace(base_path = workspaces_dir.parent, scaffold_filepath = workspaces_dir / '.mulch' / 'mulch.toml', workspace_path = workspace_path) # allow date based default if no workspace_name is provided
+        #mulch.workspace(base_path = workspaces_dir.parent, scaffold_filepath = workspaces_dir / '.mulch' / 'mulch.toml', workspace_path = workspace_path) # allow date based default if no workspace_name is provided
+        #mulch.workspace(base_path = workspaces_dir.parent, scaffold_filepath = workspaces_dir / '.mulch' / 'mulch.toml', workspace_path = workspace_path) # allow date based default if no workspace_name is provided
+        mulch.worspace_from_scaffold(workspace_path, mulch_scaffold)
         return workspaces_dir
     
 def establish_default_workspace():
