@@ -697,7 +697,7 @@ def demo_eds_plot_point_live():
                     #logger.info(f"Live: {label} → {av} @ {ts}")
                     logger.info(f"Live: {label} {round(av,2)} {un}")
             time.sleep(1)
-
+    
     collector_thread = Thread(target=collect_loop, daemon=True)
     collector_thread.start()
 
@@ -710,7 +710,7 @@ def demo_eds_webplot_point_live():
     from threading import Thread
 
     from pipeline.queriesmanager import QueriesManager, load_query_rows_from_csv_files, group_queries_by_col
-    from workspaces.eds_to_rjn.code import collector, sanitizer
+    from workspaces.eds_to_rjn.code import collector
     from pipeline.plotbuffer import PlotBuffer
     #from pipeline import gui_flaskplotly_live
     from pipeline import gui_fastapi_plotly_live
