@@ -225,11 +225,13 @@ def build_secrets():
 
 
 @app.command()
-def ping_all_services():
+def ping(
+    eds: bool = typer.Option(False,"--eds","-e",help = "Limit the pinged URL's to just the EDS services known to the configured secrets.")
+    ):
     """
     Ping all HTTP/S URL's found in the secrets configuration.
     """
-    from pipeline.calls import find_urls, call_ping
+    from pipeline.calls import call_ping, find_urls, find_eds_urls
     from pipeline.env import SecretConfig
     from pipeline.workspace_manager import WorkspaceManager
     import logging
@@ -240,34 +242,16 @@ def ping_all_services():
 
     secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_secrets_file_path())
     
-    url_set = find_urls(secrets_dict)
-    for url in url_set:
-        print(f"ping url: {url}")
-        call_ping(url)
+    if not eds:
+        url_set = find_urls(secrets_dict)
+    else:
+        url_set = find_eds_urls(secrets_dict)
 
-@app.command()
-def ping_eds_services():
-    """
-    Ping all EDS services found in the secrets configuration.
-    """
-    from pipeline.calls import call_ping, find_eds_urls
-    from pipeline.env import SecretConfig
-    from pipeline.workspace_manager import WorkspaceManager
-    import logging
-
-    logger = logging.getLogger(__name__)
-    workspace_name = WorkspaceManager.identify_default_workspace_name()
-    workspace_manager = WorkspaceManager(workspace_name)
-
-    secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_secrets_file_path())
-
-    url_set = find_eds_urls(secrets_dict)
     typer.echo(f"Found {len(url_set)} URLs in secrets configuration.")
     logger.info(f"url_set: {url_set}")
     for url in url_set:
         print(f"ping url: {url}")
         call_ping(url)
-
 
 @app.command()
 def help():
