@@ -70,7 +70,8 @@ def main(
 
 @app.command()
 def reset_db():
-    """Reset the user DB from the packaged default."""
+    """Reset the user DB from the packaged default, and from the hardcoded backup."""
+    """There should be a way to ship plant specific packaged DB, so it is not hardcoded. Probably the same way we can ship secrets. Log in, get JSON via API, write, generate file.""" 
     #user_db = get_user_db_path()
     #if user_db.exists():
     #    user_db.unlink()
