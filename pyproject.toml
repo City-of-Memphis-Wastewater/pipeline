@@ -46,6 +46,8 @@ tzdata = "^2025.2"
 pendulum = "^3.1.0"
 fastapi = "^0.116.1"
 matplotlib = "^3.10.6"
+rich = "^14.1.0"
+typer = "^0.17.4"
 
 [tool.poetry.extras]
 windb = ["pyodbc"]

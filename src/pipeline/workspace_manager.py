@@ -3,8 +3,6 @@ import toml
 import logging
 from pathlib import Path
 import sys
-import mulch
-import sys
 from pathlib import Path
 
 '''
@@ -259,6 +257,8 @@ class WorkspaceManager:
         
         with open(default_query_path, 'r') as f:
             query_config = toml.load(f)
+        if 'default-query' not in query_config or 'files' not in query_config['default-query']:
+            raise ValueError("Missing ['default-query']['files'] in default-queries.toml")
         filenames = query_config['default-query']['files']
         if not isinstance(filenames, list):
             raise ValueError("Expected a list under ['default-query']['files'] in default-queries.toml")
@@ -287,7 +287,8 @@ class WorkspaceManager:
     @classmethod
     def ensure_appdata_workspaces_dir_misnomer(cls) -> Path:
         """Create workspace folder and default toml if missing."""
-        # not called as 
+        # not called as is
+        import mulch
         workspaces_dir = cls.get_appdata_dir() / cls.WORKSPACES_DIR_NAME
         workspaces_dir.mkdir(parents=True, exist_ok=True)
         cls.workspaces_dir = workspaces_dir 
