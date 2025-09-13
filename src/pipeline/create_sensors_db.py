@@ -80,6 +80,8 @@ def create_packaged_db():
     if db_path.exists():
         print(f"⚠️ {db_path} already exists. Overwriting...")
         db_path.unlink()
+    else:
+        print(f"✅ Creating Packaged DB at {db_path}")
 
     conn = sqlite3.connect(db_path)
     cur = conn.cursor()
@@ -102,7 +104,6 @@ def create_packaged_db():
 
     conn.commit()
     conn.close()
-    print(f"✅ Packaged DB created at {db_path}")
     return db_path
 
 # -----------------------------
@@ -114,7 +115,7 @@ def reset_user_db(packaged_db_path: Path):
         user_db.unlink()
         print(f"🗑  Old user DB removed: {user_db}")
     shutil.copy(packaged_db_path, user_db)
-    print(f"✅ User DB reset from packaged DB: {user_db}")
+    print(f"✅ User DB reset from Packaged DB: {user_db}")
     return user_db
 
 # -----------------------------

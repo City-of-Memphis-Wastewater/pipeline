@@ -195,15 +195,6 @@ class WorkspaceManager:
                 dir_path.mkdir(parents=True, exist_ok=True)
 
     @classmethod
-    def get_cwd(cls) -> Path:
-        """Return current workspace directory, not the source code root, as a Path instance."""
-        # Quick and dirty, not representative of the complex truth or opportunity.
-        #cls.ROOT_DIR / 'workspaces' / cls.identify_default_workspace_name()
-        
-        # Pre-Exisiting function, generated some time before July 24, 2025. May as well use that instead. It is good to use your own library. Benefit from having built it.
-        return cls.identify_default_workspace_name()
-
-    @classmethod
     def get_all_workspaces_names(cls):
         """
         Return a list of all workspace names found in the workspaces directory.
@@ -219,6 +210,26 @@ class WorkspaceManager:
         return workspace_dirs
 
     @classmethod
+    def identify_default_workspace_path(cls):
+        """
+        Class method that reads default-workspace.toml to identify the default-workspace path.
+        """
+
+        workspaces_dir = cls.ROOT_DIR / cls.WORKSPACES_DIR_NAME
+        workspace_name = cls.identify_default_workspace_name()
+        if workspace_name is None:
+            workspace_name = cls.most_recent_workspace_name() # if 
+        if workspace_name is None:
+            workspace_name = 'eds'    
+
+        workspace_path = workspaces_dir / workspace_name
+        if not workspace_path.exists():
+            workspace_path.mkdir(parents=True, exist_ok=True)
+            
+        return workspace_path
+    
+    
+    @classmethod
     def identify_default_workspace_name(cls, workspaces_dir = None):
         """
         Class method that reads default-workspace.toml to identify the default-workspace.
@@ -229,9 +240,9 @@ class WorkspaceManager:
         default_toml_path = workspaces_dir / cls.DEFAULT_WORKSPACE_TOML_FILE_NAME
 
         if not default_toml_path.exists():
+            #print("No default_workspace.toml file to identify a default workspace folder, so the most recently edited folder will be used.")
             return None
-            #raise FileNotFoundError(f"Missing {cls.DEFAULT_WORKSPACE_TOML_FILE_NAME} in {workspaces_dir}")
-
+            
         with open(default_toml_path, 'r') as f:
             data = toml.load(f)
             logging.debug(f"data = {data}") 
@@ -240,8 +251,8 @@ class WorkspaceManager:
         except KeyError as e:
             recent_ws = cls.most_recent_workspace_name() or "default"
             default_toml_path.write_text(f"[default-workspace]\nworkspace = '{recent_ws}'\n")
-            #raise KeyError(f"Missing key in {cls.DEFAULT_WORKSPACE_TOML_FILE_NAME}: {e}")
             return recent_ws
+        
     def get_default_query_file_paths_list(self):
         
         default_query_path = self.get_queries_dir()/ 'default-queries.toml'

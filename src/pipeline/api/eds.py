@@ -998,11 +998,6 @@ if __name__ == "__main__":
         demo_eds_save_graphics_export()
     elif cmd == "license":
         demo_eds_print_license()
-    elif cmd == "access-workspace":
-        if platform.system().lower() == "windows":
-            # at this level it is correct but the get_cwd() command only knows the default workspace.
-            command = ["explorer", str(WorkspaceManager.get_cwd())]
-            subprocess.call(command) 
     else:
         print("Usage options: \n" 
         "poetry run python -m pipeline.api.eds demo-point-export \n"

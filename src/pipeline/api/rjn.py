@@ -1,11 +1,10 @@
 import requests
 import logging
-from typing import Union
+# from typing import Union # for 3.8 friendly type suggestions
 
-from pipeline.calls import make_request, call_ping
+from pipeline.calls import call_ping
 from pipeline.env import find_urls
 from pipeline.decorators import log_function_call
-from pipeline import helpers
 from pipeline.time_manager import TimeManager
 
 logger = logging.getLogger(__name__)
@@ -14,14 +13,6 @@ class RjnClient:
     def __init__(self,config):
         self.config = config
     
-    def send_point(self, payload: dict):
-        request_url = f"{self.api_url}/data/point"  # Adjust this if needed
-        response = make_request(url=request_url, headers=self.headers, data=payload, method="POST")
-        if response.status_code == 200:
-            print(f"Successfully posted point {payload.get('rjn_name')}")
-        else:
-            print(f"Failed to post point {payload.get('rjn_name')}: {response.status_code}")
-
     @staticmethod
     def login_to_session(api_url, client_id, password):
         logger.info("RjnClient.login_to_session()")
