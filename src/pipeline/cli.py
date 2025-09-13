@@ -113,7 +113,7 @@ def trend(
     workspacename: str = typer.Option(None,"--workspace","-w", help = "Provide the name of the workspace you want to use, for the secrets.yaml credentials and for the timezone config. If a start time is not provided, the workspace queries can checked for the most recent successful timestamp. "),
     print_csv: bool = typer.Option(False,"--print-csv","-p",help = "Print the CSV style for pasting into Excel."),
     step_seconds: int = typer.Option(None, "--step-seconds", help="You can explicitly provide the delta between datapoints. If not, ~400 data points will be used, based on the nice_step() function."), 
-    webplot: bool = typer.Option(False,"--webplot","-w",help = "Use a HTML-based plot instead of local (matplotlib). Useful for remote servers without display.")
+    webplot: bool = typer.Option(False,"--webplot","-w",help = "Use a browser-based plot instead of local (matplotlib). Useful for remote servers without display.")
     ):
     """
     Show a curve for a sensor over time.
@@ -125,7 +125,7 @@ def trend(
     from pipeline.plotbuffer import PlotBuffer
     from pipeline import environment
     from pipeline.workspace_manager import WorkspaceManager
-    #workspaces_dir = WorkspaceManager.ensure_appdata_workspaces_dir()
+    #workspaces_dir = WorkspaceManager.ensure_appdata_workspaces_dir()      
 
     # must set up %appdata for pip/x installation. Use mulch or yeoman for this. And have a secrets filler.
     if workspacename is None:

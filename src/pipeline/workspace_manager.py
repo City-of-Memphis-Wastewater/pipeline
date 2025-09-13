@@ -285,8 +285,9 @@ class WorkspaceManager:
         return base / cls.APP_NAME
 
     @classmethod
-    def ensure_appdata_workspaces_dir(cls) -> Path:
+    def ensure_appdata_workspaces_dir_misnomer(cls) -> Path:
         """Create workspace folder and default toml if missing."""
+        # not called as 
         workspaces_dir = cls.get_appdata_dir() / cls.WORKSPACES_DIR_NAME
         workspaces_dir.mkdir(parents=True, exist_ok=True)
         cls.workspaces_dir = workspaces_dir 
