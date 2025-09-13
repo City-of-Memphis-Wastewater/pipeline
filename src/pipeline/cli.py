@@ -21,7 +21,7 @@ from importlib.metadata import version, PackageNotFoundError
 
 from pipeline.env import SecretConfig
 from pipeline.time_manager import TimeManager
-from pipeline.create_sensors_db import get_user_db_path, ensure_user_db, get_db_connection
+from pipeline.create_sensors_db import get_user_db_path, ensure_user_db, get_db_connection, create_packaged_db, reset_user_db
 #from pipeline.helpers import setup_logging
 #from pipeline.workspace_manager import WorkspaceManager
 
@@ -68,43 +68,17 @@ def main(
         typer.echo(ctx.get_help())
         raise typer.Exit()
 
-
-@app.command()
-def run(
-    workspace: str = typer.Option(None, help="Workspace to run"),
-):
-    """
-    Import and run a workspace's main() function.
-    """
-    # Determine workspace name
-    from pipeline.workspace_manager import WorkspaceManager
-    if workspace is None:
-        workspace = WorkspaceManager.identify_default_workspace_name()
-    wm = WorkspaceManager(workspace)
-
-    workspace_dir = wm.get_workspace_dir()
-    module_path = f"workspaces.{workspace}.main"
-
-    typer.echo(f"🚀 Running {module_path} from {workspace_dir}")
-
-    try:
-        mod = importlib.import_module(module_path)
-        if not hasattr(mod, "main"):
-            typer.echo("❌ This workspace does not have a 'main()' function.")
-            raise typer.Exit(1)
-        mod.main()
-    except Exception as e:
-        typer.echo(f"💥 Error while running {workspace}: {e}")
-        raise typer.Exit(1)
-
-
 @app.command()
 def reset_db():
     """Reset the user DB from the packaged default."""
-    user_db = get_user_db_path()
-    if user_db.exists():
-        user_db.unlink()
-    ensure_user_db()
+    #user_db = get_user_db_path()
+    #if user_db.exists():
+    #    user_db.unlink()
+    #ensure_user_db()
+
+    packaged_db = create_packaged_db()
+    user_db = reset_user_db(packaged_db)
+
     typer.echo(f"✅ User DB reset to default at {user_db}")
 
 
@@ -121,16 +95,17 @@ def sensors(db_path: str = None):
     rows = cur.fetchall()
     conn.close()
 
-    table = Table(title="Sensor Correlations")
+    table = Table(title="Common Sensor Cheat Sheet (hard-coded)")
     table.add_column("IDCS", style="cyan")
-    table.add_column("IESS", style="magenta")
+    #table.add_column("IESS", style="magenta")
     table.add_column("ZD", style="green")
     table.add_column("UNITS", style="white")
     table.add_column("DESCRIPTION", style="white")
 
 
     for idcs, iess, zd, units, description in rows:
-        table.add_row(idcs, iess, zd,units, description)
+        table.add_row(idcs, zd,units, description)
+        
 
     console.print(table)
 
@@ -156,7 +131,7 @@ def trend(
     from pipeline.plotbuffer import PlotBuffer
     from pipeline import environment
     from pipeline.workspace_manager import WorkspaceManager
-    workspaces_dir = WorkspaceManager.ensure_appdata_workspaces_dir()
+    #workspaces_dir = WorkspaceManager.ensure_appdata_workspaces_dir()
 
     # must set up %appdata for pip/x installation. Use mulch or yeoman for this. And have a secrets filler.
     if workspacename is None:

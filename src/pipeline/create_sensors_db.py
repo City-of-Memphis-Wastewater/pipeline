@@ -11,11 +11,11 @@ from importlib import resources
 # Your sensor data here:
 sensors_data = [
     # (idcs, iess, zd, units, description)
-    ("M310LI", "M310L0I.UNIT0@NET0", "Maxson", "inches", "Wet well level sensor"),
+    ("M310LI", "M310LI.UNIT0@NET0", "Maxson", "Inches", "Wet well level sensor"),
     ("M100FI", "M100FI.UNIT0@NET0", "Maxson", "MGD", "Influent Flow"),
-    ("FI8001", "FI8001.UNIT0@NET0", "Maxson", "MGD", "Influent Flow"),
+    ("FI8001", "FI8001.UNIT0@NET0", "Maxson", "MGD", "Effluent Flow"),
     ("I-0201A", "I-0201A.UNIT1@NET1", "WWTF", "", ""),
-    # add as many as you like...
+    ("I-5005A", "I-5005A.UNIT1@NET1", "WWTF", "MGD", "Plant Influent Flow"),
 ]
 
 
@@ -26,9 +26,14 @@ sensors_data = [
 def ensure_user_db() -> Path:
     """Copy packaged DB to user folder if it doesn't exist."""
     user_db = get_user_db_path()
-    if not user_db.exists():
+    packaged_db = get_packaged_db_path()
+    if not user_db.exists() and packaged_db.exists():
         with resources.as_file(resources.files("pipeline.data") / "sensors.db") as packaged_db:
+            print(f"packaged_db = {packaged_db}")
             shutil.copy(packaged_db, user_db)
+    if not packaged_db.exists():
+        packaged_db = create_packaged_db()
+        user_db = reset_user_db(packaged_db)
     return user_db
 
 # -----------------------------
@@ -62,6 +67,10 @@ def get_user_db_path() -> Path:
     user_dir = base / "pipeline"
     user_dir.mkdir(parents=True, exist_ok=True)
     return user_dir / "sensors.db"
+
+#def get_packaged_db_path() -> Path:
+#    packaged_db = resources.as_file(resources.files("pipeline.data") / "sensors.db")
+#    return packaged_db
 
 # -----------------------------
 # Create packaged DB
@@ -103,9 +112,10 @@ def reset_user_db(packaged_db_path: Path):
     user_db = get_user_db_path()
     if user_db.exists():
         user_db.unlink()
-        print(f"🗑 Old user DB removed: {user_db}")
+        print(f"🗑  Old user DB removed: {user_db}")
     shutil.copy(packaged_db_path, user_db)
     print(f"✅ User DB reset from packaged DB: {user_db}")
+    return user_db
 
 # -----------------------------
 # Main

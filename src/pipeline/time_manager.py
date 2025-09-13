@@ -184,28 +184,16 @@ class TimeManager:
 @click.command()
 def main():
     click.echo("WELCOME TO THE `TimeManager` CLASS")
-    click.echo("pipx install mulch")
-    click.echo("from mulch.time_manager import TimeManager")
+    click.echo("pipx install pipeline")
+    click.echo("from pipeline.time_manager import TimeManager")
     click.echo("")
     click.echo("test>> click.MultiCommand(True)")
     click.MultiCommand(True)
     click.echo("test>> click.MultiCommand()")
     click.MultiCommand()
 
-    msg0 = ''' python time_manager.py             # runs 'main' by default if you set it as default command (else error)
-python time_manager.py main        # run main
-python time_manager.py easteregg   # run easteregg
-python time_manager.py howto-utcz  # show how-to UTCZ doc
-python time_manager.py license     # show license
-'''
-    click.echo(msg0)
-def easteregg():
-    click.echo("from mulch.philosophy import Philosophy")
-    click.echo("PS C:Users/user/dev/pipeline >> poetry run python -m mulch.philosphy --help # click ")
-
 def howto_utcz():
     click.echo(TimeManager.HOW_TO_UTCZ_DOC)
-def license():
-    pass
+
 if __name__ == "__main__":
     main()
