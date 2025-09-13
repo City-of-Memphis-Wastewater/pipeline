@@ -18,7 +18,6 @@ sensors_data = [
     ("I-5005A", "I-5005A.UNIT1@NET1", "WWTF", "MGD", "Plant Influent Flow"),
 ]
 
-
 # -----------------------------
 # Rollout packaged DB
 # -----------------------------

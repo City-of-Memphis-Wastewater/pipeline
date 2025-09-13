@@ -1,16 +1,3 @@
-'''
-@app.command()
-def list_workspaces(workspaces_dir: Path = Path("workspaces")):
-    """List valid mulch workspaces in the given directory."""
-    if not workspaces_dir.exists():
-        typer.echo(f"Directory not found: {workspaces_dir}")
-        raise typer.Exit(code=1)
-    for path in workspaces_dir.iterdir():
-        if path.is_dir() and (path / ".mulch").is_dir():
-            typer.echo(f"🪴 {path.name}")
-
-'''
-
 import sqlite3
 from rich.table import Table
 from rich.console import Console
@@ -21,12 +8,13 @@ from importlib.metadata import version, PackageNotFoundError
 
 from pipeline.env import SecretConfig
 from pipeline.time_manager import TimeManager
-from pipeline.create_sensors_db import get_user_db_path, ensure_user_db, get_db_connection, create_packaged_db, reset_user_db
-#from pipeline.helpers import setup_logging
-#from pipeline.workspace_manager import WorkspaceManager
+from pipeline.create_sensors_db import get_db_connection, create_packaged_db, reset_user_db # get_user_db_path, ensure_user_db, 
+from pipeline.api.eds import demo_eds_webplot_point_live
 
+#from pipeline.helpers import setup_logging
 ### Versioning
 CLI_APP_NAME = "pipeline"
+PIP_PACKAGE_NAME = "pipeline-eds"
 def print_version(value: bool):
     if value:
         try:
@@ -35,14 +23,14 @@ def print_version(value: bool):
             typer.echo("Version info not found")
         raise typer.Exit()
 try:
-    PIPELINE_VERSION = version(CLI_APP_NAME)
-    __version__ = version(CLI_APP_NAME)
+    PIPELINE_VERSION = version(PIP_PACKAGE_NAME)
+    __version__ = version(PIP_PACKAGE_NAME)
 except PackageNotFoundError:
     PIPELINE_VERSION = "unknown"
 
 try:
     from importlib.metadata import version
-    __version__ = version(CLI_APP_NAME)
+    __version__ = version(PIP_PACKAGE_NAME)
 except PackageNotFoundError:
     # fallback if running from source
     try:
@@ -70,7 +58,7 @@ def main(
 
 @app.command()
 def reset_db():
-    """Reset the user DB from the packaged default, and from the hardcoded backup."""
+    """Reset the user DB from the packaged default, and from the hardcoded list."""
     """There should be a way to ship plant specific packaged DB, so it is not hardcoded. Probably the same way we can ship secrets. Log in, get JSON via API, write, generate file.""" 
     #user_db = get_user_db_path()
     #if user_db.exists():
@@ -109,6 +97,14 @@ def list_sensors(db_path: str = None):
     console.print("⚠️ The ZD for the Stiles plant is WWTF", style = "magenta")
 
 @app.command()
+def live_query(
+    idcs: list[str] = typer.Argument(..., help="Provide known idcs values that match the given zd."), # , "--idcs", "-i"
+    zd: str = typer.Option('Maxson', "--zd", "-z", help = "Define the EDS ZD from your secrets file. This must correlate with your idcs point selection(s)."),
+    webplot: bool = typer.Option(False,"--webplot","-w",help = "Use a web-based plot (plotly) instead of matplotlib. Useful for remote servers without display.")
+):
+    """live data plotting, based on CSV query files. Coming soon - call any, like the 'trend' command."""
+    demo_eds_webplot_point_live()
+@app.command()
 def trend(
     idcs: list[str] = typer.Argument(..., help="Provide known idcs values that match the given zd."), # , "--idcs", "-i"
     starttime: str = typer.Option(None, "--start", "-s", help="Index from 'mulch order' to choose scaffold source."),
@@ -146,7 +142,7 @@ def trend(
     elif zd == "WWTF":
         idcs_to_iess_suffix = ".UNIT1@NET1"
     else:
-        # assumption
+        # assumption for generic system
         idcs_to_iess_suffix = ".UNIT0@NET0"
     iess_list = [x+idcs_to_iess_suffix for x in idcs]
 
