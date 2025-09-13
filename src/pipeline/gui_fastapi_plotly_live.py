@@ -65,7 +65,7 @@ async def get_data():
         return {}
     with buffer_lock:
         data = plot_buffer.get_all()
-    print("Data in buffer:", data)  # <-- DEBUG
+    #print("Data in buffer:", data)  # <-- DEBUG
     fixed_data = {}
     for label, series in data.items():
         fixed_data[label] = {
