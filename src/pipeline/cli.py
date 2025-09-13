@@ -79,11 +79,8 @@ def reset_db():
     packaged_db = create_packaged_db()
     user_db = reset_user_db(packaged_db)
 
-    typer.echo(f"✅ User DB reset to default at {user_db}")
-
-
 @app.command()
-def sensors(db_path: str = None):
+def list_sensors(db_path: str = None):
     """ See a cheatsheet of commonly used sensors from the database."""
     # db_path: str = "sensors.db"
     if db_path is not None:
@@ -97,18 +94,18 @@ def sensors(db_path: str = None):
 
     table = Table(title="Common Sensor Cheat Sheet (hard-coded)")
     table.add_column("IDCS", style="cyan")
-    #table.add_column("IESS", style="magenta")
+    #table.add_column("IESS", style="magenta") # no reason to show this
     table.add_column("ZD", style="green")
     table.add_column("UNITS", style="white")
     table.add_column("DESCRIPTION", style="white")
-
+    
 
     for idcs, iess, zd, units, description in rows:
         table.add_row(idcs, zd,units, description)
         
 
     console.print(table)
-
+    console.print("⚠️ The ZD for the Stiles plant is WWTF", style = "magenta")
 
 @app.command()
 def trend(
@@ -211,47 +208,26 @@ def list_workspaces():
     List all available workspaces detected in the workspaces folder.
     """
     # Determine workspace name
-    
-    workspace = WorkspaceManager.identify_default_workspace_name()
-    wm = WorkspaceManager(workspace)
-    workspaces = wm.get_all_workspaces_names()
+    from pipeline.workspace_manager import WorkspaceManager
+
+    workspaces = WorkspaceManager.get_all_workspaces_names()
     typer.echo("📦 Available workspaces:")
     for name in workspaces:
         typer.echo(f" - {name}")
 
-@app.command()
-def demo_rjn_ping():
-    """
-    Demo function to ping RJN service.
-    """
-    from pipeline.api.rjn import RjnClient
-    from pipeline.calls import call_ping
-    from pipeline.env import SecretConfig
-    from pipeline.workspace_manager import WorkspaceManager
-    from pipeline import helpers
-    import logging
-
-    logger = logging.getLogger(__name__)
-    workspace_name = WorkspaceManager.identify_default_workspace_name()
-    workspace_manager = WorkspaceManager(workspace_name)
-
-    secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_secrets_file_path())    
-    base_url = secrets_dict.get("contractor_apis", {}).get("RJN", {}).get("url").rstrip("/")
-    session = RjnClient.login_to_session(api_url = base_url,
-                                    client_id = secrets_dict.get("contractor_apis", {}).get("RJN", {}).get("client_id"),
-                                    password = secrets_dict.get("contractor_apis", {}).get("RJN", {}).get("password"))
-    if session is None:
-        logger.warning("RJN session not established. Skipping RJN-related data transmission.\n")
-        return
-    else:
-        logger.info("RJN session established successfully.")
-        session.base_url = base_url
-        response = call_ping(session.base_url)
 
 @app.command()
-def ping_rjn_services():
+def build_secrets():
     """
-    Ping all RJN services found in the secrets configuration.
+    Use a filler tool to add API URLs, usernames, passwords, etc.
+    """
+    pass
+
+
+@app.command()
+def ping_all_services():
+    """
+    Ping all HTTP/S URL's found in the secrets configuration.
     """
     from pipeline.calls import find_urls, call_ping
     from pipeline.env import SecretConfig
@@ -264,20 +240,17 @@ def ping_rjn_services():
 
     secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_secrets_file_path())
     
-    sessions = {}
-
     url_set = find_urls(secrets_dict)
     for url in url_set:
-        if "rjn" in url.lower():
-            print(f"ping url: {url}")
-            call_ping(url)
+        print(f"ping url: {url}")
+        call_ping(url)
 
 @app.command()
 def ping_eds_services():
     """
     Ping all EDS services found in the secrets configuration.
     """
-    from pipeline.calls import find_urls, call_ping
+    from pipeline.calls import call_ping, find_eds_urls
     from pipeline.env import SecretConfig
     from pipeline.workspace_manager import WorkspaceManager
     import logging
@@ -287,34 +260,14 @@ def ping_eds_services():
     workspace_manager = WorkspaceManager(workspace_name)
 
     secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_secrets_file_path())
-    
-    sessions = {}
 
-    url_set = find_urls(secrets_dict)
+    url_set = find_eds_urls(secrets_dict)
     typer.echo(f"Found {len(url_set)} URLs in secrets configuration.")
     logger.info(f"url_set: {url_set}")
     for url in url_set:
-        if "172.19.4" in url.lower():
-            print(f"ping url: {url}")
-            call_ping(url)
+        print(f"ping url: {url}")
+        call_ping(url)
 
-@app.command()
-def daemon_runner_main():
-    """
-    Run the daemon_runner script from the eds_to_rjn workspace.
-    """
-    import workspaces.eds_to_rjn.scripts.daemon_runner as dr
-
-    dr.main()
-
-@app.command()
-def daemon_runner_once():
-    """
-    Run the daemon_runner script from the eds_to_rjn workspace.
-    """
-    import workspaces.eds_to_rjn.scripts.daemon_runner as dr
-
-    dr.run_hourly_tabular_trend_eds_to_rjn()
 
 @app.command()
 def help():
