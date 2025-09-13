@@ -48,11 +48,8 @@ class EdsClient:
         print(", ".join(parts))
 
     @staticmethod
-    #def get_points_live_mod(session, iess: str):
     def get_points_live_mod(session, iess):
-        # please make this session based rather than header based
         "Access live value of point from the EDS, based on zs/api_id value (i.e. Maxson, WWTF, Server)"
-        #api_url = str(session.custom_dict["url"]) 
         api_url = str(session.base_url) 
 
         query = {
@@ -63,7 +60,6 @@ class EdsClient:
             'order' : ['iess']
             }
         response = session.post(f"{api_url}/points/query", json=query, verify=False).json()
-        #print(f"response = {response}")
         
         if not response or "points" not in response:
             return None
@@ -90,7 +86,6 @@ class EdsClient:
     def get_tabular_mod(session, req_id, point_list):
         results = [[] for _ in range(len(point_list))]
         while True:
-            #api_url = session.custom_dict["url"]
             api_url = str(session.base_url) 
             response = session.get(f'{api_url}/trend/tabular?id={req_id}', verify=False).json()
             for chunk in response:
@@ -105,10 +100,8 @@ class EdsClient:
 
     @staticmethod
     def get_tabular_trend(session, req_id, point_list):
-        #print(f"point_list = {point_list}")
         results = [[] for _ in range(len(point_list))]
         while True:
-            #api_url = session.custom_dict["url"]
             api_url = str(session.base_url) 
             response = session.get(f'{api_url}/trend/tabular?id={req_id}', verify=False).json()
             
@@ -118,7 +111,6 @@ class EdsClient:
 
                 for idx, samples in enumerate(chunk['items']):
                     for sample in samples:
-                        #print(f"sample = {sample}")
                         structured = {
                             "ts": sample[0],          # Timestamp
                             "value": sample[1],       # Measurement value
@@ -133,8 +125,6 @@ class EdsClient:
     @staticmethod
     #def get_points_export(session,iess_filter:str=''):
     def get_points_export(session,iess_filter=''):
-        #api_url = session.custom_dict["url"]
-        #zd = session.custom_dict["zd"]
         api_url = str(session.base_url) 
         zd = str(session.zd)  
         order = 'iess'
@@ -863,7 +853,6 @@ def demo_eds_print_tabular_trend():
         starttime = queries_manager.get_most_recent_successful_timestamp(api_id="Maxson")
         endtime = helpers.get_now_time_rounded(workspace_manager)
 
-        #api_url = session.custom_dict["url"]
         api_url = str(session.base_url) 
         request_id = EdsClient.create_tabular_request(session, api_url, starttime, endtime, points=point_list)
         EdsClient.wait_for_request_execution_session(session, api_url, request_id)
@@ -958,7 +947,6 @@ def demo_eds_ping():
     workspace_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
     session_maxson = sessions["Maxson"]
 
-    #api_url = session_maxson.custom_dict["url"]
     response = call_ping(session_maxson.base_url)
 
 if __name__ == "__main__":
