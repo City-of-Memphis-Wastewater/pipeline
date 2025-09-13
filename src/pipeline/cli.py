@@ -107,13 +107,13 @@ def live_query(
 @app.command()
 def trend(
     idcs: list[str] = typer.Argument(..., help="Provide known idcs values that match the given zd."), # , "--idcs", "-i"
-    starttime: str = typer.Option(None, "--start", "-s", help="Index from 'mulch order' to choose scaffold source."),
-    endtime: str = typer.Option(None, "--end", "-end", help="Reference a known template for workspace organization."),
+    starttime: str = typer.Option(None, "--start", "-s", help="Identify start time. Use any reasonable format, to be parsed automatically. If you must use spaces, use quotes."),
+    endtime: str = typer.Option(None, "--end", "-end", help="Identify end time. Use any reasonable format, to be parsed automatically. If you must use spaces, use quotes."),
     zd: str = typer.Option('Maxson', "--zd", "-z", help = "Define the EDS ZD from your secrets file. This must correlate with your idcs point selection(s)."),
     workspacename: str = typer.Option(None,"--workspace","-w", help = "Provide the name of the workspace you want to use, for the secrets.yaml credentials and for the timezone config. If a start time is not provided, the workspace queries can checked for the most recent successful timestamp. "),
     print_csv: bool = typer.Option(False,"--print-csv","-p",help = "Print the CSV style for pasting into Excel."),
     step_seconds: int = typer.Option(None, "--step-seconds", help="You can explicitly provide the delta between datapoints. If not, ~400 data points will be used, based on the nice_step() function."), 
-    webplot: bool = typer.Option(False,"--webplot","-w",help = "Use a web-based plot (plotly) instead of matplotlib. Useful for remote servers without display.")
+    webplot: bool = typer.Option(False,"--webplot","-w",help = "Use a HTML-based plot instead of local (matplotlib). Useful for remote servers without display.")
     ):
     """
     Show a curve for a sensor over time.
