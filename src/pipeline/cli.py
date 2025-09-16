@@ -145,6 +145,7 @@ def trend(
         # assumption for generic system
         idcs_to_iess_suffix = ".UNIT0@NET0"
     iess_list = [x+idcs_to_iess_suffix for x in idcs]
+    print(f"iess_list = {iess_list}")
 
     base_url = secrets_dict.get("eds_apis", {}).get(zd, {}).get("url").rstrip("/")
     session = EdsClient.login_to_session(api_url = base_url,
@@ -152,6 +153,23 @@ def trend(
                                                 password = secrets_dict.get("eds_apis", {}).get(zd, {}).get("password"))
     session.base_url = base_url
     session.zd = secrets_dict.get("eds_apis", {}).get(zd, {}).get("zd")
+
+
+    # Get units for the iess values
+    #decoded_str = EdsClient.get_points_export(session, iess_list=iess_list)
+    #print(f"decoded_str = {decoded_str}")
+    # # Get the parsed dictionary
+    points_data = EdsClient.get_points_metadata(session, iess_list=iess_list)
+    #
+    # # Now you can easily access the unit for 'M100FI.UNIT0@NET0'
+    #unit = points_data.get('M100FI.UNIT0@NET0', {}).get('UN')
+    # print(f"The unit for M100FI.UNIT0@NET0 is: {unit}")
+    #
+    # # You can also iterate through the results
+    #for iess, attributes in points_data.items():
+    #    print(f"Point: {iess}, Description: {attributes.get('DESC')}, Unit: {attributes.get('UN')}")
+    
+    
     
     if starttime is None:
         # back_to_last_success = True
@@ -174,14 +192,18 @@ def trend(
     # results is a list of lists. Each inner list is a separate curve.
     # The PlotBuffer instance is created once, outside the loop.
     data_buffer = PlotBuffer() 
-
     # 'results' is a list of lists. Each inner list is a separate curve.
     for idx, rows in enumerate(results):
         # This line is the key.
         # We create a unique label for each of the 'rows' in the outer loop.
         # The plot will use this label to draw a separate line for each 'rows'.
-        label = idcs[idx]
-
+        
+        attributes = points_data[iess_list[idx]]
+        label = f"{idcs[idx]}, {attributes.get('DESC')}, {attributes.get('UN')}"
+        #label = idcs[idx]
+        # The raw from EdsClient.get_tabular_trend() is brought in like this: 
+        #   sample = [1757763000, 48.93896783431371, 'G'] 
+        #   and then is converted to a dictionary with keys: ts, value, quality
         for row in rows:
             ts = helpers.iso(row.get("ts"))
             av = row.get("value")

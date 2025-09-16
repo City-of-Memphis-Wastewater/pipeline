@@ -5,6 +5,7 @@ import time
 from pprint import pprint
 from pathlib import Path
 import os
+import re
 import inspect
 import subprocess
 import platform
@@ -70,18 +71,6 @@ class EdsClient:
 
         return points[0]
 
-        '''        
-        points_datas = response.get("points", [])
-        if not points_datas:
-            raise ValueError(f"No data returned for iess='{iess}': len(points) == 0")
-        elif len(points_datas) != 1:
-            raise ValueError(f"Expected exactly one point, got {len(points_datas)}")
-        else:
-            point_data = points_datas[0] # You expect exactly one point usually
-            #print(f"point_data = {point_data}")
-        return point_data  
-        '''   
-
     @staticmethod
     def get_tabular_mod(session, req_id, point_list):
         results = [[] for _ in range(len(point_list))]
@@ -100,6 +89,8 @@ class EdsClient:
 
     @staticmethod
     def get_tabular_trend(session, req_id, point_list):
+        # The raw from EdsClient.get_tabular_trend() is brought in like this: 
+        #   sample = [1757763000, 48.93896783431371, 'G'] 
         results = [[] for _ in range(len(point_list))]
         while True:
             api_url = str(session.base_url) 
@@ -111,6 +102,7 @@ class EdsClient:
 
                 for idx, samples in enumerate(chunk['items']):
                     for sample in samples:
+                        #print(f"sample = {sample}")
                         structured = {
                             "ts": sample[0],          # Timestamp
                             "value": sample[1],       # Measurement value
@@ -124,17 +116,107 @@ class EdsClient:
 
     @staticmethod
     #def get_points_export(session,iess_filter:str=''):
-    def get_points_export(session,iess_filter=''):
+    def get_points_export(session,iess_list=None, zd=None):
+        """
+        Retrieves point metadata from the API, filtering by a list of IESS values.
+
+        Args:
+            session (requests.Session): The active session object.
+            iess_list (list): A list of IESS strings to filter by.
+            zd (str): An optional zone directory to filter by.
+        
+        Returns:
+            str: The raw text response from the API.
+        """
+
         api_url = str(session.base_url) 
+
+        # Use a dictionary to build the query parameters.
+        # The `requests` library handles lists gracefully by repeating the key.
+        params = {}
+        
+        # Add the Zone Directory (zd) if provided, otherwise use the session's zd.
+        if zd:
+            params['zd'] = zd
+        else:
+            params['zd'] = str(session.zd)
+
+        # Add the list of IESS values if the list is not empty.
+        # The 'requests' library will automatically format this as
+        # ?iess=item1&iess=item2&...
+        if iess_list and isinstance(iess_list, list) and len(iess_list) > 0:
+            params['iess'] = iess_list
+        
+        params['order'] = 'iess'
+        
         zd = str(session.zd)  
-        order = 'iess'
-        query = '?zd={}&iess={}&order={}'.format(zd, iess_filter, order)
-        request_url = f"{api_url}/points/export" + query
-        response = session.get(request_url, json={}, verify=False)
+        #order = 'iess'
+        #query = '?zd={}&iess={}&order={}'.format(zd, iess_filter, order)
+        request_url = f"{api_url}/points/export" #+ query
+        response = session.get(request_url, params = params, json={}, verify=False)
         #print(f"Status Code: {response.status_code}, Content-Type: {response.headers.get('Content-Type')}, Body: {response.text[:500]}")
         decoded_str = response.text
         return decoded_str
 
+
+    @staticmethod
+    def get_points_metadata(session, iess_list=None, zd=None):
+        """
+        Retrieves and parses point metadata into a dictionary.
+
+        Args:
+            session (requests.Session): The active session object.
+            iess_list (list): A list of IESS strings to filter by.
+            zd (str): An optional zone directory to filter by.
+        
+        Returns:
+            dict: A dictionary where keys are IESS strings and values are
+                  dictionaries of the point's attributes.
+                  Returns an empty dictionary on failure.
+        """
+        raw_export_str = EdsClient.get_points_export(session, iess_list, zd)
+        
+        all_points_metadata = {}
+        
+        # Regex to find key='value' pairs. Handles single-quoted values.
+        # This pattern is more robust than a simple split.
+        pattern = re.compile(r"(\w+)='([^']*)'")
+        for iess_value in iess_list:
+            # We must make a separate API call for each IESS.
+            # Use the existing get_points_export function, but pass a single
+            # IESS value in a list so the URL formatting remains consistent.
+            raw_export_str = EdsClient.get_points_export(session, iess_list=[iess_value], zd=zd)
+
+            
+            for line in raw_export_str.strip().splitlines():
+                # We are only interested in lines that start with 'POINT'
+                if line.strip().startswith('POINT '):
+                    # Extract key-value pairs using the regex
+                    attributes = dict(pattern.findall(line))
+                    
+                    # Double-check that the returned IESS matches the requested one
+                    if attributes.get('IESS') == iess_value:
+                        all_points_metadata[iess_value] = attributes
+                        break # We found our point, so we can stop parsing this response
+        
+        return all_points_metadata
+    # --- Example of how to use it ---
+    # (Assuming you have a 'session' object and a list of iess values)
+    #
+    # iess_list_to_filter = ['M100FI.UNIT0@NET0', 'M119FI.UNIT0@NET0']
+    # session = # ... your session object from login
+    #
+    # # Get the parsed dictionary
+    # points_data = EdsClient.get_points_metadata(session, iess_list=iess_list_to_filter)
+    #
+    # # Now you can easily access the unit for 'M100FI.UNIT0@NET0'
+    # unit = points_data.get('M100FI.UNIT0@NET0', {}).get('UN')
+    # print(f"The unit for M100FI.UNIT0@NET0 is: {unit}")
+    #
+    # # You can also iterate through the results
+    # for iess, attributes in points_data.items():
+    #     print(f"Point: {iess}, Description: {attributes.get('DESC')}, Unit: {attributes.get('UN')}")
+    
     @staticmethod
     def save_points_export(decoded_str, export_file_path):
         lines = decoded_str.strip().splitlines()
