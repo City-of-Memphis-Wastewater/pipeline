@@ -1,13 +1,15 @@
 import numpy as np
-import time
 import logging
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import matplotlib.dates as mdates
 from datetime import datetime, timedelta
+from threading import Thread
+
 from pipeline import helpers
 from pipeline.plotbuffer import PlotBuffer  # Adjust import path as needed
 from pipeline.time_manager import TimeManager
+
 
 logger = logging.getLogger(__name__)
 
@@ -98,7 +100,7 @@ def show_static(buffer: PlotBuffer):
     """
     plt.style.use('ggplot')
     fig, ax = plt.subplots(figsize=(10, 6))
-    ax.set_title("Static Pipeline Data")
+    ax.set_title("EDS Trend")
     ax.set_xlabel("Time")
     ax.set_ylabel("Value")
 

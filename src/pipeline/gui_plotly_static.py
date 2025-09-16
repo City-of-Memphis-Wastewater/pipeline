@@ -31,18 +31,35 @@ def show_static(plot_buffer):
     with buffer_lock:
         data = plot_buffer.get_all()
 
+    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
     traces = []
-    for label, series in data.items():
-        traces.append(go.Scatter(
+    for i, (label, series) in enumerate(data.items()):
+        scatter_trace = go.Scatter(
             x=series["x"],
             y=series["y"],
             mode="lines+markers",
-            name=label
-        ))
+            name=label,
+        )
+        # Explicitly set the line and marker color using update()
+        # This is a robust way to ensure the properties are set
+        
+        scatter_trace.update(
+            line=dict(
+                color=colors[i],
+                width=2
+            ),
+            marker=dict(
+                color=colors[i],
+                size=10,
+                symbol='circle'
+            )
+        )   
+        traces.append(scatter_trace)
 
     layout = go.Layout(
         title="EDS Data Plot (Static)",
-        margin=dict(t=40)
+        margin=dict(t=40),
+        #colorway=['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
     )
 
     fig = go.Figure(data=traces, layout=layout)
