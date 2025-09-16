@@ -171,18 +171,28 @@ def trend(
     results = load_historic_data(session, iess_list, dt_start, dt_finish, step_seconds) 
     if not results:
         return 
+    # results is a list of lists. Each inner list is a separate curve.
+    # The PlotBuffer instance is created once, outside the loop.
+    data_buffer = PlotBuffer() 
 
-    data_buffer = PlotBuffer()
+    # 'results' is a list of lists. Each inner list is a separate curve.
     for idx, rows in enumerate(results):
+        # This line is the key.
+        # We create a unique label for each of the 'rows' in the outer loop.
+        # The plot will use this label to draw a separate line for each 'rows'.
+        label = idcs[idx]
+
         for row in rows:
-            #label = f"({row.get('units')})"
-            label = iess_list[0]
             ts = helpers.iso(row.get("ts"))
             av = row.get("value")
-            #print(f"{round(av,2)}")
-            data_buffer.append(label, ts, av) # needs to be adapted for multiple iess sensor results
-    #print(f"data_buffer = {data_buffer}")
-    #print(f"data_buffer.get_all() = {data_buffer.get_all()}")
+            
+            # All data is appended to the *same* data_buffer,
+            # but the unique 'label' tells the buffer which series it belongs to.
+            data_buffer.append(label, ts, av)
+
+    # Once the loop is done, you can call your show_static function
+    # with the single, populated data_buffer.
+
     if not environment.matplotlib_enabled() or webplot:
         from pipeline import gui_plotly_static
         #gui_fastapi_plotly_live.run_gui(data_buffer)
