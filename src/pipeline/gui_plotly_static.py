@@ -66,10 +66,13 @@ def show_static(plot_buffer):
 
     # Update the layout to position the legend at the top-left corner
     fig.update_layout(legend=dict(
-    yanchor="top",
-    y=0.1,
-    xanchor="left",
-    x=0.0
+    yanchor="auto",
+    y=0.0,
+    xanchor="auto",
+    x=0.0,
+    bgcolor='rgba(255, 255, 255, 0.1)',  # Semi-transparent background
+    bordercolor='black',
+    
     ))
 
     # Write to a temporary HTML file
