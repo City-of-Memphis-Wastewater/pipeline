@@ -335,7 +335,7 @@ class EdsClient:
         # Check if the session_key exists in the secrets_dict
         url = secrets_dict["eds_apis"][session_key]["url"]
         parsed = urlparse(url)
-        hostname = parsed.hostname  # extracts just "172.19.4.128"
+        hostname = parsed.hostname  # Extract hostname from URL
         ip = socket.gethostbyname(hostname)
         bool_ip = (ip == get_lan_ip_address_of_current_machine())
         logger.info(f"Checking if this computer is enterprise database server: {bool_ip}")
