@@ -11,8 +11,9 @@ from importlib import resources
 # Your sensor data here:
 sensors_data = [
     # (idcs, iess, zd, units, description)
-    ("M310LI", "M310LI.UNIT0@NET0", "Maxson", "Inches", "Wet well level sensor"),
+    ("M310LI", "M310LI.UNIT0@NET0", "Maxson", "Inches", "Wet Well Level"),
     ("M100FI", "M100FI.UNIT0@NET0", "Maxson", "MGD", "Influent Flow"),
+    ("D-321E", "D-321E.UNIT0@NET0", "Maxson", "MG/L", "PAA Dose"),
     ("FI8001", "FI8001.UNIT0@NET0", "Maxson", "MGD", "Effluent Flow"),
     ("I-0201A", "I-0201A.UNIT1@NET1", "WWTF", "", ""),
     ("I-5005A", "I-5005A.UNIT1@NET1", "WWTF", "MGD", "Plant Influent Flow"),
