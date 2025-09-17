@@ -64,6 +64,14 @@ def show_static(plot_buffer):
 
     fig = go.Figure(data=traces, layout=layout)
 
+    # Update the layout to position the legend at the top-left corner
+    fig.update_layout(legend=dict(
+    yanchor="top",
+    y=0.1,
+    xanchor="left",
+    x=0.0
+    ))
+
     # Write to a temporary HTML file
     # Use Path to handle the temporary file path
     tmp_file = tempfile.NamedTemporaryFile(suffix=".html", delete=False, mode='w', encoding='utf-8')
