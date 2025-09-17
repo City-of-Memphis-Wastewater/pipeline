@@ -2,6 +2,7 @@ import sqlite3
 from rich.table import Table
 from rich.console import Console
 import typer
+import keyring
 import importlib
 from pathlib import Path
 from importlib.metadata import version, PackageNotFoundError
@@ -230,6 +231,44 @@ def trend(
             for row in rows:
                 print(f"{helpers.iso(row.get('ts'))},{row.get('value')},")
     
+@app.command(name="configure", help="Configure and store API and database credentials.")
+def configure_credentials(
+    overwrite: bool = typer.Option(False, "--overwrite", "-o", help="Overwrite existing credentials without prompting."),
+    ):
+    """
+    Guides the user through a guided credential setup process.
+    """
+    from pipeline.security import get_eds_api_credentials,  get_external_api_credentials, get_eds_db_credentials
+    typer.echo("--- Pipeline-EDS Credential Setup ---")
+    typer.echo("This will securely store your credentials in the system keyring and a local config file.")
+    typer.echo("You can skip any step by saying 'no' or 'n' when prompted.")
+
+    # Get a list of plant names from the user
+    num_plants = typer.prompt("How many EDS plants do you want to configure?", type=int, default=1)
+    
+    plant_names = []
+    for i in range(num_plants):
+        plant_name = typer.prompt(f"Enter a unique name for Plant #{i+1} (e.g., 'Maxson' or 'Stiles')")
+        plant_names.append(plant_name)
+
+    # Loop through each plant to configure its credentials
+    for name in plant_names:
+        typer.echo(f"\nConfiguring credentials for {name}...")
+        
+        # Configure API for this plant
+        if typer.confirm(f"Do you want to configure the EDS API for '{name}'?", default=True):
+            get_eds_api_credentials(plant_name=name, overwrite=overwrite)
+
+        # Configure DB for this plant
+        if typer.confirm(f"Do you want to configure the EDS database for '{name}'?",  default=False):
+            get_eds_db_credentials(plant_name=name, overwrite=overwrite)
+    
+    # Configure any other external APIs
+    if typer.confirm("Do you want to configure external API credentials? (e.g., RJN)"):
+        external_api_name = typer.prompt("Enter a name for the external API (e.g., 'RJN')")
+        get_external_api_credentials(party_name=external_api_name, overwrite=overwrite)
+
+    typer.echo("\nSetup complete. You can now use the commands that require these credentials.")
 
 @app.command()
 def list_workspaces():

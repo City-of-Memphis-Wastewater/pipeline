@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pipeline-eds"
-version = "0.2.38  "
+version = "0.2.38"
 description = "The official API pipeline library for mulch-based projects. Key target: Emerson Ovation EDS REST API."
 authors = ["George Clayton Bennett <george.bennett@memphistn.gov>"]
 license = "BSD-3"
@@ -48,6 +48,7 @@ fastapi = "^0.116.1"
 matplotlib = "^3.10.6"
 rich = "^14.1.0"
 typer = "^0.17.4"
+keyring = "^25.6.0"
 
 [tool.poetry.extras]
 windb = ["pyodbc"]
