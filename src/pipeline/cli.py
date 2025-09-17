@@ -126,6 +126,7 @@ def trend(
     from pipeline.plotbuffer import PlotBuffer
     from pipeline import environment
     from pipeline.workspace_manager import WorkspaceManager
+    from pipeline.security import get_eds_api_credentials
     #workspaces_dir = WorkspaceManager.ensure_appdata_workspaces_dir()      
 
     # must set up %appdata for pip/x installation. Use mulch or yeoman for this. And have a secrets filler.
@@ -139,8 +140,10 @@ def trend(
         zd = "WWTF"
 
     if zd == "Maxson":
+        plant_name = "Maxson"
         idcs_to_iess_suffix = ".UNIT0@NET0"
     elif zd == "WWTF":
+        plant_name = "Stiles"
         idcs_to_iess_suffix = ".UNIT1@NET1"
     else:
         # assumption for generic system
@@ -148,29 +151,32 @@ def trend(
     iess_list = [x+idcs_to_iess_suffix for x in idcs]
     print(f"iess_list = {iess_list}")
 
+    '''
     base_url = secrets_dict.get("eds_apis", {}).get(zd, {}).get("url").rstrip("/")
     session = EdsClient.login_to_session(api_url = base_url,
                                                 username = secrets_dict.get("eds_apis", {}).get(zd, {}).get("username"),
                                                 password = secrets_dict.get("eds_apis", {}).get(zd, {}).get("password"))
     session.base_url = base_url
     session.zd = secrets_dict.get("eds_apis", {}).get(zd, {}).get("zd")
+    '''
+    ###
+    # Retrieve all necessary API credentials and config values.
+    # This will prompt the user if any are missing.
+    api_credentials = get_eds_api_credentials(plant_name=plant_name)
 
+    # Use the retrieved credentials to log in to the API
+    session = EdsClient.login_to_session(
+        api_url=api_credentials.get("url"),
+        username=api_credentials.get("username"),
+        password=api_credentials.get("password")
+    )
 
-    # Get units for the iess values
-    #decoded_str = EdsClient.get_points_export(session, iess_list=iess_list)
-    #print(f"decoded_str = {decoded_str}")
-    # # Get the parsed dictionary
+    # Set the session attributes based on the retrieved credentials
+    session.base_url = api_credentials.get("url")
+    session.zd = api_credentials.get("zd")
+    ###
+
     points_data = EdsClient.get_points_metadata(session, iess_list=iess_list)
-    #
-    # # Now you can easily access the unit for 'M100FI.UNIT0@NET0'
-    #unit = points_data.get('M100FI.UNIT0@NET0', {}).get('UN')
-    # print(f"The unit for M100FI.UNIT0@NET0 is: {unit}")
-    #
-    # # You can also iterate through the results
-    #for iess, attributes in points_data.items():
-    #    print(f"Point: {iess}, Description: {attributes.get('DESC')}, Unit: {attributes.get('UN')}")
-    
-    
     
     if starttime is None:
         # back_to_last_success = True
