@@ -827,6 +827,26 @@ test = ["pyfakefs", "pytest (>=6,!=8.1.*)"]
 type = ["pygobject-stubs", "pytest-mypy", "shtab", "types-pywin32"]
 
 [[package]]
+name = "keyrings-alt"
+version = "5.0.2"
+description = "Alternate keyring implementations"
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "keyrings.alt-5.0.2-py3-none-any.whl", hash = "sha256:6be74693192f3f37bbb752bfac9b86e6177076b17d2ac12a390f1d6abff8ac7c"},
+    {file = "keyrings_alt-5.0.2.tar.gz", hash = "sha256:8f097ebe9dc8b185106502b8cdb066c926d2180e13b4689fd4771a3eab7d69fb"},
+]
+
+[package.dependencies]
+"jaraco.classes" = "*"
+"jaraco.context" = "*"
+
+[package.extras]
+doc = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-lint"]
+test = ["gdata ; python_version == \"2.7\"", "keyring (>=20)", "pycryptodome", "pycryptodomex", "pytest (>=6,!=8.1.*)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-mypy", "pytest-ruff (>=0.2.1) ; sys_platform != \"cygwin\"", "python-keyczar ; python_version == \"2.7\""]
+
+[[package]]
 name = "kiwisolver"
 version = "1.4.9"
 description = "A fast implementation of the Cassowary constraint solver"
@@ -1971,4 +1991,4 @@ windb = []
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<4.0.0"
-content-hash = "dcad4c5dc0d3addaad827120bb5d63a01a2439721e50bb3772d5f2fe8def9764"
+content-hash = "57c88022ab33f8d243605f248fbeaf50855193a35109739fdd6fd4b4051e4e76"

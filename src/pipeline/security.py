@@ -6,9 +6,24 @@ from pathlib import Path
 from typing import Dict, Set
 import typer
 
+from pipeline.environment import is_termux
+
 # Define a standard configuration path for your package
 CONFIG_PATH = Path.home() / ".pipeline-eds" / "config.json"
-
+def configure_keyring():
+    """
+    Configures the keyring backend to use the file-based keyring.
+    This is useful for environments where the default keyring is not available,
+    such as Termux on Android.
+    """
+    if is_termux():
+        typer.echo("Termux environment detected. Configuring file-based keyring backend.")
+        import keyrings.alt.file
+        keyring.set_keyring(keyrings.alt.file.PlaintextKeyring())
+        typer.echo("Keyring configured to use file-based backend.")
+    else:
+        pass
+configure_keyring() # to be run on import
 def _get_config_with_prompt(config_key: str, prompt_message: str, overwrite: bool = False) -> str:
     """
     Retrieves a config value from a local file, prompting the user and saving it if missing.
