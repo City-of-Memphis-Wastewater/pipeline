@@ -17,10 +17,10 @@ def configure_keyring():
     such as Termux on Android.
     """
     if is_termux():
-        typer.echo("Termux environment detected. Configuring file-based keyring backend.")
+        #typer.echo("Termux environment detected. Configuring file-based keyring backend.")
         import keyrings.alt.file
         keyring.set_keyring(keyrings.alt.file.PlaintextKeyring())
-        typer.echo("Keyring configured to use file-based backend.")
+        #typer.echo("Keyring configured to use file-based backend.")
     else:
         pass
 configure_keyring() # to be run on import
@@ -104,6 +104,8 @@ def _get_credential_with_prompt(service_name: str, item_name: str, prompt_messag
             new_credential = input(f"{prompt_message}: ")
             
         # Store the new credential
+        if new_credential == "''" or new_credential == '""':
+            new_credential = str("") # ensure empty string if user types '' or "" 
         keyring.set_password(service_name, item_name, new_credential)
         typer.echo("Credential stored securely.")
         return new_credential
@@ -135,13 +137,31 @@ def get_eds_db_credentials(plant_name: str, overwrite: bool = False) -> Dict[str
         'port': port,
         'database': database, # This could also be a config value if it changes
         'storage_path' : storage_path
+
     }
+
+def is_likely_ip(url: str) -> bool:
+    """Simple heuristic to check if a string looks like an IP address."""
+    parts = url.split('.')
+    if len(parts) != 4:
+        return False
+    for part in parts:
+        if not part.isdigit() or not (0 <= int(part) <= 255):
+            return False
+    return True
+
+def _get_eds_url_config_with_prompt(config_key: str, prompt_message: str, overwrite: bool = False) -> str:
+    url = _get_config_with_prompt(config_key, prompt_message, overwrite=overwrite)
+    if is_likely_ip(url):
+        url = f"http://{url}:43084/api/v1" # assume EDS patterna and port http and append api/v1 if user just put in an IP
+    return url
     
 def get_eds_api_credentials(plant_name: str, overwrite: bool = False) -> Dict[str, str]:
     """Retrieves API credentials for a given plant, prompting if necessary."""
     service_name = f"pipeline-eds-api-{plant_name}"
     
-    url = _get_config_with_prompt(f"{plant_name}_eds_api_url", f"Enter {plant_name} API URL (e.g., http://000.00.0.000:43084/api/v1)", overwrite=overwrite)
+    #url = _get_config_with_prompt(f"{plant_name}_eds_api_url", f"Enter {plant_name} API URL (e.g., http://000.00.0.000:43084/api/v1)", overwrite=overwrite)
+    url = _get_eds_url_config_with_prompt(f"{plant_name}_eds_api_url", f"Enter {plant_name} API URL (e.g., http://000.00.0.000:43084/api/v1, or just 000.00.0.000)", overwrite=overwrite)
     zd = _get_config_with_prompt(f"{plant_name}_eds_api_zd", f"Enter {plant_name} ZD (e.g., 'Maxson' or 'WWTF')", overwrite=overwrite)
     username = _get_credential_with_prompt(service_name, "username", f"Enter your API username for {plant_name} (e.g. admin)", hide_password=False, overwrite=overwrite)
     password = _get_credential_with_prompt(service_name, "password", f"Enter your API password for {plant_name} (e.g. '')", overwrite=overwrite)

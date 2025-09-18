@@ -8,6 +8,8 @@ from importlib.metadata import version, PackageNotFoundError
 from pipeline.time_manager import TimeManager
 from pipeline.create_sensors_db import get_db_connection, create_packaged_db, reset_user_db # get_user_db_path, ensure_user_db, 
 from pipeline.api.eds import demo_eds_webplot_point_live
+from pipeline import environment
+from pipeline.security import get_eds_api_credentials, get_external_api_credentials, get_eds_db_credentials, get_all_configured_urls, CONFIG_PATH
 
 #from pipeline.helpers import setup_logging
 ### Versioning
@@ -117,8 +119,7 @@ def trend(
     from pipeline.api.eds import EdsClient, load_historic_data
     from pipeline import helpers
     from pipeline.plotbuffer import PlotBuffer
-    from pipeline import environment
-    from pipeline.security import get_eds_api_credentials
+    
 
     if zd.lower() == "stiles":
         zd = "WWTF"
@@ -220,13 +221,16 @@ def configure_credentials(
     overwrite: bool = typer.Option(False, "--overwrite", "-o", help="Overwrite existing credentials, with confirmation protection."),
     ):
     """
-    Guides the user through a guided credential setup process.
+    Guides the user through a guided credential setup process. This is not necessary, as necessary credentials will be prompted for as needed, but this is a convenient way to set up multiple credentials at once. This command with the `--overwrite` flag is the designed way to edit existing credentials.
     """
-    from pipeline.security import get_eds_api_credentials,  get_external_api_credentials, get_eds_db_credentials, CONFIG_PATH
+    typer.echo("")
     typer.echo("--- Pipeline-EDS Credential Setup ---")
-    typer.echo("This will securely store your credentials in the system keyring and a local config file.")
+    #typer.echo("This will securely store your credentials in the system keyring and a local config file.")
     typer.echo("You can skip any step by saying 'no' or 'n' when prompted.")
-    
+    typer.echo("You quit editing credentials at any time by escaping with `control+C`.")
+    typer.echo("You can run this command again later to add or modify credentials.")
+    typer.echo("If you are not prompted for a credential, it is likely already configured. To change it, use the --overwrite flag.")
+    typer.echo("")
     if overwrite:
         typer.echo("⚠️ Overwrite mode is enabled. Existing credentials will shown and you will be prompted to confirm overwriting them.")
         typer.echo(f"Alternatively, edit the configuration file directly in a text editor.")
@@ -249,15 +253,17 @@ def configure_credentials(
             get_eds_api_credentials(plant_name=name, overwrite=overwrite)
 
         # Configure DB for this plant
-        if typer.confirm(f"Do you want to configure the EDS database for '{name}'?",  default=False):
+        if False and typer.confirm(f"Do you want to configure the EDS database for '{name}'?",  default=False):
             get_eds_db_credentials(plant_name=name, overwrite=overwrite)
     
     # Configure any other external APIs
-    if typer.confirm("Do you want to configure external API credentials? (e.g., RJN)"):
+    if False and typer.confirm("Do you want to configure external API credentials? (e.g., RJN)"):
         external_api_name = typer.prompt("Enter a name for the external API (e.g., 'RJN')")
         get_external_api_credentials(party_name=external_api_name, overwrite=overwrite)
 
     typer.echo("\nSetup complete. You can now use the commands that require these credentials.")
+    typer.echo("If a question was skipped, it is because the credential is already configured.")
+    typer.echo("Run this command again with --overwrite to change it.")
 
 @app.command()
 def list_workspaces():
@@ -282,7 +288,7 @@ def ping(
     Ping all HTTP/S URL's found in the secrets configuration.
     """
     from pipeline.calls import call_ping
-    from pipeline.security import get_all_configured_urls
+    
     import logging
 
     logger = logging.getLogger(__name__)
