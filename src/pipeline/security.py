@@ -161,8 +161,10 @@ def get_configurable_plant_name(overwrite=False) -> str:
     '''Comma separated list of plant names to be used as the default if none is provided in other commands.'''
     plant_name = _get_config_with_prompt(f"configurable_plantname_eds_api", f"Enter plant name(s) to be used as the default", overwrite=overwrite)
     if ',' in plant_name:
-        plant_name = ','.join([name.strip() for name in plant_name.split(',')])
-    return plant_name
+        plant_names = plant_name.split(',')
+        return plant_names
+    else:
+        return plant_name
 
 def get_eds_api_credentials(plant_name: str, overwrite: bool = False) -> Dict[str, str]:
     """Retrieves API credentials for a given plant, prompting if necessary."""
