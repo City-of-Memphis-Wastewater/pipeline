@@ -21,6 +21,24 @@ from pipeline.time_manager import TimeManager
 logger = logging.getLogger(__name__)
 #logger.setLevel(logging.INFO)
 
+class EdsLoginException(Exception):
+    """
+    Custom exception raised when a login to the EDS API fails.
+
+    This exception is used to differentiate between a simple network timeout
+    and a specific authentication or API-related login failure.
+    """
+
+    def __init__(self, message: str = "Login failed for the EDS API. Check VPN and credentials."):
+        """
+        Initializes the EdsLoginException with a custom message.
+
+        Args:
+            message: A descriptive message for the error.
+        """
+        self.message = message
+        super().__init__(self.message)
+
 class EdsClient:
 
     @staticmethod
@@ -226,13 +244,19 @@ class EdsClient:
                 f.write(line + "\n")  # Save each line in the text file
     
     @staticmethod
-    def login_to_session(api_url, username, password):
+    def login_to_session(api_url, username, password, timeout=10):
         session = requests.Session()
 
         data = {'username': username, 'password': password, 'type': 'script'}
-        response = session.post(f"{api_url}/login", json=data, verify=False).json()
+        response = session.post(f"{api_url}/login",
+                                json=data,
+                                verify=False,
+                                timeout=timeout
+                                )
+        response.raise_for_status() # Raises an HTTPError for bad responses (4xx or 5xx)
+        json_response = response.json()
         #print(f"response = {response}")
-        session.headers['Authorization'] = f"Bearer {response['sessionId']}"
+        session.headers['Authorization'] = f"Bearer {json_response['sessionId']}"
         return session
     
     @staticmethod

@@ -4,6 +4,7 @@ from rich.console import Console
 import typer
 from pathlib import Path
 from importlib.metadata import version, PackageNotFoundError
+from requests.exceptions import Timeout
 
 from pipeline.time_manager import TimeManager
 from pipeline.create_sensors_db import get_db_connection, create_packaged_db, reset_user_db # get_user_db_path, ensure_user_db, 
@@ -102,7 +103,7 @@ def live_query(
     demo_eds_webplot_point_live()
 
 @app.command()
-def plant(
+def defaultplant(
     overwrite: bool = typer.Option(False, "--overwrite", "-o", help = "Overwrite existing plant name(s) to be used as default.")
     ):
     """Set the plant name(s) to be used if one is not explicitly provided in other commands, like trend. Comma separate for multiple."""
@@ -114,7 +115,7 @@ def trend(
     idcs: list[str] = typer.Argument(..., help="Provide known idcs values that match the given zd."), # , "--idcs", "-i"
     starttime: str = typer.Option(None, "--start", "-s", help="Identify start time. Use any reasonable format, to be parsed automatically. If you must use spaces, use quotes."),
     endtime: str = typer.Option(None, "--end", "-end", help="Identify end time. Use any reasonable format, to be parsed automatically. If you must use spaces, use quotes."),
-    plantname: str = typer.Option(None, "--zd", "-z", help = "Define the EDS ZD for your credentials. This must correlate with your idcs point selection(s)."),
+    plant_name: str = typer.Option(None, "--plantname", "-pn", help = "Define the EDS ZD for your credentials. This must correlate with your idcs point selection(s)."),
     #workspacename: str = typer.Option(None,"--workspace","-w", help = "Provide the name of the workspace you want to use, for the secrets.yaml credentials and for the timezone config. If a start time is not provided, the workspace queries can checked for the most recent successful timestamp. "),
     print_csv: bool = typer.Option(False,"--print-csv","-p",help = "Print the CSV style for pasting into Excel."),
     step_seconds: int = typer.Option(None, "--step-seconds", help="You can explicitly provide the delta between datapoints. If not, ~400 data points will be used, based on the nice_step() function."), 
@@ -125,13 +126,13 @@ def trend(
     """
     #from dateutil import parser
     import pendulum
-    from pipeline.api.eds import EdsClient, load_historic_data
+    from pipeline.api.eds import EdsClient, load_historic_data, EdsLoginException
     from pipeline import helpers
     from pipeline.plotbuffer import PlotBuffer
     
     #zd = api_credentials.get("zd")
-    if plantname is None:
-        plantname = get_configurable_plant_name()
+    if plant_name is None:
+        plant_name = get_configurable_plant_name()
     """
     if zd.lower() == "stiles":
         zd = "WWTF"
@@ -155,28 +156,64 @@ def trend(
 
     # Retrieve all necessary API credentials and config values.
     # This will prompt the user if any are missing.
-    if isinstance(plantname,str):
-        api_credentials = get_eds_api_credentials(plant_name=plantname)
-    if isinstance(plantname,list):
-        typer.echo("Multiple plant names provided. This is not currently supported. Defaulting to use the first.")
-        api_credentials = get_eds_api_credentials(plant_name=plantname)[0]
+    if isinstance(plant_name,str):
+        api_credentials = get_eds_api_credentials(plant_name=plant_name)
+    if isinstance(plant_name,list):
+        typer.echo("")
+        typer.echo(f"Multiple plant names provided: {plant_name} ")
+        typer.echo("Querying multiple plants at once currently supported.") 
+        typer.echo("Defaulting to use the first name.")
+        api_credentials = get_eds_api_credentials(plant_name=plant_name[0])
 
+    typer.echo(f"")
+    typer.echo(f"Data request processing...")
+    typer.echo(f"plant_name = {plant_name}")
     idcs_to_iess_suffix = api_credentials.get("idcs_to_iess_suffix")
     iess_list = [x+idcs_to_iess_suffix for x in idcs]
-    print(f"iess_list = {iess_list}\n")
+    typer.echo(f"iess_list = {iess_list}")
+    typer.echo(f"")
 
+    """
     # Use the retrieved credentials to log in to the API
     session = EdsClient.login_to_session(
         api_url=api_credentials.get("url"),
         username=api_credentials.get("username"),
         password=api_credentials.get("password")
     )
+    """
+
+    session = None
+    try:
+        session = EdsClient.login_to_session(
+            api_url=api_credentials.get("url"),
+            username=api_credentials.get("username"),
+            password=api_credentials.get("password"),
+            timeout=10 # Add a 10-second timeout to the request
+        )
+    except Timeout:
+        typer.echo(
+            typer.style(
+                "\nConnection to the EDS API timed out. Please check your VPN connection and try again.",
+                fg=typer.colors.RED,
+                bold=True,
+            )
+        )
+        raise typer.Exit(code=1)
+    except EdsLoginException as e:
+        typer.echo(
+            typer.style(
+                f"\nLogin failed for EDS API: {e}",
+                fg=typer.colors.RED,
+                bold=True,
+            )
+        )
+        raise typer.Exit(code=1)
+    
 
     # Set the session attributes based on the retrieved credentials
     session.base_url = api_credentials.get("url")
     session.zd = api_credentials.get("zd")
     
-
     points_data = EdsClient.get_points_metadata(session, iess_list=iess_list)
     
     
@@ -239,25 +276,33 @@ def trend(
         for idx, rows in enumerate(results):
             for row in rows:
                 print(f"{helpers.iso(row.get('ts'))},{row.get('value')},")
-    
+
+
+
 @app.command(name="configure", help="Configure and store API and database credentials.")
 def configure_credentials(
     overwrite: bool = typer.Option(False, "--overwrite", "-o", help="Overwrite existing credentials, with confirmation protection."),
+    textedit: bool = typer.Option(False, "--textedit", "-t", help = "Open the config file in a text editor instead of using the guided prompt.")
     ):
     """
     Guides the user through a guided credential setup process. This is not necessary, as necessary credentials will be prompted for as needed, but this is a convenient way to set up multiple credentials at once. This command with the `--overwrite` flag is the designed way to edit existing credentials.
     """
+    if textedit:
+        typer.echo(F"Config filepath: {CONFIG_PATH}")
+        environment.open_file_in_default_app(CONFIG_PATH)
+        return
+            
     typer.echo("")
     typer.echo("--- Pipeline-EDS Credential Setup ---")
     #typer.echo("This will securely store your credentials in the system keyring and a local config file.")
     typer.echo("You can skip any step by saying 'no' or 'n' when prompted.")
-    typer.echo("You quit editing credentials at any time by escaping with `control+C`.")
+    typer.echo("You can quit editing credentials at any time by escaping with `control+C`.")
     typer.echo("You can run this command again later to add or modify credentials.")
     typer.echo("If you are not prompted for a credential, it is likely already configured. To change it, use the --overwrite flag.")
     typer.echo("")
     if overwrite:
         typer.echo("⚠️ Overwrite mode is enabled. Existing credentials will shown and you will be prompted to confirm overwriting them.")
-        typer.echo(f"Alternatively, edit the configuration file directly in a text editor.")
+        typer.echo(f"Alternatively, edit the configuration file directly in a text editor with the `--textedit` flag.")
         typer.echo(f"Config file path: {CONFIG_PATH}", color=typer.colors.MAGENTA)   
 
     # Get a list of plant names from the user
