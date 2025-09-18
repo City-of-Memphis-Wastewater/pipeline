@@ -3,7 +3,7 @@ import keyring
 import getpass
 import json
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Set
 import typer
 
 # Define a standard configuration path for your package
@@ -160,6 +160,29 @@ def get_external_api_credentials(party_name: str, overwrite: bool = False) -> Di
         'client_id': client_id,
         'password': password
     }
+
+
+def get_all_configured_urls(only_eds: bool) -> Set[str]:
+    """
+    Reads the config file and returns a set of all URLs found.
+    If only_eds is True, it returns only the EDS-related URLs.
+    """
+    config = {}
+    if CONFIG_PATH.exists():
+        with open(CONFIG_PATH, "r") as f:
+            config = json.load(f)
+
+    urls = set()
+    for key, value in config.items():
+        if isinstance(value, str):
+            # A simple check to see if the string looks like a URL
+            if value.startswith(("http://", "https://")):
+                if only_eds and "eds" in key.lower():
+                    urls.add(value)
+                elif not only_eds:
+                    urls.add(value)
+    return urls
+
 class CredentialsNotFoundError(Exception):
     """Custom exception for missing credentials."""
     pass
