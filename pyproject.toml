@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pipeline-eds"
-version = "0.2.46"
+version = "0.2.48"
 description = "The API pipeline library, with CLI tools. Key target: The Emerson Ovation EDS REST API."
 authors = ["George Clayton Bennett <george.bennett@memphistn.gov>"]
 license = "BSD-3"
@@ -18,6 +18,7 @@ include = [
 [tool.poetry.scripts]
 pipeline = "pipeline.cli:app" # for installation of pipeline as a CLI. Ex: pipeline trend M100FI -s June3 -f June17
 eds = "pipeline.cli:app" # alias eds for pipeline CLI
+pipeline-eds = "pipeline.cli:app" # alias eds for pipeline CLI
 
 
 [tool.pytest.ini_options]
@@ -53,8 +54,8 @@ keyrings-alt = "^5.0.2"
 pyodbc = { version = "^5.1.0", optional = true }
 matplotlib = { version = "^3.10.6", optional = true }
 
-[tool.poetry.extras]
-windb = ["pyodbc"]
+[tool.poetry.extras] # pipx install pipeline-eds[windows]
+windows = ["pyodbc","matplotlib"]
 mpl = ["matplotlib"]
 
 [tool.poetry.group.dev.dependencies]
