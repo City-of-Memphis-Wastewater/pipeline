@@ -54,6 +54,7 @@ def _get_config_with_prompt(config_key: str, prompt_message: str, overwrite: boo
     # prompt for a new value.
     
     if value is None or overwrite:
+        typer.echo(f"\n --- One-time configuration required --- ")
         new_value = input(f"{prompt_message}: ")
         
         # Save the new value back to the file
@@ -155,25 +156,35 @@ def _get_eds_url_config_with_prompt(config_key: str, prompt_message: str, overwr
     if is_likely_ip(url):
         url = f"http://{url}:43084/api/v1" # assume EDS patterna and port http and append api/v1 if user just put in an IP
     return url
-    
+
+def get_configurable_plant_name(overwrite=False) -> str:
+    '''Comma separated list of plant names to be used as the default if none is provided in other commands.'''
+    plant_name = _get_config_with_prompt(f"configurable_plantname_eds_api", f"Enter plant name(s) to be used as the default", overwrite=overwrite)
+    if ',' in plant_name:
+        plant_name = ','.join([name.strip() for name in plant_name.split(',')])
+    return plant_name
+
 def get_eds_api_credentials(plant_name: str, overwrite: bool = False) -> Dict[str, str]:
     """Retrieves API credentials for a given plant, prompting if necessary."""
     service_name = f"pipeline-eds-api-{plant_name}"
     
     #url = _get_config_with_prompt(f"{plant_name}_eds_api_url", f"Enter {plant_name} API URL (e.g., http://000.00.0.000:43084/api/v1)", overwrite=overwrite)
     url = _get_eds_url_config_with_prompt(f"{plant_name}_eds_api_url", f"Enter {plant_name} API URL (e.g., http://000.00.0.000:43084/api/v1, or just 000.00.0.000)", overwrite=overwrite)
-    zd = _get_config_with_prompt(f"{plant_name}_eds_api_zd", f"Enter {plant_name} ZD (e.g., 'Maxson' or 'WWTF')", overwrite=overwrite)
     username = _get_credential_with_prompt(service_name, "username", f"Enter your API username for {plant_name} (e.g. admin)", hide_password=False, overwrite=overwrite)
     password = _get_credential_with_prompt(service_name, "password", f"Enter your API password for {plant_name} (e.g. '')", overwrite=overwrite)
-
+    idcs_to_iess_suffix = _get_config_with_prompt(f"{plant_name}_eds_api_iess_suffix", f"Enter iess suffix for {plant_name} (e.g., .UNIT0@NET0)", overwrite=overwrite)
+    zd = _get_config_with_prompt(f"{plant_name}_eds_api_zd", f"Enter {plant_name} ZD (e.g., 'Maxson' or 'WWTF')", overwrite=overwrite)
+    
     #if not all([username, password]):
     #    raise CredentialsNotFoundError(f"API credentials for '{plant_name}' not found. Please run the setup utility.")
         
     return {
         'url': url,
-        'zd': zd,
         'username': username,
-        'password': password
+        'password': password,
+        'zd': zd,
+        'idcs_to_iess_suffix': idcs_to_iess_suffix
+
         # The URL and other non-secret config would come from a separate config file
         # or be prompted just-in-time as we discussed previously.
     }

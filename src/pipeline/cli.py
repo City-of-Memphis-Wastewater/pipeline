@@ -9,7 +9,7 @@ from pipeline.time_manager import TimeManager
 from pipeline.create_sensors_db import get_db_connection, create_packaged_db, reset_user_db # get_user_db_path, ensure_user_db, 
 from pipeline.api.eds import demo_eds_webplot_point_live
 from pipeline import environment
-from pipeline.security import get_eds_api_credentials, get_external_api_credentials, get_eds_db_credentials, get_all_configured_urls, CONFIG_PATH
+from pipeline.security import get_eds_api_credentials, get_external_api_credentials, get_eds_db_credentials, get_all_configured_urls, get_configurable_plant_name, CONFIG_PATH
 
 #from pipeline.helpers import setup_logging
 ### Versioning
@@ -100,12 +100,21 @@ def live_query(
 ):
     """live data plotting, based on CSV query files. Coming soon - call any, like the 'trend' command."""
     demo_eds_webplot_point_live()
+
+@app.command()
+def plant(
+    overwrite: bool = typer.Option(False, "--overwrite", "-o", help = "Overwrite existing plant name(s) to be used as default.")
+    ):
+    """Set the plant name(s) to be used if one is not explicitly provided in other commands, like trend. Comma separate for multiple."""
+    configurable_plant_name = get_configurable_plant_name(overwrite=overwrite)
+    typer.echo(f"Configurable plant name(s) for EDS API: {configurable_plant_name}")
+
 @app.command()
 def trend(
     idcs: list[str] = typer.Argument(..., help="Provide known idcs values that match the given zd."), # , "--idcs", "-i"
     starttime: str = typer.Option(None, "--start", "-s", help="Identify start time. Use any reasonable format, to be parsed automatically. If you must use spaces, use quotes."),
     endtime: str = typer.Option(None, "--end", "-end", help="Identify end time. Use any reasonable format, to be parsed automatically. If you must use spaces, use quotes."),
-    zd: str = typer.Option('Maxson', "--zd", "-z", help = "Define the EDS ZD for your credentials. This must correlate with your idcs point selection(s)."),
+    plantname: str = typer.Option(None, "--zd", "-z", help = "Define the EDS ZD for your credentials. This must correlate with your idcs point selection(s)."),
     #workspacename: str = typer.Option(None,"--workspace","-w", help = "Provide the name of the workspace you want to use, for the secrets.yaml credentials and for the timezone config. If a start time is not provided, the workspace queries can checked for the most recent successful timestamp. "),
     print_csv: bool = typer.Option(False,"--print-csv","-p",help = "Print the CSV style for pasting into Excel."),
     step_seconds: int = typer.Option(None, "--step-seconds", help="You can explicitly provide the delta between datapoints. If not, ~400 data points will be used, based on the nice_step() function."), 
@@ -120,7 +129,10 @@ def trend(
     from pipeline import helpers
     from pipeline.plotbuffer import PlotBuffer
     
-
+    #zd = api_credentials.get("zd")
+    if plantname is None:
+        plantname = get_configurable_plant_name()
+    """
     if zd.lower() == "stiles":
         zd = "WWTF"
 
@@ -132,14 +144,26 @@ def trend(
         idcs_to_iess_suffix = ".UNIT1@NET1"
     else:
         # assumption for generic system
+        is_zd_same_as_plant_name = typer.Input(f"Is the plant name the same as the ZD ? (y/n): ")
+        if is_zd_same_as_plant_name.lower() in ['y','yes']:
+            plant_name = zd
+        else:
+            plant_name = typer.Input(f"Plant name: ")
+        #plant_name = zd
         idcs_to_iess_suffix = ".UNIT0@NET0"
-    iess_list = [x+idcs_to_iess_suffix for x in idcs]
-    print(f"iess_list = {iess_list}")
+    """
 
-    ###
     # Retrieve all necessary API credentials and config values.
     # This will prompt the user if any are missing.
-    api_credentials = get_eds_api_credentials(plant_name=plant_name)
+    if isinstance(plantname,str):
+        api_credentials = get_eds_api_credentials(plant_name=plantname)
+    if isinstance(plantname,list):
+        typer.echo("Multiple plant names provided. This is not currently supported. Defaulting to use the first.")
+        api_credentials = get_eds_api_credentials(plant_name=plantname)[0]
+
+    idcs_to_iess_suffix = api_credentials.get("idcs_to_iess_suffix")
+    iess_list = [x+idcs_to_iess_suffix for x in idcs]
+    print(f"iess_list = {iess_list}\n")
 
     # Use the retrieved credentials to log in to the API
     session = EdsClient.login_to_session(
