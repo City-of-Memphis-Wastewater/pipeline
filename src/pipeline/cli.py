@@ -2,12 +2,9 @@ import sqlite3
 from rich.table import Table
 from rich.console import Console
 import typer
-import keyring
-import importlib
 from pathlib import Path
 from importlib.metadata import version, PackageNotFoundError
 
-from pipeline.env import SecretConfig
 from pipeline.time_manager import TimeManager
 from pipeline.create_sensors_db import get_db_connection, create_packaged_db, reset_user_db # get_user_db_path, ensure_user_db, 
 from pipeline.api.eds import demo_eds_webplot_point_live
@@ -57,21 +54,17 @@ def main(
         typer.echo(ctx.get_help())
         raise typer.Exit()
 
-@app.command()
-def reset_db():
-    """Reset the user DB from the packaged default, and from the hardcoded list."""
-    """There should be a way to ship plant specific packaged DB, so it is not hardcoded. Probably the same way we can ship secrets. Log in, get JSON via API, write, generate file.""" 
-    #user_db = get_user_db_path()
-    #if user_db.exists():
-    #    user_db.unlink()
-    #ensure_user_db()
-
-    packaged_db = create_packaged_db()
-    user_db = reset_user_db(packaged_db)
 
 @app.command()
-def list_sensors(db_path: str = None):
+def list_sensors(
+    db_path: str = None,
+    reset: bool = typer.Option(False, "--reset", help = "Reset the database file from the code-embedded sensor data"),
+    ):
     """ See a cheatsheet of commonly used sensors from the database."""
+    if reset:
+        packaged_db = create_packaged_db()
+        user_db = reset_user_db(packaged_db)
+
     # db_path: str = "sensors.db"
     if db_path is not None:
         conn = sqlite3.connect(db_path)
@@ -110,8 +103,8 @@ def trend(
     idcs: list[str] = typer.Argument(..., help="Provide known idcs values that match the given zd."), # , "--idcs", "-i"
     starttime: str = typer.Option(None, "--start", "-s", help="Identify start time. Use any reasonable format, to be parsed automatically. If you must use spaces, use quotes."),
     endtime: str = typer.Option(None, "--end", "-end", help="Identify end time. Use any reasonable format, to be parsed automatically. If you must use spaces, use quotes."),
-    zd: str = typer.Option('Maxson', "--zd", "-z", help = "Define the EDS ZD from your secrets file. This must correlate with your idcs point selection(s)."),
-    workspacename: str = typer.Option(None,"--workspace","-w", help = "Provide the name of the workspace you want to use, for the secrets.yaml credentials and for the timezone config. If a start time is not provided, the workspace queries can checked for the most recent successful timestamp. "),
+    zd: str = typer.Option('Maxson', "--zd", "-z", help = "Define the EDS ZD for your credentials. This must correlate with your idcs point selection(s)."),
+    #workspacename: str = typer.Option(None,"--workspace","-w", help = "Provide the name of the workspace you want to use, for the secrets.yaml credentials and for the timezone config. If a start time is not provided, the workspace queries can checked for the most recent successful timestamp. "),
     print_csv: bool = typer.Option(False,"--print-csv","-p",help = "Print the CSV style for pasting into Excel."),
     step_seconds: int = typer.Option(None, "--step-seconds", help="You can explicitly provide the delta between datapoints. If not, ~400 data points will be used, based on the nice_step() function."), 
     webplot: bool = typer.Option(False,"--webplot","-w",help = "Use a browser-based plot instead of local (matplotlib). Useful for remote servers without display.")
@@ -125,16 +118,7 @@ def trend(
     from pipeline import helpers
     from pipeline.plotbuffer import PlotBuffer
     from pipeline import environment
-    from pipeline.workspace_manager import WorkspaceManager
     from pipeline.security import get_eds_api_credentials
-    #workspaces_dir = WorkspaceManager.ensure_appdata_workspaces_dir()      
-
-    # must set up %appdata for pip/x installation. Use mulch or yeoman for this. And have a secrets filler.
-    if workspacename is None:
-        workspacename = WorkspaceManager.identify_default_workspace_name()
-    wm = WorkspaceManager(workspacename)
-    secrets_file_path = wm.get_secrets_file_path()
-    secrets_dict = SecretConfig.load_config(secrets_file_path)
 
     if zd.lower() == "stiles":
         zd = "WWTF"
@@ -151,14 +135,6 @@ def trend(
     iess_list = [x+idcs_to_iess_suffix for x in idcs]
     print(f"iess_list = {iess_list}")
 
-    '''
-    base_url = secrets_dict.get("eds_apis", {}).get(zd, {}).get("url").rstrip("/")
-    session = EdsClient.login_to_session(api_url = base_url,
-                                                username = secrets_dict.get("eds_apis", {}).get(zd, {}).get("username"),
-                                                password = secrets_dict.get("eds_apis", {}).get(zd, {}).get("password"))
-    session.base_url = base_url
-    session.zd = secrets_dict.get("eds_apis", {}).get(zd, {}).get("zd")
-    '''
     ###
     # Retrieve all necessary API credentials and config values.
     # This will prompt the user if any are missing.
@@ -174,43 +150,45 @@ def trend(
     # Set the session attributes based on the retrieved credentials
     session.base_url = api_credentials.get("url")
     session.zd = api_credentials.get("zd")
-    ###
+    
 
     points_data = EdsClient.get_points_metadata(session, iess_list=iess_list)
     
-    if starttime is None:
-        # back_to_last_success = True
-        from pipeline.queriesmanager import QueriesManager
-        queries_manager = QueriesManager(wm)
-        dt_start = queries_manager.get_most_recent_successful_timestamp(api_id=zd)
-    else:
-        dt_start = pendulum.parse(helpers.sanitize_date_input(starttime), strict=False)
+    
     if endtime is None:
-        dt_finish = helpers.get_now_time_rounded(wm)
+        dt_finish = pendulum.from_timestamp(helpers.get_now_time_rounded())
+        print(f"No endtime provided, so defaulting to now: {dt_finish.to_datetime_string()}")
     else:
         dt_finish = pendulum.parse(helpers.sanitize_date_input(endtime), strict=False)
+    if starttime is None:
+        dt_start = dt_finish.subtract(days=60) # default to 60 days ago
+        print(f"No starttime provided, so defaulting to 60 days before endtime: {dt_start.to_datetime_string()}")
+    else:
+        dt_start = pendulum.parse(helpers.sanitize_date_input(starttime), strict=False)
 
     # Should automatically choose time step granularity based on time length; map 
     if step_seconds is None:
         step_seconds = helpers.nice_step(TimeManager(dt_finish).as_unix()-TimeManager(dt_start).as_unix()) # TimeManager(starttime).as_unix()
     results = load_historic_data(session, iess_list, dt_start, dt_finish, step_seconds) 
+    # results is a list of lists. Each inner list is a separate curve.
     if not results:
         return 
-    # results is a list of lists. Each inner list is a separate curve.
+    
     # The PlotBuffer instance is created once, outside the loop.
     data_buffer = PlotBuffer() 
-    # 'results' is a list of lists. Each inner list is a separate curve.
     for idx, rows in enumerate(results):
-        # This line is the key.
+        
         # We create a unique label for each of the 'rows' in the outer loop.
         # The plot will use this label to draw a separate line for each 'rows'.
         
         attributes = points_data[iess_list[idx]]
         label = f"{idcs[idx]}, {attributes.get('DESC')}, {attributes.get('UN')}"
         #label = idcs[idx]
+        
         # The raw from EdsClient.get_tabular_trend() is brought in like this: 
         #   sample = [1757763000, 48.93896783431371, 'G'] 
         #   and then is converted to a dictionary with keys: ts, value, quality
+        
         for row in rows:
             ts = helpers.iso(row.get("ts"))
             av = row.get("value")
@@ -239,15 +217,20 @@ def trend(
     
 @app.command(name="configure", help="Configure and store API and database credentials.")
 def configure_credentials(
-    overwrite: bool = typer.Option(False, "--overwrite", "-o", help="Overwrite existing credentials without prompting."),
+    overwrite: bool = typer.Option(False, "--overwrite", "-o", help="Overwrite existing credentials, with confirmation protection."),
     ):
     """
     Guides the user through a guided credential setup process.
     """
-    from pipeline.security import get_eds_api_credentials,  get_external_api_credentials, get_eds_db_credentials
+    from pipeline.security import get_eds_api_credentials,  get_external_api_credentials, get_eds_db_credentials, CONFIG_PATH
     typer.echo("--- Pipeline-EDS Credential Setup ---")
     typer.echo("This will securely store your credentials in the system keyring and a local config file.")
     typer.echo("You can skip any step by saying 'no' or 'n' when prompted.")
+    
+    if overwrite:
+        typer.echo("⚠️ Overwrite mode is enabled. Existing credentials will shown and you will be prompted to confirm overwriting them.")
+        typer.echo(f"Alternatively, edit the configuration file directly in a text editor.")
+        typer.echo(f"Config file path: {CONFIG_PATH}", color=typer.colors.MAGENTA)   
 
     # Get a list of plant names from the user
     num_plants = typer.prompt("How many EDS plants do you want to configure?", type=int, default=1)
@@ -291,37 +274,22 @@ def list_workspaces():
 
 
 @app.command()
-def build_secrets():
-    """
-    Use a filler tool to add API URLs, usernames, passwords, etc.
-    """
-    pass
-
-
-@app.command()
 def ping(
     eds: bool = typer.Option(False,"--eds","-e",help = "Limit the pinged URL's to just the EDS services known to the configured secrets.")
     ):
     """
     Ping all HTTP/S URL's found in the secrets configuration.
     """
-    from pipeline.calls import call_ping, find_urls, find_eds_urls
-    from pipeline.env import SecretConfig
-    from pipeline.workspace_manager import WorkspaceManager
+    from pipeline.calls import call_ping
+    from pipeline.security import get_all_configured_urls
     import logging
 
     logger = logging.getLogger(__name__)
-    workspace_name = WorkspaceManager.identify_default_workspace_name()
-    workspace_manager = WorkspaceManager(workspace_name)
 
-    secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_secrets_file_path())
-    
-    if not eds:
-        url_set = find_urls(secrets_dict)
-    else:
-        url_set = find_eds_urls(secrets_dict)
+    # Our new function handles loading from the config file and returns a set of URLs.
+    url_set = get_all_configured_urls(only_eds=eds)
 
-    typer.echo(f"Found {len(url_set)} URLs in secrets configuration.")
+    typer.echo(f"Found {len(url_set)} URLs in configuration.")
     logger.info(f"url_set: {url_set}")
     for url in url_set:
         print(f"ping url: {url}")
