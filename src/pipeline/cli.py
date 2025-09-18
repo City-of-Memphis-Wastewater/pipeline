@@ -266,10 +266,11 @@ def list_workspaces():
     """
     # Determine workspace name
     from pipeline.workspace_manager import WorkspaceManager
-
-    workspaces = WorkspaceManager.get_all_workspaces_names()
+    workspaces_path = WorkspaceManager.get_workspaces_dir()
+    typer.echo(f"Workspaces directory: {workspaces_path}", color=typer.colors.MAGENTA)
+    workspaces_list = WorkspaceManager.get_all_workspaces_names()
     typer.echo("📦 Available workspaces:")
-    for name in workspaces:
+    for name in workspaces_list:
         typer.echo(f" - {name}")
 
 

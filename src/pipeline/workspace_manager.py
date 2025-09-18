@@ -197,7 +197,7 @@ class WorkspaceManager:
         """
         Return a list of all workspace names found in the workspaces directory.
         """
-        workspaces_dir = cls.ROOT_DIR / cls.WORKSPACES_DIR_NAME
+        workspaces_dir = cls.get_workspaces_dir()
         if not workspaces_dir.exists():
             raise FileNotFoundError(f"Workspaces directory not found at: {workspaces_dir}")
         
@@ -213,7 +213,7 @@ class WorkspaceManager:
         Class method that reads default-workspace.toml to identify the default-workspace path.
         """
 
-        workspaces_dir = cls.ROOT_DIR / cls.WORKSPACES_DIR_NAME
+        workspaces_dir = cls.get_workspaces_dir()
         workspace_name = cls.identify_default_workspace_name()
         if workspace_name is None:
             workspace_name = cls.most_recent_workspace_name() # if 
