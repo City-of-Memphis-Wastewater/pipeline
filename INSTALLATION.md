@@ -71,6 +71,50 @@ For Termux, the process is similar but without the use of `pipx` due to environm
     eds trend M100FI FI8001 --start Sept18
     ```
 
+---
+
+### 🛠 ️ Correcting Configuration Mistakes
+
+If you made a mistake when entering a configuration value or credential, you have two primary ways to correct it using the `configure` command.
+
+<br>
+<hr>
+<br>
+
+#### **1. Using the `--overwrite` Flag**
+
+The **`--overwrite`** (or shorthand **`-o`**) flag forces the `configure` command to re-prompt you for every credential, even if it's already set. This is the recommended way to correct a single mistake or update a credential.
+
+Running the command with this flag will show you your existing configuration and ask for confirmation before overwriting it.
+
+```bash
+pipeline configure --overwrite
+```
+
+  * The CLI will start the guided setup again.
+  * For each existing value, it will show the current setting and ask, "Do you want to overwrite it?"
+  * Select **yes** for the values you want to change and **no** for the ones you want to keep.
+
+<br>
+<hr>
+<br>
+
+#### **2. Using the `--textedit` Flag**
+
+For more advanced users or for making multiple changes at once, the **`--textedit`** (or shorthand **`-t`**) flag opens the configuration file directly in your default text editor.
+
+```bash
+pipeline configure --textedit
+```
+
+This option is useful for:
+
+  * Directly editing non-secret values like URLs or file paths.
+  * Making bulk changes to the configuration without going through the guided prompt.
+
+**Note:** The `--textedit` flag only opens the non-secret configuration file (`config.json`). **It does not grant access to the securely stored credentials in your system's keyring.** To update secrets like passwords, you must use the **`--overwrite`** flag.
+
 The video provides a tutorial on installing Python and related tools in the Termux environment on an Android device.
 
 [https://www.youtube.com/watch?v=HarwU8bxvTQ](https://www.youtube.com/watch?v=HarwU8bxvTQ)
+

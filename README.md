@@ -63,10 +63,11 @@ If you plan to contribute to the project or need to work with the source code, f
 5.  **Run Development Commands**
     Once installed, you can execute commands using `poetry run`:
     ```bash
-    poetry run python -m pipeline.env
-    poetry run eds ping
+    poetry run python -m pipeline.cli
+    poetry run eds ping # 
     ```
     This ensures that all commands run within the project's isolated environment.
+	You can run `poetry run eds` directly because of the `[tool.poetry.scripts]` section in the `pyproject.toml`, which states that `eds = "pipeline.cli:app"`.
 
 <br>
 <hr>
@@ -148,12 +149,12 @@ The `pipeline` project can be installed and run on Android devices using the **T
   * **HTML Viewer**: You may need to manually configure the default `HTML` viewer to a full-featured browser on Android.
 
 ### 🌐 Termux and Web-Based Visuals (Plotly)
-When using pipeline-eds in Termux to generate plots (e.g., with eds trend), the visuals are displayed as web-based HTML pages using libraries like Plotly. Instead of directly opening a graphical window (which is not typically supported by Termux's command-line environment), `pipeline-eds serves` these HTML files via a local web server (often on localhost).
+When using `pipeline-eds` in Termux to generate plots (e.g., with `eds trend`), the visuals are displayed as web-based HTML pages using libraries like Plotly. Instead of directly opening a graphical window (which is not typically supported by Termux's command-line environment), `pipeline-eds serves` these HTML files via a local web server (often on localhost).
 
 ### Why localhost and Manual Opening?
 
 - Termux Sandboxing: Termux operates in a sandboxed environment on Android. This security measure restricts direct access to certain system resources, including the ability to automatically launch web browsers or other GUI applications from the command line.
-- Local Server Approach: To work around this, pipeline-eds acts as a small web server, making the generated HTML plot accessible at a specific localhost URL (e.g., [http://127.0.0.1:8000.](http://127.0.0.1:8000`.)
+- Local Server Approach: To work around this, `pipeline-eds` acts as a small web server, making the generated HTML plot accessible at a specific localhost URL (e.g., [http://127.0.0.1:8000.](http://127.0.0.1:8000`.)
 - Manual Opening: Due to the sandboxing, Termux cannot automatically open this URL in your default Android browser. You must manually copy the provided URL from the Termux output and paste it into your preferred web browser (e.g., Chrome, Firefox) on your Android device. This allows your full-featured browser to render the interactive Plotly graph.
 - Security: This approach is also a security measure, ensuring that applications within Termux explicitly serve content, and the user consciously decides to open it in a less restricted environment (the browser).  
   
@@ -162,4 +163,4 @@ When using pipeline-eds in Termux to generate plots (e.g., with eds trend), the 
 <br>
 
 ## 📝 Final Note on Naming
-The project is internally referred to as pipeline, but the PyPI package is named pipeline-eds to avoid a name conflict with an existing, unrelated package on PyPI. For CLI usage, the pyproject.toml file creates aliases so you can use pipeline, eds, and pipeline-eds interchangeably in your terminal. This allows for a more intuitive command-line experience without the need to use the full PyPI package name.
+The project is internally referred to as `pipeline`, but the PyPI package is named `pipeline-eds` to avoid a name conflict with an existing, unrelated package on PyPI. For CLI usage, the pyproject.toml file creates aliases so you can use `pipeline`, `eds`, and `pipeline-eds` interchangeably in your terminal. This allows for a more intuitive command-line experience without the need to use the full PyPI package name.
