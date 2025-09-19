@@ -1,7 +1,3 @@
-Based on the provided `pyproject.toml` file, here's a final pass on the `README.md` to ensure accuracy and clarity.
-
------
-
 # `pipeline-eds`
 
 `pipeline-eds` is a Python project designed to simplify API access to Emerson Enterprise Data Server (EDS) machines. It facilitates seamless data exchange between Emerson's Ovation local systems and various external parties, including third-party contractors and internal employees. The project is distributed on PyPI under the package name `pipeline-eds`.
