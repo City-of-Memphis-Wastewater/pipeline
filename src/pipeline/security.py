@@ -1,5 +1,5 @@
 # pipeline/security.py
-import keyring
+import keyring ## configuration-example
 import getpass
 import json
 from pathlib import Path
@@ -9,7 +9,7 @@ import typer
 from pipeline.environment import is_termux
 
 # Define a standard configuration path for your package
-CONFIG_PATH = Path.home() / ".pipeline-eds" / "config.json"
+CONFIG_PATH = Path.home() / ".pipeline-eds" / "config.json" ## configuration-example
 def configure_keyring():
     """
     Configures the keyring backend to use the file-based keyring.
@@ -23,7 +23,10 @@ def configure_keyring():
         #typer.echo("Keyring configured to use file-based backend.")
     else:
         pass
-configure_keyring() # to be run on import
+def init_security():
+    if is_termux():
+        configure_keyring() # to be run on import
+
 def _get_config_with_prompt(config_key: str, prompt_message: str, overwrite: bool = False) -> str:
     """
     Retrieves a config value from a local file, prompting the user and saving it if missing.
@@ -107,7 +110,7 @@ def _get_credential_with_prompt(service_name: str, item_name: str, prompt_messag
         # Store the new credential
         if new_credential == "''" or new_credential == '""':
             new_credential = str("") # ensure empty string if user types '' or "" 
-        keyring.set_password(service_name, item_name, new_credential)
+        keyring.set_password(service_name, item_name, new_credential) ## configuration-example
         typer.echo("Credential stored securely.")
         return new_credential
     

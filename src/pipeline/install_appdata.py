@@ -10,19 +10,19 @@ app = typer.Typer(help="Manage mulch-like pipeline workspace installation")
 def setup():
     platform = sys.platform
     if platform.startswith("win"):
-        from mulch import reg_winreg
+        #from mulch import reg_winreg
         # Always build LocalAppData mulch folder first
 
         # Copy files
-        source_dir = Path(__file__).parent  # this is src/mulch/scripts/install
-        target_dir = Path(os.environ['LOCALAPPDATA']) / "pipeline"
+        source_dir = Path(__file__).parent  # this is src/mulch/scripts/install 
+        target_dir = Path(os.environ['LOCALAPPDATA']) / "pipeline" ## configuration-example
         target_dir.mkdir(parents=True, exist_ok=True)
 
         copy_mulch_installation_files(source_dir, target_dir)
 
         # Registry
-        reg_winreg.call()
-        reg_winreg.verify_registry()  # deterministic check
+        #reg_winreg.call()
+        #reg_winreg.verify_registry()  # deterministic check
 
         print("Mulch context menu installed successfully.")
 

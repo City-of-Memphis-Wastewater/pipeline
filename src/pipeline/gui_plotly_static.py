@@ -10,7 +10,6 @@ import http.server
 import time
 from pathlib import Path
 import os
-import subprocess
 
 buffer_lock = threading.Lock()  # Optional, if you want thread safety
 
@@ -100,12 +99,7 @@ def show_static(plot_buffer):
     if not is_termux():
         webbrowser.open(f"file://{tmp_file.name}")
         return
-    else:
-        try:
-            subprocess.run(['termux-open', file_path], check=True)
-            print(f"Successfully opened {file_path}")
-        except subprocess.CalledProcessError as e:
-            print(f"Error opening file: {e}")
+        
 
     # Start a temporary local server in a separate, non-blocking thread
     PORT = 8000
