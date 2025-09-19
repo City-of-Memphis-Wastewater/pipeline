@@ -2,9 +2,9 @@
 
 `pipeline-eds` is a Python project designed to simplify API access to Emerson Enterprise Data Server (EDS) machines. It facilitates seamless data exchange between Emerson's Ovation local systems and various external parties, including third-party contractors and internal employees. The project is distributed on PyPI under the package name `pipeline-eds`.
 
-\<br\>
-\<hr\>
-\<br\>
+<br>
+<hr>
+<br>
 
 ## 🚀 Getting Started
 
@@ -69,9 +69,9 @@ If you plan to contribute to the project or need to work with the source code, f
     ```
     This ensures that all commands run within the project's isolated environment.
 
-\<br\>
-\<hr\>
-\<br\>
+<br>
+<hr>
+<br>
 
 ## 🔐 Security & Configuration
 
@@ -84,9 +84,9 @@ If you plan to contribute to the project or need to work with the source code, f
 
 **Important**: You must be on the same network as your server (e.g., via a VPN) if it is not publicly accessible.
 
-\<br\>
-\<hr\>
-\<br\>
+<br>
+<hr>
+<br>
 
 ## ⚙️ Project Implementation & Use Cases
 
@@ -96,9 +96,9 @@ If you plan to contribute to the project or need to work with the source code, f
   * The iterative timing (e.g., hourly execution) is handled by the `Task Scheduler`, not by Python.
   * For these automated tasks, a standard `venv` is used, as `Task Scheduler` can run under different user accounts.
 
-\<br\>
-\<hr\>
-\<br\>
+<br>
+<hr>
+<br>
 
 ## 📱 Running on Android (`Termux`)
 
