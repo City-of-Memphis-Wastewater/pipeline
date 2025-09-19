@@ -22,3 +22,4 @@ EXPOSE 8000
 # This defines the command that will run when the container starts.
 # It uses the "eds" alias from your pyproject.toml file.
 ENTRYPOINT ["poetry", "run", "eds"]
+LABEL org.opencontainers.image.source https://github.com/city-of-memphis-wastewater/pipeline
