@@ -72,6 +72,44 @@ If you plan to contribute to the project or need to work with the source code, f
 <hr>
 <br>
 
+## ✨ Tips for Optimal Usage & Maintenance
+To ensure a smooth and efficient experience with `pipeline-eds`, consider the following best practices:
+
+### Keep `pipeline-eds` Updated: 
+Regularly upgrade your `pipeline-eds` installation to benefit from the latest features, bug fixes, and performance improvements.
+```bash
+pipx upgrade pipeline-eds
+```
+This command will update pipeline-eds and its dependencies in its isolated pipx environment.
+
+### Maintain Your Python Environment:
+
+- Desktop Users: While `pipx` isolates `pipeline-eds`, it's good practice to keep your underlying Python installation updated.
+- Termux Users: Regularly update your Termux environment and packages to ensure compatibility and security:
+```bash
+pkg update && pkg upgrade
+```
+
+### Understanding eds configure and Credential Management:
+The first time you execute a command requiring access to your EDS API (e.g., eds trend), `pipeline-eds` will guide you through a one-time configuration process. Your sensitive API credentials (URL, username, password) are securely stored using your operating system's native keyring service. This is a robust and secure method that avoids storing plaintext passwords in files. If your credentials change, you can re-run eds configure at any time to update them.
+
+### Network Connectivity (VPN Essential):
+A critical requirement for `pipeline-eds` to function is proper network connectivity to your Emerson Ovation EDS machine. If your EDS server is located on a private network (e.g., within your organization's internal network), you must be connected to the appropriate Virtual Private Network (VPN). Failure to do so will result in connection errors when `pipeline-eds` attempts to fetch data.
+
+### Leveraging Flexible Date/Time Inputs:
+The `eds trend` command offers highly flexible date and time parsing for its --start and --end options, thanks to the `pendulum` package. You can use a wide variety of natural language inputs, such as:
+
+- `--start "2023-09-18"`
+- `--start "Sept 18"`
+- `--start "a week ago"`
+- `--start "yesterday 9am"`
+- `--end "now"` 
+Experiment with different formats to suit your query needs. Remember to use quotes around values if they contain spaces.
+
+<br>
+<hr>
+<br>
+
 ## 🔐 Security & Configuration
 
 `pipeline` uses a two-tiered approach to manage configuration and secrets.
@@ -108,6 +146,20 @@ The `pipeline` project can be installed and run on Android devices using the **T
   * **No `pyenv` or `Poetry`**: Package management must be done with `pip` directly. You can and should use `venv`.
   * **Limited Library Support**: Some libraries that require compilation (e.g., `pandas`, `numpy`) or have GUI dependencies are not supported on Termux.
   * **HTML Viewer**: You may need to manually configure the default `HTML` viewer to a full-featured browser on Android.
+
+### 🌐 Termux and Web-Based Visuals (Plotly)
+When using pipeline-eds in Termux to generate plots (e.g., with eds trend), the visuals are displayed as web-based HTML pages using libraries like Plotly. Instead of directly opening a graphical window (which is not typically supported by Termux's command-line environment), `pipeline-eds serves` these HTML files via a local web server (often on localhost).
+
+### Why localhost and Manual Opening?
+
+- Termux Sandboxing: Termux operates in a sandboxed environment on Android. This security measure restricts direct access to certain system resources, including the ability to automatically launch web browsers or other GUI applications from the command line.
+- Local Server Approach: To work around this, pipeline-eds acts as a small web server, making the generated HTML plot accessible at a specific localhost URL (e.g., [http://127.0.0.1:8000.](http://127.0.0.1:8000`.)
+- Manual Opening: Due to the sandboxing, Termux cannot automatically open this URL in your default Android browser. You must manually copy the provided URL from the Termux output and paste it into your preferred web browser (e.g., Chrome, Firefox) on your Android device. This allows your full-featured browser to render the interactive Plotly graph.
+- Security: This approach is also a security measure, ensuring that applications within Termux explicitly serve content, and the user consciously decides to open it in a less restricted environment (the browser).  
   
-### 📝 Final Note on Naming
+<br>
+<hr>
+<br>
+
+## 📝 Final Note on Naming
 The project is internally referred to as pipeline, but the PyPI package is named pipeline-eds to avoid a name conflict with an existing, unrelated package on PyPI. For CLI usage, the pyproject.toml file creates aliases so you can use pipeline, eds, and pipeline-eds interchangeably in your terminal. This allows for a more intuitive command-line experience without the need to use the full PyPI package name.
