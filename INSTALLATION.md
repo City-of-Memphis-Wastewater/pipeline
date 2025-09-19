@@ -22,9 +22,9 @@ First, ensure you have Python 3.8 or a later version installed on your system.
     pip install pipx
     ```
 2.  **Ensure `pipx` is in your PATH**
-    After installing, run `pipx ensurepath` to make sure the commands are accessible from your terminal. You may need to restart your terminal session for the changes to take effect.
+    After installing, run `pipx ensurepath` or `python -m pipx ensurepath` to make sure the commands are accessible from your terminal. You may need to restart your terminal session for the changes to take effect.
     ```bash
-    pipx ensurepath
+	python -m pipx ensurepath
     ```
 3.  **Install `pipeline-eds`**
     Install the package from PyPI. If you are on Windows, you can optionally include the `[windows]` extras to get the dependencies for `matplotlib` and `pyodbc`.
@@ -36,7 +36,7 @@ First, ensure you have Python 3.8 or a later version installed on your system.
 4.  **First-time Configuration**
     The first time you run a command that requires credentials, like `eds trend`, the CLI will prompt you to configure them.
     ```bash
-    eds trend M100FI FI8001 --start "Sept 19"
+    eds trend M100FI FI8001 --start "Sept 18"
     ```
     Upon running this command for the first time, you will be prompted to enter and securely save your EDS API credentials (URL, username, and password). This is a one-time process. The next time you run a command, it will use the saved credentials.
 
@@ -49,19 +49,26 @@ For Termux, the process is similar but without the use of `pipx` due to environm
 1.  **Install Python**
     Ensure Python is installed:
     ```bash
+	pkg update && pkg upgrade
     pkg install python
     ```
-2.  **Install Dependencies**
-    Clone the repository to get the `requirements.txt` file, then install the dependencies directly with `pip`.
+2.  **Install pipx**
+    Prepare to install Python-based CLI tool(s).
     ```bash
-    git clone https://github.com/City-of-Memphis-Wastewater/pipeline.git
-    cd pipeline
-    pip install -r requirements.txt
+    pip install pipx
+	python -m pipx ensurepath
+	source ~/.bashrc # Or simply exit the Termux app and restart it.
+	pipx --version
     ```
-3.  **First-time Configuration**
-    Just like the desktop version, the CLI will prompt you to configure credentials on the first run.
+3.  **Install `pipeline-eds`**
+    Install the package from PyPI.
     ```bash
-    python -m pipeline trend M100FI FI8001 --start "one day ago"
+    pipx install pipeline-eds
+	```
+4.  **First-time Configuration**
+    Just like the desktop version, the CLI will prompt you to configure credentials on the first run. You do not need quotes in your `--start` or `--end` values if the strings do not have spaces (commas are okay either way).
+    ```bash
+    eds trend M100FI FI8001 --start Sept18
     ```
 
 The video provides a tutorial on installing Python and related tools in the Termux environment on an Android device.
