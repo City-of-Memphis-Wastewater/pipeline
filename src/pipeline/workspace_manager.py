@@ -124,6 +124,7 @@ class WorkspaceManager:
         file_path = self.get_configurations_dir() / self.CONFIGURATION_FILE_NAME
         return file_path
     
+    
     def get_logs_dir(self):
         return self.workspace_dir / self.LOGS_DIR_NAME
 
@@ -277,7 +278,7 @@ class WorkspaceManager:
     def get_appdata_dir(cls) -> Path:
         """Return platform-appropriate appdata folder."""
         if os.name == "nt":  # Windows
-            base = Path(os.getenv("APPDATA", Path.home() / "AppData" / "Roaming"))
+            base = Path(os.getenv("APPDATA", Path.home() / "AppData" / "Roaming")) ## configuration-example
         elif os.name == "posix" and "ANDROID_ROOT" in os.environ:  # Termux
             base = Path.home() / ".local" / "share"
         else:  # macOS/Linux

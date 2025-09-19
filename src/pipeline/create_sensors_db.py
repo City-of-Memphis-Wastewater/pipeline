@@ -15,8 +15,6 @@ sensors_data = [
     ("M100FI", "M100FI.UNIT0@NET0", "Maxson", "MGD", "Influent Flow"),
     ("D-321E", "D-321E.UNIT0@NET0", "Maxson", "MG/L", "PAA Dose"),
     ("FI8001", "FI8001.UNIT0@NET0", "Maxson", "MGD", "Effluent Flow"),
-    ("I-0201A", "I-0201A.UNIT1@NET1", "WWTF", "", ""),
-    ("I-5005A", "I-5005A.UNIT1@NET1", "WWTF", "MGD", "Plant Influent Flow"),
 ]
 
 # -----------------------------
@@ -58,7 +56,7 @@ def get_packaged_db_path() -> Path:
 
 def get_user_db_path() -> Path:
     if sys.platform == "win32":
-        base = Path(os.getenv("APPDATA", Path.home() / "AppData" / "Roaming"))
+        base = Path(os.getenv("APPDATA", Path.home() / "AppData" / "Roaming")) ## configuration-example
     elif sys.platform == "darwin":
         base = Path.home() / "Library" / "Application Support"
     else:

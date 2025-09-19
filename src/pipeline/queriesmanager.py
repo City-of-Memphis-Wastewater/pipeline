@@ -53,9 +53,9 @@ class QueriesManager:
     def get_most_recent_successful_timestamp(self, api_id):# -> int:
         print("QueriesManager.get_most_recent_successful_timestamp()")
         from pipeline.helpers import load_toml
+        config = load_toml(self.workspace_manager.get_configuration_file_path())
         try:
-            config = load_toml(self.workspace_manager.get_configuration_file_path())
-            timezone_config = config["settings"]["timezone"]
+            timezone_config = config["settings"]["timezone"] ## configuration-example
         except:
             timezone_config = "America/Chicago"
             

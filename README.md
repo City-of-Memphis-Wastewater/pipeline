@@ -1,206 +1,118 @@
-# pipeline
-The primary purpose of this project is to ease API access to Enterprise Data Server (EDS) machines set up by Emerson to compliment an Emerson Ovation local system. 
-Use-cases include data exchange with third-party contractors and also data access for in-house employees on work and personal devices.
+Based on the provided `pyproject.toml` file, here's a final pass on the `README.md` to ensure accuracy and clarity.
 
-*Scroll down to ***Rollout, setup, etc.*** to see information about dependencies, Poetry, and pyenv.*
+-----
 
-## How to run pipeline
+# `pipeline-eds`
 
-Check that the secrets.yaml file in the default-workspace is loading:
-```
-poetry run python -m src.pipeline.env
-```
-Recieve an export file of all the points known to your EDS:
-```
-poetry run python -m src.pipeline.api.eds demo-point-export
-```
-Run the existing eds_to_rjn workspace:
-```
-poetry run python -m workspaces.eds_to_rjn.scripts.daemon_runner test
-```
-Check connectivity:
-```
-poetry run python -m src.pipeline.api.eds ping
-poetry run python -m src.pipeline.api.rjn ping
-```
-Other commands:
-```
-.\main.bat # put the daemon into service: ill advised.
-.\main.ps1
-```
+`pipeline-eds` is a Python project designed to simplify API access to Emerson Enterprise Data Server (EDS) machines. It facilitates seamless data exchange between Emerson's Ovation local systems and various external parties, including third-party contractors and internal employees. The project is distributed on PyPI under the package name `pipeline-eds`.
 
-## Implementation
-The current ideal implementation of `pipeline` involves `Windows Task Scheduler`.
-This is installed on an `EDS` server, to pull data and send it to a third party.
-The Task is set up to call `main_eds_to_rjn_quiet.ps1` as the entry point.
-The iterative hourly timing handled is by `Windows Task Scheduler` rather than pythonically with the (no unused) `setup_schedules()` function.
-The `main` function from the `daemon_runner` file is run; this used to call the `run_hourly_tabular_trend_eds_to_rjn()` function.
-Environment managemenet is handled with `venv` rather than `pyenv` and `poetry`, because `Task Scheduler` directs the process to a different user.
+\<br\>
+\<hr\>
+\<br\>
 
-## secrets.yaml
-Access will not work without a secrets.yaml file in /pipeline/workspaces/your-workspace-name/config/secrets.yaml
+## 🚀 Getting Started
 
-*API keys are specific to each the workspace, and can be referenced in the workspace scripts.*
-You would edit the secrets.yaml file to specify your own EDS server and credentials.
-Important: You need to VPN onto the same network as your server, EDS or otherwise, if it is not available to the outside world.
-### Example secrets.yaml: 
-```
-eds_apis:
-  MyServer1:
-    url: "http://127.0.0.1:43084/api/v1/"
-    username: "admin"
-    password: ""
-  MyServer2:
-    url: "http://some-ip-address:port/api/v1/"
-    username: "admin"
-    password: ""
+This section provides a quick guide to help you get `pipeline` up and running. Choose the setup method that best suits your needs: CLI-only usage or local development.
 
-contractor_apis:
-  MySpecialContractor:
-    url: "https://contractor-api.com/v1/special/"
-    client_id: "special-user"
-    password: "2685steam"
-```
-The ***workspaces*** folder is designed to accomodate any custom workspaces or projects that you might add. You can alter the default projet file by altering the directory name indicated in the /pipeline/workspaces/default-workspace.toml file.
+### 💻 CLI Installation (Recommended for End-Users)
 
-# Future goals:
-- Submit a pipeline library to PyPi.
-- Generate a cookiecutter template for building new project directories.
-- Use mulchcli (another ongoing repo) to guide users through setting up secrets.yaml files step-by-step.
+For a simple command-line interface (CLI) experience, **`pipx`** is the recommended installation method. `pipx` installs and runs Python applications in isolated environments, preventing conflicts with your system's Python packages.
 
-# Maintenance Notes:
-- Implement session = requests.Session(), like an adult.
-- daemon_runner.py should use both Maxson and Stiles access. 
+1.  **Install `pipx`**
+    If you don't have `pipx` installed, you can get it with `pip`:
+    ```bash
+    pip install pipx
+    pipx ensurepath
+    ```
+2.  **Install `pipeline-eds` with `pipx`**
+    Install the package directly from PyPI. If you need Windows-specific dependencies like `pyodbc` and `matplotlib`, use the `[windows]` extra.
+    ```bash
+    pipx install pipeline-eds
+    # For Windows users:
+    pipx install "pipeline-eds[windows]"
+    ```
+3.  **Run CLI Commands**
+    The `pyproject.toml` file defines `pipeline`, `eds`, and `pipeline-eds` as command-line aliases. Once installed, you can use any of these aliases directly from your terminal.
+    ```bash
+    pipeline configure
+    eds check
+    pipeline-eds trend M100FI -s June3 -f June17
+    ```
 
-# Rollout, setup, etc.
-It is recommended that you use **pyenv** for setting the Python version and generating a virtual environment, though this is optional. 
+### 🛠️ Developer & Contributor Setup
 
-To benefit from the pyproject.toml rollout for this project, **Poetry** is entirely necessary for installing requirements.
+If you plan to contribute to the project or need to work with the source code, follow these steps to set up a full development environment.
 
-### Why pyenv?
-venv and virtualenv are confusing, and pyenv is not confusing. With pyenv, it is easy to run many projects at once, with different requirements for each. 
-You only need to install pyenv once on you system, and then you use it to access different versions of Python.
+1.  **Clone the Repository**
+    Start by cloning the project from GitHub and navigating into the directory:
+    ```bash
+    git clone https://github.com/City-of-Memphis-Wastewater/pipeline.git
+    cd pipeline
+    ```
+2.  **Install `pyenv` and `Poetry`**
+    This project uses **`pyenv`** for managing Python versions and **`Poetry`** for dependency management. This combination ensures a clean, reproducible development environment without interfering with your system's Python installation.
+      * **Install `pyenv`:** Refer to the official `pyenv` documentation for your operating system ([pyenv-win](https://github.com/pyenv-win/pyenv-win) for Windows, [pyenv](https://github.com/pyenv/pyenv) for Linux/macOS).
+      * **Install `Poetry`:** See the [Poetry documentation](https://www.google.com/search?q=https://python-poetry.org/docs/%23installation) for installation instructions.
+3.  **Configure the Environment**
+    Use `pyenv` to set the Python version for the project and then tell Poetry to use that version:
+    ```bash
+    pyenv install 3.11.9
+    pyenv local 3.11.9
+    poetry env use 3.11.9
+    ```
+4.  **Install Dependencies**
+    Poetry will read the `pyproject.toml` file and install all necessary packages into a new virtual environment:
+    ```bash
+    poetry install
+    ```
+5.  **Run Development Commands**
+    Once installed, you can execute commands using `poetry run`:
+    ```bash
+    poetry run python -m pipeline.env
+    poetry run eds ping
+    ```
+    This ensures that all commands run within the project's isolated environment.
 
-#### Note to anyone who doesn't yet understand the glory of virtual environments in Python: 
-Do it. You do not want to install special requirements to your system version of Python.
+\<br\>
+\<hr\>
+\<br\>
 
-### Why Poetry?
-**Poetry** is my favorite dependency management tool. It is very easy. You only need to install it once. **Poetry** also has the benefit of generating a directory-specific virtual environment.
+## 🔐 Security & Configuration
 
-## Use pyenv to set your Python version 
-(3.11.9 or other 3.11.xx).
-### Install pyenv (skip if pyenv is already installed on your system)
-How to install pyenv-win (https://github.com/pyenv-win/pyenv-win)
-```
-Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
-Invoke-WebRequest -UseBasicParsing -Uri "https://raw.githubusercontent.com/pyenv-win/pyenv-win/master/pyenv-win/install-pyenv-win.ps1" -OutFile "./install-pyenv-win.ps1"; &"./install-pyenv-win.ps1"
-```
-It is worth it to make the pyenv command persistent in PowerShell, by editing the $profile file:
-```
-notepad $profile
-```
-to include something like:
-```
-$env:PYENV = "$HOME\.pyenv\pyenv-win"
-$env:PYENV_ROOT = "$HOME\.pyenv\pyenv-win"
-$env:PYENV_HOME = "$HOME\.pyenv\pyenv-win"
-$env:Path += ";$env:PYENV\bin;$env:PYENV\shims"
-	
-# Initialize pyenv
-#$pyenvInit = & $env:PYENV_HOME\bin\pyenv init --path
-#Invoke-Expression $pyenvInit
+`pipeline` uses a two-tiered approach to manage configuration and secrets.
 
-# Manually set up the pyenv environment
-function Invoke-PyenvInit {
-    # Update PATH to include pyenv directories
-    $pyenvShims = "$env:PYENV\shims"
-    $pyenvBin = "$env:PYENV\bin"
-    $env:PATH = "$pyenvBin;$pyenvShims;$env:PATH"
-}
+  * **Non-Sensitive Configuration**: Non-sensitive settings like URLs and paths are stored in a local JSON file (`~/.pipeline-eds/config.json`). This file is easy to inspect and manage.
+  * **Secrets and Credentials**: For CLI users, API credentials and passwords are **securely stored** using your operating system's native keyring. This is a much safer alternative to storing plaintext passwords in a file. The `pipeline configure` command guides you through this one-time setup process.
 
-# Initialize pyenv
-Invoke-PyenvInit
-```
-How to install pyenv on linux (https://github.com/pyenv/pyenv)
-```
-curl -fsSL https://pyenv.run | bash
-```
-To make the pyenv command persistent in the Bourne Again SHell, edit ~/.bashrc 
-```
-nano ~/.bashrc
-```
-to include something like:
-```
-export Path="$HOME/.local/bin:$PATH"
-export PYENV_ROOT="$HOME/.pyenv"
-[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init - bash)"
-```
-### Post-install, leverage the benefits of pyenv
-Install Python 3.11.9 using pyenv:
-```
-# pyenv install --list # See all Python versions able with pyenv.
-pyenv install 3.11.9
-# pyenv local 3.11.9 # to set your current directory version
-# pyenv global 3.11.9 # to set the assumed version in any directory
-# pyenv global system # revert to your system installation as the assumed version
-```
-## Use Poetry to run deploy the requirements for this project 
-How to install poetry (https://github.com/python-poetry/poetry)
-```
-Remove-Item Alias:curl # Solution to a common PowerShell issue 
-curl -sSL https://install.python-poetry.org | python3
-# Alternatively: 
-// pip install poetry
-# Or, even:
-// pyenv exec pip install poetry
-```
-## Git clone pipeline, open source
-```
-git clone https://github.com/City-of-Memphis-Wastewater/pipeline.git
-cd pipline
-pyenv local 3.11.9 # to set your current directory version
-```
-Explicitly set poetry to use the local pyenv version.
-```
-poetry python list
-# You'll see something like this:
->> 3.13.2  CPython        System  C:/Users/<user>/.pyenv/pyenv-win/versions/3.13.2/python3.13.exe
->> 3.13.2  CPython        System  C:/Users/<user>/.pyenv/pyenv-win/versions/3.13.2/python313.exe
->> 3.13.2  CPython        System  C:/Users/<user>/.pyenv/pyenv-win/versions/3.13.2/python3.exe
->> 3.13.2  CPython        System  C:/Users/<user>/.pyenv/pyenv-win/versions/3.13.2/python.exe
->> 3.11.9  CPython        System  C:/Users/<user>/.pyenv/pyenv-win/versions/3.11.9/python3.11.exe
->> 3.11.9  CPython        System  C:/Users/<user>/.pyenv/pyenv-win/versions/3.11.9/python311.exe
->> 3.11.9  CPython        System  C:/Users/<user>/.pyenv/pyenv-win/versions/3.11.9/python3.exe
->> 3.11.9  CPython        System  C:/Users/<user>/.pyenv/pyenv-win/versions/3.11.9/python.exe
-# Copy and paste ~any~ of the comparable paths to pyenv 3.11.9 ...
-poetry use C:\Users\<user>\.pyenv\pyenv-win\versions\3.11.9\python.exe
-```
-Pull the requirements from the pyproject.toml file for packagage installation.
-```
-poetry install 
-# This is where the magic happens.
-# When in doubt, run this again. 
-# Especially if you get a ModuleNotFound warning.
-# Sometimes it doesn't take until you use "poetry run python".
-poetry run python
-poetry run python -m src.pipeline.env
-poetry run python -m src.pipeline.api.eds ping
-poetry run python -m workspaces.eds_to_rjn.scripts.main
-```
+**Note for Developers**: While the CLI now uses the keyring, some functionality within the codebase still relies on the `secrets.yaml` file for credential management. This file is not required for general CLI usage but may be necessary for specific development workflows and legacy components.
 
-# References
-PEP621.toml
+**Important**: You must be on the same network as your server (e.g., via a VPN) if it is not publicly accessible.
 
-# Installation on Termux on Android
+\<br\>
+\<hr\>
+\<br\>
 
-Due to `maturin` (Rust build dependency) required by newer versions of `pydantic`, use older versions of FastAPI and Pydantic that don't require Rust, to successfully install on Termux.
+## ⚙️ Project Implementation & Use Cases
 
-Also, Termux does not allow `poetry` or `pyenv`, so install packages directly to your generic environement with pip.
+`pipeline` is designed to be deployed as a scheduled task on a Windows server.
 
-```
-pip install -r requirements-termux.txt
-```
+  * The project is executed by **Windows Task Scheduler**, which calls a PowerShell script (`main_eds_to_rjn_quiet.ps1`) as the entry point.
+  * The iterative timing (e.g., hourly execution) is handled by the `Task Scheduler`, not by Python.
+  * For these automated tasks, a standard `venv` is used, as `Task Scheduler` can run under different user accounts.
 
-Note that Termux does not allow `numpy` or `pandas`. Nor does it allow any plotting through a pop up window, like with tkinter, freesimplegui, matplotlib, etc.
+\<br\>
+\<hr\>
+\<br\>
 
+## 📱 Running on Android (`Termux`)
+
+The `pipeline` project can be installed and run on Android devices using the **Termux** terminal emulator. **CLI installation via `pipx` is the recommended method for Termux users, as development is not expected in this environment.**
+
+### Termux Limitations
+
+  * **No `pyenv` or `Poetry`**: Package management must be done with `pip` directly.
+  * **Limited Library Support**: Some libraries that require compilation (e.g., `pandas`, `numpy`) or have GUI dependencies are not supported on Termux.
+  * **HTML Viewer**: You may need to manually configure the default `HTML` viewer to a full-featured browser on Android.
+  
+### 📝 Final Note on Naming
+The project is internally referred to as pipeline, but the PyPI package is named pipeline-eds to avoid a name conflict with an existing, unrelated package on PyPI. For CLI usage, the pyproject.toml file creates aliases so you can use pipeline, eds, and pipeline-eds interchangeably in your terminal. This allows for a more intuitive command-line experience without the need to use the full PyPI package name.

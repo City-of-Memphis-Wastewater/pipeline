@@ -10,7 +10,7 @@ from pipeline.time_manager import TimeManager
 from pipeline.create_sensors_db import get_db_connection, create_packaged_db, reset_user_db # get_user_db_path, ensure_user_db, 
 from pipeline.api.eds import demo_eds_webplot_point_live
 from pipeline import environment
-from pipeline.security import get_eds_api_credentials, get_external_api_credentials, get_eds_db_credentials, get_all_configured_urls, get_configurable_plant_name, CONFIG_PATH
+from pipeline.security import get_eds_api_credentials, get_external_api_credentials, get_eds_db_credentials, get_all_configured_urls, get_configurable_plant_name, init_security, CONFIG_PATH
 
 #from pipeline.helpers import setup_logging
 ### Versioning
@@ -38,12 +38,13 @@ except PackageNotFoundError:
         with open(Path(__file__).parent / "VERSION") as f:
             __version__ = f.read().strip()
     except FileNotFoundError:
-        __version__ = "dev"
+        __version__ = "dev" 
 
 ### Pipeline CLI
 
 app = typer.Typer(help="CLI for running pipeline workspaces.")
 console = Console()
+init_security()
 
 @app.callback(invoke_without_command=True)
 def main(
@@ -276,8 +277,6 @@ def trend(
         for idx, rows in enumerate(results):
             for row in rows:
                 print(f"{helpers.iso(row.get('ts'))},{row.get('value')},")
-
-
 
 @app.command(name="configure", help="Configure and store API and database credentials.")
 def configure_credentials(
