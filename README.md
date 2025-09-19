@@ -30,9 +30,8 @@ For a simple command-line interface (CLI) experience, **`pipx`** is the recommen
 3.  **Run CLI Commands**
     The `pyproject.toml` file defines `pipeline`, `eds`, and `pipeline-eds` as command-line aliases. Once installed, you can use any of these aliases directly from your terminal.
     ```bash
-    pipeline configure
-    eds check
-    pipeline-eds trend M100FI -s June3 -f June17
+    eds configure
+    eds trend M100FI --start June3 --end June17
     ```
 
 ### 🛠️ Developer & Contributor Setup
@@ -106,7 +105,7 @@ The `pipeline` project can be installed and run on Android devices using the **T
 
 ### Termux Limitations
 
-  * **No `pyenv` or `Poetry`**: Package management must be done with `pip` directly.
+  * **No `pyenv` or `Poetry`**: Package management must be done with `pip` directly. You can and should use `venv`.
   * **Limited Library Support**: Some libraries that require compilation (e.g., `pandas`, `numpy`) or have GUI dependencies are not supported on Termux.
   * **HTML Viewer**: You may need to manually configure the default `HTML` viewer to a full-featured browser on Android.
   
