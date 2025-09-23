@@ -75,7 +75,7 @@ def list_sensors(
     else:  
         conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("SELECT idcs, iess, zd, units, description FROM sensors")
+    cur.execute("SELECT idcs, iess, zd, ovation_drop, units, description FROM sensors")
     rows = cur.fetchall()
     conn.close()
 
@@ -83,12 +83,13 @@ def list_sensors(
     table.add_column("IDCS", style="cyan")
     #table.add_column("IESS", style="magenta") # no reason to show this
     table.add_column("ZD", style="green")
+    table.add_column("DROP", style="white")
     table.add_column("UNITS", style="white")
     table.add_column("DESCRIPTION", style="white")
     
 
-    for idcs, iess, zd, units, description in rows:
-        table.add_row(idcs, zd,units, description)
+    for idcs, iess, zd, ovation_drop, units, description in rows:
+        table.add_row(idcs, zd, ovation_drop, units, description)
         
 
     console.print(table)
@@ -134,26 +135,6 @@ def trend(
     #zd = api_credentials.get("zd")
     if plant_name is None:
         plant_name = get_configurable_plant_name()
-    """
-    if zd.lower() == "stiles":
-        zd = "WWTF"
-
-    if zd == "Maxson":
-        plant_name = "Maxson"
-        idcs_to_iess_suffix = ".UNIT0@NET0"
-    elif zd == "WWTF":
-        plant_name = "Stiles"
-        idcs_to_iess_suffix = ".UNIT1@NET1"
-    else:
-        # assumption for generic system
-        is_zd_same_as_plant_name = typer.Input(f"Is the plant name the same as the ZD ? (y/n): ")
-        if is_zd_same_as_plant_name.lower() in ['y','yes']:
-            plant_name = zd
-        else:
-            plant_name = typer.Input(f"Plant name: ")
-        #plant_name = zd
-        idcs_to_iess_suffix = ".UNIT0@NET0"
-    """
 
     # Retrieve all necessary API credentials and config values.
     # This will prompt the user if any are missing.

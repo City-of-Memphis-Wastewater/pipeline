@@ -10,11 +10,12 @@ from importlib import resources
 
 # Your sensor data here:
 sensors_data = [
-    # (idcs, iess, zd, units, description)
-    ("M310LI", "M310LI.UNIT0@NET0", "Maxson", "Inches", "Wet Well Level"),
-    ("M100FI", "M100FI.UNIT0@NET0", "Maxson", "MGD", "Influent Flow"),
-    ("D-321E", "D-321E.UNIT0@NET0", "Maxson", "MG/L", "PAA Dose"),
-    ("FI8001", "FI8001.UNIT0@NET0", "Maxson", "MGD", "Effluent Flow"),
+    # (idcs, iess, zd, ovation_drop, units, description)
+    ("M310LI", "M310LI.UNIT0@NET0", "Maxson", "1", "Inches", "Wet Well Level"),
+    ("M100FI", "M100FI.UNIT0@NET0", "Maxson", "0", "MGD", "Influent Flow"),
+    ("D-321E", "D-321E.UNIT0@NET0", "Maxson", "5", "MG/L", "PAA Dose"),
+    ("FI8001", "FI8001.UNIT0@NET0", "Maxson", "5", "MGD", "Effluent Flow"),
+    ("PM-23KV-M2-KW", "PM-23KV-M2-KW.UNIT0@NET0", "Maxson", "2", "KW", "Main 2 Active Power Total"),
 ]
 
 # -----------------------------
@@ -90,13 +91,14 @@ def create_packaged_db():
             idcs TEXT NOT NULL,
             iess TEXT NOT NULL,
             zd TEXT NOT NULL,
+            ovation_drop TEXT NOT NULL,
             units TEXT NOT NULL,
             description TEXT NOT NULL
         )
     """)
 
     cur.executemany(
-        "INSERT INTO sensors (idcs, iess, zd, units, description) VALUES (?, ?, ?, ?, ?)",
+        "INSERT INTO sensors (idcs, iess, zd, ovation_drop, units, description) VALUES (?, ?, ?, ?, ?, ?)",
         sensors_data
     )
 
