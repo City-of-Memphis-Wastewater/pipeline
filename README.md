@@ -18,7 +18,7 @@ For a simple command-line interface (CLI) experience, **`pipx`** is the recommen
     If you don't have `pipx` installed, you can get it with `pip`:
     ```bash
     pip install pipx
-    pipx ensurepath
+    python -m pipx ensurepath
     ```
 2.  **Install `pipeline-eds` with `pipx`**
     Install the package directly from PyPI. If you need Windows-specific dependencies like `pyodbc` and `matplotlib`, use the `[windows]` extra.
