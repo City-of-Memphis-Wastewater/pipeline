@@ -6,6 +6,8 @@ Created: 23 July 2024
 import platform
 import sys
 import os
+import webbrowser
+import shutil
 
 def vercel():
     #return not(is_windows()) # conflated, when using any linux that is not a webserver
@@ -87,3 +89,36 @@ def open_file_in_default_app(filepath):
         subprocess.run(['open', filepath])
     else:
         print("Unsupported operating system.")
+
+def is_interactive_terminal():
+    """Check if the script is running in an interactive terminal."""
+    # Check if a tty is attached to stdin
+    return sys.stdin.isatty() and sys.stdout.isatty()
+
+def tkinter_is_available():
+    """Check if tkinter is available and can be used."""
+    try:
+        import tkinter as tk
+        #root = tk.Tk()
+        #root.withdraw()  # Hide the main window
+        #root.update()
+        #root.destroy()
+        return True
+    except Exception:
+        return False
+    
+# --- Browser Check Helper ---
+def web_browser_is_available() -> bool:
+    try:
+        # 1. Standard Python check
+        webbrowser.get()
+        return True
+    except webbrowser.Error:
+        # Fallback needed. Check for external launchers.
+        # 2. Termux specific check
+        if shutil.which("termux-open-url"):
+            return True
+        # 3. General Linux check
+        if shutil.which("xdg-open"):
+            return True
+        return False

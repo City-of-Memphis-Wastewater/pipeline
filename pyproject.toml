@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pipeline-eds"
-version = "0.2.72"
+version = "0.2.90"
 description = "The API pipeline library, with CLI tools. Key target: The Emerson Ovation EDS REST API."
 authors = ["George Clayton Bennett <george.bennett@memphistn.gov>"]
 license = "BSD-3"
@@ -35,7 +35,6 @@ python = ">=3.11,<4.0.0"
 requests = ">=2.32.3,<3.0.0"
 toml = ">=0.10.2,<0.11.0"
 pyyaml = ">=6.0.2,<7.0.0"
-certifi = ">=2025.1.31,<2026.0.0"
 schedule = ">=1.2.2,<2.0.0"
 #fastapi = ">=0.115.12,<0.116.0"
 pydantic = "1.10.13"
@@ -48,11 +47,12 @@ pendulum = "^3.1.0"
 fastapi = "^0.116.1"
 rich = "^14.1.0"
 typer = "^0.17.4"
-keyring = "23.13.1"
+keyring = "^25.6.0"
 keyrings-alt = "^5.0.2"
 # These dependencies are only installed when the 'windb' extra is specified
 pyodbc = { version = "^5.1.0", optional = true }
 matplotlib = { version = "^3.10.6", optional = true }
+cherrypy = "^18.10.0"
 
 [tool.poetry.extras] # pipx install pipeline-eds[windows]
 windows = ["pyodbc","matplotlib"]

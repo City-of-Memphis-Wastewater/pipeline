@@ -89,6 +89,7 @@ This command will update pipeline-eds and its dependencies in its isolated pipx 
 - Termux Users: Regularly update your Termux environment and packages to ensure compatibility and security:
 ```bash
 pkg update && pkg upgrade
+pkg install rust
 ```
 
 ### Understanding eds configure and Credential Management:
