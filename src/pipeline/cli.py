@@ -5,7 +5,7 @@ import typer
 from pathlib import Path
 from importlib.metadata import version, PackageNotFoundError
 from requests.exceptions import Timeout
-
+import sys 
 from pipeline.time_manager import TimeManager
 from pipeline.create_sensors_db import get_db_connection, create_packaged_db, reset_user_db # get_user_db_path, ensure_user_db, 
 from pipeline.api.eds import demo_eds_webplot_point_live
@@ -57,6 +57,15 @@ def main(
     if ctx.invoked_subcommand is None:
         typer.echo(ctx.get_help())
         raise typer.Exit()
+    
+    # 1. Access the list of all command-line arguments
+    full_command_list = sys.argv
+    
+    # 2. Join the list into a single string to recreate the command
+    command_string = " ".join(full_command_list)
+    
+    # 3. Print the command
+    typer.echo(f"command:\n{command_string}\n")
 
 
 @app.command()
@@ -205,8 +214,9 @@ def trend(
     else:
         dt_finish = pendulum.parse(helpers.sanitize_date_input(endtime), strict=False)
     if starttime is None:
-        dt_start = dt_finish.subtract(days=60) # default to 60 days ago
-        print(f"No starttime provided, so defaulting to 60 days before endtime: {dt_start.to_datetime_string()}")
+        days_past = 2
+        dt_start = dt_finish.subtract(days=days_past) # default to 2 days ago
+        print(f"No starttime provided, so defaulting to {days_past} days before endtime: {dt_start.to_datetime_string()}")
     else:
         dt_start = pendulum.parse(helpers.sanitize_date_input(starttime), strict=False)
 

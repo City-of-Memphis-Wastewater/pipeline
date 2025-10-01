@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Dict, Set
 import typer
 
-from pipeline.environment import is_termux
+from pipeline.environment import is_termux, is_interactive_terminal, tkinter_is_available, web_browser_is_available
 
 # Define a standard configuration path for your package
 CONFIG_PATH = Path.home() / ".pipeline-eds" / "config.json" ## configuration-example
@@ -26,6 +26,51 @@ def configure_keyring():
 def init_security():
     if is_termux():
         configure_keyring() # to be run on import
+
+def _prompt_for_value(prompt_message: str, hide_input: bool) -> str:
+    """Handles prompting with a fallback from CLI to GUI."""
+    
+    if False:#is_interactive_terminal():
+        # 1. CLI Mode (Interactive)
+        typer.echo(f"\n --- Use CLI input --- ")
+        if hide_input:
+            new_value = getpass.getpass(f"{prompt_message}: ")
+        else:
+            new_value = input(f"{prompt_message}: ")
+        return new_value
+        
+    elif False:#tkinter_is_available():
+        # 2. GUI Mode (Non-interactive fallback)
+        from pipeline.guiconfig import gui_get_input
+        typer.echo(f"\n --- Non-interactive process detected. Opening GUI prompt. --- ")
+        value = gui_get_input(prompt_message, hide_input)
+        
+        if value is not None:
+            return value
+        
+
+    elif web_browser_is_available(): # 3. Check for browser availability
+        # 3. Browser Mode (Web Browser as a fallback)
+        from pipeline.webconfig import browser_get_input
+        typer.echo(f"\n --- TKinter nor console is not available to handle the configuration prompt. Opening browser-based configuration prompt --- ")
+        
+        # We use the prompt message as the identifier key for the web service
+        # because the true config_key is not available in this function's signature.
+        value = browser_get_input(
+            key=prompt_message, 
+            prompt_message=prompt_message,
+            hide_input=hide_input # <-- Passes input visibility to web config
+        )
+
+        if value is not None:
+            return value
+
+    # If all other options fail
+    raise CredentialsNotFoundError(
+        f"Configuration for '{prompt_message}' is missing and "
+        f"neither an interactive terminal, GUI display, nor a web browser is available. "
+        f"Please use a configuration utility or provide the value programmatically."
+    )
 
 def _get_config_with_prompt(config_key: str, prompt_message: str, overwrite: bool = False) -> str:
     """
@@ -58,7 +103,13 @@ def _get_config_with_prompt(config_key: str, prompt_message: str, overwrite: boo
     
     if value is None or overwrite:
         typer.echo(f"\n --- One-time configuration required --- ")
-        new_value = input(f"{prompt_message}: ")
+
+        new_value = _prompt_for_value(
+            prompt_message=prompt_message, 
+            hide_input=False
+        )
+
+        #new_value = input(f"{prompt_message}: ")
         
         # Save the new value back to the file
         CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -102,10 +153,15 @@ def _get_credential_with_prompt(service_name: str, item_name: str, prompt_messag
     # If the credential is None (not found), or if a confirmation to overwrite was given,
     # prompt for a new value.
     if credential is None or overwrite:
-        if hide_password:
-            new_credential = getpass.getpass(f"{prompt_message}: ")
-        else:
-            new_credential = input(f"{prompt_message}: ")
+        #if hide_password:
+        #    new_credential = getpass.getpass(f"{prompt_message}: ")
+        #else:
+        #    new_credential = input(f"{prompt_message}: ")
+
+        new_credential = _prompt_for_value(
+            prompt_message=prompt_message, 
+            hide_input=hide_password
+        )
             
         # Store the new credential
         if new_credential == "''" or new_credential == '""':

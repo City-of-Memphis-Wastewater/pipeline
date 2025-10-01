@@ -1,5 +1,4 @@
 import requests
-import certifi
 import platform
 import subprocess
 import sys

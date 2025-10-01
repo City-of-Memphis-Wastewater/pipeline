@@ -10,6 +10,7 @@ import http.server
 import time
 from pathlib import Path
 import os
+import subprocess
 
 buffer_lock = threading.Lock()  # Optional, if you want thread safety
 
@@ -80,7 +81,9 @@ def show_static(plot_buffer):
     tmp_file = tempfile.NamedTemporaryFile(suffix=".html", delete=False, mode='w', encoding='utf-8')
     
     # Write the plot to the file
-    pyo.plot(fig, filename=tmp_file.name, auto_open=False)
+    #pyo.plot(fig, filename=tmp_file.name, auto_open=False)
+    # Write the plot to the file while forcing the entire Plotly JS library (about 3MB) to be included in the HTML file
+    pyo.plot(fig, filename=tmp_file.name, auto_open=False, include_plotlyjs='full')
     tmp_file.close()
 
     # Create a Path object from the temporary file's name
@@ -93,27 +96,47 @@ def show_static(plot_buffer):
     # Change the current working directory to the temporary directory.
     # This is necessary for the SimpleHTTPRequestHandler to find the file.
     # pathlib has no direct chdir equivalent, so we still use os.
+    original_cwd = os.getcwd() # Save original CWD to restore later if needed
     os.chdir(str(tmp_dir))
 
     # If running in Windows, open the file directly
     if not is_termux():
         webbrowser.open(f"file://{tmp_file.name}")
+        # Restore CWD before exiting
+        os.chdir(original_cwd) 
         return
         
+    else:
+        pass
 
     # Start a temporary local server in a separate, non-blocking thread
     PORT = 8000
+    httpd = None
     server_address = ('', PORT)
-    try:
-        httpd = http.server.HTTPServer(server_address, PlotServer)
-        # Setting daemon=True ensures the server thread will exit when the main program does
-        server_thread = threading.Thread(target=httpd.serve_forever, daemon=True)
-        server_thread.start()
-    except OSError as e:
-        print(f"Error starting server on port {PORT}: {e}")
-        print("This is likely because another process is using the port.")
-        print("Please try again later or manually navigate to the file.")
-        print(f"File path: {tmp_path}")
+    server_thread = None
+    MAX_PORT_ATTEMPTS = 10
+    server_started = False 
+    for i in range(MAX_PORT_ATTEMPTS):
+        server_address = ('', PORT)
+        try:
+            httpd = http.server.HTTPServer(server_address, PlotServer)
+            # Setting daemon=True ensures the server thread will exit when the main program does
+            server_thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+            server_thread.start()
+            server_started = True # Mark as started
+            break # !!! Crucial: Exit the loop after a successful start
+        except OSError as e:
+            if i == MAX_PORT_ATTEMPTS - 1:
+                # If this was the last attempt, print final error and return
+                print(f"Error starting server: Failed to bind to any port from {8000} to {PORT}.")
+                print(f"File path: {tmp_path}")
+                return
+            # Port is busy, try the next one
+            PORT += 1
+    # --- START HERE IF SERVER FAILED ENTIRELY ---
+     # Check if the server ever started successfully
+    if not server_started:
+        # If we reached here without starting the server, just return
         return
 
     # Construct the local server URL
@@ -121,7 +144,21 @@ def show_static(plot_buffer):
     print(f"Plot server started. Opening plot at:\n{tmp_url}")
     
     # Open the local URL in the browser
-    webbrowser.open(tmp_url)
+    # --- UNIFIED OPENING LOGIC ---
+    try:
+        # On Termux/Linux, use xdg-open for the URL
+        if is_termux():
+            subprocess.run(['xdg-open', tmp_url], check=True)
+        
+        # On Windows/other systems, use webbrowser (which handles xdg-open fallback often)
+        else: 
+            webbrowser.open(tmp_url)
+        print(f"Successfully opened {tmp_url}")
+
+    except Exception as e:
+        print(f"Failed to open browser using standard method: {e}")
+        print("Please open the URL manually in your browser.")
+    # ------------------------------
     
     # Keep the main thread alive for a moment to allow the browser to open.
     # The server will run in the background until the script is manually terminated.
@@ -131,7 +168,11 @@ def show_static(plot_buffer):
             time.sleep(1)
     except KeyboardInterrupt:
         print("\nExiting.")
-        httpd.shutdown()
-        # Clean up the temporary file on exit
-        if tmp_path.exists():
-            tmp_path.unlink()
+    finally:
+        if httpd:
+            httpd.shutdown()
+            # Clean up the temporary file on exit
+            # Restore CWD before exiting
+            os.chdir(original_cwd) 
+            if tmp_path.exists():
+                tmp_path.unlink()
