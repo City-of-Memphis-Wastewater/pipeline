@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pipeline-eds"
-version = "0.2.105"
+version = "0.2.106"
 description = "The API pipeline library, with CLI tools. Key target: The Emerson Ovation EDS REST API."
 authors = ["George Clayton Bennett <george.bennett@memphistn.gov>"]
 license = "BSD-3"
@@ -31,37 +31,74 @@ testpaths = ["tests"]
 pythonpath = ["src", "."]
 
 [tool.poetry.dependencies]
-python = ">=3.8.0,<4.0.0"
-requests = ">=2.32.3,<3.0.0"
-toml = ">=0.10.2,<0.11.0"
-pyyaml = ">=6.0.2,<7.0.0"
-schedule = ">=1.2.2,<2.0.0"
-#fastapi = ">=0.115.12,<0.116.0"
-pydantic = "1.10.13"
-urllib3 = "^2.4.0"
-plotly = "^6.2.0"
-uvicorn = "^0.34.3"
-mysql-connector-python = "^9.3.0"
-tzdata = "^2025.2"
-pendulum = "^3.1.0"
-fastapi = "^0.116.1"
-rich = "^14.1.0"
-typer = "^0.17.4"
-keyring = "^25.6.0"
-keyrings-alt = "^5.0.2"
-# These dependencies are only installed when the 'windb' extra is specified
-pyodbc = { version = "^5.1.0", optional = true }
-matplotlib = { version = "^3.10.6", optional = true }
+python = ">=3.8.0,<3.15"
 cherrypy = "^18.10.0"
+fastapi = "^0.116.1"
+
+# keyring: Version 25.x requires Python >=3.9, so we pin 24.x for 3.8.
+keyring = [
+    { version = "^25.6.0", python = ">=3.9" },
+    { version = "^24.3", python = "3.8.*" },
+]
+
+keyrings-alt = "^5.0.2"
+matplotlib = [
+    { version = "^3.10.6", python = ">=3.10", optional = true },
+    { version = "^3.9.0", python = "3.9.*", optional = true },
+    { version = "^3.7", python = "3.8.*", optional = true },
+]
+# mysql-connector-python: Version 9.1.0+ requires Python >=3.9. We pin 8.3.x for 3.8.
+mysql-connector-python = [
+    { version = "^9.3.0", python = ">=3.9" },
+    { version = "^8.3.0", python = "3.8.*" },
+]
+
+# pendulum: Version 3.x requires Python >=3.9, so we pin 2.x for 3.8.
+pendulum = [
+    { version = "^3.1.0", python = ">=3.9" },
+    { version = "^2.1.2", python = "3.8.*" },
+]
+
+plotly = "^6.2.0"
+pydantic = "1.10.13"
+pyodbc = { version = "^5.1.0", optional = true }
+pyyaml = ">=6.0.2,<7.0.0"
+requests = ">=2.32.3,<3.0.0"
+rich = "^14.1.0"
+schedule = ">=1.2.2,<2.0.0"
+toml = ">=0.10.2,<0.11.0"
+typer = "^0.17.4"
+tzdata = "^2025.2"
+# urllib3: Version 2.x requires Python >=3.9, so we pin 1.26.x for 3.8.
+urllib3 = [
+    { version = "^2.4.0", python = ">=3.9" },
+    { version = "^1.26.19", python = "3.8.*" }, # Pinning latest 1.x patch for security
+]
+# uvicorn: Version 0.34.0 dropped Python 3.8 support, so we pin 0.33.x for 3.8.
+uvicorn = [
+    { version = "^0.34.3", python = ">=3.9" },
+    { version = "^0.33.0", python = "3.8.*" },
+]
 
 [tool.poetry.extras] # pipx install pipeline-eds[windows]
 windows = ["pyodbc","matplotlib"]
 mpl = ["matplotlib"]
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^8.4.1"
-pytest-cov = "^6.2.1"
+# pytest: Version 8.x requires Python >=3.9, so we pin 7.x for 3.8.
+pytest = [
+    { version = "^8.4.1", python = ">=3.9" }, # Upgraded to latest version for 3.9+
+    { version = "^7.4", python = "3.8.*" },
+]
+#pytest = "^7.4" # "^8.4.1" caps at >3.9
+#pytest-cov = "^5.0" # ^6.2.1"
+# pytest-cov: Version 6.x requires Python >=3.9, so we pin 5.x for 3.8.
+pytest-cov = [
+    { version = "^6.2.1", python = ">=3.9" }, # Upgraded to latest version for 3.9+
+    { version = "^5.0", python = "3.8.*" },
+]
 pygal = "^3.0.5"
+pyinstaller = "^6.16.0"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

@@ -33,7 +33,7 @@ def init_security():
 
 def _prompt_for_value(prompt_message: str, hide_input: bool) -> str:
     """Handles prompting with a fallback from CLI to GUI."""
-    
+    # Block these off for testing the browser_get_input, which is not expeceted in this iteration but is good practice for future proofing a hypothetical console-less GUI 
     if is_interactive_terminal():
         # 1. CLI Mode (Interactive)
         typer.echo(f"\n --- Use CLI input --- ")
