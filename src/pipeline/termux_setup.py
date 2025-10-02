@@ -33,8 +33,8 @@ def setup_termux_shortcut():
 
 # Termux Widget/Shortcut Script for EDS Plotter
 # This shortcut was automatically generated during first run.
-eds --version 
-eds trend --default-idcs
+$HOME/.local/bin/eds --version 
+$HOME/.local/bin/eds trend --default-idcs
 """
 
     # 3. Write the script to the file
