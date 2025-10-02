@@ -5,11 +5,9 @@ import json
 import uuid
 import time
 import threading
-import webbrowser 
 import urllib.parse 
-import shutil
-import subprocess
 
+from pipeline.web_utils import launch_browser, get_self_closing_html
 # --- Shared State Management ---
 
 # Global store for results awaiting retrieval by the calling Python function.
@@ -215,7 +213,12 @@ class WebPromptService(object):
         with results_lock:
             PROMPT_RESULTS[request_id] = value
         
-        # Render a simple confirmation page
+        return get_self_closing_html(
+            message="Configuration input successfully received by the application.",
+            delay_seconds=1.5 # Example: 1.5 seconds delay
+        )
+
+        # Defunct, Render a simple confirmation page
         return f"""
 <!DOCTYPE html>
 <html lang="en">
@@ -283,7 +286,8 @@ def _wait_for_web_input(request_id, key, prompt_message: str, hide_input: bool) 
 
                 # Use the robust internal launcher
                 print(f"Automatically launching URL in browser...")
-                _launch_browser(prompt_url)
+                launch_browser(prompt_url)
+                time.sleep(0.5)
                 browser_launched = True
 
             # Direct dictionary check (relies on shared memory in the same process)
@@ -306,45 +310,6 @@ def _wait_for_web_input(request_id, key, prompt_message: str, hide_input: bool) 
         except Exception as e:
             print(f"[WEBPROMPT ERROR] Polling loop exception: {e}")
             time.sleep(5)
-
-# --- Browser Launch Logic (The FIX for Termux/Linux) ---
-
-def _launch_browser(url: str):
-    """
-    Attempts to launch the URL using specific platform commands first, 
-    then falls back to the standard Python webbrowser.
-    """
-    
-    # 1. Try Termux-specific launcher
-    if shutil.which("termux-open-url"):
-        try:
-            print("[WEBPROMPT] Attempting launch using 'termux-open-url'...")
-            # Run the command without capturing output to keep it clean
-            subprocess.run(["termux-open-url", url], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            return
-        except subprocess.CalledProcessError as e:
-            print(f"[WEBPROMPT WARNING] 'termux-open-url' failed: {e}. Falling back...")
-        except FileNotFoundError:
-             pass
-
-    # 2. Try general Linux desktop launcher
-    if shutil.which("xdg-open"):
-        try:
-            print("[WEBPROMPT] Attempting launch using 'xdg-open'...")
-            subprocess.run(["xdg-open", url], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            return
-        except subprocess.CalledProcessError as e:
-            print(f"[WEBPROMPT WARNING] 'xdg-open' failed: {e}. Falling back...")
-        except FileNotFoundError:
-             pass
-             
-    # 3. Fallback to standard Python library
-    try:
-        print("[WEBPROMPT] Attempting launch using standard Python 'webbrowser' module...")
-        webbrowser.open_new_tab(url)
-    except Exception as e:
-        print(f"[WEBPROMPT ERROR] Standard 'webbrowser' failed: {e}. Please manually open the URL.")
-
 
 def browser_get_input(key: str, prompt_message: str, hide_input: bool = False) -> str:
     """

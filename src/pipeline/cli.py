@@ -279,7 +279,7 @@ def configure_credentials(
     """
     if textedit:
         typer.echo(F"Config filepath: {CONFIG_PATH}")
-        environment.open_file_in_default_app(CONFIG_PATH)
+        environment.open_text_file_in_default_app(CONFIG_PATH)
         return
             
     typer.echo("")
