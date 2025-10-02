@@ -15,7 +15,15 @@ from pipeline import environment
 from pipeline.security_and_config import get_eds_api_credentials, get_external_api_credentials, get_eds_db_credentials, get_all_configured_urls, get_configurable_plant_name, init_security, CONFIG_PATH
 from pipeline.termux_setup import setup_termux_shortcut
 #from pipeline.helpers import setup_logging
-### Versioning
+
+# --- TERMUX SETUP HOOK ---
+# This runs on every command (including --version and --help or without sub commands), 
+# but the function's internal logic
+# ensures the shortcut file is only created once in the Termux environment.
+if environment.is_termux():
+    setup_termux_shortcut()
+
+# -- Versioning --
 CLI_APP_NAME = "pipeline"
 PIP_PACKAGE_NAME = "pipeline-eds"
 def print_version(value: bool):
@@ -24,6 +32,7 @@ def print_version(value: bool):
             typer.secho(f"{CLI_APP_NAME} {PIPELINE_VERSION}",fg=typer.colors.GREEN, bold=True)
         except PackageNotFoundError:
             typer.echo("Version info not found")
+        raise typer.Exit()
 try:
     PIPELINE_VERSION = version(PIP_PACKAGE_NAME)
     __version__ = version(PIP_PACKAGE_NAME)
@@ -55,15 +64,6 @@ def main(
     """
     Pipeline CLI – run workspaces built on the pipeline framework.
     """
-    # --- TERMUX SETUP HOOK ---
-    # This runs on every command (including --version and --help or without sub commands), but the function's internal logic
-    # ensures the shortcut file is only created once in the Termux environment.
-    if environment.is_termux():
-        setup_termux_shortcut()
-
-    # 2. Handle the --version exit
-    if version: # The version flag will be True if it was passed
-        raise typer.Exit()
 
     if ctx.invoked_subcommand is None:
         typer.echo(ctx.get_help())
