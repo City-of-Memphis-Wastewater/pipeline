@@ -31,8 +31,8 @@ VSVersionInfo(
       [
       StringTable(
         u'040904E4',
-        [StringStruct(u'CompanyName', u'YOUR COMPANY NAME HERE'),
-        StringStruct(u'FileDescription', u'CLI for running pipeline workspaces.'),
+        [StringStruct(u'CompanyName', u'GEORGE CLAYTON BENNETT'),
+        StringStruct(u'FileDescription', u'CLI for accessing and managing Ovation EDS data.'),
         StringStruct(u'FileVersion', u'%(VERSION)s'),
         StringStruct(u'InternalName', u'pipeline'),
         StringStruct(u'LegalCopyright', u'Copyright © 2024 Your Company. All rights reserved.'),
