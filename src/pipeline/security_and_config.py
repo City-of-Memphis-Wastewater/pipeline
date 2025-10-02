@@ -52,16 +52,16 @@ def _prompt_for_value(prompt_message: str, hide_input: bool) -> str:
 
     elif web_browser_is_available(): # 3. Check for browser availability
         # 3. Browser Mode (Web Browser as a fallback)
-        from pipeline.webconfig import browser_get_input
+        from pipeline.webconfig import WebConfigurationManager, browser_get_input
         typer.echo(f"\n --- TKinter nor console is not available to handle the configuration prompt. Opening browser-based configuration prompt --- ")
-        
-        # We use the prompt message as the identifier key for the web service
-        # because the true config_key is not available in this function's signature.
-        value = browser_get_input(
-            key=prompt_message, 
-            prompt_message=prompt_message,
-            hide_input=hide_input # <-- Passes input visibility to web config
-        )
+        with WebConfigurationManager():
+            # We use the prompt message as the identifier key for the web service
+            # because the true config_key is not available in this function's signature.
+            value = browser_get_input(
+                key=prompt_message, 
+                prompt_message=prompt_message,
+                hide_input=hide_input # <-- Passes input visibility to web config
+            )
 
         if value is not None:
             return value
@@ -173,20 +173,6 @@ def _get_credential_with_prompt(service_name: str, item_name: str, prompt_messag
     
     # If a credential existed and overwrite was False, simply return the existing value.
     return credential
-
-
-def get_configurable_idcs_list(plant_name: str, overwrite: bool = False) -> list[str]: # generalized for stiles and maxson
-    service_name = f"{plant_name}-default-idcs"
-    idcs_value = _get_config_with_prompt(service_name, f"Enter space-separated default IDCS values for {plant_name} to use as a backup if IDCS values are not explicitly provided (e.g., M100FI FI8001)", overwrite=overwrite)
-    if ',' in idcs_value:
-        idcs_values = idcs_value.split(',')
-        return idcs_values
-    if ' ' in idcs_value:
-        idcs_values = idcs_value.split(' ')
-        return idcs_values
-    else:
-        idcs_values = [idcs_value]
-        return idcs_values
     
 def get_configurable_idcs_list(plant_name: str, overwrite: bool = False) -> List[str]:
     """
@@ -195,10 +181,10 @@ def get_configurable_idcs_list(plant_name: str, overwrite: bool = False) -> List
     
     The function handles IDCS values separated by one or more spaces or commas.
     """
-    service_name = f"pipeline-eds-default-idcs-{plant_name}"
+    service_name = f"{plant_name}-default-idcs"
     
     prompt_message = (
-        f"Enter default IDCS values for the {plant_name} plant "
+        f"Enter default IDCS values for the {plant_name} plant"
         f"(e.g., M100FI FI8001 M310LI)"
     )
     

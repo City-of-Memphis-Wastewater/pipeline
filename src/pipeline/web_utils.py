@@ -217,7 +217,7 @@ def get_self_closing_html_safe(message: str, delay_seconds: float = 1.0) -> str:
     return html_content
 
 
-def get_self_closing_html(message: str, delay_seconds: float = 1.0) -> str:
+def get_self_closing_html_ugh(message: str, delay_seconds: float = 1.0) -> str:
     """
     Generates an HTML page that displays a success message and uses JavaScript 
     to automatically close the browser tab after a specified delay. It also
@@ -316,3 +316,129 @@ def get_self_closing_html(message: str, delay_seconds: float = 1.0) -> str:
 </html>
 """
     return html_content
+
+
+def get_self_closing_html(message: str, delay_seconds: float = 1.0) -> str:
+    """
+    Generates an HTML page that displays a success message and uses JavaScript 
+    to automatically close the browser tab after a specified delay. It also
+    provides a manual 'Close' button as a fallback if automatic closure fails.
+    
+    This function is used by the server's submission endpoint to signal completion.
+    """
+    # Convert delay to milliseconds for JavaScript's setTimeout
+    delay_ms = int(delay_seconds * 1000)
+    
+    # We define a dedicated JS function for the button click that attempts a fetch
+    # before closing, mirroring the user's successful "Close Plot" pattern.
+    js_function = """
+        function closeConfigTab() {
+            // Send a harmless GET request to the root path to mimic a successful server interaction
+            fetch('/') 
+                .then(() => {
+                    console.log("Cleanup request sent. Attempting close.");
+                    // Attempt the close after a successful fetch response
+                    window.open('', '_self'); // required hack for some browsers
+                    window.close();
+                })
+                .catch(error => {
+                    // If the fetch fails (e.g., server already closed), attempt direct close and redirect
+                    console.error("Fetch failed, attempting direct close and redirect:", error);
+                    window.close();
+                    window.location.replace('about:blank');
+                });
+            // Provide a fallback redirect
+            setTimeout(function() {
+                window.location.replace("about:blank");
+            }, 300);
+        }
+    """
+    
+    return f"""
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Submission Complete</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        {js_function}
+
+        // The automatic close attempt:
+        setTimeout(function() {{
+            // This still attempts to close automatically but is prone to browser security blocks.
+            window.close();
+        }}, {delay_ms});
+    </script>
+    <style>
+        /* Updated to dark theme */
+        body {{ 
+            background-color: #1f2937; /* Dark background */
+            color: #f3f4f6; /* Light text */
+            font-family: 'Inter', sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+            padding: 20px;
+        }}
+        .message-box {{ 
+            background-color: #374151; /* Slightly lighter dark background for the box */
+            color: #f3f4f6; 
+            padding: 40px; 
+            border-radius: 12px; 
+            text-align: center; 
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5); 
+            min-width: 300px;
+            max-width: 90%;
+            border: 1px solid #4b5563;
+        }}
+        h2 {{ 
+            margin-top: 0; 
+            font-size: 1.8em;
+            color: #10b981; /* Success color for heading */
+        }}
+        p {{ 
+            font-size: 1.1em;
+            margin-bottom: 20px;
+        }}
+        .close-button {{
+            background-color: #10b981; /* Emerald green button */
+            color: #1f2937;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-weight: bold;
+            margin-top: 15px; /* Added spacing */
+        }}
+        .close-button:hover {{
+            background-color: #059669;
+        }}
+        .fallback-instruction {{
+            margin-top: 25px;
+            font-size: 0.9em;
+            color: #9ca3af; /* Gray text for instruction */
+        }}
+    </style>
+</head>
+<body>
+    <div class="message-box">
+        <h2>Configuration Saved!</h2>
+        <p>{message}</p>
+        <p>The application has successfully received your input and continued execution.</p>
+        
+        <!-- Updated to call the dedicated JS function -->
+        <button class="close-button" onclick="closeConfigTab()">Close Tab Now</button>
+        
+        <p class="fallback-instruction">
+            (If the tab doesn't close, clicking the button will at least clear the content to a blank page. 
+            You can then safely close the tab manually.)
+        </p>
+    </div>
+</body>
+</html>
+"""
