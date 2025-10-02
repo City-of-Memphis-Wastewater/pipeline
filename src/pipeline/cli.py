@@ -1,6 +1,7 @@
 import sqlite3
 from rich.table import Table
 from rich.console import Console
+from click import BadParameter 
 import typer
 from pathlib import Path
 from importlib.metadata import version, PackageNotFoundError
@@ -131,7 +132,7 @@ def defaultplant(
 
 @app.command()
 def trend(
-    idcs: list[str] = typer.Argument(..., help="Provide known idcs values that match the given zd."), # , "--idcs", "-i"
+    idcs: list[str] = typer.Argument(None, help="Provide known idcs values that match the given zd."), # , "--idcs", "-i"
     starttime: str = typer.Option(None, "--start", "-s", help="Identify start time. Use any reasonable format, to be parsed automatically. If you must use spaces, use quotes."),
     endtime: str = typer.Option(None, "--end", "-end", help="Identify end time. Use any reasonable format, to be parsed automatically. If you must use spaces, use quotes."),
     plant_name: str = typer.Option(None, "--plantname", "-pn", help = "Define the EDS ZD for your credentials. This must correlate with your idcs point selection(s)."),
@@ -149,6 +150,32 @@ def trend(
     from pipeline.api.eds import EdsClient, load_historic_data, EdsLoginException
     from pipeline import helpers
     from pipeline.plotbuffer import PlotBuffer
+
+        # --- NEW LOGIC: Conditional IDCS Input ---
+    if idcs is None:
+        if default_idcs:
+            from pipeline.config_helpers import get_configurable_idcs_list
+            # plant_name is resolved below, but we need a valid name for the helper
+            # Temporarily resolve plant_name for the prompt if needed
+            current_plant_name = plant_name if plant_name is not None else get_configurable_plant_name()
+            idcs = get_configurable_idcs_list(current_plant_name)
+            
+            if not idcs:
+                # Use a standard Typer error for missing config value
+                raise BadParameter(
+                    "The '--default-idcs' flag was used, but no IDCS points were configured or provided interactively.",
+                    param_hint="--default-idcs"
+                )
+        else:
+            # Raise a BadParameter exception to trigger the Typer/Rich error box
+            error_message = (
+                "\nIDCS values are required. You must either:\n"
+                "1. Provide IDCS values as arguments: `pipeline trend IDCS1 IDCS2 ...`\n"
+                "2. Use the default IDCS list: `pipeline trend --default-idcs`"
+            )
+            # This will now be wrapped in the structured error box.
+            raise BadParameter(error_message, param_hint="IDCS...")
+    # --- END NEW LOGIC ---
     
     #zd = api_credentials.get("zd")
     if plant_name is None:
