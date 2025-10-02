@@ -1,8 +1,8 @@
 # pipeline/install_termux.py
+from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
 import os
 from pathlib import Path
 from pipeline.environment import is_termux
-from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
 
 def setup_termux_shortcut():
     """

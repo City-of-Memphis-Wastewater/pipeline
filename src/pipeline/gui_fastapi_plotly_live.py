@@ -1,5 +1,5 @@
 # src/pipeline/gui_fastapi_plotly_live.py
-
+from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, JSONResponse
 from threading import Lock
@@ -7,8 +7,6 @@ import uvicorn
 import time
 import threading
 import webbrowser
-from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
-
 
 app = FastAPI()
 plot_buffer = None  # Set externally

@@ -1,10 +1,10 @@
 # install_appdata.py
+from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
 import typer
 from pathlib import Path
 import sys
 import os
 import shutil
-from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
 
 
 app = typer.Typer(help="Manage mulch-like pipeline workspace installation")
