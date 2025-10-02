@@ -181,6 +181,8 @@ def trend(
             )
             # This will now be wrapped in the structured error box.
             raise BadParameter(error_message, param_hint="IDCS...")
+    # Convert all idcs values to uppercase, whether input now or stored in config. This assumes all IDCS value are uppcase all the time at every plant.
+    idcs = [s.upper() for s in idcs]
     # --- END Conditional IDCS Input ---
     
 
