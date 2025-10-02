@@ -1,8 +1,8 @@
 # pipeline/guiconfig.py
+from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
 import tkinter as tk
 from tkinter import simpledialog
 from typing import Optional
-from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
 
 
 def gui_get_input(prompt_message: str, hide_input: bool = False) -> Optional[str]:
