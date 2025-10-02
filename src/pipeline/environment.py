@@ -76,13 +76,13 @@ def operatingsystem():
     return platform.system() #determine OS
 
 
-def open_file_in_default_app(filepath):
+def open_text_file_in_default_app(filepath):
     import subprocess
     """Opens a file with its default application based on the OS."""
     if is_windows():
         os.startfile(filepath)
     elif is_termux():
-        subprocess.run(['termux-open', filepath])
+        subprocess.run(['nano', filepath])
     elif is_linux():
         subprocess.run(['xdg-open', filepath])
     elif is_apple():

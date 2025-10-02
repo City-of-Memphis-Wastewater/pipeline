@@ -30,7 +30,7 @@ def init_security():
 def _prompt_for_value(prompt_message: str, hide_input: bool) -> str:
     """Handles prompting with a fallback from CLI to GUI."""
     
-    if False:#is_interactive_terminal():
+    if is_interactive_terminal():
         # 1. CLI Mode (Interactive)
         typer.echo(f"\n --- Use CLI input --- ")
         if hide_input:
@@ -39,7 +39,7 @@ def _prompt_for_value(prompt_message: str, hide_input: bool) -> str:
             new_value = input(f"{prompt_message}: ")
         return new_value
         
-    elif False:#tkinter_is_available():
+    elif tkinter_is_available():
         # 2. GUI Mode (Non-interactive fallback)
         from pipeline.guiconfig import gui_get_input
         typer.echo(f"\n --- Non-interactive process detected. Opening GUI prompt. --- ")
@@ -47,7 +47,6 @@ def _prompt_for_value(prompt_message: str, hide_input: bool) -> str:
         
         if value is not None:
             return value
-        
 
     elif web_browser_is_available(): # 3. Check for browser availability
         # 3. Browser Mode (Web Browser as a fallback)
