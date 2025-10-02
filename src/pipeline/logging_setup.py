@@ -1,6 +1,8 @@
 import os
 import json
 import logging.config
+from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
+
 
 def setup_logging(config_file="config/logging.json"): # relative to root
     if not os.path.exists("logs"):

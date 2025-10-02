@@ -9,6 +9,8 @@ from threading import Thread
 from pipeline import helpers
 from pipeline.plotbuffer import PlotBuffer  # Adjust import path as needed
 from pipeline.time_manager import TimeManager
+from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
+
 
 
 logger = logging.getLogger(__name__)

@@ -7,6 +7,7 @@ from pathlib import Path
 from importlib.metadata import version, PackageNotFoundError
 from requests.exceptions import Timeout
 import sys 
+from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
 
 from pipeline.time_manager import TimeManager
 from pipeline.create_sensors_db import get_db_connection, create_packaged_db, reset_user_db # get_user_db_path, ensure_user_db, 
