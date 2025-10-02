@@ -6,12 +6,13 @@ from pathlib import Path
 from importlib.metadata import version, PackageNotFoundError
 from requests.exceptions import Timeout
 import sys 
+
 from pipeline.time_manager import TimeManager
 from pipeline.create_sensors_db import get_db_connection, create_packaged_db, reset_user_db # get_user_db_path, ensure_user_db, 
 from pipeline.api.eds import demo_eds_webplot_point_live
 from pipeline import environment
 from pipeline.security import get_eds_api_credentials, get_external_api_credentials, get_eds_db_credentials, get_all_configured_urls, get_configurable_plant_name, init_security, CONFIG_PATH
-
+from pipeline.termux_setup import setup_termux_shortcut
 #from pipeline.helpers import setup_logging
 ### Versioning
 CLI_APP_NAME = "pipeline"
@@ -54,9 +55,16 @@ def main(
     """
     Pipeline CLI – run workspaces built on the pipeline framework.
     """
+    
     if ctx.invoked_subcommand is None:
         typer.echo(ctx.get_help())
         raise typer.Exit()
+    
+    # --- TERMUX SETUP HOOK ---
+    # This runs on every command, but the function's internal logic
+    # ensures the shortcut file is only created once in the Termux environment.
+    if environment.is_termux():
+        setup_termux_shortcut()
     
     # 1. Access the list of all command-line arguments
     full_command_list = sys.argv
@@ -130,7 +138,8 @@ def trend(
     #workspacename: str = typer.Option(None,"--workspace","-w", help = "Provide the name of the workspace you want to use, for the secrets.yaml credentials and for the timezone config. If a start time is not provided, the workspace queries can checked for the most recent successful timestamp. "),
     print_csv: bool = typer.Option(False,"--print-csv","-p",help = "Print the CSV style for pasting into Excel."),
     step_seconds: int = typer.Option(None, "--step-seconds", help="You can explicitly provide the delta between datapoints. If not, ~400 data points will be used, based on the nice_step() function."), 
-    webplot: bool = typer.Option(False,"--webplot","-w",help = "Use a browser-based plot instead of local (matplotlib). Useful for remote servers without display.")
+    webplot: bool = typer.Option(False,"--webplot","-w",help = "Use a browser-based plot instead of local (matplotlib). Useful for remote servers without display."),
+    default_idcs: bool = typer.Option(False, "--default-idcs", "-d", help="Use the default IDCS values for the configured plant name, instead of providing them on the command line.")
     ):
     """
     Show a curve for a sensor over time.

@@ -238,7 +238,7 @@ def inject_button(tmp_path: Path, is_server_mode: bool) -> Path:
                 });
         }
         """
-        button_text = "Close Plot (Stop Server)"
+        button_text = "Close Plot "# (Stop Server)
     else:
         # STATIC FILE MODE: Just closes the browser tab/window
         js_logic = """
@@ -248,7 +248,7 @@ def inject_button(tmp_path: Path, is_server_mode: bool) -> Path:
             window.close();
         }
         """
-        button_text = "Close Plot (Close Tab)"
+        button_text = "Close Plot"# (Close Tab)"
     
     # ----------------------------------------------------
     # NEW STEP: Inject Shutdown Button into the HTML
