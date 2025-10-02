@@ -56,16 +56,16 @@ def main(
     """
     Pipeline CLI – run workspaces built on the pipeline framework.
     """
-    
+    # --- TERMUX SETUP HOOK ---
+    # This runs on every command (including --version and --help or without sub commands), but the function's internal logic
+    # ensures the shortcut file is only created once in the Termux environment.
+    if environment.is_termux():
+        setup_termux_shortcut()
+
     if ctx.invoked_subcommand is None:
         typer.echo(ctx.get_help())
         raise typer.Exit()
     
-    # --- TERMUX SETUP HOOK ---
-    # This runs on every command, but the function's internal logic
-    # ensures the shortcut file is only created once in the Termux environment.
-    if environment.is_termux():
-        setup_termux_shortcut()
     
     # 1. Access the list of all command-line arguments
     full_command_list = sys.argv
