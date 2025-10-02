@@ -1,5 +1,6 @@
 # pipeline/webconfig.py
 import cherrypy
+import atexit
 import html
 import json
 import uuid
@@ -19,6 +20,21 @@ results_lock = threading.Lock()
 _SERVER_THREAD = None
 _SERVER_LOCK = threading.Lock() 
 
+# --- Context Manager for Server Lifecycle ---
+class WebConfigurationManager:
+    """A context manager to ensure the web server starts once and stops once."""
+    def __enter__(self):
+        """Called when entering the 'with' block."""
+        print("\n--- Starting Web Configuration Session ---")
+        start_server_if_needed()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Called when exiting the 'with' block."""
+        stop_server()
+        print("--- Web Configuration Session Ended ---")
+
+
 def start_server_if_needed():
     """Starts the CherryPy server in a background thread if it is not already running."""
     global _SERVER_THREAD
@@ -32,8 +48,8 @@ def start_server_if_needed():
         cherrypy.config.update({
             'server.socket_host': '127.0.0.1',
             'server.socket_port': 8081,
-            'server.thread_pool': 5, 
-            'log.screen': False, # Suppress logs during background operation
+            #'server.thread_pool': 5, 
+            'log.screen': True, # Suppress logs during background operation
             'engine.autoreload_on': False, 
         })
         
@@ -52,8 +68,9 @@ def start_server_if_needed():
         time.sleep(0.5)
         print(f"[WEBPROMPT] Server listening on http://127.0.0.1:8081/")
 
+
 def stop_server():
-    """Stops the CherryPy server."""
+    """Stops the CherryPy server and waits for the thread to terminate."""
     global _SERVER_THREAD
     
     with _SERVER_LOCK:
@@ -61,14 +78,44 @@ def stop_server():
             print("\n[WEBPROMPT] Shutting down configuration web server...")
             # Stop all running engine components
             cherrypy.engine.stop()
-            # Ensure a clean exit of the engine process
-            cherrypy.engine.exit()
+            
+            # Block and wait for the server thread to fully exit.
+            # A timeout is good practice to prevent an indefinite hang.
+            _SERVER_THREAD.join(timeout=5.0) 
+            
+            # Now that the thread is joined, we can be sure the engine has stopped.
             _SERVER_THREAD = None
+            print("[WEBPROMPT] Server has shut down cleanly.")
+        # Always call exit, even if thread wasn’t alive
+        cherrypy.engine.exit()
+
+@atexit.register
+def shutdown_webprompt():
+    # Ensure CherryPy is still running before trying to shut it down
+    #if cherrypy.engine.state == cherrypy.engine.states.STARTED:
+    #    print("Shutting down CherryPy gracefully...")
+    #    cherrypy.engine.exit()
+
+    if cherrypy.engine.state not in (
+        cherrypy.engine.states.STOPPED,
+        cherrypy.engine.states.EXITING
+        ):
+        print("Shutting down CherryPy gracefully...")
+        cherrypy.engine.exit()
 
 # --- Web Service Class ---
-
 class WebPromptService(object):
     """Manages the web interface for single-value prompts and stores results."""
+    @cherrypy.expose
+    def index(self):
+        """
+        Handles the benign GET request from the self-closing success page,
+        preventing a 404 error in the logs.
+        """
+        # Return a simple 200 OK with a minimal message.
+        # This response is not typically seen by the user.
+        cherrypy.response.headers['Content-Type'] = 'text/plain'
+        return "Server is active. Awaiting shutdown signal."
 
     def _render_prompt_page(self, request_id, prompt_key, prompt_message, input_type='text', status_message=None):
         """Renders the minimal page for prompting a single configuration value."""
@@ -256,13 +303,18 @@ def _wait_for_web_input(request_id, key, prompt_message: str, hide_input: bool) 
 
     poll_count = 0 
     browser_launched = False
+    # Launch the browser once, before the polling loop starts
+    try:
+        launch_browser(prompt_url)
+        browser_launched = True
+    except Exception as e:
+        print(f"[WEBPROMPT ERROR] Failed to launch browser: {e}")
 
     while True:
         try:
             if not browser_launched:
 
                 # Use the robust internal launcher
-                print(f"Automatically launching URL in browser...")
                 launch_browser(prompt_url)
                 time.sleep(0.5)
                 browser_launched = True
@@ -288,15 +340,16 @@ def _wait_for_web_input(request_id, key, prompt_message: str, hide_input: bool) 
             print(f"[WEBPROMPT ERROR] Polling loop exception: {e}")
             time.sleep(5)
 
+
+
 def browser_get_input(key: str, prompt_message: str, hide_input: bool = False) -> str:
     """
-    Retrieves a config value by launching a web prompt. Starts the server if needed.
+    Retrieves a config value by launching a web prompt.
+    NOTE: This function now ASSUMES the server is already running via the
+    WebConfigurationManager context manager
     """
-    # CRITICAL: Start the server before attempting to communicate with it
-    start_server_if_needed() 
-    
+    # CRITICAL: The start_server and stop_server calls are REMOVED from here and are inferred in 'with WebConfigurationManager()'.
     request_id = str(uuid.uuid4())
-    # Note: we pass the clean 'key' here
     value = _wait_for_web_input(request_id, key, prompt_message, hide_input)
-    
+    # The server is no longer stopped here.
     return value
