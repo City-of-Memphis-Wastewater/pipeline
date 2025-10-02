@@ -12,7 +12,7 @@ from pipeline.time_manager import TimeManager
 from pipeline.create_sensors_db import get_db_connection, create_packaged_db, reset_user_db # get_user_db_path, ensure_user_db, 
 from pipeline.api.eds import demo_eds_webplot_point_live
 from pipeline import environment
-from pipeline.security import get_eds_api_credentials, get_external_api_credentials, get_eds_db_credentials, get_all_configured_urls, get_configurable_plant_name, init_security, CONFIG_PATH
+from pipeline.security_and_config import get_eds_api_credentials, get_external_api_credentials, get_eds_db_credentials, get_all_configured_urls, get_configurable_plant_name, init_security, CONFIG_PATH
 from pipeline.termux_setup import setup_termux_shortcut
 #from pipeline.helpers import setup_logging
 ### Versioning
@@ -140,7 +140,7 @@ def trend(
     print_csv: bool = typer.Option(False,"--print-csv","-p",help = "Print the CSV style for pasting into Excel."),
     step_seconds: int = typer.Option(None, "--step-seconds", help="You can explicitly provide the delta between datapoints. If not, ~400 data points will be used, based on the nice_step() function."), 
     webplot: bool = typer.Option(False,"--webplot","-w",help = "Use a browser-based plot instead of local (matplotlib). Useful for remote servers without display."),
-    default_idcs: bool = typer.Option(False, "--default-idcs", "-d", help="Use the default IDCS values for the configured plant name, instead of providing them on the command line.")
+    default_idcs: bool = typer.Option(False, "--default-idcs", "-d", help="Use the default IDCS values for the configured plant name, instead of providing them as arguments.")
     ):
     """
     Show a curve for a sensor over time.
@@ -151,10 +151,14 @@ def trend(
     from pipeline import helpers
     from pipeline.plotbuffer import PlotBuffer
 
-        # --- NEW LOGIC: Conditional IDCS Input ---
+    #zd = api_credentials.get("zd")
+    if plant_name is None:
+        plant_name = get_configurable_plant_name()
+
+    # --- Conditional IDCS Input ---
     if idcs is None:
         if default_idcs:
-            from pipeline.config_helpers import get_configurable_idcs_list
+            from pipeline.security_and_config import get_configurable_idcs_list
             # plant_name is resolved below, but we need a valid name for the helper
             # Temporarily resolve plant_name for the prompt if needed
             current_plant_name = plant_name if plant_name is not None else get_configurable_plant_name()
@@ -170,16 +174,13 @@ def trend(
             # Raise a BadParameter exception to trigger the Typer/Rich error box
             error_message = (
                 "\nIDCS values are required. You must either:\n"
-                "1. Provide IDCS values as arguments: `pipeline trend IDCS1 IDCS2 ...`\n"
-                "2. Use the default IDCS list: `pipeline trend --default-idcs`"
+                "1. Provide IDCS values as arguments: `eds trend IDCS1 IDCS2 ...`\n"
+                "2. Use the default IDCS list: `eds trend --default-idcs`"
             )
             # This will now be wrapped in the structured error box.
             raise BadParameter(error_message, param_hint="IDCS...")
-    # --- END NEW LOGIC ---
+    # --- END Conditional IDCS Input ---
     
-    #zd = api_credentials.get("zd")
-    if plant_name is None:
-        plant_name = get_configurable_plant_name()
 
     # Retrieve all necessary API credentials and config values.
     # This will prompt the user if any are missing.

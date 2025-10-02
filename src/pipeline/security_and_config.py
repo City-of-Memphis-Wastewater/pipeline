@@ -1,10 +1,12 @@
 # pipeline/security.py
-import keyring ## configuration-example
 import getpass
 import json
+import keyring
 from pathlib import Path
-from typing import Dict, Set
+import re
+from typing import Dict, Set, List
 import typer
+
 
 from pipeline.environment import is_termux, is_interactive_terminal, tkinter_is_available, web_browser_is_available
 
@@ -30,7 +32,7 @@ def init_security():
 def _prompt_for_value(prompt_message: str, hide_input: bool) -> str:
     """Handles prompting with a fallback from CLI to GUI."""
     
-    if is_interactive_terminal():
+    if False: #is_interactive_terminal():
         # 1. CLI Mode (Interactive)
         typer.echo(f"\n --- Use CLI input --- ")
         if hide_input:
@@ -39,7 +41,7 @@ def _prompt_for_value(prompt_message: str, hide_input: bool) -> str:
             new_value = input(f"{prompt_message}: ")
         return new_value
         
-    elif tkinter_is_available():
+    elif False:#tkinter_is_available():
         # 2. GUI Mode (Non-interactive fallback)
         from pipeline.guiconfig import gui_get_input
         typer.echo(f"\n --- Non-interactive process detected. Opening GUI prompt. --- ")
@@ -172,10 +174,53 @@ def _get_credential_with_prompt(service_name: str, item_name: str, prompt_messag
     # If a credential existed and overwrite was False, simply return the existing value.
     return credential
 
-# Note: The other helper function, _get_config_with_prompt, should also
-# be updated with an overwrite parameter for consistency.
 
-
+def get_configurable_idcs_list(plant_name: str, overwrite: bool = False) -> list[str]: # generalized for stiles and maxson
+    service_name = f"{plant_name}-default-idcs"
+    idcs_value = _get_config_with_prompt(service_name, f"Enter space-separated default IDCS values for {plant_name} to use as a backup if IDCS values are not explicitly provided (e.g., M100FI FI8001)", overwrite=overwrite)
+    if ',' in idcs_value:
+        idcs_values = idcs_value.split(',')
+        return idcs_values
+    if ' ' in idcs_value:
+        idcs_values = idcs_value.split(' ')
+        return idcs_values
+    else:
+        idcs_values = [idcs_value]
+        return idcs_values
+    
+def get_configurable_idcs_list(plant_name: str, overwrite: bool = False) -> List[str]:
+    """
+    Retrieves a list of default IDCS points for a specific plant from configuration. 
+    If not configured, it prompts the user to enter them and saves them.
+    
+    The function handles IDCS values separated by one or more spaces or commas.
+    """
+    service_name = f"pipeline-eds-default-idcs-{plant_name}"
+    
+    prompt_message = (
+        f"Enter default IDCS values for the {plant_name} plant "
+        f"(e.g., M100FI FI8001 M310LI)"
+    )
+    
+    idcs_value = _get_config_with_prompt(service_name, prompt_message, overwrite=overwrite)
+    
+    if not idcs_value:
+        return []
+    
+    # Use re.split to split by multiple delimiters: 
+    # r'[,\s]+' means one or more commas (,) OR one or more whitespace characters (\s).
+    raw_idcs_list = re.split(r'[,\s]+', idcs_value)
+    
+    # Filter out any empty strings resulting from the split (e.g., if input was "IDCS1,,IDCS2")
+    # and strip leading/trailing whitespace from each element.
+    idcs_list = [
+        item.strip() 
+        for item in raw_idcs_list 
+        if item.strip()
+    ]
+    
+    return idcs_list
+    
 def get_eds_db_credentials(plant_name: str, overwrite: bool = False) -> Dict[str, str]: # generalized for stiles and maxson
     """Retrieves all credentials and config for Stiles EDS Fallback DB, prompting if necessary."""
     service_name = f"pipeline-eds-db-{plant_name}"
@@ -199,21 +244,6 @@ def get_eds_db_credentials(plant_name: str, overwrite: bool = False) -> Dict[str
 
     }
 
-def is_likely_ip(url: str) -> bool:
-    """Simple heuristic to check if a string looks like an IP address."""
-    parts = url.split('.')
-    if len(parts) != 4:
-        return False
-    for part in parts:
-        if not part.isdigit() or not (0 <= int(part) <= 255):
-            return False
-    return True
-
-def _get_eds_url_config_with_prompt(config_key: str, prompt_message: str, overwrite: bool = False) -> str:
-    url = _get_config_with_prompt(config_key, prompt_message, overwrite=overwrite)
-    if is_likely_ip(url):
-        url = f"http://{url}:43084/api/v1" # assume EDS patterna and port http and append api/v1 if user just put in an IP
-    return url
 
 def get_configurable_plant_name(overwrite=False) -> str:
     '''Comma separated list of plant names to be used as the default if none is provided in other commands.'''
@@ -288,6 +318,23 @@ def get_all_configured_urls(only_eds: bool) -> Set[str]:
                 elif not only_eds:
                     urls.add(value)
     return urls
+
+
+def _is_likely_ip(url: str) -> bool:
+    """Simple heuristic to check if a string looks like an IP address."""
+    parts = url.split('.')
+    if len(parts) != 4:
+        return False
+    for part in parts:
+        if not part.isdigit() or not (0 <= int(part) <= 255):
+            return False
+    return True
+
+def _get_eds_url_config_with_prompt(config_key: str, prompt_message: str, overwrite: bool = False) -> str:
+    url = _get_config_with_prompt(config_key, prompt_message, overwrite=overwrite)
+    if _is_likely_ip(url):
+        url = f"http://{url}:43084/api/v1" # assume EDS patterna and port http and append api/v1 if user just put in an IP
+    return url
 
 class CredentialsNotFoundError(Exception):
     """Custom exception for missing credentials."""

@@ -172,9 +172,9 @@ class WebPromptService(object):
         
         {f'<div class="message">{status_message}</div>' if status_message else ''}
 
-        <p class="prompt-info">
+        <!--p class="prompt-info">
             Please provide the required value for: <code>{html.escape(prompt_key)}</code>
-        </p>
+        </p-->
 
         <form method="post" action="/submit_prompt">
             <input type="hidden" name="request_id" value="{html.escape(request_id)}">
@@ -215,32 +215,9 @@ class WebPromptService(object):
         
         return get_self_closing_html(
             message="Configuration input successfully received by the application.",
-            delay_seconds=1.5 # Example: 1.5 seconds delay
+            delay_seconds=1.0 # Example: 1.0 seconds delay
         )
 
-        # Defunct, Render a simple confirmation page
-        return f"""
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Submission Complete</title>
-    <style>
-        body {{ background-color: #1f2937; color: #f3f4f6; font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }}
-        .message-box {{ background-color: #10b981; color: #1f2937; padding: 40px; border-radius: 12px; text-align: center; box-shadow: 0 0 25px rgba(0, 0, 0, 0.4); }}
-        h2 {{ margin-top: 0; font-size: 1.5em; }}
-        p {{ font-size: 1.1em; }}
-    </style>
-</head>
-<body>
-    <div class="message-box">
-        <h2>Success!</h2>
-        <p>The value has been saved and returned to your application.</p>
-        <p>You may now close this browser tab.</p>
-    </div>
-</body>
-</html>
-"""
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
