@@ -24,7 +24,6 @@ def print_version(value: bool):
             typer.secho(f"{CLI_APP_NAME} {PIPELINE_VERSION}",fg=typer.colors.GREEN, bold=True)
         except PackageNotFoundError:
             typer.echo("Version info not found")
-        raise typer.Exit()
 try:
     PIPELINE_VERSION = version(PIP_PACKAGE_NAME)
     __version__ = version(PIP_PACKAGE_NAME)
@@ -62,10 +61,13 @@ def main(
     if environment.is_termux():
         setup_termux_shortcut()
 
+    # 2. Handle the --version exit
+    if version: # The version flag will be True if it was passed
+        raise typer.Exit()
+
     if ctx.invoked_subcommand is None:
         typer.echo(ctx.get_help())
         raise typer.Exit()
-    
     
     # 1. Access the list of all command-line arguments
     full_command_list = sys.argv
