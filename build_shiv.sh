@@ -21,6 +21,27 @@ mkdir -p dist
 
 # Define the output file path
 pyz_path="dist/pipeline.pyz"
+bat_path="dist/pipeline.bat"
+
+# Function to generate the Windows Batch launcher
+generate_windows_launcher() {
+    echo "@echo off" > "$bat_path"
+    echo "REM --- Windows Launcher for pipeline.pyz ---" >> "$bat_path"
+    echo "REM NOTE: This executable was built on a Unix environment (LF line endings)." >> "$bat_path"
+    echo "REM This script ensures the executable runs correctly on Windows and pauses the window afterward." >> "$bat_path"
+    echo "" >> "$bat_path"
+    echo "set PY_EXE=python.exe" >> "$bat_path"
+    echo "set PYZ_FILE=pipeline.pyz" >> "$bat_path"
+    echo "" >> "$bat_path"
+    echo "echo Running %PYZ_FILE%..." >> "$bat_path"
+    echo "REM Call the system's python.exe to execute the self-contained archive" >> "$bat_path"
+    echo "REM %* passes any command line arguments (like --help or run-command) to the python call." >> "$bat_path"
+    echo "\"%PY_EXE%\" \"%%~dp0%PYZ_FILE%\" %*" >> "$bat_path"
+    echo "" >> "$bat_path"
+    echo "REM Keep the console window open after execution, mainly for double-click launches." >> "$bat_path"
+    echo "pause" >> "$bat_path"
+    echo "Generated Windows launcher: $bat_path"
+}
 
 # 1. Try to find the most recently created .whl file in the dist directory
 latest_wheel=$(ls -t dist/*.whl 2>/dev/null | head -n 1)
@@ -64,9 +85,10 @@ else
     fi
 fi
 
-# Check the exit code from the shiv command
+# Check the exit code from the shiv command and generate the launcher on success
 if [ $exit_code -eq 0 ]; then
     echo "Successfully created $pyz_path"
+    generate_windows_launcher # NEW: Generate the batch file
 else
     echo "Error: shiv failed to create $pyz_path (Exit Code: $exit_code). Review the output above for the cause."
     exit $exit_code
