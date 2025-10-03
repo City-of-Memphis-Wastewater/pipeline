@@ -1,3 +1,31 @@
+#!/usr/bin/env bash
+
+# Shiv Build Script (Bash)
+# Builds the pipeline.pyz executable using shiv.
+# This script is designed to be run in a Unix-like environment (WSL, Linux, Termux)
+# to ensure the resulting .pyz file has correct LF line endings for Linux/Unix execution.
+
+# --- VENV and Cleanup Configuration ---
+VENV_DIR=".venv_shiv_build"
+
+# Function to clean up the temporary virtual environment
+cleanup() {
+    echo "Cleaning up temporary virtual environment..."
+    rm -rf "$VENV_DIR"
+}
+
+# Ensure cleanup runs on exit, even if the script fails (using trap)
+trap cleanup EXIT
+
+# New function to get project name from pyproject.toml
+get_project_name_from_toml() {
+    local TOML_FILE="pyproject.toml"
+    if [ ! -f "$TOML_FILE" ]; then
+        echo "pipeline" # Default fallback if file is missing
+        return 0
+    fi # FIX: Changed stray '}' to 'fi'
+
+    # Tries to extract name from [project] (PEP 621) or [tool.poetry] sections
     # Filters for 'name = ...', extracts the value, and removes quotes/spaces.
     NAME=$(grep -A 5 -E '\[(project|tool\.poetry)\]' "$TOML_FILE" | grep -E '^\s*name\s*=' | head -n 1 | cut -d '=' -f 2 | tr -d ' "[:space:]' | tr -d "'")
 
@@ -6,7 +34,7 @@
     else
         echo "$NAME"
     fi
-}
+} 
 
 # 1. Determine Project Names from TOML
 PROJECT_NAME_RAW=$(get_project_name_from_toml)
@@ -20,24 +48,38 @@ PROJECT_NAME="$PROJECT_NAME_RAW"
 OUTPUT_DIR="dist"
 OUTPUT_FILE="${OUTPUT_DIR}/${PROJECT_NAME}.pyz"
 # ENTRY_POINT uses the underscored module name for Python imports
-ENTRY_POINT="${PROJECT_MODULE_NAME}.cli:app"
+# CRITICAL FIX: Setting the entry point directly based on the user's pyproject.toml: pipeline.cli:app
+ENTRY_POINT="pipeline.cli:app"
 
 
 # Find the Python executable
 # CRITICAL FIX: Explicitly search for known native Linux Python 3 paths first 
 # to avoid conflicts with Windows shims (like pyenv-win) when running in WSL.
-PYTHON_BIN=""
+SYSTEM_PYTHON_BIN=""
 if command -v /usr/bin/python3 >/dev/null 2>&1; then
-    PYTHON_BIN="/usr/bin/python3"
+    SYSTEM_PYTHON_BIN="/usr/bin/python3"
 elif command -v /usr/local/bin/python3 >/dev/null 2>&1; then
-    PYTHON_BIN="/usr/local/bin/python3"
+    SYSTEM_PYTHON_BIN="/usr/local/bin/python3"
 else
     # Fallback: Use the PATH search as a last resort, which might pick up shims.
-    PYTHON_BIN=$(command -v python3 || command -v python)
+    SYSTEM_PYTHON_BIN=$(command -v python3 || command -v python)
 fi
 
-if [ -z "$PYTHON_BIN" ]; then
+if [ -z "$SYSTEM_PYTHON_BIN" ]; then
     echo "Error: Native Linux Python 3 not found. Please ensure 'python3' is installed and accessible."
+    exit 1
+fi
+
+# --- VENV SETUP ---
+echo "Setting up isolated build environment..."
+if "$SYSTEM_PYTHON_BIN" -m venv "$VENV_DIR"; then
+    echo "Successfully created virtual environment at ${VENV_DIR}"
+    # Set PYTHON_BIN to the VENV python for all subsequent operations
+    PYTHON_BIN="${VENV_DIR}/bin/python"
+    # Update PATH to include the VENV bin directory so we can call 'pip' and 'shiv' directly
+    export PATH="${VENV_DIR}/bin:$PATH"
+else
+    echo "Fatal Error: Failed to create virtual environment. Ensure 'python3-venv' is installed on your host system."
     exit 1
 fi
 
@@ -58,13 +100,13 @@ set PYZ_FILE=${PROJECT_NAME}.pyz
 
 echo Running %PYZ_FILE%...
 
-rem 1. Change to the directory of the batch file (%~dp0) to ensure the PYZ file is found.
+rem 1. Change to the directory of the batch file (%%~dp0) to ensure the PYZ file is found.
 rem PUSHD also handles UNC network paths by temporarily mapping them to a drive letter.
-PUSHD "%~dp0"
+PUSHD "%%~dp0"
 
-rem 2. Execute the PYZ file using python.exe, passing all command-line arguments (%*).
+rem 2. Execute the PYZ file using python.exe, passing all command-line arguments (%%*).
 rem We use a simple relative path because PUSHD guarantees the CWD is 'dist/'.
-"%PYTHON_EXE%" "%PYZ_FILE%" %*
+"%%PYTHON_EXE%%" "%%PYZ_FILE%%" %%*
 
 rem 3. Return to the original directory.
 POPD
@@ -81,14 +123,14 @@ EOF
 # --- Main Build Process ---
 
 # 1. Ensure shiv is installed via pipx (isolated installation)
-echo "Ensuring shiv is installed via pipx..."
-# Install pipx globally
-if ! "$PYTHON_BIN" -m pip install --upgrade pipx; then
-    echo "Warning: Could not upgrade pipx via standard pip call. Continuing..."
+echo "Ensuring shiv is installed via pipx (using VENV's pip)..."
+# Pip is guaranteed to exist and work now
+if ! pip install --upgrade pipx; then
+    echo "Warning: Could not upgrade pipx via pip. Continuing..."
 fi
 
-# Install shiv via pipx
-"$PYTHON_BIN" -m pipx install shiv --force || { echo "Error: Failed to install shiv via pipx."; exit 1; }
+# Install shiv via pipx (pipx uses its own global venv, but the host pip must work)
+pipx install shiv --force || { echo "Error: Failed to install shiv via pipx."; exit 1; }
 
 # CRITICAL FIX: Add the pipx bin directory to PATH for the current script execution.
 # This fixes the "shiv: command not found" error when /home/user/.local/bin isn't in PATH.
@@ -104,12 +146,14 @@ BUILD_SUCCESS=0
 
 # --- 3. Attempt Path A (Local wheel build - Fastest and most stable) ---
 TEMP_DIR="temp_build_target"
-echo "Attempting to build from source using 'pip install . backports.zoneinfo'..."
+# FIX: Removed backports.zoneinfo as it causes C compilation issues on systems missing Python headers.
+echo "Attempting to build from source using 'pip install . ' (no backports.zoneinfo)..."
 
-if "$PYTHON_BIN" -m pip install . backports.zoneinfo --target="$TEMP_DIR" --no-deps --no-cache-dir; then
+if "$PYTHON_BIN" -m pip install . --target="$TEMP_DIR" --no-deps --no-cache-dir; then
     echo "Local package built successfully to $TEMP_DIR."
     
     echo "Attempting shiv build using site-packages ($TEMP_DIR)..."
+    # shiv is now callable due to the PATH export
     if shiv -o "$OUTPUT_FILE" -c "$ENTRY_POINT" --no-deps --site-packages "$TEMP_DIR" . ; then
         echo "Success: Executable built using Path A (local installation and site-packages)."
         generate_windows_launcher
@@ -130,13 +174,16 @@ if [ "$BUILD_SUCCESS" -eq 0 ]; then
     echo "Attempting to build directly from dependencies (Path B)..."
     echo "NOTE: This requires a pyproject.toml or setup.py file in the current directory ('.')."
     
-    # We use shiv . to install the package defined in the current directory (requires pyproject.toml)
-    if shiv . -o "$OUTPUT_FILE" -c "$ENTRY_POINT" -e ; then
+    if shiv . -o "$OUTPUT_FILE" -c "$ENTRY_POINT"; then
         echo "Success: Executable built directly from dependencies."
         generate_windows_launcher
         BUILD_SUCCESS=1
     else
         echo "Fatal Error: shiv failed using both build paths. Check your pyproject.toml dependencies."
+        # Provide more context for the entry point error
+        echo "The project module name determined was: ${PROJECT_MODULE_NAME}"
+        echo "The entry point used was: ${ENTRY_POINT}"
+        echo "Please verify this entry point is correct for your project structure in pyproject.toml or setup.py."
         exit 1
     fi
 fi
@@ -148,4 +195,3 @@ else
     echo "Fatal Error: Build process failed to create the executable."
     exit 1
 fi
-K

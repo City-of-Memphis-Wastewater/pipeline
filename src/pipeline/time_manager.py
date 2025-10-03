@@ -2,6 +2,7 @@ from __future__ import annotations # Delays annotation evaluation, allowing mode
 from datetime import datetime, timezone
 from typing import Union
 import click
+import backports.zoneinfo
 try:
     from zoneinfo import ZoneInfo
 except ImportError:
