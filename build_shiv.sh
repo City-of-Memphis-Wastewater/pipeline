@@ -41,12 +41,14 @@ else
     # 2. If no wheel is found, check for requirements.txt and fallback
     if [ -f "requirements.txt" ]; then
         # --- Path B: Fallback to Requirements.txt ---
-        echo "No wheel file (.whl) found. Falling back to requirements.txt installation."
+        echo "No wheel file (.whl) found. Falling back to source installation using requirements.txt."
         echo "Attempting to build .pyz from requirements.txt..."
-        echo "Note: Including 'src/' directory to ensure the 'pipeline' module is found in the 'src/' layout."
+        echo "Note: Using the current directory (./) as the source package."
+        echo "      This requires a pyproject.toml or setup.py in the root to be installable. (pyproject.toml is sufficient)"
 
-        # Build the .pyz using the source directory (src/) for the local package and requirements.txt for dependencies
-        shiv src/ \
+        # Build the .pyz using the current directory (.) as the local package source
+        # and requirements.txt for dependencies.
+        shiv . \
              -r requirements.txt \
              -e pipeline.cli:app \
              -o "$pyz_path" \
@@ -57,7 +59,7 @@ else
         # --- Path C: Failure ---
         echo "Error: No wheel file (.whl) found in the 'dist' directory."
         echo "Error: requirements.txt not found. Cannot build executable."
-        echo "Please build a wheel file (e.g., using 'poetry build' or 'pip wheel') or create a requirements.txt file."
+        echo "Please build a wheel file (e.g., using 'pip wheel') or ensure an installable source is available."
         exit 1
     fi
 fi
