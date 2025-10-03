@@ -18,7 +18,7 @@ For a simple command-line interface (CLI) experience, **`pipx`** is the recommen
     If you don't have `pipx` installed, you can get it with `pip`:
     ```bash
     pip install pipx
-    pipx ensurepath
+    python -m pipx ensurepath
     ```
 2.  **Install `pipeline-eds` with `pipx`**
     Install the package directly from PyPI. If you need Windows-specific dependencies like `pyodbc` and `matplotlib`, use the `[windows]` extra.
@@ -89,6 +89,7 @@ This command will update pipeline-eds and its dependencies in its isolated pipx 
 - Termux Users: Regularly update your Termux environment and packages to ensure compatibility and security:
 ```bash
 pkg update && pkg upgrade
+pkg install rust
 ```
 
 ### Understanding eds configure and Credential Management:

@@ -35,14 +35,18 @@ logs/
 **/live_data.csv
 **/sent_data.csv
 
+# PyInstaller / Build Artifacts
+dist/
+build/
+*.spec
+version.rc         # <--- ADD THIS LINE
+
 # Other
 !workspaces/
 !src/
 src/defunct/
 src/example/
 *.sqlite3
-dist/
-build/
 *.egg-info/
 Postman*
 .dockerignore

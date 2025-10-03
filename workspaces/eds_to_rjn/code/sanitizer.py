@@ -7,6 +7,7 @@ Purpose:
 I like it when data gathered is data returned. Sanitization should not happen during import. If not entirely probitive, the entirety of the raw should be available for unforeseen use cases.
 So. We need explicit and discernible sanitization scenarios, called a scripted approach, following the preparation, collection, and aggregation, insert buzz words here, etc.
 '''
+from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
 from datetime import datetime
 from pipeline.helpers import round_datetime_to_nearest_past_five_minutes
 

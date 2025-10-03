@@ -1,5 +1,5 @@
+from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
 import requests
-import certifi
 import platform
 import subprocess
 import sys
@@ -7,6 +7,7 @@ import time
 import logging
 from urllib.parse import urlparse
 from urllib3.exceptions import NewConnectionError
+
 
 logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
 

@@ -22,7 +22,7 @@ First, ensure you have Python 3.8 or a later version installed on your system.
     pip install pipx
     ```
 2.  **Ensure `pipx` is in your PATH**
-    After installing, run `pipx ensurepath` or `python -m pipx ensurepath` to make sure the commands are accessible from your terminal. You may need to restart your terminal session for the changes to take effect.
+    After installing, run `python -m pipx ensurepath` to make sure the commands are accessible from your terminal. You may need to restart your terminal session for the changes to take effect.
     ```bash
 	python -m pipx ensurepath
     ```

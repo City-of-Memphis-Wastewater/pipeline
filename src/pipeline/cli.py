@@ -1,19 +1,30 @@
+from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
 import sqlite3
 from rich.table import Table
 from rich.console import Console
+from click import BadParameter 
 import typer
 from pathlib import Path
 from importlib.metadata import version, PackageNotFoundError
 from requests.exceptions import Timeout
+import sys 
 
 from pipeline.time_manager import TimeManager
 from pipeline.create_sensors_db import get_db_connection, create_packaged_db, reset_user_db # get_user_db_path, ensure_user_db, 
 from pipeline.api.eds import demo_eds_webplot_point_live
 from pipeline import environment
-from pipeline.security import get_eds_api_credentials, get_external_api_credentials, get_eds_db_credentials, get_all_configured_urls, get_configurable_plant_name, init_security, CONFIG_PATH
-
+from pipeline.security_and_config import get_eds_api_credentials, get_external_api_credentials, get_eds_db_credentials, get_all_configured_urls, get_configurable_plant_name, init_security, CONFIG_PATH
+from pipeline.termux_setup import setup_termux_shortcut
 #from pipeline.helpers import setup_logging
-### Versioning
+
+# --- TERMUX SETUP HOOK ---
+# This runs on every command (including --version and --help or without sub commands), 
+# but the function's internal logic
+# ensures the shortcut file is only created once in the Termux environment.
+if environment.is_termux():
+    setup_termux_shortcut()
+
+# -- Versioning --
 CLI_APP_NAME = "pipeline"
 PIP_PACKAGE_NAME = "pipeline-eds"
 def print_version(value: bool):
@@ -54,9 +65,19 @@ def main(
     """
     Pipeline CLI – run workspaces built on the pipeline framework.
     """
+
     if ctx.invoked_subcommand is None:
         typer.echo(ctx.get_help())
         raise typer.Exit()
+    
+    # 1. Access the list of all command-line arguments
+    full_command_list = sys.argv
+    
+    # 2. Join the list into a single string to recreate the command
+    command_string = " ".join(full_command_list)
+    
+    # 3. Print the command
+    typer.echo(f"command:\n{command_string}\n")
 
 
 @app.command()
@@ -75,7 +96,7 @@ def list_sensors(
     else:  
         conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("SELECT idcs, iess, zd, units, description FROM sensors")
+    cur.execute("SELECT idcs, iess, zd, ovation_drop, units, description FROM sensors")
     rows = cur.fetchall()
     conn.close()
 
@@ -83,12 +104,13 @@ def list_sensors(
     table.add_column("IDCS", style="cyan")
     #table.add_column("IESS", style="magenta") # no reason to show this
     table.add_column("ZD", style="green")
+    table.add_column("DROP", style="white")
     table.add_column("UNITS", style="white")
     table.add_column("DESCRIPTION", style="white")
     
 
-    for idcs, iess, zd, units, description in rows:
-        table.add_row(idcs, zd,units, description)
+    for idcs, iess, zd, ovation_drop, units, description in rows:
+        table.add_row(idcs, zd, ovation_drop, units, description)
         
 
     console.print(table)
@@ -113,14 +135,15 @@ def defaultplant(
 
 @app.command()
 def trend(
-    idcs: list[str] = typer.Argument(..., help="Provide known idcs values that match the given zd."), # , "--idcs", "-i"
+    idcs: list[str] = typer.Argument(None, help="Provide known idcs values that match the given zd."), # , "--idcs", "-i"
     starttime: str = typer.Option(None, "--start", "-s", help="Identify start time. Use any reasonable format, to be parsed automatically. If you must use spaces, use quotes."),
     endtime: str = typer.Option(None, "--end", "-end", help="Identify end time. Use any reasonable format, to be parsed automatically. If you must use spaces, use quotes."),
     plant_name: str = typer.Option(None, "--plantname", "-pn", help = "Define the EDS ZD for your credentials. This must correlate with your idcs point selection(s)."),
     #workspacename: str = typer.Option(None,"--workspace","-w", help = "Provide the name of the workspace you want to use, for the secrets.yaml credentials and for the timezone config. If a start time is not provided, the workspace queries can checked for the most recent successful timestamp. "),
     print_csv: bool = typer.Option(False,"--print-csv","-p",help = "Print the CSV style for pasting into Excel."),
     step_seconds: int = typer.Option(None, "--step-seconds", help="You can explicitly provide the delta between datapoints. If not, ~400 data points will be used, based on the nice_step() function."), 
-    webplot: bool = typer.Option(False,"--webplot","-w",help = "Use a browser-based plot instead of local (matplotlib). Useful for remote servers without display.")
+    webplot: bool = typer.Option(False,"--webplot","-w",help = "Use a browser-based plot instead of local (matplotlib). Useful for remote servers without display."),
+    default_idcs: bool = typer.Option(False, "--default-idcs", "-d", help="Use the default IDCS values for the configured plant name, instead of providing them as arguments.")
     ):
     """
     Show a curve for a sensor over time.
@@ -130,30 +153,39 @@ def trend(
     from pipeline.api.eds import EdsClient, load_historic_data, EdsLoginException
     from pipeline import helpers
     from pipeline.plotbuffer import PlotBuffer
-    
+
     #zd = api_credentials.get("zd")
     if plant_name is None:
         plant_name = get_configurable_plant_name()
-    """
-    if zd.lower() == "stiles":
-        zd = "WWTF"
 
-    if zd == "Maxson":
-        plant_name = "Maxson"
-        idcs_to_iess_suffix = ".UNIT0@NET0"
-    elif zd == "WWTF":
-        plant_name = "Stiles"
-        idcs_to_iess_suffix = ".UNIT1@NET1"
-    else:
-        # assumption for generic system
-        is_zd_same_as_plant_name = typer.Input(f"Is the plant name the same as the ZD ? (y/n): ")
-        if is_zd_same_as_plant_name.lower() in ['y','yes']:
-            plant_name = zd
+    # --- Conditional IDCS Input ---
+    if idcs is None:
+        if default_idcs:
+            from pipeline.security_and_config import get_configurable_idcs_list
+            # plant_name is resolved below, but we need a valid name for the helper
+            # Temporarily resolve plant_name for the prompt if needed
+            current_plant_name = plant_name if plant_name is not None else get_configurable_plant_name()
+            idcs = get_configurable_idcs_list(current_plant_name)
+            
+            if not idcs:
+                # Use a standard Typer error for missing config value
+                raise BadParameter(
+                    "The '--default-idcs' flag was used, but no IDCS points were configured or provided interactively.",
+                    param_hint="--default-idcs"
+                )
         else:
-            plant_name = typer.Input(f"Plant name: ")
-        #plant_name = zd
-        idcs_to_iess_suffix = ".UNIT0@NET0"
-    """
+            # Raise a BadParameter exception to trigger the Typer/Rich error box
+            error_message = (
+                "\nIDCS values are required. You must either:\n"
+                "1. Provide IDCS values as arguments: `eds trend IDCS1 IDCS2 ...`\n"
+                "2. Use the default IDCS list: `eds trend --default-idcs`"
+            )
+            # This will now be wrapped in the structured error box.
+            raise BadParameter(error_message, param_hint="IDCS...")
+    # Convert all idcs values to uppercase, whether input now or stored in config. This assumes all IDCS value are uppcase all the time at every plant.
+    idcs = [s.upper() for s in idcs]
+    # --- END Conditional IDCS Input ---
+    
 
     # Retrieve all necessary API credentials and config values.
     # This will prompt the user if any are missing.
@@ -224,8 +256,9 @@ def trend(
     else:
         dt_finish = pendulum.parse(helpers.sanitize_date_input(endtime), strict=False)
     if starttime is None:
-        dt_start = dt_finish.subtract(days=60) # default to 60 days ago
-        print(f"No starttime provided, so defaulting to 60 days before endtime: {dt_start.to_datetime_string()}")
+        days_past = 2
+        dt_start = dt_finish.subtract(days=days_past) # default to 2 days ago
+        print(f"No starttime provided, so defaulting to {days_past} days before endtime: {dt_start.to_datetime_string()}")
     else:
         dt_start = pendulum.parse(helpers.sanitize_date_input(starttime), strict=False)
 
@@ -288,7 +321,7 @@ def configure_credentials(
     """
     if textedit:
         typer.echo(F"Config filepath: {CONFIG_PATH}")
-        environment.open_file_in_default_app(CONFIG_PATH)
+        environment.open_text_file_in_default_app(CONFIG_PATH)
         return
             
     typer.echo("")

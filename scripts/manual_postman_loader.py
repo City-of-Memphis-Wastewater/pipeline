@@ -1,9 +1,10 @@
+from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
 import csv
 import json
 
 # Read your CSV file
 # hardcoded filth
-filepath = r"C:\Users\george.bennett\dev\pipeline\workspaces\eds_to_rjn\exports\manual_effluent.csv"
+filepath = r"C:\Users\george.bennett\dev\pipeline\workspaces\eds_to_rjn\exports\manual_data_load_to_postman_effluent_sept19.csv"
 
 data_dict = {}
 with open(filepath, newline='') as csvfile:
