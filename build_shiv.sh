@@ -1,69 +1,71 @@
 #!/bin/bash
 
-# --- Logic to find the most recently created .whl file ---
+# Check if shiv is installed and install it if not found (using pipx for isolated installation)
+if ! command -v shiv &> /dev/null
+then
+    echo "shiv not found. Attempting to install via pipx..."
+    # Attempt to install pipx if not present
+    if ! command -v pipx &> /dev/null; then
+        echo "pipx not found. Installing pipx..."
+        # We rely on 'python3 -m pip' being available and compatible
+        python3 -m pip install pipx || { echo "Failed to install pipx. Exiting."; exit 1; }
+    fi
+    pipx install shiv || { echo "Failed to install shiv. Exiting."; exit 1; }
+    # Ensure shiv is accessible in the current shell session
+    pipx ensurepath
+    echo "shiv installed successfully. You may need to restart your shell for pipx path changes to take effect."
+fi
 
-# Find the newest .whl file in the dist directory using 'ls -t' (sort by time, newest first)
-# and 'head -n 1' to take only the first line.
-# '2>/dev/null' suppresses any error message if no files are found.
+# Ensure the output directory exists
+mkdir -p dist
+
+# Define the output file path
+pyz_path="dist/pipeline.pyz"
+
+# 1. Try to find the most recently created .whl file in the dist directory
 latest_wheel=$(ls -t dist/*.whl 2>/dev/null | head -n 1)
-exit_code=0
 
-# Check if a wheel file was found
-if [ -z "$latest_wheel" ]; then
-    echo "Warning: No pre-built wheel file (.whl) found in the 'dist' directory."
+if [ -n "$latest_wheel" ]; then
+    # --- Path A: Build from existing Wheel (.whl) ---
+    echo "Building .pyz from wheel: $latest_wheel"
+    echo "Attempting to build .pyz..."
 
-    # --- Fallback: Attempt to build directly from requirements.txt ---
+    # Build the .pyz using the wheel path as a positional argument
+    shiv "$latest_wheel" \
+         -e pipeline.cli:app \
+         -o "$pyz_path" \
+         -p "/usr/bin/env python3"
+
+    exit_code=$?
+else
+    # 2. If no wheel is found, check for requirements.txt and fallback
     if [ -f "requirements.txt" ]; then
-        echo "Attempting fallback: Building .pyz directly from requirements.txt..."
+        # --- Path B: Fallback to Requirements.txt ---
+        echo "No wheel file (.whl) found. Falling back to requirements.txt installation."
+        echo "Attempting to build .pyz from requirements.txt..."
+        echo "Note: Including 'src/' directory to ensure the 'pipeline' module is found in the 'src/' layout."
 
-        # Execute shiv command using the requirements file
-        shiv -r requirements.txt \
+        # Build the .pyz using the source directory (src/) for the local package and requirements.txt for dependencies
+        shiv src/ \
+             -r requirements.txt \
              -e pipeline.cli:app \
-             -o dist/pipeline.pyz \
+             -o "$pyz_path" \
              -p "/usr/bin/env python3"
 
-        # Capture the exit code of the fallback shiv command
         exit_code=$?
-
-        # Check exit code and report success or failure
-        if [ $exit_code -eq 0 ]; then
-            echo "Successfully created dist/pipeline.pyz using requirements.txt"
-            exit 0 # Exit successfully after the fallback build
-        else
-            echo "Error: Fallback shiv build failed! (Exit Code: $exit_code). Please ensure your 'requirements.txt' is valid and all dependencies are available."
-            exit 1 # Exit with failure
-        fi
     else
-        # If no wheel AND no requirements.txt, then fail.
-        echo "Error: Cannot find pre-built wheel file, and no 'requirements.txt' found for fallback build."
-        echo "Please ensure you have run a build command (e.g., 'python -m build') or have a 'requirements.txt' file present."
+        # --- Path C: Failure ---
+        echo "Error: No wheel file (.whl) found in the 'dist' directory."
+        echo "Error: requirements.txt not found. Cannot build executable."
+        echo "Please build a wheel file (e.g., using 'poetry build' or 'pip wheel') or create a requirements.txt file."
         exit 1
     fi
 fi
 
-# --- Primary Path (Only executes if $latest_wheel was found) ---
-
-wheel_path="$latest_wheel"
-echo "Building .pyz from wheel: $wheel_path"
-
-# Setting bootstrap cache is omitted as it caused an error in the original script.
-
-# --- Execute shiv command with the wheel file ---
-
-echo "Attempting to build .pyz..."
-
-shiv "$wheel_path" \
-     -e pipeline.cli:app \
-     -o dist/pipeline.pyz \
-     -p "/usr/bin/env python3"
-
-# Capture the exit code of the last command (shiv)
-exit_code=$?
-
-# --- Check exit code and report success or failure ---
+# Check the exit code from the shiv command
 if [ $exit_code -eq 0 ]; then
-    echo "Successfully created dist/pipeline.pyz"
+    echo "Successfully created $pyz_path"
 else
-    echo "Error: shiv failed to create pipeline.pyz (Exit Code: $exit_code). Review the output above for the cause."
-    exit 1
+    echo "Error: shiv failed to create $pyz_path (Exit Code: $exit_code). Review the output above for the cause."
+    exit $exit_code
 fi
