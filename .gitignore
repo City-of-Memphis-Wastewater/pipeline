@@ -39,7 +39,8 @@ logs/
 dist/
 build/
 *.spec
-version.rc         # <--- ADD THIS LINE
+version.rc
+*.pyz
 
 # Other
 !workspaces/
