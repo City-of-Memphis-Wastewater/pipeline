@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pipeline-eds"
-version = "0.2.110"
+version = "0.2.111"
 description = "The API pipeline library, with CLI tools. Key target: The Emerson Ovation EDS REST API."
 authors = ["George Clayton Bennett <george.bennett@memphistn.gov>"]
 license = "BSD-3"
@@ -32,6 +32,10 @@ pythonpath = ["src", "."]
 
 [tool.poetry.dependencies]
 python = ">=3.8.0,<3.15"
+# backports.tarfile is required due to a transitive dependency (likely jaraco.context's
+# use of tarball functionality) which unconditionally imports the backport, even
+# though standard Python 3.x includes the necessary functionality.
+"backports.tarfile" = "^1.2" # <--- Unconditional entry (no python marker)
 cherrypy = "^18.10.0"
 colorama = [
     { version = "^0.4.6", python = ">=3.8,<3.15" }
@@ -88,6 +92,13 @@ version = "^0.2.1"
 python = "<3.9"
 optional = false
 
+#[tool.poetry.dependencies."backports.tarfile"]
+## backports.tarfile is required due to a transitive dependency (likely jaraco.context's
+## use of tarball functionality) which unconditionally imports the backport, even
+## though standard Python 3.x includes the necessary functionality.
+#version = "^1.2" # or appropriate version
+#python = "<3.9" # Or whatever version makes the standard library tarfile available
+#optional = false
 
 [tool.poetry.extras] # pipx install pipeline-eds[windows]
 windows = ["pyodbc","matplotlib"]
