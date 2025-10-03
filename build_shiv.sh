@@ -1,95 +1,137 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# Check if shiv is installed and install it if not found (using pipx for isolated installation)
-if ! command -v shiv &> /dev/null
-then
-    echo "shiv not found. Attempting to install via pipx..."
-    # Attempt to install pipx if not present
-    if ! command -v pipx &> /dev/null; then
-        echo "pipx not found. Installing pipx..."
-        # We rely on 'python3 -m pip' being available and compatible
-        python3 -m pip install pipx || { echo "Failed to install pipx. Exiting."; exit 1; }
+# Shiv Build Script (Bash)
+# Builds the pipeline.pyz executable using shiv.
+# This script is designed to be run in a Unix-like environment (WSL, Linux, Termux)
+# to ensure the resulting .pyz file has correct LF line endings for Linux/Unix execution.
+
+# New function to get project name from pyproject.toml
+get_project_name_from_toml() {
+    local TOML_FILE="pyproject.toml"
+    if [ ! -f "$TOML_FILE" ]; then
+        echo "pipeline" # Default fallback if file is missing
+        return 0
     fi
-    pipx install shiv || { echo "Failed to install shiv. Exiting."; exit 1; }
-    # Ensure shiv is accessible in the current shell session
-    pipx ensurepath
-    echo "shiv installed successfully. You may need to restart your shell for pipx path changes to take effect."
-fi
 
-# Ensure the output directory exists
-mkdir -p dist
+    # Tries to extract name from [project] (PEP 621) or [tool.poetry] sections
+    # Filters for 'name = ...', extracts the value, and removes quotes/spaces.
+    NAME=$(grep -A 5 -E '\[(project|tool\.poetry)\]' "$TOML_FILE" | grep -E '^\s*name\s*=' | head -n 1 | cut -d '=' -f 2 | tr -d ' "[:space:]' | tr -d "'")
 
-# Define the output file path
-pyz_path="dist/pipeline.pyz"
-bat_path="dist/pipeline.bat"
-
-# Function to generate the Windows Batch launcher
-generate_windows_launcher() {
-    echo "@echo off" > "$bat_path"
-    echo "REM --- Windows Launcher for pipeline.pyz ---" >> "$bat_path"
-    echo "REM NOTE: This executable was built on a Unix environment (LF line endings)." >> "$bat_path"
-    echo "REM This script ensures the executable runs correctly on Windows and pauses the window afterward." >> "$bat_path"
-    echo "" >> "$bat_path"
-    echo "set PY_EXE=python.exe" >> "$bat_path"
-    echo "set PYZ_FILE=pipeline.pyz" >> "$bat_path"
-    echo "" >> "$bat_path"
-    echo "echo Running %PYZ_FILE%..." >> "$bat_path"
-    echo "REM Call the system's python.exe to execute the self-contained archive" >> "$bat_path"
-    echo "REM %* passes any command line arguments (like --help or run-command) to the python call." >> "$bat_path"
-    echo "\"%PY_EXE%\" \"%%~dp0%PYZ_FILE%\" %*" >> "$bat_path"
-    echo "" >> "$bat_path"
-    echo "REM Keep the console window open after execution, mainly for double-click launches." >> "$bat_path"
-    echo "pause" >> "$bat_path"
-    echo "Generated Windows launcher: $bat_path"
+    if [ -z "$NAME" ]; then
+        echo "pipeline" # Default fallback if name not found
+    else
+        echo "$NAME"
+    fi
 }
 
-# 1. Try to find the most recently created .whl file in the dist directory
-latest_wheel=$(ls -t dist/*.whl 2>/dev/null | head -n 1)
+# 1. Determine Project Names from TOML
+PROJECT_NAME_RAW=$(get_project_name_from_toml)
+# Use project name with underscores for the module import (entry point), required by Python imports
+PROJECT_MODULE_NAME=$(echo "$PROJECT_NAME_RAW" | tr '-' '_')
 
-if [ -n "$latest_wheel" ]; then
-    # --- Path A: Build from existing Wheel (.whl) ---
-    echo "Building .pyz from wheel: $latest_wheel"
-    echo "Attempting to build .pyz..."
 
-    # Build the .pyz using the wheel path as a positional argument
-    shiv "$latest_wheel" \
-         -e pipeline.cli:app \
-         -o "$pyz_path" \
-         -p "/usr/bin/env python3"
+# --- Configuration ---
+# PROJECT_NAME is used for file paths (retains hyphens if present)
+PROJECT_NAME="$PROJECT_NAME_RAW"
+OUTPUT_DIR="dist"
+OUTPUT_FILE="${OUTPUT_DIR}/${PROJECT_NAME}.pyz"
+# ENTRY_POINT uses the underscored module name for Python imports
+ENTRY_POINT="${PROJECT_MODULE_NAME}.cli:app"
 
-    exit_code=$?
-else
-    # 2. If no wheel is found, check for requirements.txt and fallback
-    if [ -f "requirements.txt" ]; then
-        # --- Path B: Fallback to Requirements.txt ---
-        echo "No wheel file (.whl) found. Falling back to source installation using requirements.txt."
-        echo "Attempting to build .pyz from requirements.txt..."
-        echo "Note: Using the current directory (./) as the source package."
-        echo "      This requires a pyproject.toml or setup.py in the root to be installable. (pyproject.toml is sufficient)"
 
-        # Build the .pyz using the current directory (.) as the local package source
-        # and requirements.txt for dependencies.
-        shiv . \
-             -r requirements.txt \
-             -e pipeline.cli:app \
-             -o "$pyz_path" \
-             -p "/usr/bin/env python3"
+# Find the Python executable
+PYTHON_BIN=$(command -v python3 || command -v python)
+if [ -z "$PYTHON_BIN" ]; then
+    echo "Error: Python 3 not found. Please ensure 'python3' or 'python' is in your PATH."
+    exit 1
+fi
 
-        exit_code=$?
+# Function to generate a reliable Windows Batch file launcher
+generate_windows_launcher() {
+    # The launcher file path
+    LAUNCHER_FILE="${OUTPUT_DIR}/${PROJECT_NAME}.bat"
+
+    # Create the Batch script content
+    cat > "$LAUNCHER_FILE" << EOF
+@echo off
+rem Generated by build_shiv.sh on a Unix system (using LF line endings).
+rem This script ensures the console stays open after execution and handles pathing reliably.
+
+setlocal
+set PYTHON_EXE=python.exe
+set PYZ_FILE=${PROJECT_NAME}.pyz
+
+echo Running %PYZ_FILE%...
+
+rem 1. Change to the directory of the batch file (%~dp0) to ensure the PYZ file is found.
+rem PUSHD also handles UNC network paths by temporarily mapping them to a drive letter.
+PUSHD "%~dp0"
+
+rem 2. Execute the PYZ file using python.exe, passing all command-line arguments (%*).
+rem We use a simple relative path because PUSHD guarantees the CWD is 'dist/'.
+"%PYTHON_EXE%" "%PYZ_FILE%" %*
+
+rem 3. Return to the original directory.
+POPD
+
+rem 4. Wait for user input to prevent the console window from immediately closing.
+PAUSE
+
+endlocal
+EOF
+
+    echo "Generated Windows launcher: ${LAUNCHER_FILE}"
+}
+
+# --- Main Build Process ---
+
+# 1. Ensure shiv is installed via pipx (isolated installation)
+echo "Ensuring shiv is installed via pipx..."
+"$PYTHON_BIN" -m pip install --upgrade pipx
+"$PYTHON_BIN" -m pipx install shiv --force || { echo "Error: Failed to install shiv via pipx."; exit 1; }
+
+# 2. Setup output directory
+mkdir -p "$OUTPUT_DIR"
+echo "Output directory created: ${OUTPUT_DIR}"
+
+# 3. Attempt to build the shiv file from a local wheel (Path A: Fastest and most stable)
+# We explicitly add 'backports.zoneinfo' here to ensure the dependency is included,
+# even if the project's dependency definition is conditional or incomplete for the build target.
+echo "Attempting to build from source using 'pip install . backports.zoneinfo' and then shiv..."
+if "$PYTHON_BIN" -m pip install . backports.zoneinfo --target="temp_build_target" --no-deps --no-cache-dir; then
+    echo "Local package built successfully to temp_build_target."
+    
+    # Run shiv command using the locally installed package
+    if shiv -o "$OUTPUT_FILE" -c "$ENTRY_POINT" --no-deps --site-packages "temp_build_target" . ; then
+        echo "Success: Executable built using local installation and site-packages."
+        generate_windows_launcher
     else
-        # --- Path C: Failure ---
-        echo "Error: No wheel file (.whl) found in the 'dist' directory."
-        echo "Error: requirements.txt not found. Cannot build executable."
-        echo "Please build a wheel file (e.g., using 'pip wheel') or ensure an installable source is available."
+        echo "Error: shiv failed using Path A (site-packages). Falling back to Path B."
+        # Cleanup temporary directory
+        rm -rf temp_build_target
+        # Fall through to Path B
+    fi
+    # Cleanup temporary directory
+    rm -rf temp_build_target
+else
+    echo "Error: Local package installation failed (Path A). Falling back to Path B."
+fi
+
+
+# 4. Fallback: Build directly from source dependencies (Path B: Simpler, relies on pyproject.toml)
+# This path is executed only if Path A failed or was skipped.
+if [ ! -f "$OUTPUT_FILE" ] || [ ! -s "$OUTPUT_FILE" ]; then
+    echo "Attempting to build directly from dependencies (Path B)..."
+    echo "NOTE: This requires a pyproject.toml or setup.py file in the current directory ('.') to correctly install the 'pipeline' package."
+    
+    # We use shiv . to install the package defined in the current directory (requires pyproject.toml)
+    if shiv . -o "$OUTPUT_FILE" -c "$ENTRY_POINT" -e ; then
+        echo "Success: Executable built directly from dependencies."
+        generate_windows_launcher
+    else
+        echo "Fatal Error: shiv failed using both build paths. Check your pyproject.toml dependencies."
         exit 1
     fi
 fi
 
-# Check the exit code from the shiv command and generate the launcher on success
-if [ $exit_code -eq 0 ]; then
-    echo "Successfully created $pyz_path"
-    generate_windows_launcher # NEW: Generate the batch file
-else
-    echo "Error: shiv failed to create $pyz_path (Exit Code: $exit_code). Review the output above for the cause."
-    exit $exit_code
-fi
+echo "Build complete. Executable available at: ${OUTPUT_FILE}"
