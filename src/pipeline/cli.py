@@ -4,6 +4,10 @@ from rich.table import Table
 from rich.console import Console
 from click import BadParameter 
 import typer
+try:
+    import colorama # explicitly added so for the shiv build
+except ImportError:
+    colorama = None  # or handle gracefully
 from pathlib import Path
 from importlib.metadata import version, PackageNotFoundError
 from requests.exceptions import Timeout

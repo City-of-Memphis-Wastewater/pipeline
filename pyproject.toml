@@ -33,6 +33,9 @@ pythonpath = ["src", "."]
 [tool.poetry.dependencies]
 python = ">=3.8.0,<3.15"
 cherrypy = "^18.10.0"
+colorama = [
+    { version = "^0.4.6", python = ">=3.8,<3.15" }
+]
 fastapi = "^0.116.1"
 
 # keyring: Version 25.x requires Python >=3.9, so we pin 24.x for 3.8.
@@ -79,6 +82,12 @@ uvicorn = [
     { version = "^0.34.3", python = ">=3.9" },
     { version = "^0.33.0", python = "3.8.*" },
 ]
+
+[tool.poetry.dependencies."backports.zoneinfo"] # known poetry quirk necessary when freezing, a la "poetry export -f requirements.txt --without-hashes > requirements.txt"
+version = "^0.2.1"
+python = "<3.9"
+optional = false
+
 
 [tool.poetry.extras] # pipx install pipeline-eds[windows]
 windows = ["pyodbc","matplotlib"]
