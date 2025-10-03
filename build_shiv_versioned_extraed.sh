@@ -8,7 +8,7 @@ PY_MINOR=$(python3 -c 'import sys; print(sys.version_info[1])')
 PY_VERSION="py${PY_MAJOR}${PY_MINOR}"
 
 # Keep only major.minor.patch (first three numeric groups)
-PKG_VERSION=$(echo "$PKG_VERSION" | grep -oE '^[0-9]+\.[0-9]+\.[0-9]+')
+#PKG_VERSION=$(echo "$PKG_VERSION" | grep -oE '^[0-9]+\.[0-9]+\.[0-9]+')
 
 # --- Detect extras to include in filename ---
 EXTRAS=()
@@ -54,6 +54,15 @@ latest_wheel=$(ls -t dist/*.whl 2>/dev/null | head -n 1)
 if [ -n "$latest_wheel" ]; then
     echo "Building .pyz from wheel: $latest_wheel"
     shiv "$latest_wheel" -e pipeline.cli:app -o "$PYZ_PATH" -p "/usr/bin/env python3"
+
+    # --- Extract the package version from metadata inside the .pyz ---
+    # We unzip only the METADATA file and grep the Version field
+    META_VERSION=$(unzip -p "$PYZ_PATH" '*/METADATA' 2>/dev/null | grep '^Version:' | awk '{print $2}')
+
+   # --- Optionally sanitize the PKG_VERSION ---
+    # Example: if METADATA shows "0.2.1100.2.1", we keep only first three numeric groups
+    PKG_VERSION_CLEAN=$(echo "$META_VERSION" | grep -oE '^[0-9]+\.[0-9]+\.[0-9]+')
+
     exit_code=$?
 else
     if [ -f "requirements.txt" ]; then

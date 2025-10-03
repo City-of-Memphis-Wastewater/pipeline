@@ -77,7 +77,6 @@ description = "Backport of CPython tarfile module"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
-markers = "python_version < \"3.12\""
 files = [
     {file = "backports.tarfile-1.2.0-py3-none-any.whl", hash = "sha256:77e284d754527b01fb1e6fa8a1afe577858ebe4e9dad8919e34c862cb399bc34"},
     {file = "backports_tarfile-1.2.0.tar.gz", hash = "sha256:d75e02c268746e1b8144c278978b6e98e85de6ad16f8e4b0844a154557eca991"},
@@ -3906,4 +3905,4 @@ windows = ["matplotlib", "matplotlib", "matplotlib", "pyodbc"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.8.0,<3.15"
-content-hash = "c5b31e8a04c90c9982147b494b65d635c52ee3a4ebf08be30be2390610999714"
+content-hash = "45f6aa42beaeff1d4d97399dd0cbfcbabb437a20fd232e29e979dc9f4291d7af"
