@@ -25,6 +25,7 @@ from pipeline.api.eds import demo_eds_webplot_point_live, EdsClient, load_histor
 from pipeline import environment
 from pipeline.security_and_config import get_eds_api_credentials, get_external_api_credentials, get_eds_db_credentials, get_all_configured_urls, get_configurable_plant_name, init_security, CONFIG_PATH
 from pipeline.termux_setup import setup_termux_shortcut
+from pipeline.windows_setup import setup_windows_install, cleanup_windows_install
 from pipeline import helpers
 from pipeline.plotbuffer import PlotBuffer
 #from pipeline.helpers import setup_logging
@@ -35,6 +36,8 @@ from pipeline.plotbuffer import PlotBuffer
 # ensures the shortcut file is only created once in the Termux environment.
 if environment.is_termux():
     setup_termux_shortcut()
+elif environment.is_windows():
+    setup_windows_install()
 
 # -- Versioning --
 CLI_APP_NAME = "pipeline"
@@ -386,6 +389,26 @@ def list_workspaces():
     typer.echo("📦 Available workspaces:")
     for name in workspaces_list:
         typer.echo(f" - {name}")
+
+@app.command()
+def install(
+    uninstall: bool = typer.Option(False,"--uninstall","-u",help = "Remove the installation artifacts for the current operating system.")
+):
+    """
+    Windows: Uninstall the registry context-menu item, the launcher BAT, and the AppData folder
+    Termux: Remove the scripts from the .shortcuts/ folder.
+    """
+    if uninstall:
+        if environment.is_windows():
+            if typer.confirm("Are you sure you want to uninstall the registry context-menu item, the launcher BAT, and empty out the AppData folder?"):
+                cleanup_windows_install()
+        elif environment.is_termux():
+            pass
+    else:
+        if environment.is_windows():
+            setup_windows_install()
+        elif environment.is_termux():
+            setup_termux_shortcut()
 
 
 @app.command()

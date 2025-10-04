@@ -8,19 +8,15 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y bash curl \
     && rm -rf /var/lib/apt/lists/*
 	
-# Copy only dependency files first (pyproject.toml + poetry.lock)
-COPY pyproject.toml poetry.lock README.md ./
+# Copy everything
+COPY . .
 
 # Install Poetry in the container.
 RUN pip install poetry
 
 # Use Poetry to install all project dependencies and the project itself.
 # This creates an editable install, making the 'pipeline' module available.
-RUN poetry install --without dev --no-interaction --no-ansi --no-root
-
-# Copy all project files into the container. This includes src/, pyproject.toml, etc.
-COPY src/ ./src/
-#COPY . .
+RUN poetry install --no-interaction --no-ansi
 
 # Expose any ports your application might need (e.g., for the Plotly web server).
 EXPOSE 8000
