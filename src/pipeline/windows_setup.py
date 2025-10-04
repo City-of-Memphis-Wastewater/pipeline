@@ -176,11 +176,13 @@ def setup_windows_install():
         # Use simple print for this critical error, as installation won't proceed
         print("Error: Could not determine running executable path (likely running from source). Aborting Windows setup.", file=sys.stderr)
         return
+    
+    short_path_ref = fr"%LOCALAPPDATA%\{PACKAGE_NAME}"
 
     # 3. Check if already installed
     if check_if_installed(exe_path):
         # Print a concise status message instead of the verbose setup prints
-        print(f"[{APP_NAME}] AppData/{PACKAGE_NAME} is set up (v{INSTALL_VERSION}). Skipping setup.")
+        print(f"[{APP_NAME}] {short_path_ref} is set up (v{INSTALL_VERSION}). Skipping setup.")
         return
 
     log_message(f"Starting NEW/UPDATE Windows setup for executable: {exe_path}")
@@ -195,7 +197,7 @@ def setup_windows_install():
         finalize_install_version(exe_path)
         
         # 4. Success message to console
-        print(f"[{APP_NAME}] AppData/{PACKAGE_NAME} is set up. Check log file at {config_dir / LOG_FILE} for details.")
+        print(f"[{APP_NAME}] {short_path_ref} is set up. Check log file at {config_dir / LOG_FILE} for details.")
 
     except Exception as e:
         log_message(f"FATAL ERROR during Windows setup: {e}", is_error=True)
