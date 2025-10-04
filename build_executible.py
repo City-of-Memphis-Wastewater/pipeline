@@ -1,11 +1,11 @@
 # build_executible.py
 from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
-import toml
 import os
-import sys
 from pathlib import Path
+import shutil
 from subprocess import run
-
+import sys
+import toml
 from pipeline.version_info import get_package_name, get_package_version, get_python_version, form_dynamic_binary_name
 from pipeline.system_info import SystemInfo
 
@@ -59,23 +59,32 @@ def generate_rc_file(package_version: str):
 # --- Main Execution Block ---
 # Assuming run_pyinstaller has been updated to take the dynamic name
 def run_pyinstaller(dynamic_exe_name: str):
-    # ... (Your previous PyInstaller logic goes here, using dynamic_exe_name) ...
-    # This is placeholder logic to show how the name is used:
     
-    command = [
+    # 1. Build the base PyInstaller command
+    base_command = [
         'pyinstaller',
         '--onefile',
         f'--name={dynamic_exe_name}',
         # ... rest of the command logic ...
         str(CLI_MAIN_FILE)
     ]
-    
     if IS_WINDOWS_BUILD:
-        command.insert(3, f'--version-file={RC_FILE.name}')
+        base_command.insert(3, f'--version-file={RC_FILE.name}')
     
-    print(f"Executing: poetry run {' '.join(command)}")
-    result = run(['poetry', 'run'] + command, check=False)
-
+    # 2. Determine the full command using shutil.which for availability check
+    if shutil.which('poetry'):
+        # Poetry is available, prepend 'poetry run'
+        full_command = ['poetry', 'run'] + base_command
+        print(f"Attempting with Poetry: {' '.join(full_command)}")
+    else:
+        # Poetry is not available, run PyInstaller directly
+        full_command = base_command
+        print("Poetry executable not found. Running PyInstaller directly.")
+        print(f"Executing: {' '.join(full_command)}")
+    
+    # 3. Execute the command
+    result = run(full_command, check=False)
+    
     if result.returncode != 0:
         print(f"PyInstaller failed with exit code {result.returncode}", file=sys.stderr)
         sys.exit(result.returncode)
