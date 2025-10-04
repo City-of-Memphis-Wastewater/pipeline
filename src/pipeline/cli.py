@@ -4,21 +4,29 @@ from rich.table import Table
 from rich.console import Console
 from click import BadParameter 
 import typer
+from pathlib import Path
+from importlib.metadata import version, PackageNotFoundError
+from requests.exceptions import Timeout
+import sys
+import pendulum
+
 try:
     import colorama # explicitly added so for the shiv build
 except ImportError:
     colorama = None  # or handle gracefully
-from pathlib import Path
-from importlib.metadata import version, PackageNotFoundError
-from requests.exceptions import Timeout
-import sys 
+try:
+    import tzdata # explicitly added so for the shiv build
+except ImportError:
+    tzdata = None  # or handle gracefully
 
 from pipeline.time_manager import TimeManager
 from pipeline.create_sensors_db import get_db_connection, create_packaged_db, reset_user_db # get_user_db_path, ensure_user_db, 
-from pipeline.api.eds import demo_eds_webplot_point_live
+from pipeline.api.eds import demo_eds_webplot_point_live, EdsClient, load_historic_data, EdsLoginException, demo_eds_save_point_export
 from pipeline import environment
 from pipeline.security_and_config import get_eds_api_credentials, get_external_api_credentials, get_eds_db_credentials, get_all_configured_urls, get_configurable_plant_name, init_security, CONFIG_PATH
 from pipeline.termux_setup import setup_termux_shortcut
+from pipeline import helpers
+from pipeline.plotbuffer import PlotBuffer
 #from pipeline.helpers import setup_logging
 
 # --- TERMUX SETUP HOOK ---
@@ -152,11 +160,6 @@ def trend(
     """
     Show a curve for a sensor over time.
     """
-    #from dateutil import parser
-    import pendulum
-    from pipeline.api.eds import EdsClient, load_historic_data, EdsLoginException
-    from pipeline import helpers
-    from pipeline.plotbuffer import PlotBuffer
 
     #zd = api_credentials.get("zd")
     if plant_name is None:
@@ -406,6 +409,14 @@ def ping(
     for url in url_set:
         print(f"ping url: {url}")
         call_ping(url)
+
+@app.command()
+def export():
+    """
+    Export a list of all EDS Points.
+    """
+    typer.echo("Coming soon.")
+    demo_eds_save_point_export()
 
 @app.command()
 def help():
