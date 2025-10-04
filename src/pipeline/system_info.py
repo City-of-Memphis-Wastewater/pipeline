@@ -54,11 +54,22 @@ class SystemInfo:
             return True
         return False
     
+    def get_windows_tag(self) -> str:
+        """Differentiate Windows 10 vs 11 based on build number."""
+        release, version, csd, ptype = platform.win32_ver()
+        try:
+            build_number = int(version.split(".")[-1])
+        except Exception:
+            build_number = 0
+
+        if build_number >= 22000:
+            return "windows11"
+        return "windows10"
+    
     def get_os_tag(self) -> str:
         """Return a compact string for use in filenames (e.g. ubuntu22.04)."""
         if self.system == "Windows":
-            win_ver = platform.win32_ver()[0] or "windows"
-            return f"windows{win_ver}"
+            return self.get_windows_tag()
 
         if self.system == "Darwin":
             mac_ver = platform.mac_ver()[0].split(".")[0] or "macos"
@@ -76,6 +87,12 @@ class SystemInfo:
             return distro_id
 
         return self.system.lower()
+    
+    def get_arch(self) -> str:
+        arch = self.architecture.lower()
+        if arch in ("amd64", "x86_64"):
+            return "x86_64"
+        return self.architecture
     
     def to_dict(self) -> dict:
         """Return a full snapshot of system information."""
@@ -108,7 +125,6 @@ class SystemInfo:
 if __name__ == "__main__":
     sysinfo = SystemInfo()
     sysinfo.pretty_print()
-    print(f"sysinfo.system = {sysinfo.system}")
-    print(f"sysinfo.release = {sysinfo.release}")
-    print(f"sysinfo.version = {sysinfo.version}")
-    print(f"sysinfo.architecture = {sysinfo.architecture}")
+    sysinfo.get_os_tag()
+    sysinfo.get_arch()
+    
