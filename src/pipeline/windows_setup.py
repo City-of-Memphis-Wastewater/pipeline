@@ -225,6 +225,36 @@ pause
     except Exception as e:
         log_message(f"Warning: Failed to create desktop launcher {bat_path}: {e}", is_error=True)
 
+def create_start_menu_shortcut(exe_path: Path):
+    """
+    Creates a simple BAT file in the user's Start Menu Programs folder.
+    Windows will treat this BAT file as a Start Menu shortcut.
+    """
+    try:
+        # Standard location for the user's Start Menu Programs folder
+        start_menu_path = Path(os.environ['APPDATA']) / "Microsoft" / "Windows" / "Start Menu" / "Programs"
+        start_menu_path.mkdir(parents=True, exist_ok=True)
+    except Exception as e:
+        log_message(f"Warning: Failed to locate or create Start Menu path: {e}", is_error=True)
+        return
+
+    bat_filename = f"{APP_NAME} Launch.bat"
+    bat_path = start_menu_path / bat_filename
+
+    # Simple BAT file content to execute the application silently
+    bat_content = f"""@echo off
+REM Start Menu Launcher for {APP_NAME}
+"{exe_path}" %*
+""" # Note: removed pause for cleaner Start Menu launch
+
+    try:
+        bat_path.write_text(bat_content, encoding='utf-8')
+        log_message(f"Start Menu shortcut created: {bat_path}")
+    except Exception as e:
+        log_message(f"Warning: Failed to create Start Menu shortcut {bat_path}: {e}", is_error=True)
+
+
+
 def register_context_menu(exe_path: Path):
     """
     Registers a context menu entry on folder background right-click that launches 
@@ -238,16 +268,22 @@ def register_context_menu(exe_path: Path):
     config_dir = setup_appdata_dir()
     ps1_filename = f"setup_info_{PACKAGE_NAME}.ps1"
     ps1_path = config_dir / ps1_filename
+    
+    # Determine the executable type for clarity in the PS script (e.g., EXE, PYZ)
+    exe_type = exe_path.suffix.upper().lstrip('.') if exe_path.suffix else "UNKNOWN"
 
     # Content of the PowerShell script, including pipx info and example command
     ps1_content = f"""Write-Host "--- {APP_NAME} Installation and Usage Information ---"
+Write-Host ""
+Write-Host "This utility can be downloaded as a standalone PYZ, EXE, or ELF file from the GitHub Releases page:"
+Write-Host "  https://github.com/City-of-Memphis-Wastewater/pipeline/releases"
 Write-Host ""
 Write-Host "To install the application system-wide for easy access (if pipx is installed):"
 Write-Host "  pipx install {PACKAGE_NAME}"
 Write-Host "Then you can run the application directly from any terminal:"
 Write-Host "  {PACKAGE_NAME} trend --default-idcs"
 Write-Host ""
-Write-Host "Current Executable Path:"
+Write-Host "Current Executable Path (Type: {exe_type}):"
 Write-Host "  {exe_path}"
 Write-Host "Example Execution using current file:"
 Write-Host "  & '{exe_path}' trend --default-idcs"
@@ -273,7 +309,7 @@ Pause
     try:
         # 3. Create the main key
         key = winreg.CreateKeyEx(winreg.HKEY_CURRENT_USER, key_path)
-        winreg.SetValueEx(key, "", 0, winreg.REG_SZ, f"[{APP_NAME}] Installation & Info")
+        winreg.SetValueEx(key, "", 0, winreg.REG_SZ, f"[{APP_NAME}] Info")
         winreg.CloseKey(key)
 
         # 4. Create the command key and set the execution string
@@ -286,6 +322,7 @@ Pause
 
     except Exception as e:
         log_message(f"Error registering context menu: {e}", is_error=True)
+
 
 
 def register_powertoys_integration(exe_path: Path):
@@ -311,6 +348,25 @@ def cleanup_desktop_launcher():
             log_message(f"Cleaned up desktop launcher: {bat_path}")
         except Exception as e:
             log_message(f"Warning: Failed to delete desktop launcher {bat_path}: {e}", is_error=True)
+
+def cleanup_start_menu_shortcut():
+    """Removes the Start Menu BAT file launcher."""
+    try:
+        start_menu_path = Path(os.environ['APPDATA']) / "Microsoft" / "Windows" / "Start Menu" / "Programs"
+    except KeyError:
+        log_message("Warning: APPDATA environment variable not set. Skipping Start Menu cleanup.", is_error=True)
+        return
+
+    bat_filename = f"{APP_NAME} Launch.bat"
+    bat_path = start_menu_path / bat_filename
+    
+    if bat_path.exists():
+        try:
+            bat_path.unlink()
+            log_message(f"Cleaned up Start Menu shortcut: {bat_path}")
+        except Exception as e:
+            log_message(f"Warning: Failed to delete Start Menu shortcut {bat_path}: {e}", is_error=True)
+
 
 def cleanup_appdata_script():
     """Removes the PowerShell setup information script from AppData."""
@@ -394,6 +450,7 @@ def cleanup_windows_install():
     print(f"Starting Windows uninstallation cleanup for {APP_NAME}...") 
     
     cleanup_desktop_launcher()
+    cleanup_start_menu_shortcut() 
     cleanup_context_menu_registry()
     cleanup_install_version_file() # Ensure this goes before attempting to remove the directory
     cleanup_appdata_script()
