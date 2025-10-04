@@ -13,12 +13,11 @@ PIP_PACKAGE_NAME = "pipeline-eds"
 def get_version_from_known_alias():
     try:
         PIPELINE_VERSION = version(PIP_PACKAGE_NAME)
-        __version__ = version(PIP_PACKAGE_NAME)
     except PackageNotFoundError:
         PIPELINE_VERSION = "0.0.0"
     return PIPELINE_VERSION
 
-get_version_from_known_alias()
+PIPELINE_VERSION = get_version_from_known_alias()
 try:
     __version__ = version(PIP_PACKAGE_NAME)
 
