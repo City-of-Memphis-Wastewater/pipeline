@@ -4,9 +4,34 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
-- Work in progress smooth rollout of .shortcuts/ shell script to reference the Termux-native ELF binary. Include clear instructions.
+---
 
+
+## [0.2.115] - 2025-10-04
+
+This release focuses on significant improvements to the **Windows Installation and Setup** process, providing a more professional, silent, and integrated user experience for standalone executable users.
+
+### Added
+
+- **Silent Installation Logging (Windows):** Implemented file-based logging to `install_log.txt` within the `AppData` configuration directory. All verbose setup output is now redirected from `stdout` to this file, ensuring a non-disruptive, single-line console status message during application launch.
+    
+- **Start Menu Shortcut:** Automated creation of a launcher `.BAT` file in the user's Start Menu Programs directory (`%APPDATA%\Microsoft\Windows\Start Menu\Programs`), significantly improving application accessibility.
+    
+- **Comprehensive Uninstall/Cleanup (Windows):** Introduced `cleanup_windows_install()` and supporting routines to reliably remove all generated installation artifacts (Desktop launcher, Start Menu shortcut, Context Menu Registry keys, and AppData installation files) upon request.
+    
+
+### Changed
+
+- **Installation Dispatcher Optimization (Windows):** Implemented version-based installation tracking using an `install_version.txt` file in AppData. This prevents all setup routines (registry, shortcuts) from re-running on every application launch, eliminating startup overhead.
+    
+- **Context Menu Information:** The `setup_info_eds.ps1` PowerShell script, accessible via the folder background right-click, is now dynamically populated to explicitly reference the executable type (`.EXE` or `.PYZ`) and includes the definitive link to the GitHub Releases page for direct download options.
+    
+
+### Fixed
+
+- **Excessive Setup Output:** Resolved the issue where verbose installation details were printed to the console during every application startup by implementing the version-based state check and redirecting all setup messages to the log file.
+
+---
 
 ## [0.2.113] - 2025-10-04
 
@@ -39,10 +64,14 @@ This release focuses on a major overhaul of the build and packaging system to im
 ### Learned
 -    **Termux Quirk**: Termux Widget `.shortcuts/` shell scripts hit a permission-denied wall when referencing a `.PYZ` zipapp.
 
+---
+
 ## [0.2.112] - 2025-10-03
 - Added Windows/Ubuntu/Android executables
 - Updated dependencies (plotly, uvicorn, pendulum)
 - Minor bug fixes in CLI commands
+
+---
 
 ## [0.2.111] - 2025-10-02
 - Initial multi-OS release with `.whl`, `.pyz`, and `.exe` distributions
