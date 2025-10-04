@@ -1,6 +1,7 @@
 import platform
 import sys
 from pathlib import Path
+import os
 
 try:
     import distro  # external package, best for Linux detection
@@ -46,6 +47,36 @@ class SystemInfo:
                 }
             return {"id": "unknown", "name": "unknown", "version": "unknown"}
 
+    def detect_android_termux(self) -> bool:
+        if "ANDROID_ROOT" in os.environ or "TERMUX_VERSION" in os.environ:
+            return True
+        if "android" in self.release.lower():
+            return True
+        return False
+    
+    def get_os_tag(self) -> str:
+        """Return a compact string for use in filenames (e.g. ubuntu22.04)."""
+        if self.system == "Windows":
+            win_ver = platform.win32_ver()[0] or "windows"
+            return f"windows{win_ver}"
+
+        if self.system == "Darwin":
+            mac_ver = platform.mac_ver()[0].split(".")[0] or "macos"
+            return f"macos{mac_ver}"
+
+        if self.system == "Linux":
+            if self.detect_android_termux():
+                return "android"
+
+            info = self.detect_linux_distro()
+            distro_id = info.get("id") or "linux"
+            distro_ver = (info.get("version") or "").replace(".", "")
+            if distro_ver:
+                return f"{distro_id}{info['version']}"
+            return distro_id
+
+        return self.system.lower()
+    
     def to_dict(self) -> dict:
         """Return a full snapshot of system information."""
         info = {
@@ -53,8 +84,12 @@ class SystemInfo:
             "release": self.release,
             "version": self.version,
             "arch": self.architecture,
+            "os_tag": self.get_os_tag(),
         }
-        if self.system == "Linux":
+        if self.system == "Linux" and self.detect_android_termux():
+            info["id"] = "android"
+            info["name"] = "Android (Termux)"
+        elif self.system == "Linux":
             info.update(self.detect_linux_distro())
         elif self.system == "Windows":
             info["win_version"] = platform.win32_ver()
@@ -73,7 +108,7 @@ class SystemInfo:
 if __name__ == "__main__":
     sysinfo = SystemInfo()
     sysinfo.pretty_print()
-    print(sysinfo.system)
-    print(sysinfo.release)
-    print(sysinfo.version)
-    print(sysinfo.architecture)
+    print(f"sysinfo.system = {sysinfo.system}")
+    print(f"sysinfo.release = {sysinfo.release}")
+    print(f"sysinfo.version = {sysinfo.version}")
+    print(f"sysinfo.architecture = {sysinfo.architecture}")
