@@ -13,7 +13,7 @@ from pathlib import Path
 from pipeline.version_info import get_package_name, get_package_version, get_python_version, form_dynamic_binary_name
 from pipeline.system_info import SystemInfo
 
-def determine_zipapp_name():
+def determine_zipapp_name(extras_str):
     package_name = get_package_name()
     package_version = get_package_version() 
     py_version = get_python_version()
@@ -26,7 +26,7 @@ def determine_zipapp_name():
     executible_descriptor = form_dynamic_binary_name(package_name, package_version, py_version, os_tag, architecture)
     
     # Append the extension
-    zipapp_filename = executible_descriptor + ".pyz"
+    zipapp_filename = f"{executible_descriptor}{extras_str}.pyz"
     return zipapp_filename
 
 def run_command(command, check=False, cwd=None):
@@ -151,8 +151,7 @@ def main():
         sys.exit(1)
 
     # --- Compose final filenames ---
-    #pyz_filename = f"{pkg_name}-{pkg_version}-{py_version_str}{extras_str}.pyz"
-    pyz_filename = determine_zipapp_name()
+    pyz_filename = determine_zipapp_name(extras_str)
     pyz_path = dist_dir / pyz_filename
     bat_path = pyz_path.with_suffix(".bat")
 
