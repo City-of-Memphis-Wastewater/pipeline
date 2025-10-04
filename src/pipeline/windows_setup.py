@@ -87,6 +87,8 @@ def setup_appdata_dir() -> Path:
     Returns the path to the configuration directory.
     """
     # Use environment variable for robustness
+    if not is_windows():
+        return
     local_appdata = os.environ.get('LOCALAPPDATA')
     if not local_appdata:
         # Fallback using Path.home()
