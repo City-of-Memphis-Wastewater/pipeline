@@ -416,7 +416,7 @@ def export():
     Export a list of all EDS Points.
     """
     typer.echo("Coming soon.")
-    demo_eds_save_point_export()
+    #demo_eds_save_point_export()
 
 @app.command()
 def help():
