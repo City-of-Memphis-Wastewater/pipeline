@@ -24,7 +24,7 @@ from pipeline.create_sensors_db import get_db_connection, create_packaged_db, re
 from pipeline.api.eds import demo_eds_webplot_point_live, EdsClient, load_historic_data, EdsLoginException, demo_eds_save_point_export
 from pipeline import environment
 from pipeline.security_and_config import get_eds_api_credentials, get_external_api_credentials, get_eds_db_credentials, get_all_configured_urls, get_configurable_plant_name, init_security, CONFIG_PATH
-from pipeline.termux_setup import setup_termux_shortcut
+from pipeline.termux_setup import setup_termux_install, cleanup_termux_install
 from pipeline.windows_setup import setup_windows_install, cleanup_windows_install
 from pipeline import helpers
 from pipeline.plotbuffer import PlotBuffer
@@ -36,7 +36,7 @@ from pipeline.version_info import  PIP_PACKAGE_NAME, PIPELINE_VERSION, __version
 # but the function's internal logic
 # ensures the shortcut file is only created once in the Termux environment.
 if environment.is_termux():
-    setup_termux_shortcut()
+    setup_termux_install()
 elif environment.is_windows():
     setup_windows_install()
 
@@ -386,12 +386,12 @@ def install(
             if typer.confirm("Are you sure you want to uninstall the registry context-menu item, the launcher BAT, and empty out the AppData folder?"):
                 cleanup_windows_install()
         elif environment.is_termux():
-            pass
+            cleanup_termux_install()
     else:
         if environment.is_windows():
             setup_windows_install()
         elif environment.is_termux():
-            setup_termux_shortcut()
+            setup_termux_install()
 
 
 @app.command()
