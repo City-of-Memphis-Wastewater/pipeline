@@ -12,7 +12,7 @@ def get_package_version() -> str:
         data = toml.load('pyproject.toml')
         version = data['tool']['poetry']['version']
     except Exception as e:
-        print(f"Error reading version from pyproject.toml: {e}", file=sys.stderr)
+        # print(f"Error reading version from pyproject.toml: {e}", file=sys.stderr)
         # Fallback version if TOML fails
         version = '0.0.0'
         
