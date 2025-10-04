@@ -10,8 +10,8 @@ from pipeline.version_info import get_package_name
 # Constants
 APP_NAME = get_package_name()
 PACKAGE_NAME = get_package_name() # Used for executable name and AppData folder
-PIPX_UPGRADE_SCRIPTNAME = "upgrade_and_run_eds.sh"
-PIPX_RUN_SCRIPTNAME = "pipx_eds_plot.sh"
+PIPX_UPGRADE_SCRIPTNAME = "pipx_eds_upgrade_and_trend.sh"
+PIPX_RUN_SCRIPTNAME = "pipx_eds_trend.sh"
 ELF_RUN_SCRIPTNAME = "eds trend -d.sh"
 
 def setup_termux_shortcut():
@@ -228,7 +228,7 @@ def cleanup_termux_pipx_shortcut():
             print(f"Warning: Failed to delete Termux shortcut {shortcut_file}: {e}")
 
 
-def cleanup_termux_upgrade_shortcut():
+def cleanup_termux_pipx_upgrade_shortcut():
     """Removes the pipx-based Termux upgrade and run shortcut file."""
     if not is_termux():
         return
@@ -271,5 +271,6 @@ def cleanup_termux_shortcut():
     # Attempt to clean up both known shortcut names
     cleanup_termux_pipx_shortcut()
     cleanup_termux_elf_shortcut()
+    cleanup_termux_pipx_upgrade_shortcut()
     
     print("Termux cleanup complete.")
