@@ -6,6 +6,9 @@ import sys
 from pathlib import Path
 from subprocess import run
 
+from pipeline.version_info import get_package_name, get_package_version, get_python_version, form_dynamic_binary_name
+from pipeline.system_info import SystemInfo
+
 """
 Builds an EXE when run on Windows 
 Builds an ELF binary when run on Linunx
@@ -22,35 +25,21 @@ RC_FILE = Path('version.rc')
 CLI_MAIN_FILE = Path('src/pipeline/cli.py')
 EXE_NAME = 'pipeline-eds-cli' # Will be made dynamic later
 
-# --- NEW FUNCTION: Version Retrieval ---
-def get_project_version() -> str:
-    """Reads project version from pyproject.toml."""
-    try:
-        data = toml.load('pyproject.toml')
-        version = data['tool']['poetry']['version']
-    except Exception as e:
-        print(f"Error reading version from pyproject.toml: {e}", file=sys.stderr)
-        # Fallback version if TOML fails
-        version = '0.0.0'
-        
-    print(f"Detected project version: {version}")
-    return version
-
-# --- Refactored RC File Generation ---
-def generate_rc_file(version: str):
+# --- RC File Generation ---
+def generate_rc_file(package_version: str):
     """Generates the .rc file using the provided version string."""
     if not IS_WINDOWS_BUILD:
         print("Skipping .rc file generation (Not building on Windows).")
         return
         
-    version_tuple = tuple(map(int, version.split('.')))
+    version_tuple = tuple(map(int, package_version.split('.')))
     # Add a 0 for the 4th spot if the version is only major.minor.patch
     if len(version_tuple) == 3:
         version_tuple = version_tuple + (0,)
         
     # 1. Prepare substitution values
     substitutions = {
-        'VERSION': version,
+        'VERSION': package_version,
         'VERSION_TUPLE': ', '.join(map(str, version_tuple)),
     }
     
@@ -66,23 +55,8 @@ def generate_rc_file(version: str):
         print(f"Error generating {RC_FILE} from template: {e}", file=sys.stderr)
         sys.exit(1)
 
-# --- (Example for your future dynamic naming function) ---
-def get_dynamic_exe_name(version: str) -> str:
-    # 1. Read package name from pyproject.toml
-    try:
-        data = toml.load('pyproject.toml')
-        pkg_name = data['tool']['poetry']['name']
-    except:
-        pkg_name = 'pipeline-eds' # Fallback
-        
-    py_major = sys.version_info.major
-    py_minor = sys.version_info.minor
-    py_version = f"py{py_major}{py_minor}"
-    
-    # Use hyphens for the CLI/EXE name
-    return f"{pkg_name}-{version}-{py_version}"
 
-# --- Refactored Main Execution Block ---
+# --- Main Execution Block ---
 # Assuming run_pyinstaller has been updated to take the dynamic name
 def run_pyinstaller(dynamic_exe_name: str):
     # ... (Your previous PyInstaller logic goes here, using dynamic_exe_name) ...
@@ -119,13 +93,19 @@ def run_pyinstaller(dynamic_exe_name: str):
 
 
 if __name__ == '__main__':
-    project_version = get_project_version()
+    package_name = get_package_name()
+    package_version = get_package_version() 
+    py_version = get_python_version()
     
-    # 1. Generate RC file (conditionally)
-    generate_rc_file(project_version)
+    sysinfo = SystemInfo()
+    os_tag = sysinfo.get_os_tag()
+    architecture = sysinfo.get_arch()
+
+    # 1. Generate RC file (conditionally, on Windows)
+    generate_rc_file(package_version)
     
-    # 2. Determine the executable name
-    dynamic_name = get_dynamic_exe_name(project_version)
+    # 2. Determine the executable name (without the extension)
+    executible_descriptor = form_dynamic_binary_name(package_name, package_version, py_version, os_tag, architecture)
     
     # 3. Run the installer
-    run_pyinstaller(dynamic_name)
+    run_pyinstaller(executible_descriptor)
