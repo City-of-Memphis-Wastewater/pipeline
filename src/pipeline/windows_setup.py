@@ -4,9 +4,10 @@ import sys
 import platform
 from pathlib import Path
 import subprocess
+import datetime
 
 from pipeline.environment import is_windows
-from pipeline.version_info import get_package_name 
+from pipeline.version_info import get_package_name, get_package_version
 
 # Importing winreg is necessary for proper Windows registry access.
 # We wrap it in a try-except block for environments where it might not exist (e.g., development on Linux).
@@ -18,10 +19,45 @@ except ImportError:
 # Constants
 APP_NAME = get_package_name()
 PACKAGE_NAME = get_package_name() # Used for executable name and AppData folder
+INSTALL_VERSION = get_package_version()
+INSTALL_VERSION_FILE = "install_version.txt"
+LOG_FILE = "install_log.txt" # New constant for logging
+
+# --- Logging Helpers ---
+
+def _get_log_path() -> Path:
+    """Returns the full path to the installation log file."""
+    return setup_appdata_dir() / LOG_FILE
+
+def log_message(message: str, is_error: bool = False):
+    """Writes a timestamped message to the installation log file."""
+    timestamp = datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
+    log_line = f"{timestamp} {'[ERROR]' if is_error else '[INFO]'}: {message}"
+    
+    # We must try to get the log path, but cannot rely on setup_appdata_dir being
+    # fully successful or being called before setup_appdata_dir is complete.
+    try:
+        log_path = _get_log_path()
+        with open(log_path, 'a', encoding='utf-8') as f:
+            f.write(log_line + '\n')
+    except Exception:
+        # Fallback to console print if logging to file fails (e.g., permissions)
+        if is_error:
+            # Print errors to the console, even during silent operation
+            print(f"FATAL LOGGING ERROR: {log_line}", file=sys.stderr)
+        else:
+            # We skip printing non-error messages to the console here to ensure silence
+            pass
+
+# --- Environment and Path Functions ---
+
+def is_windows() -> bool:
+    """Checks if the current operating system is Windows."""
+    return platform.system() == "Windows"
 
 def get_executable_path() -> Path | None:
     """
-    Returns the path to the running executable (e.g., the PyInstaller .exe).
+    Returns the path to the running executable (e.g., the PyInstaller .exe or shiv .pyz).
     
     Returns None if the application is running as a Python script (e.g., via 
     'python -m' or 'poetry run') to prevent setup from running with a source path.
@@ -31,42 +67,18 @@ def get_executable_path() -> Path | None:
     try:
         # sys.argv[0] is the path to the currently running entry point
         running_path = Path(sys.argv[0]).resolve()
+        
         suffix = running_path.suffix.lower()
-
-        # If the path ends in .py, assume it's running from source code.
-        if suffix == '.py':
-            return None
         
         # Only allow paths that explicitly look like deployed executables:
         # .exe (PyInstaller, or pipx shim) or .pyz (Shiv)
         if suffix in ['.exe', '.pyz']:
             return running_path
-        
-        # Reject anything else
+            
+        # Reject anything else, including .py files or generic interpreter paths.
         return None
     except IndexError:
         return None
-
-def setup_windows_install():
-    """
-    Main dispatcher for all Windows-specific setup tasks.
-    
-    This function should be called during the first run of the application 
-    on a Windows system.
-    """
-    if not is_windows():
-        return
-
-    exe_path = get_executable_path()
-    if not exe_path:
-        print("Error: Could not determine running executable path. Aborting Windows setup.")
-        return
-
-    print(f"Starting Windows setup for executable: {exe_path}")
-    setup_appdata_dir()
-    create_desktop_launcher(exe_path)
-    register_context_menu(exe_path)
-    # register_powertoys_integration(exe_path) # See function note below
 
 def setup_appdata_dir() -> Path:
     """
@@ -84,11 +96,113 @@ def setup_appdata_dir() -> Path:
         
     try:
         config_dir.mkdir(parents=True, exist_ok=True)
-        print(f"AppData configuration directory ensured: {config_dir}")
+        # We don't log success here, as this function is called repeatedly.
     except Exception as e:
-        print(f"Warning: Failed to create AppData directory {config_dir}: {e}")
+        # Use simple print as logging system relies on this dir existing
+        print(f"Warning: Failed to create AppData directory {config_dir}: {e}", file=sys.stderr)
         
     return config_dir
+
+def check_if_installed(exe_path: Path) -> bool:
+    """
+    Checks if the current application version has already performed setup.
+    Installation is tied to the unique executable path.
+    """
+    config_dir = setup_appdata_dir()
+    version_file = config_dir / INSTALL_VERSION_FILE
+    
+    if not version_file.exists():
+        log_message(f"Version file {INSTALL_VERSION_FILE} not found. Proceeding with installation.")
+        return False
+
+    try:
+        content = version_file.read_text().splitlines()
+        
+        if len(content) < 2:
+            log_message("Version file is corrupt/incomplete. Reinstalling artifacts.", is_error=True)
+            return False
+
+        current_installed_version = content[0].strip()
+        installed_exe_path = content[1].strip()
+        
+        is_same_version = current_installed_version == INSTALL_VERSION
+        is_same_executable = installed_exe_path == str(exe_path)
+        
+        if not is_same_version:
+            log_message(f"Found version {current_installed_version}, expected {INSTALL_VERSION}. Proceeding with update.", is_error=False)
+
+        if not is_same_executable:
+            log_message(f"Installed EXE path {installed_exe_path} does not match current path {exe_path}. Proceeding with update.", is_error=False)
+
+        # We only consider it installed if both version and executable path match.
+        return is_same_version and is_same_executable
+        
+    except Exception as e:
+        log_message(f"Error reading installation version file: {e}. Reinstalling artifacts.", is_error=True)
+        return False
+
+def finalize_install_version(exe_path: Path):
+    """Writes the installation marker file after a successful setup."""
+    config_dir = setup_appdata_dir()
+    version_file = config_dir / INSTALL_VERSION_FILE
+    
+    content = f"{INSTALL_VERSION}\n{exe_path}"
+    
+    try:
+        version_file.write_text(content, encoding='utf-8')
+        log_message(f"Installation version {INSTALL_VERSION} marked as installed for executable: {exe_path}")
+    except Exception as e:
+        log_message(f"Error writing installation version file: {e}", is_error=True)
+
+# --- Setup Dispatcher ---
+
+def setup_windows_install():
+    """
+    Main dispatcher for all Windows-specific setup tasks.
+    
+    This function should be called during the first run of the application 
+    on a Windows system. It now includes a version check to prevent running 
+    on every startup, and logs verbose output instead of printing it.
+    """
+    if not is_windows():
+        return
+
+    # 1. Ensure AppData is set up first, so we have a log file location
+    config_dir = setup_appdata_dir()
+    
+    # 2. Get the executable path
+    exe_path = get_executable_path()
+    if not exe_path:
+        # Use simple print for this critical error, as installation won't proceed
+        print("Error: Could not determine running executable path (likely running from source). Aborting Windows setup.", file=sys.stderr)
+        return
+
+    # 3. Check if already installed
+    if check_if_installed(exe_path):
+        # Print a concise status message instead of the verbose setup prints
+        print(f"[{APP_NAME}] AppData/{PACKAGE_NAME} is set up (v{INSTALL_VERSION}). Skipping setup.")
+        return
+
+    log_message(f"Starting NEW/UPDATE Windows setup for executable: {exe_path}")
+    
+    try:
+        # Run setup tasks
+        create_desktop_launcher(exe_path)
+        register_context_menu(exe_path)
+        register_powertoys_integration(exe_path)
+        
+        # Write version file only if all setup completed successfully
+        finalize_install_version(exe_path)
+        
+        # 4. Success message to console
+        print(f"[{APP_NAME}] AppData/{PACKAGE_NAME} is set up. Check log file at {config_dir / LOG_FILE} for details.")
+
+    except Exception as e:
+        log_message(f"FATAL ERROR during Windows setup: {e}", is_error=True)
+        print(f"[{APP_NAME}] Setup failed. Check log file at {config_dir / LOG_FILE} for errors.", file=sys.stderr)
+
+
+# --- Setup Sub-Functions (Modified to use logging) ---
 
 def create_desktop_launcher(exe_path: Path):
     """
@@ -100,7 +214,6 @@ def create_desktop_launcher(exe_path: Path):
     bat_path = desktop_dir / bat_filename
 
     # Simple BAT file content to execute the application
-    # The '@echo off' prevents echoing the command. The double quotes handle spaces in paths.
     bat_content = f"""@echo off
 REM Launcher for {APP_NAME}
 "{exe_path}" %*
@@ -108,44 +221,9 @@ pause
 """
     try:
         bat_path.write_text(bat_content, encoding='utf-8')
-        print(f"Desktop launcher created: {bat_path}")
+        log_message(f"Desktop launcher created: {bat_path}")
     except Exception as e:
-        print(f"Warning: Failed to create desktop launcher {bat_path}: {e}")
-
-def register_context_menu_defunct(exe_path: Path):
-    """
-    Registers a context menu entry ("Open with EDS Plotter") when right-clicking 
-    any file in Windows Explorer.
-    """
-    if winreg is None:
-        print("Warning: 'winreg' module not available. Skipping context menu setup.")
-        return
-
-    # Registry path for adding an entry to all files (*)
-    key_path = fr"Software\Classes\*\shell\{APP_NAME}"
-    command_key_path = fr"Software\Classes\*\shell\{APP_NAME}\command"
-    
-    # The command to execute: 'C:\path\to\app.exe "%1"'
-    # %1 represents the path of the file that was right-clicked.
-    command_to_run = f'"{exe_path}" "%1"'
-
-    try:
-        # 1. Create the main key
-        key = winreg.CreateKeyEx(winreg.HKEY_CURRENT_USER, key_path)
-        winreg.SetValueEx(key, "", 0, winreg.REG_SZ, f"Open with {APP_NAME}")
-        winreg.CloseKey(key)
-
-        # 2. Create the command key and set the execution string
-        command_key = winreg.CreateKeyEx(winreg.HKEY_CURRENT_USER, command_key_path)
-        winreg.SetValueEx(command_key, "", 0, winreg.REG_SZ, command_to_run)
-        winreg.CloseKey(command_key)
-        
-        print(f"Successfully registered context menu for all files: '{APP_NAME}'")
-        print(f"Command: {command_to_run}")
-
-    except Exception as e:
-        print(f"Error registering context menu: {e}")
-
+        log_message(f"Warning: Failed to create desktop launcher {bat_path}: {e}", is_error=True)
 
 def register_context_menu(exe_path: Path):
     """
@@ -153,11 +231,11 @@ def register_context_menu(exe_path: Path):
     a PowerShell script detailing installation and usage information.
     """
     if winreg is None:
-        print("Warning: 'winreg' module not available. Skipping context menu setup.")
+        log_message("Warning: 'winreg' module not available. Skipping context menu setup.", is_error=True)
         return
 
     # 1. Determine AppData path and create PS1 file
-    config_dir = setup_appdata_dir() # Use the existing function to get the AppData path
+    config_dir = setup_appdata_dir()
     ps1_filename = f"setup_info_{PACKAGE_NAME}.ps1"
     ps1_path = config_dir / ps1_filename
 
@@ -181,17 +259,15 @@ Pause
 
     try:
         ps1_path.write_text(ps1_content, encoding='utf-8')
-        print(f"Generated PowerShell script: {ps1_path}")
+        log_message(f"Generated PowerShell script: {ps1_path}")
     except Exception as e:
-        print(f"Error generating PowerShell script: {e}")
+        log_message(f"Error generating PowerShell script: {e}", is_error=True)
         return
 
     # 2. Define Registry paths and command
-    # Targeting the folder background context menu (right-click in empty space in a folder)
     key_path = fr"Software\Classes\Directory\Background\shell\{APP_NAME} Setup"
     command_key_path = fr"Software\Classes\Directory\Background\shell\{APP_NAME} Setup\command"
     
-    # The command executes the PS1 script using PowerShell with execution policy bypassed
     command_to_run = f'powershell.exe -NoProfile -ExecutionPolicy Bypass -File "{ps1_path}"'
 
     try:
@@ -205,31 +281,23 @@ Pause
         winreg.SetValueEx(command_key, "", 0, winreg.REG_SZ, command_to_run)
         winreg.CloseKey(command_key)
         
-        print(f"Successfully registered context menu for folder backgrounds: '{APP_NAME} Setup'")
-        print(f"Command: {command_to_run}")
+        log_message(f"Successfully registered context menu for folder backgrounds: '{APP_NAME} Setup'")
+        log_message(f"Command: {command_to_run}")
 
     except Exception as e:
-        print(f"Error registering context menu: {e}")
+        log_message(f"Error registering context menu: {e}", is_error=True)
+
 
 def register_powertoys_integration(exe_path: Path):
     """
     Placeholder for more advanced OS-level integration (e.g., Clipboard/PowerToys).
-    
-    True PowerToys integration is complex and usually requires custom modules or
-    monitoring external events, which is outside the scope of a simple install script.
-    
-    A simpler OS-level access point could be:
-    1. Registering a custom URI scheme (e.g., 'edsplot://data?...')
-    2. Registering a custom Keyboard Shortcut handler (less common for apps)
-    
-    For a desktop app, the best approach for "text copied to the clipboard" 
-    is usually an **optional internal clipboard monitor** running in the background, 
-    not a registry change. We leave this function as a placeholder.
     """
-    print("\n--- PowerToys/Advanced Integration Note ---")
-    print("Advanced clipboard monitoring or PowerToys integration must be handled within the application.")
-    print("Consider registering a custom URI scheme (e.g., 'edsplot://') in the registry for deep links.")
+    log_message("\n--- PowerToys/Advanced Integration Note ---")
+    log_message("Advanced clipboard monitoring or PowerToys integration must be handled within the application.")
+    log_message("Consider registering a custom URI scheme (e.g., 'edsplot://') in the registry for deep links.")
     
+
+# --- Cleanup Sub-Functions (Modified to use logging) ---
 
 def cleanup_desktop_launcher():
     """Removes the desktop BAT file launcher."""
@@ -240,9 +308,9 @@ def cleanup_desktop_launcher():
     if bat_path.exists():
         try:
             bat_path.unlink()
-            print(f"Cleaned up desktop launcher: {bat_path}")
+            log_message(f"Cleaned up desktop launcher: {bat_path}")
         except Exception as e:
-            print(f"Warning: Failed to delete desktop launcher {bat_path}: {e}")
+            log_message(f"Warning: Failed to delete desktop launcher {bat_path}: {e}", is_error=True)
 
 def cleanup_appdata_script():
     """Removes the PowerShell setup information script from AppData."""
@@ -254,9 +322,41 @@ def cleanup_appdata_script():
         try:
             # We only delete the script, leaving the main AppData folder in place
             ps1_path.unlink()
-            print(f"Cleaned up AppData script: {ps1_path}")
+            log_message(f"Cleaned up AppData script: {ps1_path}")
         except Exception as e:
-            print(f"Warning: Failed to delete AppData script {ps1_path}: {e}")
+            log_message(f"Warning: Failed to delete AppData script {ps1_path}: {e}", is_error=True)
+
+def cleanup_install_version_file():
+    """Removes the installation version marker file."""
+    config_dir = setup_appdata_dir()
+    version_file = config_dir / INSTALL_VERSION_FILE
+    
+    if version_file.exists():
+        try:
+            version_file.unlink()
+            log_message(f"Cleaned up installation version file: {version_file.name}")
+        except Exception as e:
+            log_message(f"Warning: Failed to delete version file {version_file}: {e}", is_error=True)
+            
+def cleanup_appdata_dir_if_empty():
+    """
+    Removes the main AppData folder if it is empty after artifact cleanup.
+    """
+    config_dir = setup_appdata_dir()
+    try:
+        # Check if the directory is empty.
+        if not os.listdir(config_dir):
+            config_dir.rmdir()
+            log_message(f"Cleaned up empty AppData directory: {config_dir}")
+        else:
+            log_message(f"AppData directory {config_dir} is not empty. Leaving it in place to protect user data.")
+    except FileNotFoundError:
+        log_message(f"AppData directory {config_dir} not found during cleanup.", is_error=False)
+    except OSError as e:
+        # OSError is raised if rmdir fails because the directory is not empty or locked
+        log_message(f"Warning: Could not remove AppData directory {config_dir}: {e}", is_error=True)
+    except Exception as e:
+        log_message(f"Warning: Failed to clean up AppData directory {config_dir}: {e}", is_error=True)
             
 def cleanup_context_menu_registry():
     """Removes the context menu entries from the Windows Registry."""
@@ -268,35 +368,37 @@ def cleanup_context_menu_registry():
     try:
         # Must delete the subkey (command) before the main key
         winreg.DeleteKey(winreg.HKEY_CURRENT_USER, key_path + r"\command")
-        print(f"Cleaned up registry command subkey.")
+        log_message(f"Cleaned up registry command subkey.")
     except FileNotFoundError:
-        pass # Subkey already gone
+        log_message(f"Registry command subkey not found during cleanup.")
     except Exception as e:
-        print(f"Error cleaning up registry command subkey: {e}")
+        log_message(f"Error cleaning up registry command subkey: {e}", is_error=True)
         
     try:
         winreg.DeleteKey(winreg.HKEY_CURRENT_USER, key_path)
-        print(f"Cleaned up registry main key: {key_path}")
+        log_message(f"Cleaned up registry main key: {key_path}")
     except FileNotFoundError:
-        pass # Main key already gone
+        log_message(f"Registry main key not found during cleanup.")
     except Exception as e:
-        print(f"Error cleaning up registry main key: {e}")
+        log_message(f"Error cleaning up registry main key: {e}", is_error=True)
 
 def cleanup_windows_install():
     """
     Performs full uninstallation cleanup of all artifacts created by 
     setup_windows_install.
-    
-    This function should be called when the application is uninstalled or 
-    to remove corrupted setup artifacts.
     """
     if not is_windows():
         return
         
-    print(f"Starting Windows uninstallation cleanup for {APP_NAME}...")
+    # We must print the start of cleanup since the main loop needs to know
+    print(f"Starting Windows uninstallation cleanup for {APP_NAME}...") 
+    
     cleanup_desktop_launcher()
-    cleanup_appdata_script()
     cleanup_context_menu_registry()
+    cleanup_install_version_file() # Ensure this goes before attempting to remove the directory
+    cleanup_appdata_script()
+    cleanup_appdata_dir_if_empty()
+    
     print("Windows cleanup complete.")
 
 # Example of how this might be executed during application startup:
