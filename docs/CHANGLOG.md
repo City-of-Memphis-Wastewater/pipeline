@@ -6,6 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.3.8] - 2025-10-04
+
+This release implements critical enhancements and refactoring to the **Termux installation pipeline**, focusing on improving executable detection reliability and installation logic flow.
+
+### Added
+
+- **Modular ELF Detection:** Introduced the dedicated `is_elf()` helper function to isolate and standardize native binary detection logic within the `setup_termux_install()` dispatcher. 
+    
+- **System Library Dependency:** Added `import sys` to support new requirements for executable path resolution, necessary for advanced type detection.
+    
+
+### Changed
+
+- **Robust ELF Type Validation:** The mechanism for detecting a standalone Termux ELF binary was overhauled. Detection now utilizes a reliable **magic number check** (`b'\x7fELF'`) on the executable file, replacing the previous, less dependable heuristic based on parsing architecture strings in the filename.
+    
+- **Idempotent Shortcut Creation:** Implemented a pre-write existence check in `setup_termux_elf_shortcut()` and `setup_termux_pipx_shortcut()` to ensure **idempotency** and prevent unintentional file modification of user-customized Termux widget scripts.
+    
+- **Consolidated Pipx Setup:** The logic for setting up the separate pipx upgrade shortcut has been merged directly into the `setup_termux_pipx_shortcut()` routine, streamlining the package installation path. 
+    
+- **Refined ELF Shortcut Execution:** Modified the ELF shortcut script generation to explicitly execute a `cd "$HOME"` command prior to binary execution, mitigating execution errors in environments where the Termux widget launches from an arbitrary working directory.
+    
+
+### Refactored
+
+- **Installation Utility Removal:** Removed the centralized `_create_shortcut` utility function; its directory creation, writing, and permission-setting functionality has been inlined into specific setup functions for enhanced modularity and control.
+
+---
 
 ## [0.2.115] - 2025-10-04
 
