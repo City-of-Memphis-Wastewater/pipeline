@@ -2,8 +2,33 @@
 from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
 import sys
 import toml
+from importlib.metadata import version, PackageNotFoundError
+from pathlib import Path  
 
 from pipeline.system_info import SystemInfo
+
+# -- Versioning --
+PIP_PACKAGE_NAME = "pipeline-eds"
+
+def get_version_from_known_alias():
+    try:
+        PIPELINE_VERSION = version(PIP_PACKAGE_NAME)
+        __version__ = version(PIP_PACKAGE_NAME)
+    except PackageNotFoundError:
+        PIPELINE_VERSION = "0.0.0"
+    return PIPELINE_VERSION
+
+get_version_from_known_alias()
+try:
+    __version__ = version(PIP_PACKAGE_NAME)
+
+except PackageNotFoundError:
+    # fallback if running from source
+    try:
+            with open(Path(__file__).parent / "VERSION") as f:
+                __version__ = f.read().strip()
+    except FileNotFoundError:
+        __version__ = "dev" 
 
 # --- Version Retrieval ---
 def get_package_version() -> str:
@@ -14,7 +39,7 @@ def get_package_version() -> str:
     except Exception as e:
         # print(f"Error reading version from pyproject.toml: {e}", file=sys.stderr)
         # Fallback version if TOML fails
-        version = '0.0.0'
+        version = get_version_from_known_alias()
         
     #print(f"Detected project version: {version}")
     return version
