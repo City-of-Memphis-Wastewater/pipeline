@@ -34,8 +34,8 @@ def setup_termux_install():
 
     # Check the type of file being run, whether a pipx binary in .local/bin or an ELF file or a PYZ, etc
     if is_elf():
-        setup_termux_elf_shortcut(exe_path)
-        register_shell_alias()
+        setup_termux_elf_shortcut()
+        register_shell_alias(exe_path)
     elif is_pipx():
         setup_termux_pipx_shortcut()
         setup_termux_pipx_upgrade_shortcut()
