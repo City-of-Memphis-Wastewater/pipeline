@@ -28,6 +28,7 @@ from pipeline.termux_setup import setup_termux_shortcut
 from pipeline.windows_setup import setup_windows_install, cleanup_windows_install
 from pipeline import helpers
 from pipeline.plotbuffer import PlotBuffer
+from pipeline.version_info import  PIP_PACKAGE_NAME, PIPELINE_VERSION, __version__, get_package_version
 #from pipeline.helpers import setup_logging
 
 # --- TERMUX SETUP HOOK ---
@@ -40,31 +41,13 @@ elif environment.is_windows():
     setup_windows_install()
 
 # -- Versioning --
-CLI_APP_NAME = "pipeline"
-PIP_PACKAGE_NAME = "pipeline-eds"
 def print_version(value: bool):
     if value:
         try:
-            typer.secho(f"{CLI_APP_NAME} {PIPELINE_VERSION}",fg=typer.colors.GREEN, bold=True)
+            typer.secho(f"{PIP_PACKAGE_NAME} {PIPELINE_VERSION}",fg=typer.colors.GREEN, bold=True)
         except PackageNotFoundError:
             typer.echo("Version info not found")
         raise typer.Exit()
-try:
-    PIPELINE_VERSION = version(PIP_PACKAGE_NAME)
-    __version__ = version(PIP_PACKAGE_NAME)
-except PackageNotFoundError:
-    PIPELINE_VERSION = "unknown"
-
-try:
-    from importlib.metadata import version
-    __version__ = version(PIP_PACKAGE_NAME)
-except PackageNotFoundError:
-    # fallback if running from source
-    try:
-        with open(Path(__file__).parent / "VERSION") as f:
-            __version__ = f.read().strip()
-    except FileNotFoundError:
-        __version__ = "dev" 
 
 ### Pipeline CLI
 
