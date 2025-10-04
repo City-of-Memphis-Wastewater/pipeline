@@ -10,6 +10,9 @@ from pipeline.version_info import get_package_name
 # Constants
 APP_NAME = get_package_name()
 PACKAGE_NAME = get_package_name() # Used for executable name and AppData folder
+PIPX_UPGRADE_SCRIPTNAME = "upgrade_and_run_eds.sh"
+PIPX_RUN_SCRIPTNAME = "pipx_eds_plot.sh"
+ELF_RUN_SCRIPTNAME = "eds trend -d.sh"
 
 def setup_termux_shortcut():
     if not is_termux():
@@ -65,7 +68,7 @@ def setup_termux_pipx_shortcut():
     # Termux shortcut directory and file path
     home_dir = Path.home()
     shortcut_dir = home_dir / ".shortcuts"
-    shortcut_file = shortcut_dir / "pipx_eds_plot.sh"
+    shortcut_file = shortcut_dir / PIPX_RUN_SCRIPTNAME
 
     if shortcut_file.exists():
         # Shortcut is already set up, nothing to do
@@ -104,7 +107,7 @@ $HOME/.local/bin/eds trend --default-idcs
         print(f"Warning: Failed to set executable permissions on {shortcut_file}: {e}")
 
     # --- 2. Upgrade and Run Shortcut  ---
-    upgrade_shortcut_file = shortcut_dir / "upgrade_and_run_eds.sh"
+    upgrade_shortcut_file = shortcut_dir / PIPX_UPGRADE_SCRIPTNAME
     
     if not upgrade_shortcut_file.exists():
         upgrade_script_content = f"""#!/data/data/com.termux/files/usr/bin/bash
@@ -163,7 +166,7 @@ def setup_termux_elf_shortcut():
     # Termux shortcut directory and file path
     home_dir = Path.home()
     shortcut_dir = home_dir / ".shortcuts"
-    shortcut_file = shortcut_dir / "eds trend -d.sh"
+    shortcut_file = shortcut_dir / ELF_RUN_SCRIPTNAME
 
     if shortcut_file.exists():
         # Shortcut is already set up, nothing to do
@@ -215,12 +218,28 @@ def cleanup_termux_pipx_shortcut():
         return
         
     home_dir = Path.home()
-    shortcut_file = home_dir / ".shortcuts" / "run_eds_plot.sh"
+    shortcut_file = home_dir / ".shortcuts" / PIPX_RUN_SCRIPTNAME
 
     if shortcut_file.exists():
         try:
             shortcut_file.unlink()
             print(f"Cleaned up Termux pipx shortcut: {shortcut_file.name}")
+        except Exception as e:
+            print(f"Warning: Failed to delete Termux shortcut {shortcut_file}: {e}")
+
+
+def cleanup_termux_upgrade_shortcut():
+    """Removes the pipx-based Termux upgrade and run shortcut file."""
+    if not is_termux():
+        return
+        
+    home_dir = Path.home()
+    shortcut_file = home_dir / ".shortcuts" / PIPX_UPGRADE_SCRIPTNAME
+
+    if shortcut_file.exists():
+        try:
+            shortcut_file.unlink()
+            print(f"Cleaned up Termux pipx upgrade shortcut: {shortcut_file.name}")
         except Exception as e:
             print(f"Warning: Failed to delete Termux shortcut {shortcut_file}: {e}")
 
