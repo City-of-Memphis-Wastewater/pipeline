@@ -24,14 +24,22 @@ ALIAS_START_MARKER = f"# >>> Start {APP_NAME} Alias >>>"
 ALIAS_END_MARKER = f"# <<< End {APP_NAME} Alias <<<"
 
 def setup_termux_install():
+    """
+    Main dispatcher for Termux shortcut setup.
+    """
     if not is_termux():
         return
+    # Termux setup needs to know which type of executable is running to create the best shortcut
+    exe_path = Path(os.environ.get('_', ''))
+
     # Check the type of file being run, whether a pipx binary in .local/bin or an ELF file or a PYZ, etc
     if is_elf():
-        setup_termux_elf_shortcut()
+        setup_termux_elf_shortcut(exe_path)
         register_shell_alias()
     elif is_pipx():
         setup_termux_pipx_shortcut()
+        setup_termux_pipx_upgrade_shortcut()
+
 
 def is_pipx() -> bool:
     """Checks if the executable is running from a pipx managed environment."""
@@ -121,8 +129,10 @@ $HOME/.local/bin/eds trend --default-idcs
     except Exception as e:
         print(f"Warning: Failed to set executable permissions on {shortcut_file}: {e}")
 
+def setup_termux_pipx_upgrade_shortcut():
+
     # --- 2. Upgrade and Run Shortcut  ---
-    upgrade_shortcut_file = shortcut_dir / UPGRADE_SHORTCUT_NAME
+    upgrade_shortcut_file = _get_termux_shortcut_path() / UPGRADE_SHORTCUT_NAME
     
     if not upgrade_shortcut_file.exists():
         upgrade_script_content = f"""#!/data/data/com.termux/files/usr/bin/bash
