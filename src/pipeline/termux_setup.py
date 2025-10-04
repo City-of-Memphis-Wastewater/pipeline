@@ -163,7 +163,7 @@ fi
     _create_shortcut(_get_termux_shortcut_path() / UPGRADE_SHORTCUT_NAME, SCRIPT_CONTENT)
 
 
-def setup_termux_shortcut():
+def setup_termux_install():
     """
     Main dispatcher for Termux shortcut setup.
     """
