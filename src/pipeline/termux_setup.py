@@ -13,13 +13,20 @@ PACKAGE_NAME = get_package_name() # Used for executable name and AppData folder
 PIPX_UPGRADE_SCRIPTNAME = "pipx_eds_upgrade_and_trend.sh"
 PIPX_RUN_SCRIPTNAME = "pipx_eds_trend.sh"
 ELF_RUN_SCRIPTNAME = "eds trend -d.sh"
+TERMUX_SHORTCUT_DIR = ".shortcuts"
+BASHRC_PATH = Path.home() / ".bashrc"
 
-def setup_termux_shortcut():
+# Alias marker comments for easy cleanup
+ALIAS_START_MARKER = f"# >>> Start {APP_NAME} Alias >>>"
+ALIAS_END_MARKER = f"# <<< End {APP_NAME} Alias <<<"
+
+def setup_termux_install():
     if not is_termux():
         return
     # Check the type of file being run, whether a pipx binary in .local/bin or an ELF file or a PYZ, etc
     if is_elf():
         setup_termux_elf_shortcut()
+        register_shell_alias()
     elif is_pipx():
         setup_termux_pipx_shortcut()
 
@@ -212,6 +219,60 @@ cd "$HOME" || exit 1
     except Exception as e:
         print(f"Warning: Failed to set executable permissions on {shortcut_file}: {e}")
 
+def register_shell_alias(exe_path: Path):
+    """
+    Registers a permanent shell alias for the ELF binary in ~/.bashrc.
+    This allows the user to run the app using the package name.
+    """
+    if not BASHRC_PATH.exists():
+        # Create it if it doesn't exist
+        try:
+            BASHRC_PATH.touch()
+            print(f"Created new bash profile file: {BASHRC_PATH.name}")
+        except Exception as e:
+            print(f"Warning: Could not create {BASHRC_PATH.name} for alias: {e}")
+            return
+            
+    try:
+        current_content = BASHRC_PATH.read_text()
+    except Exception as e:
+        print(f"Error reading {BASHRC_PATH.name}: {e}")
+        return
+
+    # 1. Remove any existing block before writing a new one (handles updates)
+    start_index = current_content.find(ALIAS_START_MARKER)
+    end_index = current_content.find(ALIAS_END_MARKER)
+    
+    if start_index != -1 and end_index != -1:
+        # Find the content *before* the start marker
+        pre_content = current_content[:start_index]
+        # Find the content *after* the end marker (and the newline following it)
+        post_content = current_content[end_index + len(ALIAS_END_MARKER):]
+        # Combine them to remove the old block
+        current_content = pre_content.rstrip() + post_content
+        print("Removed existing shell alias block for update.")
+
+    # 2. Define the new alias block
+    # The alias definition must be wrapped in double quotes in the script to handle spaces
+    # and executed with the full path to ensure it finds the ELF binary.
+    alias_content = f"""
+{ALIAS_START_MARKER}
+# Alias to easily run the standalone ELF binary from any shell session
+alias {PACKAGE_NAME}='"{exe_path}"'
+{ALIAS_END_MARKER}
+"""
+    
+    # 3. Append the new block to the content
+    new_content = current_content.rstrip() + "\n" + alias_content.strip() + "\n"
+    
+    try:
+        BASHRC_PATH.write_text(new_content)
+        print(f"Registered shell alias '{PACKAGE_NAME}' in {BASHRC_PATH.name}.")
+        print("Note: You must restart Termux or run 'source ~/.bashrc' for the alias to take effect.")
+    except Exception as e:
+        print(f"Error writing to {BASHRC_PATH.name} for alias: {e}")
+
+# --- CLEAN UP / UNINSTALL ---
 def cleanup_termux_pipx_shortcut():
     """Removes the pipx-based Termux shortcut file."""
     if not is_termux():
@@ -258,7 +319,39 @@ def cleanup_termux_elf_shortcut():
         except Exception as e:
             print(f"Warning: Failed to delete Termux shortcut {shortcut_file}: {e}")
 
-def cleanup_termux_shortcut():
+def cleanup_shell_alias():
+    """
+    Removes the shell alias block from ~/.bashrc.
+    """
+    if not BASHRC_PATH.exists():
+        return
+        
+    try:
+        current_content = BASHRC_PATH.read_text()
+    except Exception as e:
+        print(f"Error reading {BASHRC_PATH.name} during cleanup: {e}")
+        return
+
+    start_index = current_content.find(ALIAS_START_MARKER)
+    end_index = current_content.find(ALIAS_END_MARKER)
+    
+    if start_index != -1 and end_index != -1:
+        try:
+            # Content before the block
+            pre_content = current_content[:start_index]
+            # Content after the block (skip the end marker and subsequent newline)
+            post_content = current_content[end_index + len(ALIAS_END_MARKER):]
+            
+            # Write the file back without the alias block
+            new_content = pre_content.rstrip() + post_content.lstrip('\n')
+            
+            BASHRC_PATH.write_text(new_content.strip() + "\n")
+            print(f"Cleaned up shell alias from {BASHRC_PATH.name}.")
+        except Exception as e:
+            print(f"Error writing to {BASHRC_PATH.name} during alias cleanup: {e}")
+
+
+def cleanup_termux_install():
     """
     Performs full uninstallation cleanup of Termux shortcut files.
     Tries to remove both possible filenames for robustness.
@@ -272,5 +365,6 @@ def cleanup_termux_shortcut():
     cleanup_termux_pipx_shortcut()
     cleanup_termux_elf_shortcut()
     cleanup_termux_pipx_upgrade_shortcut()
+    cleanup_shell_alias()
     
     print("Termux cleanup complete.")
