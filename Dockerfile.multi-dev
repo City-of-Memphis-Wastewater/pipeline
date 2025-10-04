@@ -1,0 +1,24 @@
+# syntax=docker/dockerfile:1.4
+ARG PYTHON_VERSION=3.11-slim
+FROM python:${PYTHON_VERSION}
+
+WORKDIR /app
+
+# Install essential system packages
+RUN apt-get update && apt-get install -y bash curl git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy the full project source tree
+COPY . .
+
+# Install Poetry
+RUN pip install --no-cache-dir poetry
+
+# Install all dependencies, including dev, for a full dev environment
+RUN poetry install --with dev --no-interaction --no-ansi
+
+# Expose ports if needed (e.g., for API dev server)
+EXPOSE 8000
+
+# Default entrypoint is bash for dev containers
+ENTRYPOINT ["bash"]
