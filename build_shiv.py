@@ -9,9 +9,160 @@ import subprocess
 import sys
 import zipfile
 from pathlib import Path
+import toml
 
-from pipeline.version_info import get_package_name, get_package_version, get_python_version, form_dynamic_binary_name
-from pipeline.system_info import SystemInfo
+try:
+    import distro  # external package, best for Linux detection
+except ImportError:
+    distro = None
+
+
+class SystemInfo:
+    """Detects the current OS, distro, and version information."""
+
+    def __init__(self):
+        self.system = platform.system()  # "Windows", "Linux", "Darwin"
+        self.release = platform.release()
+        self.version = platform.version()
+        self.architecture = platform.machine()
+
+    def detect_linux_distro(self) -> dict:
+        """Return Linux distribution info (if available)."""
+        if self.system != "Linux":
+            return {}
+
+        if distro:
+            return {
+                "id": distro.id(),
+                "name": distro.name(),
+                "version": distro.version(),
+                "like": distro.like(),
+            }
+        else:
+            # fallback to /etc/os-release parsing
+            os_release = Path("/etc/os-release")
+            if os_release.exists():
+                info = {}
+                for line in os_release.read_text().splitlines():
+                    if "=" in line:
+                        k, v = line.split("=", 1)
+                        info[k.strip()] = v.strip().strip('"')
+                return {
+                    "id": info.get("ID"),
+                    "name": info.get("NAME"),
+                    "version": info.get("VERSION_ID"),
+                    "like": info.get("ID_LIKE"),
+                }
+            return {"id": "unknown", "name": "unknown", "version": "unknown"}
+
+    def detect_android_termux(self) -> bool:
+        if "ANDROID_ROOT" in os.environ or "TERMUX_VERSION" in os.environ:
+            return True
+        if "android" in self.release.lower():
+            return True
+        return False
+    
+    def get_windows_tag(self) -> str:
+        """Differentiate Windows 10 vs 11 based on build number."""
+        release, version, csd, ptype = platform.win32_ver()
+        try:
+            build_number = int(version.split(".")[-1])
+        except Exception:
+            build_number = 0
+
+        if build_number >= 22000:
+            return "windows11"
+        return "windows10"
+    
+    def get_os_tag(self) -> str:
+        """Return a compact string for use in filenames (e.g. ubuntu22.04)."""
+        if self.system == "Windows":
+            return self.get_windows_tag()
+
+        if self.system == "Darwin":
+            mac_ver = platform.mac_ver()[0].split(".")[0] or "macos"
+            return f"macos{mac_ver}"
+
+        if self.system == "Linux":
+            if self.detect_android_termux():
+                return "android"
+
+            info = self.detect_linux_distro()
+            distro_id = info.get("id") or "linux"
+            distro_ver = (info.get("version") or "").replace(".", "")
+            if distro_ver:
+                return f"{distro_id}{info['version']}"
+            return distro_id
+
+        return self.system.lower()
+    
+    def get_arch(self) -> str:
+        arch = self.architecture.lower()
+        if arch in ("amd64", "x86_64"):
+            return "x86_64"
+        return self.architecture
+    
+    def to_dict(self) -> dict:
+        """Return a full snapshot of system information."""
+        info = {
+            "system": self.system,
+            "release": self.release,
+            "version": self.version,
+            "arch": self.architecture,
+            "os_tag": self.get_os_tag(),
+        }
+        if self.system == "Linux" and self.detect_android_termux():
+            info["id"] = "android"
+            info["name"] = "Android (Termux)"
+        elif self.system == "Linux":
+            info.update(self.detect_linux_distro())
+        elif self.system == "Windows":
+            info["win_version"] = platform.win32_ver()
+        elif self.system == "Darwin":
+            info["mac_ver"] = platform.mac_ver()[0]
+        return info
+
+    def pretty_print(self):
+        """Nicely formatted printout of system info."""
+        info = self.to_dict()
+        print("--- System Information ---")
+        for k, v in info.items():
+            print(f"{k:10}: {v}")
+            
+# --- Version Retrieval ---
+def get_package_version() -> str:
+    """Reads project version from pyproject.toml."""
+    try:
+        data = toml.load('pyproject.toml')
+        version = data['tool']['poetry']['version']
+    except Exception as e:
+        print(f"Error reading version from pyproject.toml: {e}", file=sys.stderr)
+        # Fallback version if TOML fails
+        version = '0.0.0'
+        
+    #print(f"Detected project version: {version}")
+    return version
+
+def get_package_name() -> str:
+    # 1. Read package name from pyproject.toml
+    try:
+        data = toml.load('pyproject.toml')
+        pkg_name = data['tool']['poetry']['name']
+    except:
+        pkg_name = 'pipeline-eds' # Fallback
+    return pkg_name
+
+def get_python_version():
+    py_major = sys.version_info.major
+    py_minor = sys.version_info.minor
+    py_version = f"py{py_major}{py_minor}"
+    return py_version
+
+def form_dynamic_binary_name(package_name: str, package_version: str, py_version: str, os_tag: str, arch: str) -> str:    
+    # Use hyphens for the CLI/EXE/ELF name
+    return f"{package_name}-{package_version}-{py_version}-{os_tag}-{arch}"
+
+# --- Include copies of naming stuff ---
 
 def determine_zipapp_name(extras_str):
     package_name = get_package_name()
