@@ -284,12 +284,12 @@ There are several ways to run `pipeline` inside Termux, depending on your needs:
 ### 🌐 Termux and Web-Based Visuals (Plotly)
 When using `pipeline-eds` in Termux to generate plots (e.g., with `eds trend`), the visuals are displayed as web-based HTML pages using libraries like Plotly. Instead of directly opening a graphical window (which is not typically supported by Termux's command-line environment), `pipeline-eds serves` these HTML files via a local web server (often on localhost).
 
-### Why localhost and Manual Opening?
+### Why localhost
 
 - Termux Sandboxing: Termux operates in a sandboxed environment on Android. This security measure restricts direct access to certain system resources, including the ability to automatically launch web browsers or other GUI applications from the command line.
 - Local Server Approach: To work around this, `pipeline-eds` acts as a small web server, making the generated HTML plot accessible at a specific localhost URL (e.g., [http://127.0.0.1:8000.](http://127.0.0.1:8000`.)
-- Manual Opening: Due to the sandboxing, Termux cannot automatically open this URL in your default Android browser. You must manually copy the provided URL from the Termux output and paste it into your preferred web browser (e.g., Chrome, Firefox) on your Android device. This allows your full-featured browser to render the interactive Plotly graph.
-- Security: This approach is also a security measure, ensuring that applications within Termux explicitly serve content, and the user consciously decides to open it in a less restricted environment (the browser).  
+- Manual Opening: Improvemenrs have been made using `xdg-open` and `termux-url-open`, so manual opening of web graphics is no longer required. Due to the sandboxing, Termux has limited ways to automatically open this URL in your default Android browser, but it is possible and now suceeds. Another approach is the `am` command, or `termux-api` but those are not used in this package. If for any reason auyomatic launching fails, you canmanually copy the provided URL from the Termux output and paste it into your preferred web browser (e.g., Chrome, Firefox) on your Android device. This allows your full-featured browser to render the interactive Plotly graph.
+- Security: Localhost-based plotting is also a security measure, ensuring that applications within Termux explicitly serve content, and the user is able tonview it in a secure yet less restricted environment (the browser).  
   
 <br>
 <hr>
