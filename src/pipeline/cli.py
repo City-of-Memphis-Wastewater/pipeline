@@ -115,13 +115,14 @@ def list_sensors(
     console.print("⚠️ The ZD for the Stiles plant is WWTF", style = "magenta")
 
 @app.command()
-def live_query(
+def live(
     idcs: list[str] = typer.Argument(..., help="Provide known idcs values that match the given zd."), # , "--idcs", "-i"
     zd: str = typer.Option('Maxson', "--zd", "-z", help = "Define the EDS ZD from your secrets file. This must correlate with your idcs point selection(s)."),
     webplot: bool = typer.Option(False,"--webplot","-w",help = "Use a web-based plot (plotly) instead of matplotlib. Useful for remote servers without display.")
 ):
     """live data plotting, based on CSV query files. Coming soon - call any, like the 'trend' command."""
-    demo_eds_webplot_point_live()
+    typer.echo(f"Coming soon!")
+    #demo_eds_webplot_point_live()
 
 @app.command()
 def defaultplant(
