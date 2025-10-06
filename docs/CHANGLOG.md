@@ -13,9 +13,10 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 
 - **Robust Termux Integration:** Major enhancements for users running the application within Termux (Android). The application now automatically detects the installation method (pipx or standalone ELF binary) and sets up the best possible shortcuts.
 - **Termux Widget Shortcuts:**
-    - **New:** Automatic creation of two Termux widget shortcuts (`{PACKAGE_NAME}-pipx.sh` or `{PACKAGE_NAME}-elf.sh`) to launch the application easily from the Android home screen.
+    - **New:** Automatic creation of Termux widget shortcuts such as (`{PACKAGE_NAME}-pipx.sh`, `{PACKAGE_NAME}-elf.sh`, or `{PACKAGE_NAME}-pyz.sh`) to launch the application easily from the Android home screen. These names infer installation method, which at this time is primarily for developer troubleshooting.
     - **New:** Creation of a separate **Upgrade Widget Shortcut** (`{PACKAGE_NAME}-upgrade.sh`) for pipx installations. This script runs a full update, including `pkg upgrade -y` and `pipx upgrade {PACKAGE_NAME}`, before launching the application.
 - **ELF Binary Shell Alias:** For users running the standalone ELF binary, a permanent shell alias (`{PACKAGE_NAME}-elf`) is now registered in `~/.bashrc` to allow the application to be run simply by typing the alias from any shell session.
+- **PYZ Binary Shell Alias:** For users running the PYZ zipapp binary, a permanent shell alias (`{PACKAGE_NAME}-pyz`) is now registered in `~/.bashrc` to allow the application to be run simply by typing the alias from any shell session.
 - **Clean Uninstallation:** Added comprehensive cleanup functions (`cleanup_termux_install`, `cleanup_shell_alias`) to safely remove all generated Termux shortcuts, aliases, and markers from `~/.bashrc` upon uninstallation.
 
 ### Changed
