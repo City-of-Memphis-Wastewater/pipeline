@@ -84,6 +84,7 @@ def setup_termux_pipx_shortcut():
     """
     Creates the Termux widget shortcut script if running in Termux and the 
     shortcut does not already exist.
+    Assumes that pipx installs to .local/bin/.
     """
     if not is_termux():
         return
@@ -107,6 +108,8 @@ def setup_termux_pipx_shortcut():
     # 2Define the content of the script
     # We use the pipx executable name directly as it is on the PATH.
     script_content = f"""#!/data/data/com.termux/files/usr/bin/bash
+# With this line, shotcuts will be treated the same as runnig from shell.
+source $HOME/.bashrc 2>/dev/null || true
 
 # Termux Widget/Shortcut Script for EDS Plotter
 # This shortcut was automatically generated during first run.
@@ -130,21 +133,30 @@ $HOME/.local/bin/eds trend --default-idcs
         print(f"Warning: Failed to set executable permissions on {shortcut_file}: {e}")
 
 def setup_termux_pipx_upgrade_shortcut():
+    """
+    Generate the Termux Widgets Shortcut to upgrade the pipx-installed package.
+    Runs afterwards to demonstrate success.
+    Assumes that pipx installs to .local/bin/.
+    """
 
     # --- 2. Upgrade and Run Shortcut  ---
     upgrade_shortcut_file = _get_termux_shortcut_path() / UPGRADE_SHORTCUT_NAME
     
     if not upgrade_shortcut_file.exists():
         upgrade_script_content = f"""#!/data/data/com.termux/files/usr/bin/bash
+# With this line, shotcuts will be treated the same as runnig from shell.
+source $HOME/.bashrc 2>/dev/null || true
 
 # Termux Widget/Shortcut Script for {APP_NAME} (Upgrade and Run)
 # Updates core packages and the pipx installation before running the app.
 
 echo "--- Starting Termux Environment Update ---"
-
 # Update core system packages
 pkg upgrade -y
 
+echo " --- Updating pipeline-eds with pipx ---"
+echo "which pipeline-eds"
+which pipeline-eds
 # If installed via pipx, update the app
 if command -v {PACKAGE_NAME} &> /dev/null; then
     echo "Upgrading {PACKAGE_NAME} via pipx..."
@@ -208,6 +220,8 @@ def setup_termux_elf_shortcut():
     # We use the specific filename determined above. We also add 'cd $HOME'
     # as Termux widgets sometimes execute from an arbitrary path.
     script_content = f"""#!/data/data/com.termux/files/usr/bin/bash
+# With this line, shotcuts will be treated the same as runnig from shell.
+source $HOME/.bashrc 2>/dev/null || true
 
 # Termux Widget/Shortcut Script for EDS Plotter
 # This shortcut was automatically generated during first run.
@@ -218,8 +232,13 @@ def setup_termux_elf_shortcut():
 cd "$HOME" || exit 1 
 
 # Execute the application (The ELF binary)
-./{exec_filename} --version 
-./{exec_filename} trend --default-idcs
+# NEW WAY - allows shortcut to be build for wherever the executible is running from, rather than assuming it is in $HOME
+{running_exec_path} --version 
+{running_exec_path} trend --default-idcs
+
+# OLD WAY - assumed shortcut was in $HOME
+#./{exec_filename} --version 
+#./{exec_filename} trend --default-idcs
 """
 
     # 4. Write the script to the file
