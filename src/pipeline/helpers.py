@@ -8,7 +8,8 @@ import os
 import logging
 import socket
 import re
-
+import zipfile
+from pathlib import Path
 
 from pipeline.time_manager import TimeManager
 
@@ -84,17 +85,16 @@ def function_view(globals_passed=None):
                 print(f"  {name}")
     print("\n")
 
-#def get_nested_config(dct: dict, keys: list[str]):
-def get_nested_config(dct, keys):
-    """Retrieve nested dict value by keys list; raise KeyError with full path if missing."""
-    current = dct
-    for key in keys:
-        try:
-            current = current[key]
-        except KeyError as e:
-            full_path = " -> ".join(keys)
-            raise KeyError(f"Missing required configuration at path: {full_path}") from e
-    return current
+
+def check_if_zip(file_path: str | Path) -> bool:
+    """Checks if the file at the given path is a valid ZIP archive."""
+    try:
+        return zipfile.is_zipfile(file_path)
+    except Exception:
+        # Handle cases where the path might be invalid, or other unexpected errors
+        return False
+
+
 
 def human_readable(ts):
     return datetime.fromtimestamp(ts).strftime("%H:%M:%S")

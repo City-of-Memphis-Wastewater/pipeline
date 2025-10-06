@@ -6,15 +6,18 @@ import sys
 
 from pipeline.environment import is_termux
 from pipeline.version_info import get_package_name
+from pipeline.source_check import is_pipx, is_pyz, is_elf
     
 # Constants
 APP_NAME = get_package_name()
 PACKAGE_NAME = get_package_name() # Used for executable name and AppData folder
 PACKAGE_NAME_ELF = f"{get_package_name()}-elf"
+PACKAGE_NAME_PYZ = f"{get_package_name()}-pyz"
 
 # Shortcut filenames for cleanup
-ELF_SHORTCUT_NAME = f"{PACKAGE_NAME}-elf.sh"
-PIPX_SHORTCUT_NAME = f"{PACKAGE_NAME}-pipx.sh"
+SHORTCUT_NAME_ELF = f"{PACKAGE_NAME}-elf.sh"
+SHORTCUT_NAME_PYZ = f"{PACKAGE_NAME}-pyz.sh"
+SHORTCUT_NAME_PIPX = f"{PACKAGE_NAME}-pipx.sh"
 UPGRADE_SHORTCUT_NAME = f"{PACKAGE_NAME}-upgrade.sh" # New script for pipx upgrades
 
 TERMUX_SHORTCUT_DIR = ".shortcuts"
@@ -33,47 +36,16 @@ def setup_termux_install(force=False):
 
     # Check the type of file being run, whether a pipx binary in PIPX_BIN_DIR or an ELF file or a PYZ, etc
     if is_elf():
-        setup_termux_widget_elf_shortcut(force)
-        register_shell_alias_elf_to_basrc(force)
+        setup_termux_widget_executable_shortcut(force, shortcut_name = SHORTCUT_NAME_ELF)
+        register_shell_alias_executable_to_basrc(force, package_name = PACKAGE_NAME_ELF)
+    elif is_pyz():
+        setup_termux_widget_executable_shortcut(force, shortcut_name = SHORTCUT_NAME_PYZ)
+        register_shell_alias_executable_to_basrc(force, package_name = PACKAGE_NAME_PYZ)
     elif is_pipx():
         setup_termux_widget_pipx_shortcut(force)
         setup_termux_widget_pipx_upgrade_shortcut(force)
 
 
-def is_pipx() -> bool:
-    """Checks if the executable is running from a pipx managed environment."""
-    try:
-        # pipx installs symlinks typically in PIPX_BIN_DIR/ or Termux system bin.
-        exec_path = Path(sys.argv[0]).resolve()
-        # Check for common pipx/system bin path substrings
-        return "local/bin" in str(exec_path) or exec_path.parent.name == 'bin'
-    except Exception:
-        # Fallback for unexpected path errors
-        return False
-
-def is_elf() -> bool:
-    """Checks if the currently running executable (sys.argv[0]) is a standalone PyInstaller-built ELF binary."""
-    # If it's a pipx installation, it is not the monolithic binary we are concerned with here.
-    if is_pipx():
-        return False
-        
-    exec_path = Path(sys.argv[0]).resolve()
-    
-    # Check if the file exists and is readable
-    if not exec_path.is_file():
-        return False
-        
-    try:
-        # Check the magic number: The first four bytes of an ELF file are 0x7f, 'E', 'L', 'F' (b'\x7fELF').
-        # This is the most reliable way to determine if the executable is a native binary wrapper (like PyInstaller's).
-        with open(exec_path, 'rb') as f:
-            magic_bytes = f.read(4)
-        
-        return magic_bytes == b'\x7fELF'
-    except Exception:
-        # Handle exceptions like PermissionError, IsADirectoryError, etc.
-        return False
-    
 def _get_termux_shortcut_path() -> Path:
     """Returns the absolute path to the Termux widget shortcut directory."""
     return Path.home() / TERMUX_SHORTCUT_DIR
@@ -90,7 +62,7 @@ def setup_termux_widget_pipx_shortcut(force=False):
     # Termux shortcut directory and file path
     home_dir = Path.home()
     shortcut_dir = home_dir / ".shortcuts"
-    shortcut_file = shortcut_dir / PIPX_SHORTCUT_NAME
+    shortcut_file = shortcut_dir / SHORTCUT_NAME_PIPX
 
     if shortcut_file.exists() and not force:
         # Shortcut is already set up, nothing to do
@@ -105,14 +77,14 @@ def setup_termux_widget_pipx_shortcut(force=False):
 
     # 2Define the content of the script
     # We use the pipx executable name directly as it is on the PATH.
-    script_content = f"""#!/data/data/com.termux/files/usr/bin/bash
-# With this line, shotcuts will be treated the same as runnig from shell.
+    script_content = f"""#!/usr/bin/env bash
+# With this line, shortcuts will be treated the same as runnig from shell.
 source $HOME/.bashrc 2>/dev/null || true
 
-# Termux Widget/Shortcut Script for EDS Plotter
+# Termux Widget/Shortcut Script
 # This shortcut was automatically generated during first run.
-PIPX_BIN_DIR/{PACKAGE_NAME} --version 
-PIPX_BIN_DIR/eds trend --default-idcs
+{PACKAGE_NAME} --version 
+{PACKAGE_NAME} trend --default-idcs
 """
 
     # Write the script to the file
@@ -143,7 +115,7 @@ def setup_termux_widget_pipx_upgrade_shortcut(force):
     if upgrade_shortcut_file.exists() and not force: # force is True allows override of old version of the shortcut script, meant for the CLI `install --upgrade` command, and not when the program runs every time on start up
         return
         
-    upgrade_script_content = f"""#!/data/data/com.termux/files/usr/bin/bash
+    upgrade_script_content = f"""#!/usr/bin/env bash
 # With this line, shortcuts will be treated the same as runnig from shell.
 source $HOME/.bashrc 2>/dev/null || true
 
@@ -166,7 +138,7 @@ if command -v {PACKAGE_NAME} &> /dev/null; then
     echo "Upgrading shortcut script {UPGRADE_SHORTCUT_NAME}..."
     # The 'install' command with the --upgrade flag
     # forces the Python code to re-generate both shortcut scripts.
-    PIPX_BIN_DIR/{PACKAGE_NAME} install --upgrade
+    {PACKAGE_NAME} install --upgrade
     echo "{PACKAGE_NAME} upgrade complete. This should impact all Termux widget shortcut scripts relevant to a pipx installation."
     # Things might get weird here if the {PACKAGE_NAME} package name alias is pointed at a binary rather than at the pipx CLI installation.
 else
@@ -175,7 +147,8 @@ fi
 
 echo "--- Launching {APP_NAME} ---"
 # Execute the application
-PIPX_BIN_DIR/{PACKAGE_NAME} trend --default-idcs
+{PACKAGE_NAME} --version
+{PACKAGE_NAME} trend --default-idcs
 """
     try:
         upgrade_shortcut_file.write_text(upgrade_script_content, encoding='utf-8')
@@ -185,7 +158,7 @@ PIPX_BIN_DIR/{PACKAGE_NAME} trend --default-idcs
         print(f"Warning: Failed to set up Termux pipx upgrade shortcut: {e}")
 
 
-def setup_termux_widget_elf_shortcut(force=False):
+def setup_termux_widget_executable_shortcut(force=False, shortcut_name=None):
     """
     Creates the Termux widget shortcut script if running in Termux and the 
     shortcut does not already exist. It uses the filename of the currently 
@@ -193,15 +166,15 @@ def setup_termux_widget_elf_shortcut(force=False):
     """
     if not is_termux():
         return
-
-    # 1. Determine the name of the running executable (the ELF binary)
+    if shortcut_name is None:
+        print(f"shortcut_name not provided")
+        return
+    
+    # 1. Determine the name of the running executable (the ELF or PYZ binary)
     try:
         # sys.argv[0] is the path to the currently running executable (e.g., pipeline-0.2.1-aarch64).
         running_exec_path = Path(sys.argv[0])
         exec_filename = running_exec_path.name
-        
-        # NOTE: No checks for .pyz extension are needed, as we assume the executable
-        # is the Termux-native ELF wrapper when running in this environment.
 
     except IndexError:
         print("Warning: Could not determine running executable name from sys.argv. Aborting shortcut creation.", file=sys.stderr)
@@ -210,7 +183,7 @@ def setup_termux_widget_elf_shortcut(force=False):
     # Termux shortcut directory and file path
     home_dir = Path.home()
     shortcut_dir = home_dir / ".shortcuts"
-    shortcut_file = shortcut_dir / ELF_SHORTCUT_NAME
+    shortcut_file = shortcut_dir / shortcut_name
 
     if shortcut_file.exists() and not force:
         # Shortcut is already set up, nothing to do
@@ -224,22 +197,16 @@ def setup_termux_widget_elf_shortcut(force=False):
         return
 
     # 3. Define the content of the script
-    # We use the specific filename determined above. We also add 'cd $HOME'
-    # as Termux widgets sometimes execute from an arbitrary path.
-    script_content = f"""#!/data/data/com.termux/files/usr/bin/bash
-# With this line, shotcuts will be treated the same as runnig from shell.
+    script_content = f"""#!/usr/bin/env bash
+# With this line, shortcuts will be treated the same as runnig from shell.
 source $HOME/.bashrc 2>/dev/null || true
 
-# Termux Widget/Shortcut Script for EDS Plotter
+# Termux Widget/Shortcut Script
 # This shortcut was automatically generated during first run.
 # It targets the executable named '{exec_filename}'.
-# ASSUMPTION: The user has copied the Termux ELF binary to $HOME.
 
-# Change directory to $HOME where the executable should reside for relative execution
-cd "$HOME" || exit 1 
-
-# Execute the application (The ELF binary)
-# Allows shortcut to be built for wherever the executible is running from, rather than assuming it is in $HOME
+# Execute the application (The ELF or PYZ binary)
+# Allows shortcut to be built for wherever the executable is running from, rather than assuming it is in $HOME
 {running_exec_path} --version 
 {running_exec_path} trend --default-idcs
 
@@ -261,14 +228,21 @@ cd "$HOME" || exit 1
     except Exception as e:
         print(f"Warning: Failed to set executable permissions on {shortcut_file}: {e}")
 
-def register_shell_alias_elf_to_basrc(force=False):
+def register_shell_alias_executable_to_basrc(force=False, package_name = None):
     """
-    Registers a permanent shell alias for the ELF binary in ~/.bashrc.
+    Registers a permanent shell alias for the ELF or PYZ binary in ~/.bashrc.
     This allows the user to run the app using the package name.
     """
-
+    if package_name is None:
+        print(f"package_name not provided")
+        return
     # Termux setup needs to know which type of executable is running to create the best shortcut
-    exe_path = Path(os.environ.get('_', ''))
+    try:
+        # Resolve the path to handle symlinks (Termux execution might involve one)
+        exe_path = Path(sys.argv[0]).resolve() 
+    except IndexError:
+        print("Warning: Could not determine running executable name from sys.argv. Aborting alias.", file=sys.stderr)
+        return
 
     if not BASHRC_PATH.exists() or force:
         # Create it if it doesn't exist
@@ -300,11 +274,11 @@ def register_shell_alias_elf_to_basrc(force=False):
 
     # 2. Define the new alias block
     # The alias definition must be wrapped in double quotes in the script to handle spaces
-    # and executed with the full path to ensure it finds the ELF binary.
+    # and executed with the full path to ensure it finds the ELF or PYZ binary.
     alias_content = f"""
 {ALIAS_START_MARKER}
-# Alias to easily run the standalone ELF binary from any shell session
-alias {PACKAGE_NAME_ELF}='"{exe_path}"'
+# Alias to easily run the standalone ELF or PYZ binary from any shell session
+alias {package_name}='"{exe_path}"'
 {ALIAS_END_MARKER}
 """
     
@@ -313,7 +287,7 @@ alias {PACKAGE_NAME_ELF}='"{exe_path}"'
     
     try:
         BASHRC_PATH.write_text(new_content)
-        print(f"Registered shell alias '{PACKAGE_NAME}' in {BASHRC_PATH.name}.")
+        print(f"Registered shell alias '{package_name}' in {BASHRC_PATH.name}.")
         print("Note: You must restart Termux or run 'source ~/.bashrc' for the alias to take effect.")
     except Exception as e:
         print(f"Error writing to {BASHRC_PATH.name} for alias: {e}")
@@ -372,8 +346,8 @@ def cleanup_termux_install():
     print(f"Starting Termux uninstallation cleanup in {shortcut_dir}...")
     
     # Clean up artifacts
-    _remove_file_if_exists(shortcut_dir / ELF_SHORTCUT_NAME, "ELF shortcut")
-    _remove_file_if_exists(shortcut_dir / PIPX_SHORTCUT_NAME, "pipx shortcut")
+    _remove_file_if_exists(shortcut_dir / SHORTCUT_NAME_ELF, "ELF shortcut")
+    _remove_file_if_exists(shortcut_dir / SHORTCUT_NAME_PIPX, "pipx shortcut")
     _remove_file_if_exists(shortcut_dir / UPGRADE_SHORTCUT_NAME, "pipx upgrade shortcut")
     cleanup_shell_alias() # New cleanup step
     

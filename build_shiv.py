@@ -174,10 +174,10 @@ def determine_zipapp_name(extras_str):
     architecture = sysinfo.get_arch()
 
     # Determine the executable name (without the extension)
-    executible_descriptor = form_dynamic_binary_name(package_name, package_version, py_version, os_tag, architecture)
+    executable_descriptor = form_dynamic_binary_name(package_name, package_version, py_version, os_tag, architecture)
     
     # Append the extension
-    zipapp_filename = f"{executible_descriptor}{extras_str}.pyz"
+    zipapp_filename = f"{executable_descriptor}{extras_str}.pyz"
     return zipapp_filename
 
 def run_command(command, check=False, cwd=None):

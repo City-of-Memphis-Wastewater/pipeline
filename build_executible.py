@@ -1,4 +1,4 @@
-# build_executible.py
+# build_executable.py
 from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
 import os
 from pathlib import Path
@@ -13,7 +13,7 @@ from pipeline.system_info import SystemInfo
 Builds an EXE when run on Windows 
 Builds an ELF binary when run on Linunx
 How to run:
-    poetry run python build_executible.py
+    poetry run python build_executable.py
 """
 
 # --- Configuration ---
@@ -114,7 +114,7 @@ if __name__ == '__main__':
     generate_rc_file(package_version)
     
     # 2. Determine the executable name (without the extension)
-    executible_descriptor = form_dynamic_binary_name(package_name, package_version, py_version, os_tag, architecture)
+    executable_descriptor = form_dynamic_binary_name(package_name, package_version, py_version, os_tag, architecture)
     
     # 3. Run the installer
-    run_pyinstaller(executible_descriptor)
+    run_pyinstaller(executable_descriptor)
