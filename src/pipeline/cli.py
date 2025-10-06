@@ -376,12 +376,14 @@ def list_workspaces():
 
 @app.command()
 def install(
-    uninstall: bool = typer.Option(False,"--uninstall","-u",help = "Remove the installation artifacts for the current operating system.")
+    uninstall: bool = typer.Option(False,"--uninstall","-un",help = "Remove the installation artifacts for the current operating system."),
+    upgrade: bool = typer.Option(False, "--upgrade", "-up", help = "Uppgrades will be forece, namely shortcut scripts on Termux will be overwritten even if they already exist.")
 ):
     """
     Windows: Uninstall the registry context-menu item, the launcher BAT, and the AppData folder
     Termux: Remove the scripts from the .shortcuts/ folder.
     """
+
     if uninstall:
         if environment.is_windows():
             if typer.confirm("Are you sure you want to uninstall the registry context-menu item, the launcher BAT, and empty out the AppData folder?"):
@@ -389,10 +391,15 @@ def install(
         elif environment.is_termux():
             cleanup_termux_install()
     else:
+
         if environment.is_windows():
+            typer.echo("AppData will be set up explicity and a content menu item will be added to your Registry.")
             setup_windows_install()
         elif environment.is_termux():
-            setup_termux_install()
+            typer.echo("Scripts will now be added to the $HOME/.shortcuts/ directory for launching from the Termux Widget.")
+            setup_termux_install(force=upgrade)
+
+        
 
 
 @app.command()

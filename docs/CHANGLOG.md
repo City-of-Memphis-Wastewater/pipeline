@@ -2,8 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+The format is (read: strives to be) based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+
+---
+
+## [0.3.10] - 2025-10-05
+
+### Added
+
+- **Robust Termux Integration:** Major enhancements for users running the application within Termux (Android). The application now automatically detects the installation method (pipx or standalone ELF binary) and sets up the best possible shortcuts.
+- **Termux Widget Shortcuts:**
+    - **New:** Automatic creation of two Termux widget shortcuts (`{PACKAGE_NAME}-pipx.sh` or `{PACKAGE_NAME}-elf.sh`) to launch the application easily from the Android home screen.
+    - **New:** Creation of a separate **Upgrade Widget Shortcut** (`{PACKAGE_NAME}-upgrade.sh`) for pipx installations. This script runs a full update, including `pkg upgrade -y` and `pipx upgrade {PACKAGE_NAME}`, before launching the application.
+- **ELF Binary Shell Alias:** For users running the standalone ELF binary, a permanent shell alias (`{PACKAGE_NAME}-elf`) is now registered in `~/.bashrc` to allow the application to be run simply by typing the alias from any shell session.
+- **Clean Uninstallation:** Added comprehensive cleanup functions (`cleanup_termux_install`, `cleanup_shell_alias`) to safely remove all generated Termux shortcuts, aliases, and markers from `~/.bashrc` upon uninstallation.
+
+### Changed
+
+- **Improved Shortcut Execution Logic:** Termux shortcut scripts now use the resolved path of the running executable (e.g., `{running_exec_path}`) instead of assuming its location or relying on a simple filename, significantly improving reliability.
+- **Dependency Management:** All Termux widget scripts now explicitly `source $HOME/.bashrc` to ensure necessary environment variables and aliases are loaded when running from a non-interactive widget environment.
+
+### Refactored
+
+- Internal Termux setup functions were renamed for improved clarity and consistency:
+    - `setup_termux_elf_shortcut` to **`setup_termux_widget_elf_shortcut`**
+    - `register_shell_alias_elf` to **`register_shell_alias_elf_to_basrc`**
+	
 ---
 
 ## [0.3.8] - 2025-10-04

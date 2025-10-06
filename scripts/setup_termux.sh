@@ -1,1 +1,1 @@
-export PATH = "HOME/.local/bin:PATH"
+export PATH = "PIPX_BIN_DIR:PATH"
