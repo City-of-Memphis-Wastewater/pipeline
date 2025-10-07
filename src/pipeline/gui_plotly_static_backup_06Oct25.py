@@ -56,88 +56,16 @@ class PlotServer(http.server.SimpleHTTPRequestHandler):
 class MockBuffer:
     def get_all(self):
         return {
-            "Series Alpha": {"x": [1, 2, 3, 4], "y": [10, 20, 15, 25], "unit": "MG/L"},
-            "Series Beta": {"x": [1, 2, 3, 4], "y": [5, 12, 18, 10], "unit": "MGD"},
-            "Series Gamma": {"x": [1, 2, 3, 4], "y": [5000, 4000, 12000, 9000], "unit": "KW"},
-            "Series Sigma": {"x": [1, 2, 3, 4], "y": [5000, 4000, 12000, 9000], "unit": "KW"},
+            "Series Alpha": {"x": [1, 2, 3, 4], "y": [10, 20, 15, 25]},
+            "Series Beta": {"x": [1, 2, 3, 4], "y": [5, 12, 18, 10]},
         }
 #plot_buffer = MockBuffer()
-
-COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
-    
-
-# --- Helper Function for Normalization ---
-# It's good practice to have this as a separate, robust function.
-# Normalization function (scaling to range [0, 1])
-# Returns the normalized array, min, and max of the original data
-def normalize(data):
-    """Normalizes a numpy array to the range [0, 1], 
-    and return max and min."""
-    min_val = np.min(data)
-    max_val = np.max(data)
-    # Handle the case where max_val == min_val to avoid division by zero
-    if max_val == min_val:
-        return np.zeros_like(data), min_val, max_val
-    return (data - min_val) / (max_val - min_val), min_val, max_val
-
-# Function to normalize a set of ticks based on the original data's min/max
-def normalize_ticks(ticks, data_min, data_max):
-    # Handle the case where max_val == min_val
-    if data_max == data_min:
-        return np.zeros_like(ticks)
-    return (ticks - data_min) / (data_max - data_min)
-
-def get_ticks_array_n(y_min, y_max, steps):
-    # Calculate the step size
-    step = (y_max - y_min) / steps
-    array_tick_location = []
-    for i in range(steps+1): 
-        array_tick_location.append(y_min+i*step)
-    return array_tick_location
-
-def build_y_axis(y_data,j,axis_label,tick_count = 10):
-    # Normalize the data and get min/max for original scale
-    yn_normalized, yn_min, yn_max = normalize(y_data)
-    
-    # Define the original tick values for each axis
-    
-    yn_original_ticks = get_ticks_array_n(yn_min,yn_max,tick_count)
-    
-    # Calculate the normalized positions for the original ticks
-    yn_ticktext = [f"{t:.0f}" for t in yn_original_ticks]
-    # Y-axis 1
-    """
-    yaxis_dict=dict(
-        title=axis_label,
-        side="left",
-        range=[0, 1], # Key 1: Set the axis range to the normalized data range
-        tickmode='array',
-        tickvals=normalize_ticks(yn_original_ticks, yn_min, yn_max), # Key 2: Normalized positions
-        ticktext=yn_ticktext,           # Key 3: Original labels
-        color=COLORS[j]
-    ),"""
-
-    yaxis_dict=dict(
-        title=axis_label,
-        overlaying="free", # or "no", no known difference
-        side="left",
-        anchor="free",
-        position = (0.002*j**2)+(j*0.05)+0.05,
-        #range=[0, 1], # Set the axis range to the normalized data range
-        range = [-0.05, 1.05], # Set range for normalized data [0,1] with a little padding
-        tickmode='array',
-        tickvals=normalize_ticks(yn_original_ticks, yn_min, yn_max), # Normalized positions
-        ticktext=yn_ticktext,           # Original labels
-        color=COLORS[j])
-    
-    return yaxis_dict
-# --- Modified show_static Function ---
 
 def show_static(plot_buffer):
     """
     Renders the current contents of plot_buffer as a static HTML plot.
-    - Data is visually normalized, but hover-text shows original values.
-    - Each curve gets its own y-axis, evenly spaced horizontally.
+    Does not listen for updates.
+    launches a temporary server that can be shut down via a button on the plot page.
     """
     if plot_buffer is None:
         print("plot_buffer is None")
@@ -145,87 +73,58 @@ def show_static(plot_buffer):
 
     with buffer_lock:
         data = plot_buffer.get_all()
-        
-    if not data:
-        print("plot_buffer is empty")
-        return
 
+    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
     traces = []
-    units_used = []
-    layout_updates = {}
-    j=0
     for i, (label, series) in enumerate(data.items()):
-        
-        y_original = series["y"]
-        unit = series["unit"]
-        # 1. VISUAL NORMALIZATION: Normalize y-data for plotting
-        y_normalized = normalize(y_original)
-        
-        # Determine the y-axis ID for this trace. First is 'y', second is 'y2', etc.
-        axis_id = 'y' if i == 0 else f'y{i+1}' # This is the Plotly trace axis *name* ('y1', 'y2', etc.)
-
-
         scatter_trace = go.Scatter(
             x=series["x"],
-            y=y_normalized,  # Use normalized data for visual plotting
+            y=series["y"],
             mode="lines+markers",
             name=label,
-            yaxis=axis_id, # Link this trace to its specific y-axis using the expected plotly jargon (e.g. 'y', 'y1', 'y2', 'y3', etc.) 
-            line=dict(color=COLORS[i % len(COLORS)],width=2),
-            #line=dict(color=COLORS[i],width=2),
-            marker=dict(color=COLORS[i],size=10,symbol='circle'),
-            
-        #,
-            # 2. NUMERICAL ACCURACY: Store original data for hover info
-            customdata=y_original,
-            hovertemplate=(
-                f"<b>{label}</b><br>"
-                "X: %{x}<br>"
-                "Y: %{customdata:.4f}<extra></extra>" # Display original Y from customdata
-            )
         )
+        # Explicitly set the line and marker color using update()
+        # This is a robust way to ensure the properties are set
         
+        scatter_trace.update(
+            line=dict(
+                color=colors[i],
+                width=2
+            ),
+            marker=dict(
+                color=colors[i],
+                size=10,
+                symbol='circle'
+            )
+        )   
         traces.append(scatter_trace)
 
-        # The first axis is named 'yaxis', subsequent ones are 'yaxis2', 'yaxis3', etc.
-        if not unit in units_used:
-
-            units_used.append(unit)
-            j+=1
-            layout_key = 'yaxis' if j == 0 else f'yaxis{j+1}'
-            layout_updates[layout_key] = build_y_axis(y_original,j,axis_label = f"{unit}",tick_count = 10)
-            
-    # --- Figure Creation and Layout Updates ---
-
-    # Define the base layout, hiding the default legend since axes titles now serve that purpose
     layout = go.Layout(
-        title="EDS Data Plot (Static, Visually Normalized)",
-        showlegend=True, 
-        xaxis=dict(domain= [0.05, 0.95],title="Time") # Add a small margin to prevent axes titles from being cut off
+        title="EDS Data Plot (Static)",
+        margin=dict(t=40),
+        #colorway=['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
     )
 
     fig = go.Figure(data=traces, layout=layout)
-    
-    # Apply all the generated y-axis layouts at once
+
     # Update the layout to position the legend at the top-left corner
     fig.update_layout(legend=dict(
-        yanchor="auto",
-        y=0.0,
-        xanchor="auto",
-        x=0.0,
-        bgcolor='rgba(255, 255, 255, 0.1)',  # Semi-transparent background
-        bordercolor='black',   
-        )
-    )
-
-    # Apply all the generated y-axis layouts at once
-    fig.update_layout(**layout_updates)
-    if True:
-        fig.update_layout(legend=dict(title="Curves"))
-    # --- File Generation and Display ---
+    yanchor="auto",
+    y=0.0,
+    xanchor="auto",
+    x=0.0,
+    bgcolor='rgba(255, 255, 255, 0.1)',  # Semi-transparent background
+    bordercolor='black',
+    
+    ))
 
     # Write to a temporary HTML file
+    # Use Path to handle the temporary file path
     tmp_file = tempfile.NamedTemporaryFile(suffix=".html", delete=False, mode='w', encoding='utf-8')
+    
+    # Write the plot to the file
+    #pyo.plot(fig, filename=tmp_file.name, auto_open=False)
+    # Write the plot to the file while forcing the entire Plotly JS library (about 3MB) to be included in the HTML file
     pyo.plot(fig, filename=tmp_file.name, auto_open=False, include_plotlyjs='full')
     tmp_file.close()
 

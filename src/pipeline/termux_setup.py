@@ -18,7 +18,7 @@ PACKAGE_NAME_PYZ = f"{get_package_name()}-pyz"
 SHORTCUT_NAME_ELF = f"{PACKAGE_NAME}-elf.sh"
 SHORTCUT_NAME_PYZ = f"{PACKAGE_NAME}-pyz.sh"
 SHORTCUT_NAME_PIPX = f"{PACKAGE_NAME}-pipx.sh"
-UPGRADE_SHORTCUT_NAME = f"{PACKAGE_NAME}-upgrade.sh" # New script for pipx upgrades
+UPGRADE_SHORTCUT_NAME = f"{PACKAGE_NAME}-upgrade-pipx.sh" # New script for pipx upgrades
 
 TERMUX_SHORTCUT_DIR = ".shortcuts"
 BASHRC_PATH = Path.home() / ".bashrc"
@@ -38,9 +38,11 @@ def setup_termux_install(force=False):
     if is_elf():
         setup_termux_widget_executable_shortcut(force, shortcut_name = SHORTCUT_NAME_ELF)
         register_shell_alias_executable_to_basrc(force, package_name = PACKAGE_NAME_ELF)
+        setup_linux_app_data_directory(force)
     elif is_pyz():
         setup_termux_widget_executable_shortcut(force, shortcut_name = SHORTCUT_NAME_PYZ)
         register_shell_alias_executable_to_basrc(force, package_name = PACKAGE_NAME_PYZ)
+        setup_linux_app_data_directory(force)
     elif is_pipx():
         setup_termux_widget_pipx_shortcut(force)
         setup_termux_widget_pipx_upgrade_shortcut(force)
@@ -50,7 +52,9 @@ def _get_termux_shortcut_path() -> Path:
     """Returns the absolute path to the Termux widget shortcut directory."""
     return Path.home() / TERMUX_SHORTCUT_DIR
 
-    
+def setup_linux_app_data_directory():
+    pass
+
 def setup_termux_widget_pipx_shortcut(force=False):
     """
     Creates the Termux widget shortcut script if running in Termux and the 

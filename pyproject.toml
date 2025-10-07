@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pipeline-eds"
-version = "0.3.10"
+version = "0.3.11"
 description = "The API pipeline library, with CLI tools. Key target: The Emerson Ovation EDS REST API."
 authors = ["George Clayton Bennett <george.bennett@memphistn.gov>"]
 license = "BSD-3"
@@ -60,7 +60,13 @@ mysql-connector-python = [
     { version = "^9.3.0", python = ">=3.9" },
     { version = "^8.3.0", python = "3.8.*" },
 ]
-
+# numpy 
+numpy = [
+    { version = "^2.3.3", python = ">=3.11" },
+    { version = "^1.26.0", python = "3.10.*" },
+    { version = "^1.25.0", python = "3.9.*" },
+    { version = "^1.24.4", python = "3.8.*" },
+]
 # pendulum: Version 3.x requires Python >=3.9, so we pin 2.x for 3.8.
 pendulum = [
     { version = "^3.1.0", python = ">=3.9" },
