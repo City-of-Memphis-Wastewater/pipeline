@@ -7,6 +7,28 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 
 ---
 
+### [0.3.14] - 2025-10-07
+
+### Fixed
+
+- **Termux Installation Stability:** Minor internal refinements to the Termux shortcut generation and shell alias cleanup routines.
+- **Termux Alias Conflict:** Corrected an issue where standalone binaries (ELF and PYZ) installed in Termux would incorrectly register the generic package name (`pipeline-eds`) as a shell alias in `~/.bashrc`.
+    - **The Problem:** For versions **0.3.3 through 0.3.12**, this led to conflicts by potentially overwriting the alias intended for the **pipx installation**.
+    - **The Solution:** Standalone installations now use distinct, unique aliases to allow all installation types to coexist cleanly:
+        - **ELF Binary:** Registers the alias: **`pipeline-eds-elf`**
+        - **PYZ Binary:** Registers the alias: **`pipeline-eds-pyz`**
+    - *Note: Users who ran a standalone binary in Termux during the affected versions should run the application's cleanup command or manually remove any problematic `pipeline-eds` alias blocks from `~/.bashrc`.*
+	
+---
+
+## [0.3.12] - 2025-10-07
+
+### Fixed
+
+- Fixed a critical rendering bug in the static Plotly generator (gui_plotly_static.py) where traces linked to secondary Y-axes (yaxis2, yaxis3, etc.) were incorrectly clipped or hidden. This issue prevented users from seeing all data series when multiple units were plotted. The resolution involves explicitly setting the overlaying='y' property for all non-primary Y-axes to ensure correct canvas drawing order.
+
+---
+
 ## [0.3.10] - 2025-10-05
 
 ### Added

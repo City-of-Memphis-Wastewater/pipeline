@@ -20,6 +20,8 @@ except ImportError:
 APP_NAME = get_package_name()
 PACKAGE_NAME = get_package_name() # Used for executable name and AppData folder
 INSTALL_VERSION = get_package_version()
+PACKAGE_ALIAS_EXE = f"{get_package_name()}-exe" # alias for non-pipx binary
+PACKAGE_ALIAS_PYZ = f"{get_package_name()}-pyz"
 INSTALL_VERSION_FILE = "install_version.txt"
 LOG_FILE = "install_log.txt" # New constant for logging
 
