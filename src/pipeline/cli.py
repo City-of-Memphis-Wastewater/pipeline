@@ -22,7 +22,7 @@ except ImportError:
 from pipeline.time_manager import TimeManager
 from pipeline.create_sensors_db import get_db_connection, create_packaged_db, reset_user_db # get_user_db_path, ensure_user_db, 
 from pipeline.api.eds import demo_eds_webplot_point_live, EdsClient, load_historic_data, EdsLoginException, demo_eds_save_point_export
-from pipeline import environment
+from pipeline.environment import is_termux, is_windows, is_pyz, is_elf, is_pipx, matplolib_enabled, open_text_file_in_default_app
 from pipeline.security_and_config import get_eds_api_credentials, get_external_api_credentials, get_eds_db_credentials, get_all_configured_urls, get_configurable_plant_name, init_security, CONFIG_PATH
 from pipeline.termux_setup import setup_termux_install, cleanup_termux_install
 from pipeline.windows_setup import setup_windows_install, cleanup_windows_install
@@ -35,9 +35,9 @@ from pipeline.version_info import  PIP_PACKAGE_NAME, PIPELINE_VERSION, __version
 # This runs on every command (including --version and --help or without sub commands), 
 # but the function's internal logic
 # ensures the shortcut file is only created once in the Termux environment.
-if environment.is_termux():
+if is_termux():
     setup_termux_install()
-elif environment.is_windows():
+elif is_windows():
     setup_windows_install()
 
 # -- Versioning --
@@ -306,7 +306,7 @@ def trend(
     # Once the loop is done, you can call your show_static function
     # with the single, populated data_buffer.
 
-    if not environment.matplotlib_enabled() or webplot:
+    if not matplotlib_enabled() or webplot:
         from pipeline import gui_plotly_static
         #from pipeline import gui_plotly_static_backup_06Oct25 as gui_plotly_static
         #gui_fastapi_plotly_live.run_gui(data_buffer)
@@ -344,7 +344,7 @@ def configure_credentials(
     """
     if textedit:
         typer.echo(F"Config filepath: {CONFIG_PATH}")
-        environment.open_text_file_in_default_app(CONFIG_PATH)
+        open_text_file_in_default_app(CONFIG_PATH)
         return
             
     typer.echo("")
@@ -406,29 +406,35 @@ def list_workspaces():
 @app.command()
 def install(
     uninstall: bool = typer.Option(False,"--uninstall","-un",help = "Remove the installation artifacts for the current operating system."),
-    upgrade: bool = typer.Option(False, "--upgrade", "-up", help = "Uppgrades will be forece, namely shortcut scripts on Termux will be overwritten even if they already exist.")
+    upgrade: bool = typer.Option(False, "--upgrade", "-up", help = "Uppgrades will be forece, namely shortcut scripts on Termux will be overwritten even if they already exist."),
+    debug: bool = typer.Option(False, "--debug", "-d", help = "Show debugging output and do not actually perform any installation or uninstallation actions.")
 ):
     """
     Windows: Uninstall the registry context-menu item, the launcher BAT, and the AppData folder
     Termux: Remove the scripts from the .shortcuts/ folder.
     """
 
+    if debug:
+        # is_win_exe(debug=True) # inferred, not yet implemented
+        is_pipx(debug=True)
+        is_pyz(debug=True)
+        is_elf(debug=True)
+        return
+    
     if uninstall:
-        if environment.is_windows():
+        if is_windows():
             if typer.confirm("Are you sure you want to uninstall the registry context-menu item, the launcher BAT, and empty out the AppData folder?"):
                 cleanup_windows_install()
-        elif environment.is_termux():
+        elif is_termux():
             cleanup_termux_install()
-    else:
+        return
 
-        if environment.is_windows():
-            typer.echo("AppData will be set up explicity and a content menu item will be added to your Registry.")
-            setup_windows_install()
-        elif environment.is_termux():
-            typer.echo("Scripts will now be added to the $HOME/.shortcuts/ directory for launching from the Termux Widget.")
-            setup_termux_install(force=upgrade)
-
-        
+    if is_windows():
+        typer.echo("AppData will be set up explicity and a content menu item will be added to your Registry.")
+        setup_windows_install()
+    elif is_termux():
+        typer.echo("Scripts will now be added to the $HOME/.shortcuts/ directory for launching from the Termux Widget.")
+        setup_termux_install(force=upgrade)
 
 
 @app.command()
