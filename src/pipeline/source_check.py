@@ -40,26 +40,24 @@ def is_pipx() -> bool:
         # This is the path to the interpreter running the script (e.g., venv/bin/python)
         # In a pipx-managed execution, this is the venv python.
         interpreter_path = Path(sys.executable).resolve()
-
         pipx_bin_path, pipx_venv_base_path = get_pipx_paths()
 
-        # --- A. Check the Symlink Location (Original, still valuable check) ---
-        # The symlink that was executed to launch the script (sys.argv[0]) 
-        # is in the pipx binary directory.
-        if exec_path != interpreter_path and normalize_path(exec_path).startswith(normalize_path(pipx_bin_path)):
-            return True
-
-        # --- B. Check the Venv Location (The definitive, non-ambiguous check) ---
-        # The actual interpreter running the code is located inside the 
-        # *internal* pipx venv structure. This is the ultimate "pipx signature."
-        if normalize_path(interpreter_path).startswith(normalize_path(pipx_venv_base_path)):
+        """
+        # --- DEBUGGING OUTPUT ---
+        print(f"DEBUG: EXEC_PATH:      {exec_path}")
+        print(f"DEBUG: INTERP_PATH:    {interpreter_path}")
+        print(f"DEBUG: PIPX_BIN_PATH:  {pipx_bin_path}")
+        print(f"DEBUG: PIPX_VENV_BASE: {pipx_venv_base_path}")
+        print(f"DEBUG: Check B result: {normalize_path(interpreter_path).startswith(normalize_path(pipx_venv_base_path))}")
+        # ------------------------
+        """
+        # Quick and dirty and probably sufficient check for if the executible is a pip intalled binary:
+        if 'pipx/venvs' in normalize_path(exec_path) or 'pipx\\venvs' in normalize_path(exec_path):
             return True
         
-        # --- C. Check for pip install --user case (The Ambiguity Filter) ---
-        # If running from a venv, but not a pipx one, this should be False.
-        # If running from ~/.local/bin via `pip install --user`, this also returns False, 
-        # as that interpreter is not nested in `.../pipx/venvs`.
-
+        if exec_path != interpreter_path and normalize_path(exec_path).startswith(normalize_path(pipx_venv_base_path)):
+            return True
+        
         return False
 
     except Exception:
@@ -99,7 +97,7 @@ def is_pyz(exec_path: Path=None) -> bool:
         exec_path = Path(sys.argv[0]).resolve()
     print(f"exec_path = {exec_path}")
     # Check if the extension is PYZ
-    if not str(exec_path).endswith() == ".pyz":
+    if not str(exec_path).endswith(".pyz"):
         return False
     
     if not check_if_zip():
