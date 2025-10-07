@@ -33,13 +33,13 @@ def setup_termux_install(force=False):
     """
     if not is_termux():
         return
-
+    exec_path = Path(sys.argv[0]).resolve()
     # Check the type of file being run, whether a pipx binary in PIPX_BIN_DIR or an ELF file or a PYZ, etc
     if is_elf():
         setup_termux_widget_executable_shortcut(force, shortcut_name = SHORTCUT_NAME_ELF)
         register_shell_alias_executable_to_basrc(force, package_name = PACKAGE_NAME_ELF)
         setup_linux_app_data_directory(force)
-    elif is_pyz():
+    elif is_pyz(exec_path=exec_path):
         setup_termux_widget_executable_shortcut(force, shortcut_name = SHORTCUT_NAME_PYZ)
         register_shell_alias_executable_to_basrc(force, package_name = PACKAGE_NAME_PYZ)
         setup_linux_app_data_directory(force)
@@ -138,7 +138,7 @@ if command -v {PACKAGE_NAME} &> /dev/null; then
     echo "Upgrading {PACKAGE_NAME} via pipx..."
     pipx upgrade {PACKAGE_NAME}
     echo "{PACKAGE_NAME} upgrade complete."
-
+    
     echo "Upgrading shortcut script {UPGRADE_SHORTCUT_NAME}..."
     # The 'install' command with the --upgrade flag
     # forces the Python code to re-generate both shortcut scripts.
