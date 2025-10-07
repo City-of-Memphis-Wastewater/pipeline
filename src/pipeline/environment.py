@@ -165,6 +165,9 @@ def is_pipx(debug=False) -> bool:
         # In a pipx-managed execution, this is the venv python.
         interpreter_path = Path(sys.executable).resolve()
         pipx_bin_path, pipx_venv_base_path = get_pipx_paths()
+        # Normalize paths for comparison
+        norm_exec_path = normalize_path(exec_path)
+        norm_interp_path = normalize_path(interpreter_path)
 
         if debug:
             # --- DEBUGGING OUTPUT ---
@@ -175,18 +178,33 @@ def is_pipx(debug=False) -> bool:
             print(f"DEBUG: Check B result: {normalize_path(interpreter_path).startswith(normalize_path(pipx_venv_base_path))}")
         # ------------------------
         
-        # Quick and dirty and probably sufficient check for if the executible is a pip intalled binary:
-        if 'pipx/venvs' in normalize_path(exec_path) or 'pipx\\venvs' in normalize_path(exec_path):
+        # 1. Signature Check (Most Robust): Look for the unique 'pipx/venvs' string.
+        # This is a strong check for both the executable path (your discovery) 
+        # and the interpreter path (canonical venv location).
+        if "pipx/venvs" in norm_exec_path or "pipx/venvs" in norm_interp_path:
+            if debug: print("is_pipx: True (Signature Check)")
+            return True
+
+        # 2. Targeted Venv Check: The interpreter's path starts with the PIPX venv base.
+        # This is a canonical check if the signature check is somehow missed.
+        if norm_interp_path.startswith(normalize_path(pipx_venv_base_path)):
+            if debug: print("is_pipx: True (Interpreter Base Check)")
             return True
         
-        if exec_path != interpreter_path and normalize_path(exec_path).startswith(normalize_path(pipx_venv_base_path)):
-            return True
-        
+        # 3. Targeted Executable Check: The executable's resolved path starts with the PIPX venv base.
+        # This is your key Termux discovery, confirming the shim resolves into the venv.
+        if norm_exec_path.startswith(normalize_path(pipx_venv_base_path)):
+             if debug: print("is_pipx: True (Executable Base Check)")
+             return True
+
+        if debug: print("is_pipx: False")
         return False
 
     except Exception:
         # Fallback for unexpected path errors
         return False
+    
+    
     
 
 def is_elf(exec_path : Path = None, debug=False) -> bool:
