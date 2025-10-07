@@ -83,9 +83,12 @@ def normalize(data):
 # Function to normalize a set of ticks based on the original data's min/max
 def normalize_ticks(ticks, data_min, data_max):
     # Handle the case where max_val == min_val
+    ticks_arr = np.asarray(ticks, dtype=np.float64)
+    if not np.isfinite(data_min) or not np.isfinite(data_max):
+        return (ticks_arr - float(data_min)) / (float(data_max) - float(data_min))
     if data_max == data_min:
-        return np.zeros_like(ticks)
-    return (ticks - data_min) / (data_max - data_min)
+        return np.zeros_like(ticks_arr)
+    return np.array((ticks_arr - float(data_min)) / (float(data_max) - float(data_min)))
 
 def get_ticks_array_n(y_min, y_max, steps):
     # Calculate the step size
@@ -95,40 +98,38 @@ def get_ticks_array_n(y_min, y_max, steps):
         array_tick_location.append(y_min+i*step)
     return array_tick_location
 
-def build_y_axis(y_data,j,axis_label,tick_count = 10):
+def build_y_axis(y_data,axis_index,axis_label,tick_count = 10):
     # Normalize the data and get min/max for original scale
-    yn_normalized, yn_min, yn_max = normalize(y_data)
+    yn_normalized, y_min, y_max = normalize(y_data)
     
     # Define the original tick values for each axis
     
-    yn_original_ticks = get_ticks_array_n(yn_min,yn_max,tick_count)
+    original_ticks = get_ticks_array_n(y_min,y_max,tick_count)
     
     # Calculate the normalized positions for the original ticks
-    yn_ticktext = [f"{t:.0f}" for t in yn_original_ticks]
-    # Y-axis 1
-    """
+    ticktext = [f"{t:.0f}" for t in original_ticks]
+    tickvals=normalize_ticks(original_ticks, y_min, y_max) # Normalized positions
+    print(f"tickvals = {tickvals}")
+    pos = (axis_index-1)*0.05+0.06
     yaxis_dict=dict(
         title=axis_label,
+        overlaying="y", # or "no", no known difference
         side="left",
-        range=[0, 1], # Key 1: Set the axis range to the normalized data range
-        tickmode='array',
-        tickvals=normalize_ticks(yn_original_ticks, yn_min, yn_max), # Key 2: Normalized positions
-        ticktext=yn_ticktext,           # Key 3: Original labels
-        color=COLORS[j]
-    ),"""
-
-    yaxis_dict=dict(
-        title=axis_label,
-        overlaying="free", # or "no", no known difference
-        side="left",
-        anchor="free",
-        position = (0.002*j**2)+(j*0.05)+0.05,
+        anchor="x",
+        position = pos,
+        #position = (0.002*axis_index**2)+(axis_index*0.05)+0.06,
         #range=[0, 1], # Set the axis range to the normalized data range
         range = [-0.05, 1.05], # Set range for normalized data [0,1] with a little padding
         tickmode='array',
-        tickvals=normalize_ticks(yn_original_ticks, yn_min, yn_max), # Normalized positions
-        ticktext=yn_ticktext,           # Original labels
-        color=COLORS[j])
+        #tickvals = list(map(np.float64(tickvals))),
+        #tickvals = list(map(tickvals)),
+        tickvals = tickvals,
+        
+        ticktext=ticktext,           # Original labels
+        color=COLORS[axis_index-1],
+        showgrid=False,
+        zeroline=False,
+        layer = "above traces")
     
     return yaxis_dict
 # --- Modified show_static Function ---
@@ -156,10 +157,10 @@ def show_static(plot_buffer):
     j=0
     for i, (label, series) in enumerate(data.items()):
         
-        y_original = series["y"]
+        y_original = np.array(series["y"],dtype="float")
         unit = series["unit"]
         # 1. VISUAL NORMALIZATION: Normalize y-data for plotting
-        y_normalized = normalize(y_original)
+        y_normalized , yn_min, yn_max = normalize(y_original)
         
         # Determine the y-axis ID for this trace. First is 'y', second is 'y2', etc.
         axis_id = 'y' if i == 0 else f'y{i+1}' # This is the Plotly trace axis *name* ('y1', 'y2', etc.)
@@ -172,8 +173,7 @@ def show_static(plot_buffer):
             name=label,
             yaxis=axis_id, # Link this trace to its specific y-axis using the expected plotly jargon (e.g. 'y', 'y1', 'y2', 'y3', etc.) 
             line=dict(color=COLORS[i % len(COLORS)],width=2),
-            #line=dict(color=COLORS[i],width=2),
-            marker=dict(color=COLORS[i],size=10,symbol='circle'),
+            marker=dict(color=COLORS[i % len(COLORS)],size=8,symbol='circle'),
             
         #,
             # 2. NUMERICAL ACCURACY: Store original data for hover info
@@ -189,11 +189,10 @@ def show_static(plot_buffer):
 
         # The first axis is named 'yaxis', subsequent ones are 'yaxis2', 'yaxis3', etc.
         if not unit in units_used:
-
             units_used.append(unit)
-            j+=1
             layout_key = 'yaxis' if j == 0 else f'yaxis{j+1}'
-            layout_updates[layout_key] = build_y_axis(y_original,j,axis_label = f"{unit}",tick_count = 10)
+            layout_updates[layout_key] = build_y_axis(y_original,axis_index=j,axis_label = f"{unit}",tick_count = 10)
+            j+=1
             
     # --- Figure Creation and Layout Updates ---
 
