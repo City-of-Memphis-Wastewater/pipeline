@@ -88,15 +88,28 @@ def list_sensors(
         packaged_db = create_packaged_db()
         user_db = reset_user_db(packaged_db)
 
-    # db_path: str = "sensors.db"
-    if db_path is not None:
-        conn = sqlite3.connect(db_path)
-    else:  
-        conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT idcs, iess, zd, ovation_drop, units, description FROM sensors")
-    rows = cur.fetchall()
-    conn.close()
+    try:
+        # db_path: str = "sensors.db"
+        if db_path is not None:
+            conn = sqlite3.connect(db_path)
+        else:  
+            conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT idcs, iess, zd, ovation_drop, units, description FROM sensors")
+        rows = cur.fetchall()
+        conn.close()
+    except:
+        # if fail, it is likely the use has an outdated db on their system. Force update, then run again.
+        packaged_db = create_packaged_db()
+        user_db = reset_user_db(packaged_db)
+        if db_path is not None:
+            conn = sqlite3.connect(db_path)
+        else:  
+            conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT idcs, iess, zd, ovation_drop, units, description FROM sensors")
+        rows = cur.fetchall()
+        conn.close()
 
     table = Table(title="Common Sensor Cheat Sheet (hard-coded)")
     table.add_column("IDCS", style="cyan")
@@ -292,6 +305,7 @@ def trend(
 
     if not environment.matplotlib_enabled() or webplot:
         from pipeline import gui_plotly_static
+        #from pipeline import gui_plotly_static_backup_06Oct25 as gui_plotly_static
         #gui_fastapi_plotly_live.run_gui(data_buffer)
         gui_plotly_static.show_static(data_buffer)
     else:
@@ -305,7 +319,19 @@ def trend(
             for row in rows:
                 print(f"{helpers.iso(row.get('ts'))},{row.get('value')},")
 
-@app.command(name="configure", help="Configure and store API and database credentials.")
+@app.command()
+def alarm(
+    idcs: list[str] = typer.Argument(None, help="Provide known idcs values to filter the alarms."), # , "--idcs", "-i"
+    export: str = typer.Option(None, "--export", "-e", help = "Export the .")
+    ):
+    """
+    See all current alarms.
+    """
+    typer.echo("Coming soon - print or export alarms. Filter by IDCS values. Designate a specific export path or rely on the default.")
+    if export is None:
+        export_path = Path().cwd() # or
+
+@app.command(name="config", help="Configure and store API and database credentials.")
 def configure_credentials(
     overwrite: bool = typer.Option(False, "--overwrite", "-o", help="Overwrite existing credentials, with confirmation protection."),
     textedit: bool = typer.Option(False, "--textedit", "-t", help = "Open the config file in a text editor instead of using the guided prompt.")

@@ -176,8 +176,10 @@ def setup_windows_install():
     exe_path = get_executable_path()
     if not exe_path:
         # Use simple print for this critical error, as installation won't proceed
-        print("Error: Could not determine running executable path (likely running from source). Aborting Windows setup.", file=sys.stderr)
+        #print("Error: Could not determine running executable path (likely running from source). Aborting Windows setup.", file=sys.stderr)
         return
+    else:
+        print("pipeline.windows_setup.setup_windows_install() ...")
     
     short_path_ref = fr"%LOCALAPPDATA%\{PACKAGE_NAME}"
 
