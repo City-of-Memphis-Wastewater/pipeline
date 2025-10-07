@@ -67,13 +67,13 @@ def is_pipx() -> bool:
         return False
     
 
-def is_elf() -> bool:
+def is_elf(exec_path : Path = None) -> bool:
     """Checks if the currently running executable (sys.argv[0]) is a standalone PyInstaller-built ELF binary."""
     # If it's a pipx installation, it is not the monolithic binary we are concerned with here.
     if is_pipx():
         return False
-        
-    exec_path = Path(sys.argv[0]).resolve()
+    if exec_path is None:    
+        exec_path = Path(sys.argv[0]).resolve()
     
     # Check if the file exists and is readable
     if not exec_path.is_file():
