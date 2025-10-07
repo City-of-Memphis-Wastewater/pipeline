@@ -60,13 +60,24 @@ class MockBuffer:
             "Series Beta": {"x": [1, 2, 3, 4], "y": [10, 20, 15, 25], "unit": "MGA"},
             "Series Gamma": {"x": [1, 2, 3, 4], "y": [5, 12, 18, 10], "unit": "MGD"},
             "Series Delta": {"x": [1, 2, 3, 4], "y": [12, 17, 14, 20], "unit": "MGA"},
-            #"Series Epison": {"x": [1, 2, 3, 4], "y": [4500, 3000, 13000, 8000], "unit": "KW"},
-            #"Series Zeta": {"x": [1, 2, 3, 4], "y": [5000, 4000, 12000, 9000], "unit": "KW"},
+            "Series Epison": {"x": [1, 2, 3, 4], "y": [4500, 3000, 13000, 8000], "unit": "KW"},
+            "Series Zeta": {"x": [1, 2, 3, 4], "y": [5000, 4000, 12000, 9000], "unit": "KW"},
         }
 #plot_buffer = MockBuffer()
 
-COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
-    
+#COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+COLORS = [
+    'rgba(31, 119, 180, 0.7)',  # #1f77b4
+    'rgba(255, 127, 14, 0.7)',  # #ff7f0e
+    'rgba(44, 160, 44, 0.7)',   # #2ca02c
+    'rgba(214, 39, 40, 0.7)',   # #d62728
+    'rgba(148, 103, 189, 0.7)', # #9467bd
+    'rgba(140, 86, 75, 0.7)',   # #8c564b
+    'rgba(227, 119, 194, 0.7)', # #e377c2
+    'rgba(127, 127, 127, 0.7)', # #7f7f7f
+    'rgba(188, 189, 34, 0.7)',  # #bcbd22
+    'rgba(23, 190, 207, 0.7)'   # #17becf
+]   
 
 # --- Helper Function for Normalization ---
 # It's good practice to have this as a separate, robust function.
@@ -170,7 +181,7 @@ def build_y_axis(y_min, y_max,axis_index,axis_label,tick_count = 10):
     ticktext = [f"{t:.0f}" for t in original_ticks]
     tickvals=normalize_ticks(original_ticks, y_min, y_max) # Normalized positions
 
-    pos = (axis_index)*0.05+0.06
+    pos = (0.0025*axis_index**2)+(axis_index)*0.06
     overlaying_prop = "y" if axis_index > 0 else None
     #pos = (axis_index)
     #pos= 0
@@ -180,25 +191,18 @@ def build_y_axis(y_min, y_max,axis_index,axis_label,tick_count = 10):
         #overlaying="y", # or "no", no known difference # suppress
         overlaying = overlaying_prop,
         side="left",
-        # anchor="x",
+        anchor="free", 
         position = pos,
-        #position = (0.002*axis_index**2)+(axis_index*0.05)+0.06,
         #range=[0, 1], # Set the axis range to the normalized data range
         range = [-0.05, 1.05], # Set range for normalized data [0,1] with a little padding
         tickmode='array',
-        #tickvals = list(map(np.float64(tickvals))),
-        #tickvals = list(map(tickvals)),
         tickvals = tickvals,
-        
         ticktext=ticktext,           # Original labels
-        
-        #color=COLORS[axis_index % len(COLORS)], # colors are only for trouble shooting. Because there is only one color for each curve but not a one to one correlation for curve-to-axis if there are share units and thus axes for multiple curves, it throws the color off.
-        #showgrid=False,
         showgrid=(axis_index == 0), # Show grid only for the first (leftmost) y-axis
         gridcolor='#e0e0e0',
-        zeroline=False)
-        #zeroline=False,
-        #layer = "above traces") # or "above_traces"
+        #zeroline=False)
+        zeroline=False,
+        layer = "above traces") # or "above_traces"
         #layer = "below traces") # or "below_traces"
     
     return yaxis_dict
@@ -245,8 +249,8 @@ def show_static(plot_buffer):
             mode="lines+markers",
             name=label,
             yaxis=axis_id, # Link this trace to its specific y-axis using the expected plotly jargon (e.g. 'y', 'y1', 'y2', 'y3', etc.) 
-            line=dict(color=COLORS[i % len(COLORS)],width=2),
-            marker=dict(color=COLORS[i % len(COLORS)],size=8,symbol='circle'),
+            line=dict(color=COLORS[i % len(COLORS)],width=2,),
+            marker=dict(color=COLORS[i % len(COLORS)],size=6,symbol='circle'),
         
             # 2. NUMERICAL ACCURACY: Store original data for hover info
             customdata=y_original,
@@ -298,11 +302,11 @@ def show_static(plot_buffer):
         # Set the plot area to span the full width of the figure as requested
         'xaxis': dict(domain=[0.0, 1.0], title="Time"),
         'legend': dict(
-            yanchor="top",
-            y=0.98,
-            xanchor="left",
-            x=0.01, # Position legend in the top-left corner
-            bgcolor='rgba(255, 255, 255, 0.6)',
+            yanchor="auto",
+            y=0.01,
+            xanchor="auto",
+            x=0.98, # Position legend in the top-left corner
+            bgcolor='rgba(255, 255, 255, 0.1)', # semi transparent background
             bordercolor='grey',
             borderwidth=1,
             title="Curves"
