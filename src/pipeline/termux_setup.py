@@ -11,8 +11,8 @@ from pipeline.source_check import is_pipx, is_pyz, is_elf
 # Constants
 APP_NAME = get_package_name()
 PACKAGE_NAME = get_package_name() # Used for executable name and AppData folder
-PACKAGE_NAME_ELF = f"{get_package_name()}-elf"
-PACKAGE_NAME_PYZ = f"{get_package_name()}-pyz"
+PACKAGE_ALIAS_ELF = f"{get_package_name()}-elf"
+PACKAGE_ALIAS_PYZ = f"{get_package_name()}-pyz"
 
 # Shortcut filenames for cleanup
 SHORTCUT_NAME_ELF = f"{PACKAGE_NAME}-elf.sh"
@@ -37,11 +37,11 @@ def setup_termux_install(force=False):
     # Check the type of file being run, whether a pipx binary in PIPX_BIN_DIR or an ELF file or a PYZ, etc
     if is_elf():
         setup_termux_widget_executable_shortcut(force, shortcut_name = SHORTCUT_NAME_ELF)
-        register_shell_alias_executable_to_basrc(force, package_name = PACKAGE_NAME_ELF)
+        register_shell_alias_executable_to_basrc(force, package_alias = PACKAGE_ALIAS_ELF)
         setup_linux_app_data_directory(force)
     elif is_pyz(exec_path=exec_path):
         setup_termux_widget_executable_shortcut(force, shortcut_name = SHORTCUT_NAME_PYZ)
-        register_shell_alias_executable_to_basrc(force, package_name = PACKAGE_NAME_PYZ)
+        register_shell_alias_executable_to_basrc(force, package_alias = PACKAGE_ALIAS_PYZ)
         setup_linux_app_data_directory(force)
     elif is_pipx():
         setup_termux_widget_pipx_shortcut(force)
@@ -232,13 +232,13 @@ source $HOME/.bashrc 2>/dev/null || true
     except Exception as e:
         print(f"Warning: Failed to set executable permissions on {shortcut_file}: {e}")
 
-def register_shell_alias_executable_to_basrc(force=False, package_name = None):
+def register_shell_alias_executable_to_basrc(force=False, package_alias = None):
     """
     Registers a permanent shell alias for the ELF or PYZ binary in ~/.bashrc.
     This allows the user to run the app using the package name.
     """
-    if package_name is None:
-        print(f"package_name not provided")
+    if package_alias is None:
+        print(f"package_alias not provided")
         return
     # Termux setup needs to know which type of executable is running to create the best shortcut
     try:
@@ -282,7 +282,7 @@ def register_shell_alias_executable_to_basrc(force=False, package_name = None):
     alias_content = f"""
 {ALIAS_START_MARKER}
 # Alias to easily run the standalone ELF or PYZ binary from any shell session
-alias {package_name}='"{exe_path}"'
+alias {package_alias}='"{exe_path}"'
 {ALIAS_END_MARKER}
 """
     
@@ -291,17 +291,28 @@ alias {package_name}='"{exe_path}"'
     
     try:
         BASHRC_PATH.write_text(new_content)
-        print(f"Registered shell alias '{package_name}' in {BASHRC_PATH.name}.")
+        print(f"Registered shell alias '{package_alias}' in {BASHRC_PATH.name}.")
         print("Note: You must restart Termux or run 'source ~/.bashrc' for the alias to take effect.")
     except Exception as e:
         print(f"Error writing to {BASHRC_PATH.name} for alias: {e}")
 
 # --- CLEAN UP / UNINSTALL ---
 
-def cleanup_shell_alias():
+def cleanup_shell_alias(package_alias = None):
     """
-    Removes the shell alias block from ~/.bashrc.
+    Removes the shell alias block from ~/.bashrc and removes alias from env vars if present.
     """
+    import subprocess
+    if package_alias:
+        # Check if the alias is defined (e.g., in bash)
+        check_result = subprocess.run(f'alias {package_alias} &> /dev/null', 
+                                    shell=True, 
+                                    executable='/bin/bash', 
+                                    check=False) 
+        if check_result.returncode == 0:
+            # use check=False to avoid errors if the alias does not exist, though it should exist at this point, due to check_result being 0
+            print(f"Removing shell alias '{package_alias}' from current environment.")
+            subprocess.run(['unalias', package_alias],check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     if not BASHRC_PATH.exists():
         return
         
@@ -328,7 +339,7 @@ def cleanup_shell_alias():
             print(f"Cleaned up shell alias from {BASHRC_PATH.name}.")
         except Exception as e:
             print(f"Error writing to {BASHRC_PATH.name} during alias cleanup: {e}")
-
+    
 def _remove_file_if_exists(path: Path, description: str):
     """Helper to safely remove a file and print confirmation."""
     if path.exists():
@@ -350,10 +361,16 @@ def cleanup_termux_install():
     print(f"Starting Termux uninstallation cleanup in {shortcut_dir}...")
     
     # Clean up artifacts
-    _remove_file_if_exists(shortcut_dir / SHORTCUT_NAME_ELF, "ELF shortcut")
-    _remove_file_if_exists(shortcut_dir / SHORTCUT_NAME_PIPX, "pipx shortcut")
-    _remove_file_if_exists(shortcut_dir / UPGRADE_SHORTCUT_NAME, "pipx upgrade shortcut")
-    cleanup_shell_alias() # New cleanup step
+    if is_elf():
+        _remove_file_if_exists(shortcut_dir / SHORTCUT_NAME_ELF, "ELF shortcut")
+        cleanup_shell_alias(PACKAGE_ALIAS_ELF)
+    elif is_pyz():
+        _remove_file_if_exists(shortcut_dir / SHORTCUT_NAME_PYZ, "PYZ shortcut")
+        cleanup_shell_alias(PACKAGE_ALIAS_PYZ)
+    elif is_pipx():
+        _remove_file_if_exists(shortcut_dir / SHORTCUT_NAME_PIPX, "pipx shortcut")
+        _remove_file_if_exists(shortcut_dir / UPGRADE_SHORTCUT_NAME, "pipx upgrade shortcut")
+        # No alias to clean for pipx installations, as it is not created.
     
     # Attempt to remove the shortcut directory if it is now empty
     try:
