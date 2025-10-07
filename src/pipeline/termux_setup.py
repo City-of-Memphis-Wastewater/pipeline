@@ -4,9 +4,8 @@ import os
 from pathlib import Path
 import sys
 
-from pipeline.environment import is_termux
+from pipeline.environment import is_termux, is_pipx, is_pyz, is_elf
 from pipeline.version_info import get_package_name
-from pipeline.source_check import is_pipx, is_pyz, is_elf
     
 # Constants
 APP_NAME = get_package_name()

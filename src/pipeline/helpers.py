@@ -95,7 +95,6 @@ def check_if_zip(file_path: str | Path) -> bool:
         return False
 
 
-
 def human_readable(ts):
     return datetime.fromtimestamp(ts).strftime("%H:%M:%S")
 
