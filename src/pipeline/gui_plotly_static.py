@@ -56,10 +56,12 @@ class PlotServer(http.server.SimpleHTTPRequestHandler):
 class MockBuffer:
     def get_all(self):
         return {
-            "Series Alpha": {"x": [1, 2, 3, 4], "y": [10, 20, 15, 25], "unit": "MG/L"},
-            "Series Beta": {"x": [1, 2, 3, 4], "y": [5, 12, 18, 10], "unit": "MGD"},
-            "Series Gamma": {"x": [1, 2, 3, 4], "y": [5000, 4000, 12000, 9000], "unit": "KW"},
-            "Series Sigma": {"x": [1, 2, 3, 4], "y": [5000, 4000, 12000, 9000], "unit": "KW"},
+            "Series Alph": {"x": [1, 2, 3, 4], "y": [7, 13, 16, 9], "unit": "MGD"},
+            "Series Beta": {"x": [1, 2, 3, 4], "y": [10, 20, 15, 25], "unit": "MGA"},
+            "Series Gamma": {"x": [1, 2, 3, 4], "y": [5, 12, 18, 10], "unit": "MGD"},
+            "Series Delta": {"x": [1, 2, 3, 4], "y": [12, 17, 14, 20], "unit": "MGA"},
+            #"Series Epison": {"x": [1, 2, 3, 4], "y": [4500, 3000, 13000, 8000], "unit": "KW"},
+            #"Series Zeta": {"x": [1, 2, 3, 4], "y": [5000, 4000, 12000, 9000], "unit": "KW"},
         }
 #plot_buffer = MockBuffer()
 
@@ -85,7 +87,7 @@ def normalize_ticks(ticks, data_min, data_max):
     # Handle the case where max_val == min_val
     ticks_arr = np.asarray(ticks, dtype=np.float64)
     if not np.isfinite(data_min) or not np.isfinite(data_max):
-        return (ticks_arr - float(data_min)) / (float(data_max) - float(data_min))
+        return np.array(ticks_arr - float(data_min)) / (float(data_max) - float(data_min))
     if data_max == data_min:
         return np.zeros_like(ticks_arr)
     return np.array((ticks_arr - float(data_min)) / (float(data_max) - float(data_min)))
@@ -98,9 +100,67 @@ def get_ticks_array_n(y_min, y_max, steps):
         array_tick_location.append(y_min+i*step)
     return array_tick_location
 
-def build_y_axis(y_data,axis_index,axis_label,tick_count = 10):
+def assess_unit_stats(data):
+    """
+    For curves with shared units, determine the overall min/max for the shared axis
+    """
+    # --- PASS 1: AGGREGATE DATA RANGES PER UNIT ---
+    # We must loop through all data first to find the true min/max for each unit.
+    unit_stats = {}
+    for label, series in data.items():
+        unit = series["unit"]
+        print(f"unit = {unit}")
+        y_data = np.array(series["y"], dtype="float")
+        
+        #if not np.any(y_data): continue # Skip empty series
+
+        current_min, current_max = np.min(y_data), np.max(y_data)
+        
+        if unit not in unit_stats:
+            print("unit not in unit_stats")
+            print(f"Adding {unit} to unit_stats...")
+            unit_stats[unit] = {"min": current_min, "max": current_max}
+        else:
+            # Update the min/max for this unit if needed
+            unit_stats[unit]["min"] = min(unit_stats[unit]["min"], current_min)
+            unit_stats[unit]["max"] = max(unit_stats[unit]["max"], current_max)
+    return unit_stats
+
+def assess_layout_updates(unit_stats):
+    # --- BUILD AXES BASED ON AGGREGATED STATS ---
+    # Now that we have the final range for each unit, create the axes.
+    axis_counter = 0
+    layout_updates = {}
+    unit_to_axis_index = {}  # enables a new axis to be made for each unique unit
+    for unit, stats in unit_stats.items():
+        unit_to_axis_index[unit] = axis_counter
+        layout_key = 'yaxis' if axis_counter == 0 else f'yaxis{axis_counter + 1}'
+        
+        layout_updates[layout_key] = build_y_axis(
+            y_min=stats["min"], 
+            y_max=stats["max"],
+            axis_index=axis_counter,
+            axis_label=f"{unit}",
+            tick_count=10
+        )
+        axis_counter += 1
+    return layout_updates, unit_to_axis_index
+
+def y_normalize_global(y_original,unit_stats, unit=None):
+    # Get the global min/max for this trace's unit
+    global_min = unit_stats[unit]["min"]
+    global_max = unit_stats[unit]["max"]
+
+    # VISUAL NORMALIZATION: Normalize using the GLOBAL range for the unit.
+    # This ensures all traces on the same axis share the same scale.
+    if global_max == global_min:
+        y_normalized = np.zeros_like(y_original)
+    else:
+        y_normalized = (y_original - global_min) / (global_max - global_min)
+    return y_normalized
+
+def build_y_axis(y_min, y_max,axis_index,axis_label,tick_count = 10):
     # Normalize the data and get min/max for original scale
-    yn_normalized, y_min, y_max = normalize(y_data)
     
     # Define the original tick values for each axis
     
@@ -109,13 +169,18 @@ def build_y_axis(y_data,axis_index,axis_label,tick_count = 10):
     # Calculate the normalized positions for the original ticks
     ticktext = [f"{t:.0f}" for t in original_ticks]
     tickvals=normalize_ticks(original_ticks, y_min, y_max) # Normalized positions
-    print(f"tickvals = {tickvals}")
-    pos = (axis_index-1)*0.05+0.06
+
+    pos = (axis_index)*0.05+0.06
+    overlaying_prop = "y" if axis_index > 0 else None
+    #pos = (axis_index)
+    #pos= 0
     yaxis_dict=dict(
-        title=axis_label,
-        overlaying="y", # or "no", no known difference
+        #title=axis_label,
+        title=dict(text=axis_label, standoff=10), # Use dict for better control
+        #overlaying="y", # or "no", no known difference # suppress
+        overlaying = overlaying_prop,
         side="left",
-        anchor="x",
+        # anchor="x",
         position = pos,
         #position = (0.002*axis_index**2)+(axis_index*0.05)+0.06,
         #range=[0, 1], # Set the axis range to the normalized data range
@@ -126,10 +191,15 @@ def build_y_axis(y_data,axis_index,axis_label,tick_count = 10):
         tickvals = tickvals,
         
         ticktext=ticktext,           # Original labels
-        color=COLORS[axis_index-1],
-        showgrid=False,
-        zeroline=False,
-        layer = "above traces")
+        
+        #color=COLORS[axis_index % len(COLORS)], # colors are only for trouble shooting. Because there is only one color for each curve but not a one to one correlation for curve-to-axis if there are share units and thus axes for multiple curves, it throws the color off.
+        #showgrid=False,
+        showgrid=(axis_index == 0), # Show grid only for the first (leftmost) y-axis
+        gridcolor='#e0e0e0',
+        zeroline=False)
+        #zeroline=False,
+        #layer = "above traces") # or "above_traces"
+        #layer = "below traces") # or "below_traces"
     
     return yaxis_dict
 # --- Modified show_static Function ---
@@ -150,22 +220,25 @@ def show_static(plot_buffer):
     if not data:
         print("plot_buffer is empty")
         return
-
+    
+    unit_stats = assess_unit_stats(data)
+    print(f"unit_stats   = {unit_stats}")
+    layout_updates, unit_to_axis_index = assess_layout_updates(unit_stats)
+    print(f"unit_to_axis_index = {unit_to_axis_index}")
     traces = []
-    units_used = []
-    layout_updates = {}
-    j=0
+    
     for i, (label, series) in enumerate(data.items()):
         
         y_original = np.array(series["y"],dtype="float")
         unit = series["unit"]
         # 1. VISUAL NORMALIZATION: Normalize y-data for plotting
-        y_normalized , yn_min, yn_max = normalize(y_original)
+        #y_normalized , y_min, y_max = normalize(y_original)
+        if y_original.size == 0: continue
+        y_normalized = y_normalize_global(y_original,unit_stats, unit)
         
-        # Determine the y-axis ID for this trace. First is 'y', second is 'y2', etc.
-        axis_id = 'y' if i == 0 else f'y{i+1}' # This is the Plotly trace axis *name* ('y1', 'y2', etc.)
-
-
+        current_axis_idx = unit_to_axis_index[unit]
+        axis_id = 'y' if current_axis_idx == 0 else f'y{current_axis_idx+1}' # This is the Plotly trace axis *name* ('y1', 'y2', etc.)
+            
         scatter_trace = go.Scatter(
             x=series["x"],
             y=y_normalized,  # Use normalized data for visual plotting
@@ -174,35 +247,31 @@ def show_static(plot_buffer):
             yaxis=axis_id, # Link this trace to its specific y-axis using the expected plotly jargon (e.g. 'y', 'y1', 'y2', 'y3', etc.) 
             line=dict(color=COLORS[i % len(COLORS)],width=2),
             marker=dict(color=COLORS[i % len(COLORS)],size=8,symbol='circle'),
-            
-        #,
+        
             # 2. NUMERICAL ACCURACY: Store original data for hover info
             customdata=y_original,
             hovertemplate=(
                 f"<b>{label}</b><br>"
                 "X: %{x}<br>"
                 "Y: %{customdata:.4f}<extra></extra>" # Display original Y from customdata
-            )
-        )
-        
+            ),
+            opacity=1.0
+        )        
         traces.append(scatter_trace)
 
-        # The first axis is named 'yaxis', subsequent ones are 'yaxis2', 'yaxis3', etc.
-        if not unit in units_used:
-            units_used.append(unit)
-            layout_key = 'yaxis' if j == 0 else f'yaxis{j+1}'
-            layout_updates[layout_key] = build_y_axis(y_original,axis_index=j,axis_label = f"{unit}",tick_count = 10)
-            j+=1
-            
     # --- Figure Creation and Layout Updates ---
-
+    num_axes = len(unit_stats)
+    left_margin = 0.08 + (num_axes - 1) * 0.07
     # Define the base layout, hiding the default legend since axes titles now serve that purpose
     layout = go.Layout(
         title="EDS Data Plot (Static, Visually Normalized)",
         showlegend=True, 
-        xaxis=dict(domain= [0.05, 0.95],title="Time") # Add a small margin to prevent axes titles from being cut off
+        xaxis=dict(domain= [0.0, 1.0],title="Time") # Add a small margin to prevent axes titles from being cut off
+        #xaxis=dict(domain= [0.05, 0.95],title="Time") # Add a small margin to prevent axes titles from being cut off
+        #xaxis=dict(domain=[0.20, 0.95], title="Time") # Make space for multiple Y axes on the left
     )
 
+    """
     fig = go.Figure(data=traces, layout=layout)
     
     # Apply all the generated y-axis layouts at once
@@ -216,13 +285,35 @@ def show_static(plot_buffer):
         bordercolor='black',   
         )
     )
-
     # Apply all the generated y-axis layouts at once
     fig.update_layout(**layout_updates)
     if True:
         fig.update_layout(legend=dict(title="Curves"))
-    # --- File Generation and Display ---
+    
+    """
 
+    final_layout = {
+        'title': "EDS Data Plot (Static, Visually Normalized)",
+        'showlegend': True,
+        # Set the plot area to span the full width of the figure as requested
+        'xaxis': dict(domain=[0.0, 1.0], title="Time"),
+        'legend': dict(
+            yanchor="top",
+            y=0.98,
+            xanchor="left",
+            x=0.01, # Position legend in the top-left corner
+            bgcolor='rgba(255, 255, 255, 0.6)',
+            bordercolor='grey',
+            borderwidth=1,
+            title="Curves"
+        ),
+        'margin': dict(l=20, r=20, t=50, b=40) # Add a little padding around the whole figure
+    }
+
+    # --- File Generation and Display ---
+    final_layout.update(layout_updates)
+    fig = go.Figure(data=traces, layout=go.Layout(final_layout))
+    
     # Write to a temporary HTML file
     tmp_file = tempfile.NamedTemporaryFile(suffix=".html", delete=False, mode='w', encoding='utf-8')
     pyo.plot(fig, filename=tmp_file.name, auto_open=False, include_plotlyjs='full')

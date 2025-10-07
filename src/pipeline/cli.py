@@ -285,7 +285,10 @@ def trend(
         # The plot will use this label to draw a separate line for each 'rows'.
         
         attributes = points_data[iess_list[idx]]
-        label = f"{idcs[idx]}, {attributes.get('DESC')}, {attributes.get('UN')}"
+        unit = attributes.get('UN')
+        label = f"{idcs[idx]}, {attributes.get('DESC')}, ({attributes.get('UN')})"
+        #label = f"{idcs[idx]}, {attributes.get('DESC')}"
+        
         #label = idcs[idx]
         
         # The raw from EdsClient.get_tabular_trend() is brought in like this: 
@@ -298,7 +301,7 @@ def trend(
             
             # All data is appended to the *same* data_buffer,
             # but the unique 'label' tells the buffer which series it belongs to.
-            data_buffer.append(label, ts, av)
+            data_buffer.append(label, ts, av, unit)
 
     # Once the loop is done, you can call your show_static function
     # with the single, populated data_buffer.

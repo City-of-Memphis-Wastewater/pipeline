@@ -10,9 +10,10 @@ class PlotBuffer:
         self.data = defaultdict(lambda: {"x": [], "y": []})
         self.max_points = max_points
 
-    def append(self, label, x, y):
+    def append(self, label, x, y, unit=None):
         self.data[label]["x"].append(x)
         self.data[label]["y"].append(y)
+        self.data[label]["unit"] = unit
 
         if len(self.data[label]["x"]) > self.max_points:
             if not KEEP_ALL_LIVE_POINTS:
