@@ -11,6 +11,7 @@ from pipeline.source_check import is_pipx, is_pyz, is_elf
 # Constants
 APP_NAME = get_package_name()
 PACKAGE_NAME = get_package_name() # Used for executable name and AppData folder
+# it is necessary to give the pacakge a separate alias name for different installations to avoid conflict with the pipx installation
 PACKAGE_ALIAS_ELF = f"{get_package_name()}-elf"
 PACKAGE_ALIAS_PYZ = f"{get_package_name()}-pyz"
 
