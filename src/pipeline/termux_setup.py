@@ -299,7 +299,7 @@ alias {package_alias}='"{exe_path}"'
 
 # --- CLEAN UP / UNINSTALL ---
 
-def cleanup_shell_alias(package_alias = None):
+def _cleanup_shell_alias(package_alias = None):
     """
     Removes the shell alias block from ~/.bashrc and removes alias from env vars if present.
     """
@@ -364,10 +364,10 @@ def cleanup_termux_install():
     # Clean up artifacts
     if is_elf():
         _remove_file_if_exists(shortcut_dir / SHORTCUT_NAME_ELF, "ELF shortcut")
-        cleanup_shell_alias(PACKAGE_ALIAS_ELF)
+        _cleanup_shell_alias(PACKAGE_ALIAS_ELF)
     elif is_pyz():
         _remove_file_if_exists(shortcut_dir / SHORTCUT_NAME_PYZ, "PYZ shortcut")
-        cleanup_shell_alias(PACKAGE_ALIAS_PYZ)
+        _cleanup_shell_alias(PACKAGE_ALIAS_PYZ)
     elif is_pipx():
         _remove_file_if_exists(shortcut_dir / SHORTCUT_NAME_PIPX, "pipx shortcut")
         _remove_file_if_exists(shortcut_dir / UPGRADE_SHORTCUT_NAME, "pipx upgrade shortcut")
