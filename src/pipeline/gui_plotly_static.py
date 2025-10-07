@@ -183,6 +183,7 @@ def build_y_axis(y_min, y_max,axis_index,axis_label,tick_count = 10):
 
     pos = (0.0025*axis_index**2)+(axis_index)*0.06
     overlaying_prop = "y" if axis_index > 0 else None
+    
     #pos = (axis_index)
     #pos= 0
     yaxis_dict=dict(

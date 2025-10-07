@@ -90,16 +90,16 @@ def is_elf() -> bool:
         # Handle exceptions like PermissionError, IsADirectoryError, etc.
         return False
     
-def is_pyz() -> bool:
+def is_pyz(exec_path: Path=None) -> bool:
     """Checks if the currently running executable (sys.argv[0]) is a PYZ zipapp ."""
     # If it's a pipx installation, it is not the monolithic binary we are concerned with here.
     if is_pipx():
         return False
-        
-    exec_path = Path(sys.argv[0]).resolve()
-    
+    if exec_path is None:
+        exec_path = Path(sys.argv[0]).resolve()
+    print(f"exec_path = {exec_path}")
     # Check if the extension is PYZ
-    if not exec_path.suffix() == ".pyz":
+    if not str(exec_path).endswith() == ".pyz":
         return False
     
     if not check_if_zip():
