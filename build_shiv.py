@@ -16,6 +16,8 @@ try:
 except ImportError:
     distro = None
 
+# NO, NOT IN THIS CASE< WE DONT WANT CIRUCLAR IMPORT # from pipeline.version_info import get_package_name, get_package_version
+
 
 class SystemInfo:
     """Detects the current OS, distro, and version information."""

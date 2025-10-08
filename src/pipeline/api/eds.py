@@ -2,6 +2,7 @@ from __future__ import annotations # Delays annotation evaluation, allowing mode
 from datetime import datetime
 import logging
 import requests
+from requests.exceptions import Timeout
 import time
 from pprint import pprint
 from pathlib import Path
@@ -12,6 +13,8 @@ import subprocess
 import platform
 import mysql.connector
 from functools import lru_cache
+import typer # for CLI
+
 
 from pipeline.env import SecretConfig
 from pipeline.workspace_manager import WorkspaceManager
@@ -134,14 +137,14 @@ class EdsClient:
 
 
     @staticmethod
-    #def get_points_export(session,iess_filter:str=''):
-    def get_points_export(session,iess_list=None, zd=None):
+    #def get_points_export(session,filter_iess:str=''):
+    def get_points_export(session,filter_iess: list=None, zd: str =None) -> str: 
         """
         Retrieves point metadata from the API, filtering by a list of IESS values.
 
         Args:
             session (requests.Session): The active session object.
-            iess_list (list): A list of IESS strings to filter by.
+            filter_iess (list): A list of IESS strings to filter by. Currently only allows one input.
             zd (str): An optional zone directory to filter by.
         
         Returns:
@@ -163,29 +166,46 @@ class EdsClient:
         # Add the list of IESS values if the list is not empty.
         # The 'requests' library will automatically format this as
         # ?iess=item1&iess=item2&...
-        if iess_list and isinstance(iess_list, list) and len(iess_list) > 0:
-            params['iess'] = iess_list
+        #if filter_iess and isinstance(filter_iess, list) and len(filter_iess) > 0:
+        #    params['iess'] = filter_iess
+
+
+        # --- THE CRITICAL FIX IS HERE ---
+        # 1. Check if filter_iess is a list and join it into a comma-separated string.
+        # 2. Add the resulting string to params, which the API is likely expecting.
+        print(f"filter_iess = {filter_iess}")
+        if filter_iess:
+            if isinstance(filter_iess, list) and len(filter_iess) > 0:
+                # Convert the list to a single string using a delimiter
+                iess_string = ",".join(filter_iess) # Join with a space ","
+                #iess_string = " ".join(filter_iess) # Join with a space " "
+                params['iess'] = iess_string
+            elif isinstance(filter_iess, str):
+                # If it's already a string, use it directly
+                params['iess'] = filter_iess
+        # --- END OF FIX ---
         
         params['order'] = 'iess'
-        
+        print(f"params = {params}")
         zd = str(session.zd)  
         #order = 'iess'
-        #query = '?zd={}&iess={}&order={}'.format(zd, iess_filter, order)
+        #query = '?zd={}&iess={}&order={}'.format(zd, filter_iess, order)
         request_url = f"{api_url}/points/export" #+ query
-        response = session.get(request_url, params = params, json={}, verify=False)
+        
+        response = session.get(request_url, params=params, json={}, verify=False)
         #print(f"Status Code: {response.status_code}, Content-Type: {response.headers.get('Content-Type')}, Body: {response.text[:500]}")
         decoded_str = response.text
         return decoded_str
 
 
     @staticmethod
-    def get_points_metadata(session, iess_list=None, zd=None):
+    def get_points_metadata(session, filter_iess=None, zd=None):
         """
         Retrieves and parses point metadata into a dictionary.
 
         Args:
             session (requests.Session): The active session object.
-            iess_list (list): A list of IESS strings to filter by.
+            filter_iess (list): A list of IESS strings to filter by.
             zd (str): An optional zone directory to filter by.
         
         Returns:
@@ -193,18 +213,18 @@ class EdsClient:
                   dictionaries of the point's attributes.
                   Returns an empty dictionary on failure.
         """
-        raw_export_str = EdsClient.get_points_export(session, iess_list, zd)
+        raw_export_str = EdsClient.get_points_export(session, filter_iess, zd)
         
         all_points_metadata = {}
         
         # Regex to find key='value' pairs. Handles single-quoted values.
         # This pattern is more robust than a simple split.
         pattern = re.compile(r"(\w+)='([^']*)'")
-        for iess_value in iess_list:
+        for iess_value in filter_iess:
             # We must make a separate API call for each IESS.
             # Use the existing get_points_export function, but pass a single
             # IESS value in a list so the URL formatting remains consistent.
-            raw_export_str = EdsClient.get_points_export(session, iess_list=[iess_value], zd=zd)
+            raw_export_str = EdsClient.get_points_export(session, filter_iess=[iess_value], zd=zd)
 
             
             for line in raw_export_str.strip().splitlines():
@@ -226,7 +246,7 @@ class EdsClient:
     # session = # ... your session object from login
     #
     # # Get the parsed dictionary
-    # points_data = EdsClient.get_points_metadata(session, iess_list=iess_list_to_filter)
+    # points_data = EdsClient.get_points_metadata(session, filter_iess=iess_list_to_filter)
     #
     # # Now you can easily access the unit for 'M100FI.UNIT0@NET0'
     # unit = points_data.get('M100FI.UNIT0@NET0', {}).get('UN')
@@ -237,10 +257,10 @@ class EdsClient:
     #     print(f"Point: {iess}, Description: {attributes.get('DESC')}, Unit: {attributes.get('UN')}")
     
     @staticmethod
-    def save_points_export(decoded_str, export_file_path):
+    def save_points_export(decoded_str, export_path):
         lines = decoded_str.strip().splitlines()
 
-        with open(export_file_path, "w", encoding="utf-8") as f:
+        with open(export_path, "w", encoding="utf-8") as f:
             for line in lines:
                 f.write(line + "\n")  # Save each line in the text file
     
@@ -258,6 +278,45 @@ class EdsClient:
         json_response = response.json()
         #print(f"response = {response}")
         session.headers['Authorization'] = f"Bearer {json_response['sessionId']}"
+        return session
+    
+    @staticmethod
+    def login_to_session_with_api_credentials(api_credentials):
+        """
+        Like login_to_sessesion, plug with custom session attributes added to the session object.
+        """
+        # Expected to be used in terminal, so typer is acceptable, but should be scaled.
+        session = None
+        try:
+            session = EdsClient.login_to_session(
+                api_url=api_credentials.get("url"),
+                username=api_credentials.get("username"),
+                password=api_credentials.get("password"),
+                timeout=10 # Add a 10-second timeout to the request
+            )
+            
+            # --- Add custom session attributes to the session object ---
+            session.base_url = api_credentials.get("url")
+            session.zd = api_credentials.get("zd")
+        except Timeout:
+            typer.echo(
+                typer.style(
+                    "\nConnection to the EDS API timed out. Please check your VPN connection and try again.",
+                    fg=typer.colors.RED,
+                    bold=True,
+                )
+            )
+            raise typer.Exit(code=1)
+        except EdsLoginException as e:
+            typer.echo(
+                typer.style(
+                    f"\nLogin failed for EDS API: {e}",
+                    fg=typer.colors.RED,
+                    bold=True,
+                )
+            )
+            raise typer.Exit(code=1)
+        
         return session
     
     @staticmethod
@@ -868,7 +927,7 @@ def demo_eds_webplot_point_live():
     gui_fastapi_plotly_live.run_gui(data_buffer)
 
 @log_function_call(level=logging.DEBUG)    
-def load_historic_data(session, iess_list, starttime, endtime, step_seconds):    
+def load_historic_data(session, filter_iess, starttime, endtime, step_seconds):    
     
 
     starttime = TimeManager(starttime).as_unix()
@@ -877,7 +936,7 @@ def load_historic_data(session, iess_list, starttime, endtime, step_seconds):
     logger.info(f"endtime = {endtime}")
 
 
-    point_list = iess_list
+    point_list = filter_iess
     api_url = str(session.base_url) 
     request_id = EdsClient.create_tabular_request(session, api_url, starttime, endtime, points=point_list, step_seconds=step_seconds)
     if not request_id:
@@ -909,9 +968,9 @@ def demo_eds_save_point_export():
     session_maxson = sessions["Maxson"]
 
     point_export_decoded_str = EdsClient.get_points_export(session_maxson)
-    export_file_path = workspace_manager.get_exports_file_path(filename = 'export_eds_points_neo.txt')
-    EdsClient.save_points_export(point_export_decoded_str, export_file_path = export_file_path)
-    print(f"Export file saved to: \n{export_file_path}") 
+    export_path = workspace_manager.get_exports_file_path(filename = 'export_eds_points_neo.txt')
+    EdsClient.save_points_export(point_export_decoded_str, export_path = export_path)
+    print(f"Export file saved to: \n{export_path}") 
 
 @log_function_call(level=logging.DEBUG)
 def demo_eds_save_graphics_export():
