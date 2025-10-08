@@ -266,7 +266,7 @@ def show_static(plot_buffer):
 
     # --- Figure Creation and Layout Updates ---
     final_layout = {
-        'title': "EDS Data Plot (Static)",
+        #'title': "EDS Data Plot (Static)", # shows large on mobile, not very useful
         'template':PLOTLY_THEME,
         'showlegend': True,
         # Set the plot area to span the full width of the figure as requested
