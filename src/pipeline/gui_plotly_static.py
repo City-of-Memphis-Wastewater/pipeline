@@ -17,6 +17,21 @@ import numpy as np
 
 from pipeline.web_utils import launch_browser
 
+PLOTLY_THEME = 'seaborn'
+COLORS = [
+    'rgba(31, 119, 180, 0.7)',  # #1f77b4
+    'rgba(255, 127, 14, 0.7)',  # #ff7f0e
+    'rgba(44, 160, 44, 0.7)',   # #2ca02c
+    'rgba(214, 39, 40, 0.7)',   # #d62728
+    'rgba(148, 103, 189, 0.7)', # #9467bd
+    'rgba(140, 86, 75, 0.7)',   # #8c564b
+    'rgba(227, 119, 194, 0.7)', # #e377c2
+    'rgba(127, 127, 127, 0.7)', # #7f7f7f
+    'rgba(188, 189, 34, 0.7)',  # #bcbd22
+    'rgba(23, 190, 207, 0.7)'   # #17becf
+]   
+COLORS = []
+
 buffer_lock = threading.Lock()  # Optional, if you want thread safety
 
 # A simple HTTP server that serves files from the current directory.
@@ -56,28 +71,14 @@ class PlotServer(http.server.SimpleHTTPRequestHandler):
 class MockBuffer:
     def get_all(self):
         return {
-            "Series Alph": {"x": [1, 2, 3, 4], "y": [7, 13, 16, 9], "unit": "MGD"},
-            "Series Beta": {"x": [1, 2, 3, 4], "y": [10, 20, 15, 25], "unit": "MGA"},
-            "Series Gamma": {"x": [1, 2, 3, 4], "y": [5, 12, 18, 10], "unit": "MGD"},
-            "Series Delta": {"x": [1, 2, 3, 4], "y": [12, 17, 14, 20], "unit": "MGA"},
+            "Series Alpha": {"x": [1, 2, 3, 4], "y": [7, 13, 7, 9], "unit": "MGD"},
+            "Series Beta": {"x": [1, 2, 3, 4], "y": [10, 20, 15, 25], "unit": "MG/L"},
+            "Series Gamma": {"x": [1, 2, 3, 4], "y": [5, 12, 11, 10], "unit": "MGD"},
+            "Series Delta": {"x": [1, 2, 3, 4], "y": [12, 17, 14, 20], "unit": "MG/L"},
             "Series Epison": {"x": [1, 2, 3, 4], "y": [4500, 3000, 13000, 8000], "unit": "KW"},
             "Series Zeta": {"x": [1, 2, 3, 4], "y": [5000, 4000, 12000, 9000], "unit": "KW"},
         }
 #plot_buffer = MockBuffer()
-
-#COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
-COLORS = [
-    'rgba(31, 119, 180, 0.7)',  # #1f77b4
-    'rgba(255, 127, 14, 0.7)',  # #ff7f0e
-    'rgba(44, 160, 44, 0.7)',   # #2ca02c
-    'rgba(214, 39, 40, 0.7)',   # #d62728
-    'rgba(148, 103, 189, 0.7)', # #9467bd
-    'rgba(140, 86, 75, 0.7)',   # #8c564b
-    'rgba(227, 119, 194, 0.7)', # #e377c2
-    'rgba(127, 127, 127, 0.7)', # #7f7f7f
-    'rgba(188, 189, 34, 0.7)',  # #bcbd22
-    'rgba(23, 190, 207, 0.7)'   # #17becf
-]   
 
 # --- Helper Function for Normalization ---
 # It's good practice to have this as a separate, robust function.
@@ -120,7 +121,6 @@ def assess_unit_stats(data):
     unit_stats = {}
     for label, series in data.items():
         unit = series["unit"]
-        print(f"unit = {unit}")
         y_data = np.array(series["y"], dtype="float")
         
         #if not np.any(y_data): continue # Skip empty series
@@ -128,8 +128,6 @@ def assess_unit_stats(data):
         current_min, current_max = np.min(y_data), np.max(y_data)
         
         if unit not in unit_stats:
-            print("unit not in unit_stats")
-            print(f"Adding {unit} to unit_stats...")
             unit_stats[unit] = {"min": current_min, "max": current_max}
         else:
             # Update the min/max for this unit if needed
@@ -227,9 +225,9 @@ def show_static(plot_buffer):
         return
     
     unit_stats = assess_unit_stats(data)
-    print(f"unit_stats   = {unit_stats}")
+    #print(f"unit_stats = {unit_stats}")
     layout_updates, unit_to_axis_index = assess_layout_updates(unit_stats)
-    print(f"unit_to_axis_index = {unit_to_axis_index}")
+    #print(f"unit_to_axis_index = {unit_to_axis_index}")
     traces = []
     
     for i, (label, series) in enumerate(data.items()):
@@ -250,8 +248,8 @@ def show_static(plot_buffer):
             mode="lines+markers",
             name=label,
             yaxis=axis_id, # Link this trace to its specific y-axis using the expected plotly jargon (e.g. 'y', 'y1', 'y2', 'y3', etc.) 
-            line=dict(color=COLORS[i % len(COLORS)],width=2,),
-            marker=dict(color=COLORS[i % len(COLORS)],size=6,symbol='circle'),
+            ##line=dict(color=COLORS[i % len(COLORS)],width=2,),
+            ##marker=dict(color=COLORS[i % len(COLORS)],size=6,symbol='circle'),
         
             # 2. NUMERICAL ACCURACY: Store original data for hover info
             customdata=y_original,
@@ -299,7 +297,7 @@ def show_static(plot_buffer):
 
     final_layout = {
         'title': "EDS Data Plot (Static, Visually Normalized)",
-        'template':"plotly_dark",
+        'template':PLOTLY_THEME,
         'showlegend': True,
         # Set the plot area to span the full width of the figure as requested
         'xaxis': dict(domain=[0.0, 1.0], title="Time"),
@@ -339,7 +337,7 @@ def show_static(plot_buffer):
 
     # --- Inject the button based on environment ---
     is_termux_mode = is_termux()
-    tmp_path = inject_button(tmp_path, is_server_mode=is_termux_mode)
+    tmp_path = inject_buttons(tmp_path, is_server_mode=is_termux_mode)
 
     
     os.chdir(str(tmp_dir))
@@ -415,16 +413,20 @@ def show_static(plot_buffer):
             if tmp_path.exists():
                 tmp_path.unlink()
 
-def inject_button(tmp_path: Path, is_server_mode: bool) -> Path:
+def inject_buttons(tmp_path: Path, is_server_mode: bool) -> Path:
     """
     Injects a shutdown button and corresponding JavaScript logic into the existing plot HTML file.
     The JavaScript logic is conditional based on whether a server is running (is_server_mode).
+
+    Injects a darkmode button.
+
+    Injects a button to hide the legend.
     """
     
     # The JavaScript logic for closing the plot, made conditional via Python f-string
     if is_server_mode:
         # SERVER MODE: Uses fetch to talk to the Python server's /shutdown endpoint
-        js_logic = """
+        js_close_logic = """
         function closePlot() {
             // SERVER MODE: Send shutdown request to Python server
             fetch('/shutdown')
@@ -437,56 +439,157 @@ def inject_button(tmp_path: Path, is_server_mode: bool) -> Path:
                 });
         }
         """
-        button_text = "Close Plot "# (Stop Server)
+        button_text_close = "Close Plot "# (Stop Server)
     else:
         # STATIC FILE MODE: Just closes the browser tab/window
-        js_logic = """
+        js_close_logic = """
         function closePlot() {
-            // STATIC FILE MODE: Close the tab/window directly
+            // STATIC FILE MODE: Close the tab/window directly 
             console.log("Static file mode detected. Closing window.");
             window.close();
         }
         """
-        button_text = "Close Plot"# (Close Tab)"
-    
+        button_text_close = "Close Plot"# (Close Tab)"
     # ----------------------------------------------------
-    # NEW STEP: Inject Shutdown Button into the HTML
+    # JavaScript for Plotly-specific controls
+    # ----------------------------------------------------
+    js_plotly_logic = f"""
+    let isLegendVisible = true;
+
+    function getPlotlyDiv() {{
+        /** Plotly plots are typically contained in the first div with the class 'js-plotly-plot' **/
+        return document.querySelector('.js-plotly-plot');
+    }}
+
+    function toggleLegend() {{
+        const plotDiv = getPlotlyDiv();
+        if (!plotDiv) return;
+
+        isLegendVisible = !isLegendVisible;
+        const newVisibility = isLegendVisible;
+        const button = document.getElementById('toggleLegendButton');
+        
+        /** Update the Plotly layout **/
+        Plotly.relayout(plotDiv.id, {{
+            'showlegend': newVisibility
+        }});
+
+        /** Update the button text **/
+        button.textContent = newVisibility ? 'Hide Legend' : 'Show Legend';
+    }}
+
+
+    function toggleThemeOther() {{
+        const plotDiv = getPlotlyDiv();
+        if (!plotDiv) return;
+
+        const button = document.getElementById('toggleThemeButton');
+        const body = document.body;
+
+        /** Toggle a CSS class on the body **/
+        body.classList.toggle('light-mode');
+        
+        /** Update the button text **/
+        if (body.classList.contains('light-mode')) {{
+            button.textContent = 'Dark Mode';
+        }} else {{
+            button.textContent = 'Light Mode';
+        }}
+    }}
+    function toggleTheme() {{
+        const body = document.body;
+        body.classList.toggle('light-mode');
+
+        const button = document.getElementById('toggleThemeButton');
+        button.textContent = body.classList.contains('light-mode') ? 'Dark Mode' : 'Light Mode';
+    }}
+    // Immediately set dark mode on load
+    window.addEventListener('load', () => {{
+        document.body.classList.remove('light-mode'); // ensure dark
+        const themeButton = document.getElementById('toggleThemeButton');
+        if (themeButton) themeButton.textContent = 'Light Mode'; // button shows opposite
+    }});
+
+
+    """
+    # ----------------------------------------------------
+    # Inject Buttons into the HTML
     # ----------------------------------------------------
     
-    # Define the HTML/CSS for the close button
-    shutdown_button_html = f"""
+    # Define the HTML/CSS for all control buttons
+    # The #button-container with flex-direction: row-reverse ensures proper right-to-left stacking
+    buttons_html = f"""
     <style>
-        .close-button {{
-            position: fixed;
-            bottom: 15px;
-            right: 15px;
-            padding: 10px 20px;
-            font-size: 16px;
+        .control-button {{
+            padding: 8px 16px;
+            font-size: 14px;
             font-weight: bold;
             color: white;
-            background-color: #3b82f6; /* Changed to a standard blue for clarity */
+            background-color: #3b82f6;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
             transition: background-color 0.3s;
             z-index: 1000;
+            margin-left: 10px; /* Space between buttons */
         }}
-        .close-button:hover {{
+        .control-button:hover {{
             background-color: #2563eb;
         }}
+        #button-container {{
+            position: fixed;
+            bottom: 15px;
+            right: 15px;
+            display: flex;
+            flex-direction: row-reverse; /* Arrange buttons from right (Close Plot) to left (Legend) */
+            align-items: center;
+        }}
+
+        /* Base style assumes dark mode */
+        body {{
+            background-color: #111;
+            color: #eee;
+            transition: background-color 0.6s ease, color 0.6s ease;
+        }}
+
+        /* Light mode overrides */
+        body.light-mode {{
+            background-color: #fafafa;
+            color: #222;
+        }}
+
+        /* Affect Plotly's wrapper div directly */
+        .js-plotly-plot {{
+            transition: filter 0.6s ease, background-color 0.6s ease;
+        }}
+
+        /* Dark-to-light simulation using invert */
+        body.light-mode .js-plotly-plot {{
+            filter: invert(1) hue-rotate(180deg);
+            background-color: #fafafa;
+        }}
+
     </style>
-    <button class="close-button" onclick="closePlot()">{button_text}</button>
+
+    <div id="button-container">
+        <button class="control-button" onclick="closePlot()">{button_text_close}</button>
+        <button id="toggleThemeButton" class="control-button" onclick="toggleTheme()">Light Mode</button>
+        <button id="toggleLegendButton" class="control-button" onclick="toggleLegend()">Hide Legend</button>
+    </div>
+
     <script>
-        {js_logic}
+        {js_close_logic}
+        {js_plotly_logic}
     </script>
     """
-    
+
     # Read the existing Plotly HTML
     html_content = tmp_path.read_text(encoding='utf-8')
     
     # Inject the button and script right before the closing </body> tag
-    html_content = html_content.replace('</body>', shutdown_button_html + '</body>')
+    #html_content = html_content.replace('</body>', shutdown_button_html_close + '</body>')
+    html_content = html_content.replace('</body>', buttons_html + '</body>')
     
     # Rewrite the file with the new content
     tmp_path.write_text(html_content, encoding='utf-8')
