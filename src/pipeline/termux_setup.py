@@ -151,7 +151,7 @@ else
     echo "{PACKAGE_NAME} not found via pipx (or command failed). Skipping app upgrade."
 fi
 
-echo "--- Launching {APP_NAME} ---"
+echo "--- Version {APP_NAME} ---"
 # Execute the application
 {PACKAGE_NAME} --version
 # {PACKAGE_NAME} trend --default-idcs
@@ -162,6 +162,7 @@ echo "--- Launching {APP_NAME} ---"
         print(f"Successfully created Termux upgrade shortcut for pipx at: {upgrade_shortcut_file}")
     except Exception as e:
         print(f"Warning: Failed to set up Termux pipx upgrade shortcut: {e}")
+    input("Press Enter to exit...")
 
 
 def setup_termux_widget_executable_shortcut(force=False, shortcut_name=None):
