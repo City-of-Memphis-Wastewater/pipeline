@@ -18,6 +18,7 @@ import numpy as np
 from pipeline.web_utils import launch_browser
 
 PLOTLY_THEME = 'seaborn'
+"""
 COLORS = [
     'rgba(31, 119, 180, 0.7)',  # #1f77b4
     'rgba(255, 127, 14, 0.7)',  # #ff7f0e
@@ -29,7 +30,7 @@ COLORS = [
     'rgba(127, 127, 127, 0.7)', # #7f7f7f
     'rgba(188, 189, 34, 0.7)',  # #bcbd22
     'rgba(23, 190, 207, 0.7)'   # #17becf
-]   
+] """  
 COLORS = []
 
 buffer_lock = threading.Lock()  # Optional, if you want thread safety
@@ -193,7 +194,7 @@ def build_y_axis(y_min, y_max,axis_index,axis_label,tick_count = 10):
         anchor="free", 
         position = pos,
         #range=[0, 1], # Set the axis range to the normalized data range
-        range = [-0.05, 1.05], # Set range for normalized data [0,1] with a little padding
+        #range = [-0.05, 1.05], # Set range for normalized data [0,1] with a little padding
         tickmode='array',
         tickvals = tickvals,
         ticktext=ticktext,           # Original labels
@@ -263,38 +264,6 @@ def show_static(plot_buffer):
         traces.append(scatter_trace)
 
     # --- Figure Creation and Layout Updates ---
-    num_axes = len(unit_stats)
-    left_margin = 0.08 + (num_axes - 1) * 0.07
-    # Define the base layout, hiding the default legend since axes titles now serve that purpose
-    layout = go.Layout(
-        title="EDS Data Plot (Static, Visually Normalized)",
-        showlegend=True, 
-        xaxis=dict(domain= [0.0, 1.0],title="Time") # Add a small margin to prevent axes titles from being cut off
-        #xaxis=dict(domain= [0.05, 0.95],title="Time") # Add a small margin to prevent axes titles from being cut off
-        #xaxis=dict(domain=[0.20, 0.95], title="Time") # Make space for multiple Y axes on the left
-    )
-
-    """
-    fig = go.Figure(data=traces, layout=layout)
-    
-    # Apply all the generated y-axis layouts at once
-    # Update the layout to position the legend at the top-left corner
-    fig.update_layout(legend=dict(
-        yanchor="auto",
-        y=0.0,
-        xanchor="auto",
-        x=0.0,
-        bgcolor='rgba(255, 255, 255, 0.1)',  # Semi-transparent background
-        bordercolor='black',   
-        )
-    )
-    # Apply all the generated y-axis layouts at once
-    fig.update_layout(**layout_updates)
-    if True:
-        fig.update_layout(legend=dict(title="Curves"))
-    
-    """
-
     final_layout = {
         'title': "EDS Data Plot (Static, Visually Normalized)",
         'template':PLOTLY_THEME,
@@ -311,7 +280,7 @@ def show_static(plot_buffer):
             borderwidth=1,
             title="Curves"
         ),
-        'margin': dict(l=20, r=20, t=50, b=40) # Add a little padding around the whole figure
+        'margin': dict(l=20, r=20, t=50, b=40) # Add on;y a little padding around the whole figure - this increases the size compared to the default
     }
 
     # --- File Generation and Display ---
