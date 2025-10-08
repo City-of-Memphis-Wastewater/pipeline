@@ -363,5 +363,45 @@ When using `pipeline-eds` in Termux to generate plots (e.g., with `eds trend`), 
 <hr>
 <br>
 
+## 🐍 Python Version Compatibility
+
+The `pipeline-eds` project is designed to support a broad range of modern Python versions, from Python 3.8 up to the latest stable releases, ensuring accessibility across various operating environments (desktop, server, and mobile environments like Termux).
+
+### Supported Python Versions
+
+The project officially supports the following CPython versions:
+
+| Python Version                | Status              | Key Dependency Notes                                                                                                                                                                                                                                                                           |
+| ----------------------------- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **3.11 / 3.12 / 3.13 / 3.14** | ✅ Fully Supported   | Runs on the latest major versions of all dependencies (e.g., `keyring` v25+, `pendulum` v3+, `urllib3` v2+).                                                                                                                                                                                   |
+| **3.10**                      | ✅ Fully Supported   | Stable; uses latest dependencies, with specific `numpy` and `matplotlib` pins.                                                                                                                                                                                                                 |
+| **3.9**                       | ✅ Fully Supported   | Stable; this version marks the transition to modern dependency major versions.                                                                                                                                                                                                                 |
+| **3.8**                       | ⚠️ Maintenance Only | Requires older, pinned versions of dependencies (e.g., `pendulum` v2, `urllib3` v1) to function. **Python 3.8 has reached end-of-life (EOL) and support will be deprecated in a future release.** Python 3.8 is supported because this is the system Python on our Emerson Ovation EDS server. |
+
+### Important Notes on Conditional Dependencies
+
+To maintain compatibility across this range, **Poetry** automatically pins several major dependencies based on your Python version, ensuring maximum stability.
+
+- **Python 3.9+ (Recommended)**: Installations on Python 3.9 and newer automatically receive the latest, feature-rich major versions of core libraries such as `keyring`, `pendulum`, `urllib3`, and the development tools `pytest` and `pytest-cov`.
+    
+- **Python 3.8 (Legacy)**: If you install on Python 3.8, you will receive older, but still compatible and secure, versions of the following packages:
+    
+    - `keyring` (`^24.3`)
+    - `pendulum` (`^2.1.2`)
+    - `urllib3` (`^1.26.19`)
+    - `uvicorn` (`^0.33.0`)
+    - `mysql-connector-python` (`^8.3.0`)
+        
+### Recommended Version
+
+**Python 3.11 or newer is highly recommended** for the best performance, security, and access to the latest features from all third-party libraries. If you are using the Developer Setup, please target Python 3.11.9 as specified in the getting started guide.
+
+<br>
+<hr>
+<br>
+
 ## 📝 Final Note on Naming
 The project is internally referred to as `pipeline`, but the PyPI package is named `pipeline-eds` to avoid a name conflict with an existing, unrelated package on PyPI. For CLI usage, the pyproject.toml file creates aliases so you can use `pipeline`, `eds`, and `pipeline-eds` interchangeably in your terminal. This allows for a more intuitive command-line experience without the need to use the full PyPI package name.
+
+
+does the python version table need fixed?
