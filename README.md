@@ -70,6 +70,74 @@ If you plan to contribute to the project or need to work with the source code, f
     ```
     This ensures that all commands run within the project's isolated environment.
 	You can run `poetry run eds` directly because of the `[tool.poetry.scripts]` section in the `pyproject.toml`, which states that `eds = "pipeline.cli:app"`.
+	
+### 🛠️ Alternative Setup: Building from Source (pip)
+This method is necessary for environments like Termux and Alpine/iSH where full Poetry support is not practical or where you prefer to use standard pip for dependency management after cloning the repository or unpacking the .tar.gz source distribution.
+
+##### For Termux (Android)
+Termux does not support Poetry. You must manually install system dependencies and then use pip in a virtual environment.
+
+1.  Install Python and System Dependencies
+
+```bash     
+# Update package lists and upgrade existing packages
+pkg update && pkg upgrade -y
+# Install core Termux packages needed for Python scientific libraries
+pkg install python python-pip python-numpy rust clang make
+```
+
+2.  Create and Activate a Virtual Environment
+    *Though not strictly required by Termux, using a virtual environment is a strong best practice.*
+    
+```bash
+python -m venv .venv     
+source .venv/bin/activate
+```
+   
+3.  Install Python Dependencies
+    First, generate the requirements.txt file from pyproject.toml (if not already present), then install.    
+```bash
+pip install -r requirements.txt 
+```
+4.  Run Commands
+
+```bash
+python -m pipeline.cli configure     
+```
+##### For Alpine Linux / iSH (iOS)
+Alpine uses MUSL, which requires installing specific package variants. `cryptography`, `keyring`, and `numpy` are notable blockers due to MUSL compatibility, but a workaround is possible.
+
+1.  Install System Dependencies
+    
+```bash     
+# Install pip and the required cryptography backend for MUSL
+apk update
+apk add python3 \
+    py3-pip \
+    gcc \
+	musl-dev \
+	build-base \
+	py3-cryptography \
+	py3-numpy
+```
+     
+2.  Create and Activate a Virtual Environment
+    *Using a virtual environment is a strong best practice for keeping your system Python clean and consolidating .*
+   
+```bash 
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+3.  Install Python Dependencies
+```bash 
+pip install -r requirements.txt
+```
+4.  Run Commands
+
+```bash 
+python3 -m pipeline.cli trend M100FI
+```
 
 <br>
 <hr>
