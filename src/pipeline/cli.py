@@ -423,7 +423,7 @@ def ping(
         call_ping(url)
 
 @app.command()
-def export(
+def points_export(
     export_path: str = typer.Argument(None, help = "Provide a specific export path. If not provided, the export will be saved to the current working directory."),
     plant_name: str = typer.Option(None, "--plantname", "-pn", help = "Provide the EDS ZD for your credentials."),
     #filter_idcs: str = typer.Option(None,"--idcs", "-i", help="Provide known idcs values to filter the export."), # , "--idcs", "-i"
