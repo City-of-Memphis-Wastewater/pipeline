@@ -51,3 +51,4 @@ src/example/
 *.egg-info/
 Postman*
 .dockerignore
+.python-version
