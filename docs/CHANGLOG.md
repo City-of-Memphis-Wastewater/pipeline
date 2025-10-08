@@ -6,6 +6,19 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 
 ---
 
+## [0.3.23] - 2025-10-07
+
+We need to make sure these changes impact the static tmp files as well as continuously served html.
+
+### Added
+- **Dark Mode Plotting with Mode Button:** CSS and Javascript are used to edit the HTML.
+- **Hide Legend / Show Legend Button:** This works well to toggle on and off the legend.
+
+### Changed:
+- Plot colors, line sizes, and marker sizes are no longer manually set - instead this is managed by the default theme, seaborn. 
+
+---
+
 ## [0.3.22] - 2025-10-07
 
 We need dark mode plotting.
