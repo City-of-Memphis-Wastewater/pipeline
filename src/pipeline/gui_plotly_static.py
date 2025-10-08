@@ -299,6 +299,7 @@ def show_static(plot_buffer):
 
     final_layout = {
         'title': "EDS Data Plot (Static, Visually Normalized)",
+        'template':"plotly_dark",
         'showlegend': True,
         # Set the plot area to span the full width of the figure as requested
         'xaxis': dict(domain=[0.0, 1.0], title="Time"),
