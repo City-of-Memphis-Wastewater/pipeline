@@ -4,10 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is (read: strives to be) based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+---
+
+## [0.3.22] - 2025-10-07
+
+We need dark mode plotting.
+
+### Added
+- **points-export CLI command:** Now users can generate an export file of all of their EDS points associated with their plant. Plant name and file path can be provided or will be determined automatically.
+
+### Broken
+- The iess value filter is not working consistently for multiple values provided. Ergo, the feature is not included for the `points-export` command at this time.
 
 ---
 
-### [0.3.14] - 2025-10-07
+## [0.3.14] - 2025-10-07
 
 ### Fixed
 

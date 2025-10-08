@@ -217,7 +217,7 @@ def trend(
     # Use the retrieved credentials to log in to the API, including custom session attributes
     session = EdsClient.login_to_session_with_api_credentials(api_credentials)
 
-    points_data = EdsClient.get_points_metadata(session, iess_list=iess_list)
+    points_data = EdsClient.get_points_metadata(session, filter_iess=iess_list)
     
     
     if endtime is None:
