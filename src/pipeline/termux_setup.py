@@ -137,7 +137,7 @@ echo "which {PACKAGE_NAME}"
 which {PACKAGE_NAME}
 # If installed via pipx, update the app
 if command -v {PACKAGE_NAME} &> /dev/null; then
-    echo "Upgrading {PACKAGE_NAME} via pipx..."
+    echo "pipx upgrade {PACKAGE_NAME} ..."
     pipx upgrade {PACKAGE_NAME}
     echo "{PACKAGE_NAME} upgrade complete."
     
@@ -154,7 +154,7 @@ fi
 echo "--- Launching {APP_NAME} ---"
 # Execute the application
 {PACKAGE_NAME} --version
-{PACKAGE_NAME} trend --default-idcs
+# {PACKAGE_NAME} trend --default-idcs
 """
     try:
         upgrade_shortcut_file.write_text(upgrade_script_content, encoding='utf-8')
