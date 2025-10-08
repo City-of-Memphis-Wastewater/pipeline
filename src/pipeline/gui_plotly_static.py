@@ -491,9 +491,9 @@ def inject_buttons(tmp_path: Path, is_server_mode: bool) -> Path:
         
         /** Update the button text **/
         if (body.classList.contains('light-mode')) {{
-            button.textContent = 'Dark Mode';
-        }} else {{
             button.textContent = 'Light Mode';
+        }} else {{
+            button.textContent = 'Dark Mode';
         }}
     }}
     function toggleTheme() {{
@@ -501,13 +501,13 @@ def inject_buttons(tmp_path: Path, is_server_mode: bool) -> Path:
         body.classList.toggle('light-mode');
 
         const button = document.getElementById('toggleThemeButton');
-        button.textContent = body.classList.contains('light-mode') ? 'Dark Mode' : 'Light Mode';
+        button.textContent = body.classList.contains('light-mode') ? 'Light Mode' : 'Dark Mode';
     }}
     // Immediately set dark mode on load
     window.addEventListener('load', () => {{
         document.body.classList.remove('light-mode'); // ensure dark
         const themeButton = document.getElementById('toggleThemeButton');
-        if (themeButton) themeButton.textContent = 'Light Mode'; // button shows opposite
+        if (themeButton) themeButton.textContent = 'Dark Mode'; // button shows opposite
     }});
 
 
@@ -574,7 +574,7 @@ def inject_buttons(tmp_path: Path, is_server_mode: bool) -> Path:
 
     <div id="button-container">
         <button class="control-button" onclick="closePlot()">{button_text_close}</button>
-        <button id="toggleThemeButton" class="control-button" onclick="toggleTheme()">Light Mode</button>
+        <button id="toggleThemeButton" class="control-button" onclick="toggleTheme()">Dark Mode</button>
         <button id="toggleLegendButton" class="control-button" onclick="toggleLegend()">Hide Legend</button>
     </div>
 
