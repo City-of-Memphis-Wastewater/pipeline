@@ -9,6 +9,7 @@ from importlib.metadata import version, PackageNotFoundError
 from requests.exceptions import Timeout
 import sys
 import pendulum
+import re
 
 try:
     import colorama # explicitly added so for the shiv build
@@ -22,13 +23,13 @@ except ImportError:
 from pipeline.time_manager import TimeManager
 from pipeline.create_sensors_db import get_db_connection, create_packaged_db, reset_user_db # get_user_db_path, ensure_user_db, 
 from pipeline.api.eds import demo_eds_webplot_point_live, EdsClient, load_historic_data, EdsLoginException, demo_eds_save_point_export
-from pipeline.environment import is_termux, is_windows, is_pyz, is_elf, is_pipx, matplolib_enabled, open_text_file_in_default_app
+from pipeline.environment import is_termux, is_windows, is_pyz, is_elf, is_pipx, matplotlib_enabled, open_text_file_in_default_app
 from pipeline.security_and_config import get_eds_api_credentials, get_external_api_credentials, get_eds_db_credentials, get_all_configured_urls, get_configurable_plant_name, init_security, CONFIG_PATH
 from pipeline.termux_setup import setup_termux_install, cleanup_termux_install
 from pipeline.windows_setup import setup_windows_install, cleanup_windows_install
 from pipeline import helpers
 from pipeline.plotbuffer import PlotBuffer
-from pipeline.version_info import  PIP_PACKAGE_NAME, PIPELINE_VERSION, __version__, get_package_version
+from pipeline.version_info import  PIP_PACKAGE_NAME, PIPELINE_VERSION, __version__, get_package_version, get_package_name
 #from pipeline.helpers import setup_logging
 
 # --- TERMUX SETUP HOOK ---
@@ -150,7 +151,7 @@ def trend(
     idcs: list[str] = typer.Argument(None, help="Provide known idcs values that match the given zd."), # , "--idcs", "-i"
     starttime: str = typer.Option(None, "--start", "-s", help="Identify start time. Use any reasonable format, to be parsed automatically. If you must use spaces, use quotes."),
     endtime: str = typer.Option(None, "--end", "-end", help="Identify end time. Use any reasonable format, to be parsed automatically. If you must use spaces, use quotes."),
-    plant_name: str = typer.Option(None, "--plantname", "-pn", help = "Define the EDS ZD for your credentials. This must correlate with your idcs point selection(s)."),
+    plant_name: str = typer.Option(None, "--plantname", "-pn", help = "Provide the EDS ZD for your credentials."),
     #workspacename: str = typer.Option(None,"--workspace","-w", help = "Provide the name of the workspace you want to use, for the secrets.yaml credentials and for the timezone config. If a start time is not provided, the workspace queries can checked for the most recent successful timestamp. "),
     print_csv: bool = typer.Option(False,"--print-csv","-p",help = "Print the CSV style for pasting into Excel."),
     step_seconds: int = typer.Option(None, "--step-seconds", help="You can explicitly provide the delta between datapoints. If not, ~400 data points will be used, based on the nice_step() function."), 
@@ -213,47 +214,9 @@ def trend(
     typer.echo(f"iess_list = {iess_list}")
     typer.echo(f"")
 
-    """
-    # Use the retrieved credentials to log in to the API
-    session = EdsClient.login_to_session(
-        api_url=api_credentials.get("url"),
-        username=api_credentials.get("username"),
-        password=api_credentials.get("password")
-    )
-    """
+    # Use the retrieved credentials to log in to the API, including custom session attributes
+    session = EdsClient.login_to_session_with_api_credentials(api_credentials)
 
-    session = None
-    try:
-        session = EdsClient.login_to_session(
-            api_url=api_credentials.get("url"),
-            username=api_credentials.get("username"),
-            password=api_credentials.get("password"),
-            timeout=10 # Add a 10-second timeout to the request
-        )
-    except Timeout:
-        typer.echo(
-            typer.style(
-                "\nConnection to the EDS API timed out. Please check your VPN connection and try again.",
-                fg=typer.colors.RED,
-                bold=True,
-            )
-        )
-        raise typer.Exit(code=1)
-    except EdsLoginException as e:
-        typer.echo(
-            typer.style(
-                f"\nLogin failed for EDS API: {e}",
-                fg=typer.colors.RED,
-                bold=True,
-            )
-        )
-        raise typer.Exit(code=1)
-    
-
-    # Set the session attributes based on the retrieved credentials
-    session.base_url = api_credentials.get("url")
-    session.zd = api_credentials.get("zd")
-    
     points_data = EdsClient.get_points_metadata(session, iess_list=iess_list)
     
     
@@ -460,12 +423,57 @@ def ping(
         call_ping(url)
 
 @app.command()
-def export():
+def export(
+    export_path: str = typer.Argument(None, help = "Provide a specific export path. If not provided, the export will be saved to the current working directory."),
+    plant_name: str = typer.Option(None, "--plantname", "-pn", help = "Provide the EDS ZD for your credentials."),
+    #filter_idcs: str = typer.Option(None,"--idcs", "-i", help="Provide known idcs values to filter the export."), # , "--idcs", "-i"
+):
     """
     Export a list of all EDS Points.
     """
-    typer.echo("Coming soon.")
-    #demo_eds_save_point_export()
+    filter_idcs=None # trouble getting multiple points back, suppress for now
+    if plant_name is None:
+        plant_name = get_configurable_plant_name()
+
+
+    if isinstance(plant_name,str):
+        api_credentials = get_eds_api_credentials(plant_name=plant_name)
+
+    if isinstance(plant_name,list):
+        typer.echo("")
+        typer.echo(f"Multiple plant names provided: {plant_name} ")
+        typer.echo("Querying multiple plants at once currently supported.") 
+        typer.echo("Defaulting to use the first name.")
+        api_credentials = get_eds_api_credentials(plant_name=plant_name[0])
+    
+    # Use the retrieved credentials to log in to the API, including custom session attributes
+    typer.echo("Logging in to session...")
+    session = EdsClient.login_to_session_with_api_credentials(api_credentials)
+    
+
+    typer.echo("Retrieving point export...")
+    if filter_idcs is not None:
+        filter_idcs_list = re.split(r'[,\s]+', filter_idcs)
+        idcs_to_iess_suffix = api_credentials.get("idcs_to_iess_suffix")
+        filter_iess = [x+idcs_to_iess_suffix for x in filter_idcs_list]
+        typer.echo(f"filter_iess = {filter_iess}")
+    else:
+        filter_iess = None
+    point_export_decoded_str = EdsClient.get_points_export(session, filter_iess = filter_iess)
+
+    typer.echo("Saving export file...")
+    app_dir_name = f".{get_package_name()}"
+    if export_path is None:
+        data_dir = Path.home() / app_dir_name / "data" 
+        data_dir.mkdir(parents=True, exist_ok=True)
+        export_path = data_dir / 'export_eds_points_neo.txt'
+    try:
+        EdsClient.save_points_export(point_export_decoded_str, export_path = export_path)
+    except Exception as e: # Catch the actual save errors here
+        typer.echo(f"ERROR: Failed to save export file to: {export_path}")
+        typer.echo(f"Details: {e}")
+        return
+    typer.echo(f"\nExport file saved to: \n{export_path}\n")
 
 @app.command()
 def help():

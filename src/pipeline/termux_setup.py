@@ -34,7 +34,6 @@ def setup_termux_install(force=False):
     if not is_termux():
         return
     exec_path = Path(sys.argv[0]).resolve()
-    print(f"is_pipx() = {is_pipx()}")
     # Check the type of file being run, whether a pipx binary in PIPX_BIN_DIR or an ELF file or a PYZ, etc
     if is_elf():
         setup_termux_widget_executable_shortcut(force, shortcut_name = SHORTCUT_NAME_ELF)
