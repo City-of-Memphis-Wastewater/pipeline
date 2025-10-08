@@ -400,8 +400,109 @@ To maintain compatibility across this range, **Poetry** automatically pins sever
 <hr>
 <br>
 
+
+---
+
+## Comparison: `pipeline-eds` Python Package vs Emerson Ovation EDS Excel Add-In vs EDS Portal Webapp
+
+
+### **1. Emerson Ovation EDS Excel Add-In**
+
+**Pros:**
+
+* Integrates directly into Excel, a familiar environment for many users.
+* Supports creating tabular trends and exporting EDS data within spreadsheets.
+* Good for ad-hoc data analysis if you are comfortable with Excel.
+* **Insert Tabular Trend** functionality is diversified from the **EDS Excel Function library** (`EDS point fields`, `EDS archives`, `EDS steam tables`, `EDS tabular trends`)
+
+**Cons:**
+
+* The interface for generating data (e.g., via **Insert tabular trend**) is **cumbersome and not very intuitive**.
+* Users must manually insert charts after data extraction unless they have a pre-built spreadsheet template.
+* Requires Excel to be installed.
+* Requires **admin rights to install an MSI package** provided by Emerson, which can be a barrier in locked-down environments.
+* Not scriptable or easily automated unless the user is comortbale calling XLSX files from Task Scheduler.
+* Limited performance for rapid exploration or querying.
+
+
+### **2. Emerson EDS Portal Webapp**
+
+**Pros:**
+
+* Web-based, no local installation required.
+* Intuitive UI for browsing EDS data.
+* Good for **interactive, point-and-click exploration**.
+* Tab-building allows for excellent stable page-based system analysis, so the inqueries do not need to be repeated.
+
+**Cons:**
+
+* To visualize **one-off sensor curves**, you must:
+
+  * Open the filter utility.
+  * Manually type in the full IESS (sensor ID).
+  * Adjust time ranges via multiple clicks.
+* Limited ability to automate or integrate data retrieval into other workflows.
+* Data export is usually manual.
+* Requires a web browser and network access.
+
+
+### **3. `pipeline-eds` Python Package**
+
+**Pros:**
+
+* **CLI-based**, enabling extremely **fast visualization of one-off sensor curves** with simple commands.
+* No GUI overhead: you just run a command like `pipeline trend ABC XYZ --start 2024-01-01 --end 2024-01-31` and get results quickly.
+* Supports automation and scripting for repetitive or scheduled data extraction and processing.
+* Minimal installation requirements: only needs a shell environment (PowerShell, Bash).
+* Works on platforms where Excel or full web browsers may not be available.
+* Can be used on **mobile devices** through tools like Termux on Android, avoiding the need for Emerson’s paid mobile app license.
+* Open-source, so you can extend or customize the tool.
+* Integrates easily with Python-based data workflows, dashboards, or analytics tools.
+
+**Cons:**
+
+* Requires familiarity with command-line interfaces and scripting (though the Termux shortcuts widget allows mobile users to not use the terminal directly.)
+* No graphical input UI (yet) for those who prefer point-and-click.
+* May require initial setup and learning curve if you are not familiar with Python or CLI tools.
+
+---
+
+### **4. Mobile Use Case**
+
+* **Emerson Mobile Apps** (iOS and Android) require additional licensing and purchase from Emerson.
+* `pipeline-eds` can be run on mobile devices using:
+
+  * **Termux** (Android) or similar terminal emulators.
+  * Any SSH client connected to a remote system with the package installed.
+* This approach **undercuts the need for Emerson’s mobile app license**, providing a lightweight, free way to query and visualize EDS data on the go.
+* Great for field engineers or operators needing quick access to sensor data without carrying a laptop or paying for extra licenses.
+
+---
+
+### **Software Comparison Summary Table**
+
+| Feature                         | Excel Add-In                           | EDS Portal Webapp                  | `pipeline-eds` Python Package                       |
+| ------------------------------- | -------------------------------------- | ---------------------------------- | --------------------------------------------------- |
+| Installation                    | Requires MSI installer + Excel         | No install, web browser only       | Python package + shell (PowerShell/Bash)            |
+| Ease of Use                     | Familiar Excel UI, but clunky workflow | Intuitive GUI, but slow multi-step | CLI-based, fast but requires command-line skills    |
+| Automation                      | No                                     | No                                 | Yes, fully scriptable                               |
+| Speed for One-off Sensor Curves | Slow, manual chart creation            | Slow, many clicks to filter        | Fast, one command                                   |
+| Integration with other tools    | Limited                                | Limited                            | Excellent, can be embedded in Python pipelines      |
+| Mobile Access                   | No                                     | Web browser only (no offline)      | Possible via Termux or SSH, no extra license needed |
+| Licensing Cost                  | Included with Emerson tools            | Included with Emerson tools        | Open-source, free                                   |
+
+---
+
+### Software Comparison Final Thoughts
+
+If you mainly need **quick, interactive visualizations occasionally**, and prefer GUIs, the `Excel Add-In` or `Portal` may suffice.
+
+If you want **fast, automated, scriptable access**, with the flexibility to integrate into broader workflows — especially **for repeated sensor curve visualizations** — `pipeline-eds` is much more efficient.
+
+If **mobile access without extra license costs** is important, `pipeline-eds` on Termux or similar CLI apps is a strong advantage.
+
+
+---
+
 ## 📝 Final Note on Naming
 The project is internally referred to as `pipeline`, but the PyPI package is named `pipeline-eds` to avoid a name conflict with an existing, unrelated package on PyPI. For CLI usage, the pyproject.toml file creates aliases so you can use `pipeline`, `eds`, and `pipeline-eds` interchangeably in your terminal. This allows for a more intuitive command-line experience without the need to use the full PyPI package name.
-
-
-does the python version table need fixed?
