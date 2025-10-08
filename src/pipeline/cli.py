@@ -398,6 +398,8 @@ def install(
     elif is_termux():
         typer.echo("Scripts will now be added to the $HOME/.shortcuts/ directory for launching from the Termux Widget.")
         setup_termux_install(force=upgrade)
+        typer.echo("Update complete.")
+        input("Press Enter to exit...")
 
 
 @app.command()

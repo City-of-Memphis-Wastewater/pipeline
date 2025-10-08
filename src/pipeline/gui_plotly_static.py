@@ -32,6 +32,8 @@ COLORS = [
     'rgba(23, 190, 207, 0.7)'   # #17becf
 ] """  
 COLORS = []
+font_size = 20 if is_termux() else 14
+
 
 buffer_lock = threading.Lock()  # Optional, if you want thread safety
 
@@ -180,13 +182,12 @@ def build_y_axis(y_min, y_max,axis_index,axis_label,tick_count = 10):
     ticktext = [f"{t:.0f}" for t in original_ticks]
     tickvals=normalize_ticks(original_ticks, y_min, y_max) # Normalized positions
 
-    pos = (0.0025*axis_index**2)+(axis_index)*0.06
+    pos = (0.0025*axis_index**2)+(axis_index)*0.08
     overlaying_prop = "y" if axis_index > 0 else None
     
     #pos = (axis_index)
     #pos= 0
     yaxis_dict=dict(
-        #title=axis_label,
         title=dict(text=axis_label, standoff=10), # Use dict for better control
         #overlaying="y", # or "no", no known difference # suppress
         overlaying = overlaying_prop,
@@ -265,11 +266,12 @@ def show_static(plot_buffer):
 
     # --- Figure Creation and Layout Updates ---
     final_layout = {
-        'title': "EDS Data Plot (Static, Visually Normalized)",
+        'title': "EDS Data Plot (Static)",
         'template':PLOTLY_THEME,
         'showlegend': True,
         # Set the plot area to span the full width of the figure as requested
         'xaxis': dict(domain=[0.0, 1.0], title="Time"),
+        'font':dict(size=font_size),
         'legend': dict(
             yanchor="auto",
             y=0.01,
@@ -278,7 +280,7 @@ def show_static(plot_buffer):
             bgcolor='rgba(255, 255, 255, 0.1)', # semi transparent background
             bordercolor='grey',
             borderwidth=1,
-            title="Curves"
+            #title="Curves"
         ),
         'margin': dict(l=20, r=20, t=50, b=40) # Add on;y a little padding around the whole figure - this increases the size compared to the default
     }
