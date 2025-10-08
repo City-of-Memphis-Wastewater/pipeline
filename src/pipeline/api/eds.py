@@ -166,14 +166,9 @@ class EdsClient:
         # Add the list of IESS values if the list is not empty.
         # The 'requests' library will automatically format this as
         # ?iess=item1&iess=item2&...
-        #if filter_iess and isinstance(filter_iess, list) and len(filter_iess) > 0:
-        #    params['iess'] = filter_iess
-
-
-        # --- THE CRITICAL FIX IS HERE ---
         # 1. Check if filter_iess is a list and join it into a comma-separated string.
         # 2. Add the resulting string to params, which the API is likely expecting.
-        print(f"filter_iess = {filter_iess}")
+        #print(f"filter_iess = {filter_iess}")
         if filter_iess:
             if isinstance(filter_iess, list) and len(filter_iess) > 0:
                 # Convert the list to a single string using a delimiter
@@ -186,7 +181,7 @@ class EdsClient:
         # --- END OF FIX ---
         
         params['order'] = 'iess'
-        print(f"params = {params}")
+        #print(f"params = {params}")
         zd = str(session.zd)  
         #order = 'iess'
         #query = '?zd={}&iess={}&order={}'.format(zd, filter_iess, order)

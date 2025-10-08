@@ -429,7 +429,7 @@ def export(
     #filter_idcs: str = typer.Option(None,"--idcs", "-i", help="Provide known idcs values to filter the export."), # , "--idcs", "-i"
 ):
     """
-    Export a list of all EDS Points.
+    Export a list of all EDS Points. This is specific to the EDS.
     """
     filter_idcs=None # trouble getting multiple points back, suppress for now
     if plant_name is None:
@@ -466,7 +466,8 @@ def export(
     if export_path is None:
         data_dir = Path.home() / app_dir_name / "data" 
         data_dir.mkdir(parents=True, exist_ok=True)
-        export_path = data_dir / 'export_eds_points_neo.txt'
+        now_time_str = TimeManager(TimeManager.now()).as_safe_isoformat_for_filename()
+        export_path = data_dir / f'{plant_name}-export_eds_points_{now_time_str}.txt'
     try:
         EdsClient.save_points_export(point_export_decoded_str, export_path = export_path)
     except Exception as e: # Catch the actual save errors here
