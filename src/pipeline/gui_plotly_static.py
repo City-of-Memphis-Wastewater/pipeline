@@ -182,7 +182,7 @@ def build_y_axis(y_min, y_max,axis_index,axis_label,tick_count = 10):
     ticktext = [f"{t:.0f}" for t in original_ticks]
     tickvals=normalize_ticks(original_ticks, y_min, y_max) # Normalized positions
 
-    pos = (0.0025*axis_index**2)+(axis_index)*0.08
+    pos = (0.0025*axis_index**2)+(axis_index)*0.1
     overlaying_prop = "y" if axis_index > 0 else None
     
     #pos = (axis_index)
