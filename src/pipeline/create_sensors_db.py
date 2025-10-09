@@ -17,6 +17,8 @@ sensors_data = [
     ("D-321E", "D-321E.UNIT0@NET0", "Maxson", "5", "MG/L", "PAA Dose"),
     ("FI8001", "FI8001.UNIT0@NET0", "Maxson", "5", "MGD", "Effluent Flow"),
     ("PM-23KV-M2-KW", "PM-23KV-M2-KW.UNIT0@NET0", "Maxson", "2", "KW", "Main 2 Active Power Total"),
+    ("RASFLOW", "RASFLOW.UNIT0@NET0", "Maxson", "2", "MGD", "All Clarifier Flow Minus WAS flow"),
+    ("E152SI", "E152SI.UNIT0@NET0", "Maxson", "2", "MGD", "WAS, Waste Flow Line"),
 ]
 
 # -----------------------------

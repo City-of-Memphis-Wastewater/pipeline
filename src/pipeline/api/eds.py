@@ -46,6 +46,61 @@ class EdsLoginException(Exception):
 class EdsClient:
 
     @staticmethod
+    def login_to_session(api_url, username, password, timeout=10):
+        session = requests.Session()
+
+        data = {'username': username, 'password': password, 'type': 'script'}
+        response = session.post(f"{api_url}/login",
+                                json=data,
+                                verify=False,
+                                timeout=timeout
+                                )
+        response.raise_for_status() # Raises an HTTPError for bad responses (4xx or 5xx)
+        json_response = response.json()
+        #print(f"response = {response}")
+        session.headers['Authorization'] = f"Bearer {json_response['sessionId']}"
+        return session
+    
+    @staticmethod
+    def login_to_session_with_api_credentials(api_credentials):
+        """
+        Like login_to_sessesion, plug with custom session attributes added to the session object.
+        """
+        # Expected to be used in terminal, so typer is acceptable, but should be scaled.
+        session = None
+        try:
+            session = EdsClient.login_to_session(
+                api_url=api_credentials.get("url"),
+                username=api_credentials.get("username"),
+                password=api_credentials.get("password"),
+                timeout=10 # Add a 10-second timeout to the request
+            )
+            
+            # --- Add custom session attributes to the session object ---
+            session.base_url = api_credentials.get("url")
+            session.zd = api_credentials.get("zd")
+        except Timeout:
+            typer.echo(
+                typer.style(
+                    "\nConnection to the EDS API timed out. Please check your VPN connection and try again.",
+                    fg=typer.colors.RED,
+                    bold=True,
+                )
+            )
+            raise typer.Exit(code=1)
+        except EdsLoginException as e:
+            typer.echo(
+                typer.style(
+                    f"\nLogin failed for EDS API: {e}",
+                    fg=typer.colors.RED,
+                    bold=True,
+                )
+            )
+            raise typer.Exit(code=1)
+        
+        return session
+    
+    @staticmethod
     def get_license(session,api_url:str):
         response = session.get(f'{api_url}/license', json={}, verify=False).json()
         return response
@@ -259,60 +314,7 @@ class EdsClient:
             for line in lines:
                 f.write(line + "\n")  # Save each line in the text file
     
-    @staticmethod
-    def login_to_session(api_url, username, password, timeout=10):
-        session = requests.Session()
 
-        data = {'username': username, 'password': password, 'type': 'script'}
-        response = session.post(f"{api_url}/login",
-                                json=data,
-                                verify=False,
-                                timeout=timeout
-                                )
-        response.raise_for_status() # Raises an HTTPError for bad responses (4xx or 5xx)
-        json_response = response.json()
-        #print(f"response = {response}")
-        session.headers['Authorization'] = f"Bearer {json_response['sessionId']}"
-        return session
-    
-    @staticmethod
-    def login_to_session_with_api_credentials(api_credentials):
-        """
-        Like login_to_sessesion, plug with custom session attributes added to the session object.
-        """
-        # Expected to be used in terminal, so typer is acceptable, but should be scaled.
-        session = None
-        try:
-            session = EdsClient.login_to_session(
-                api_url=api_credentials.get("url"),
-                username=api_credentials.get("username"),
-                password=api_credentials.get("password"),
-                timeout=10 # Add a 10-second timeout to the request
-            )
-            
-            # --- Add custom session attributes to the session object ---
-            session.base_url = api_credentials.get("url")
-            session.zd = api_credentials.get("zd")
-        except Timeout:
-            typer.echo(
-                typer.style(
-                    "\nConnection to the EDS API timed out. Please check your VPN connection and try again.",
-                    fg=typer.colors.RED,
-                    bold=True,
-                )
-            )
-            raise typer.Exit(code=1)
-        except EdsLoginException as e:
-            typer.echo(
-                typer.style(
-                    f"\nLogin failed for EDS API: {e}",
-                    fg=typer.colors.RED,
-                    bold=True,
-                )
-            )
-            raise typer.Exit(code=1)
-        
-        return session
     
     @staticmethod
     #def create_tabular_request(session: object, api_url: str, starttime: int, endtime: int, points: list):

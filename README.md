@@ -13,6 +13,7 @@ This section provides a quick guide to help you get `pipeline` up and running. C
 ### 💻 CLI Installation (Recommended for End-Users)
 
 For a simple command-line interface (CLI) experience, **`pipx`** is the recommended installation method. `pipx` installs and runs Python applications in isolated environments, preventing conflicts with your system's Python packages.
+For more information about installing Python, pip, and any environment-specific dependencies, see the section below, `Building from Source (pip)`.
 
 1.  **Install `pipx`**
     If you don't have `pipx` installed, you can get it with `pip`:
@@ -24,7 +25,7 @@ For a simple command-line interface (CLI) experience, **`pipx`** is the recommen
     Install the package directly from PyPI. If you need Windows-specific dependencies like `pyodbc` and `matplotlib`, use the `[windows]` extra.
     ```bash
     pipx install pipeline-eds
-    # For Windows users:
+    # For Windows users. who want to use matplotlib:
     pipx install "pipeline-eds[windows]"
     ```
 3.  **Run CLI Commands**
@@ -396,15 +397,9 @@ To maintain compatibility across this range, **Poetry** automatically pins sever
 
 **Python 3.11 or newer is highly recommended** for the best performance, security, and access to the latest features from all third-party libraries. If you are using the Developer Setup, please target Python 3.11.9 as specified in the getting started guide.
 
-<br>
-<hr>
-<br>
-
-
 ---
 
 ## Comparison: `pipeline-eds` Python Package vs Emerson Ovation EDS Excel Add-In vs EDS Portal Webapp
-
 
 ### **1. Emerson Ovation EDS Excel Add-In**
 
