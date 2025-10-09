@@ -131,8 +131,28 @@ class MissionClient:
         return client
 
     
+    def get_analog_table_(self, device_id: int, start_ms: int, end_ms: int, start_row: int = 1, page_size: int = 50):
+        url = f"{self.base_url}/Analog/Table"
+
+        params = {
+            "customerId": self.customer_id,
+            "deviceId": device_id,
+            "StartRow": start_row,
+            "PageSize": page_size,
+            "StartDate": start_ms,
+            "EndDate": end_ms,
+            "fromDate": "undefined",  
+            "timestamp": int(time.time() * 1000),
+        }
+        r = requests.get(url, headers=self.headers, params=params)
+        #r = self.session.get(url, headers=self.headers, params=params)  # use session
+        r.raise_for_status()
+        return r.json()
+    
+    
     def get_analog_table(self, device_id: int, start_ms: int, end_ms: int, start_row: int = 1, page_size: int = 50):
         url = f"{self.base_url}/Analog/Table"
+        print(f"self.customer_id = {self.customer_id}")
         params = {
             "customerId": self.customer_id,
             "deviceId": device_id,
@@ -187,10 +207,9 @@ def demo_retrieve_analog_data_and_save_csv():
     """"""
     client = MissionClient.login(api_url,username,password)
 
-    # Example request:
+    # fetch teh cusotomer_id after logging in
     resp = client.session.get(f"{client.base_url}/account/GetSettings/?viewMode=1")
-    MissionClient.customer_id = resp.json()['user']['customerId']
-    print(MissionClient.customer_id)
+    client.customer_id = resp.json().get('user',{}).get('customerId',{})
     
     # Get the last 24 hours of analog table data
     end = datetime.now()

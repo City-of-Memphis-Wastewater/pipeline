@@ -47,6 +47,7 @@ version.rc
 !src/
 src/defunct/
 src/example/
+src/exploratory/
 *.sqlite3
 *.egg-info/
 Postman*
