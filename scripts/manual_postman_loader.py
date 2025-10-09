@@ -4,7 +4,7 @@ import json
 
 # Read your CSV file
 # hardcoded filth
-filepath = r"C:\Users\george.bennett\dev\pipeline\workspaces\eds_to_rjn\exports\manual_data_load_to_postman_effluent_sept19.csv"
+filepath = r"C:\Users\george.bennett\dev\pipeline\workspaces\eds_to_rjn\exports\manual_data_load_to_postman_stiles_wetwell_229_oct8.csv"
 
 data_dict = {}
 with open(filepath, newline='') as csvfile:
@@ -26,3 +26,5 @@ with open("output.json", "w") as f:
     json.dump(output, f, indent=4)
 
 print(json.dumps(output, indent=4))
+
+# =TEXT(E1,"YYYY-MM-DD")&"T"&TEXT(E1,"hh:mm:ss")

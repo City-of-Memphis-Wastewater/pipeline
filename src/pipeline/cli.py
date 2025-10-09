@@ -399,8 +399,9 @@ def install(
         typer.echo("Scripts will now be added to the $HOME/.shortcuts/ directory for launching from the Termux Widget.")
         setup_termux_install(force=upgrade)
         typer.echo("Update complete.")
-        typer.echo(f"n\{get_package_name()} --version")
+        typer.echo(f"\n{get_package_name()} --version")
         typer.secho(f"{get_package_name()} {get_package_version()}", fg=typer.colors.GREEN, bold=True)
+        typer.echo("\n")
         input("Press Enter to exit...") # moved to internal of setup_termux_install()
 
 
