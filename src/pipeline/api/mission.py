@@ -6,6 +6,16 @@ import time
 from urllib.parse import quote_plus
 import json
 
+"""
+📝 Note: Handling Hashed Passwords
+
+- The system uses a hashed version of the password for authentication.
+- If the password ever changes, you’ll need to update the stored credentials with whatever authentication values the service requires for non-interactive access.
+- Do not attempt to reverse the hash — it’s a one-way cryptographic function and cannot be decrypted to retrieve the original password.
+- Always store and transmit authentication credentials and tokens securely, and avoid exposing them in public repositories or logs.
+- If the system’s hashing method changes (e.g., due to a security update), make sure to adjust the authentication logic accordingly.
+- If you need to run this automation non-interactively, obtain a supported programmatic credential (API key, OAuth client credentials, service account, or refresh token) from the service owner and store it in a secure secrets manager. Do not rely on copying browser network values for production automation; contact the service administrator for a documented solution.
+"""
 
     
 class MissionClient:
