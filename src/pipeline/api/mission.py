@@ -15,6 +15,11 @@ import json
 - Always store and transmit authentication credentials and tokens securely, and avoid exposing them in public repositories or logs.
 - If the system’s hashing method changes (e.g., due to a security update), make sure to adjust the authentication logic accordingly.
 - If you need to run this automation non-interactively, obtain a supported programmatic credential (API key, OAuth client credentials, service account, or refresh token) from the service owner and store it in a secure secrets manager. Do not rely on copying browser network values for production automation; contact the service administrator for a documented solution.
+- Ensure that the password provided is in the correct format expected by the authentication endpoint. Some systems may require pre-hashed passwords, while others hash them internally. Confirm with the administrator whether the password should be used as-is or transformed before submission.
+- If password-based login fails, consider requesting an API key, service account, or OAuth client credentials for automation. These are more stable and secure for non-interactive use.
+- Enable logging of HTTP responses during development to inspect error messages and status codes. This can help pinpoint authentication issues.
+
+
 """
 
     
