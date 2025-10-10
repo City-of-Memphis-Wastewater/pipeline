@@ -184,13 +184,13 @@ def demo_retrieve_analog_data_and_save_csv():
     username = secrets_dict.get("contractor_apis", {}).get("Mission", {}).get("username")
     password = secrets_dict.get("contractor_apis", {}).get("Mission", {}).get("password")
 
-    """"""
+    
     client = MissionClient.login(api_url,username,password)
 
     # Example request:
     resp = client.session.get(f"{client.base_url}/account/GetSettings/?viewMode=1")
-    MissionClient.customer_id = resp.json()['user']['customerId']
-    print(MissionClient.customer_id)
+    client.customer_id = resp.json()['user']['customerId']
+    print(client.customer_id)
     
     # Get the last 24 hours of analog table data
     end = datetime.now()
