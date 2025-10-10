@@ -39,7 +39,7 @@ class MissionClient:
         with the bearer token.
         """
         session = requests.Session()
-        session.verify = False  # for self-signed certs
+        session.verify = True  # for self-signed certs
 
         connection_data = [
             {"name": "chathub"},
@@ -69,14 +69,14 @@ class MissionClient:
         client.session = session
         client.session.headers.update({"Authorization": f"Bearer {token}"})
         return client
-    
+
     @staticmethod
     def login(api_url: str, username: str, password: str, timeout=10) -> "MissionClient":
         """
         Login using OAuth2 password grant, returns a MissionClient with valid token.
         """
         session = requests.Session()
-        session.verify = False  # Ignore self-signed certs; optional
+        session.verify = True  # Ignore self-signed certs; optional
 
         # Add required cookie
         session.cookies.set("userBaseLayer", "fc", domain="123scada.com")
@@ -105,15 +105,20 @@ class MissionClient:
         }
 
         response = session.post(url, data=data, headers=headers, timeout=timeout)
-        
-        print("response = session.post(url, data=data, headers=headers, timeout=timeout)")
+
+        #print("response = session.post(url, data=data, headers=headers, timeout=timeout)")
         response.raise_for_status()
         token = response.json().get("access_token")
         if not token:
             raise ValueError("No access_token returned from /token endpoint.")
 
+        #client=cls(token=token)
+        #client.session = session
+        #resp = client.session.get(f"{client.base_url}/account/GetSettings/?viewMode=1")
+        #client.customer_id = resp.json()['user']['customerId']
+        #return client
         return MissionClient(token=token)
-    
+
     @staticmethod
     def login_defunct(api_url: str, username: str, password: str, timeout: int = 10) -> "MissionClient":
         """
@@ -145,7 +150,6 @@ class MissionClient:
         client.session.headers.update({"Authorization": f"Bearer {bearer_token}"})
         return client
 
-    
     def get_analog_table(self, device_id: int, start_ms: int, end_ms: int, start_row: int = 1, page_size: int = 50):
         url = f"{self.base_url}/Analog/Table"
         params = {
@@ -185,8 +189,6 @@ class MissionClient:
         r = requests.get(url, headers=self.headers, params=params)
         r.raise_for_status()
         return r.content  # CSV bytes
-    
-
 
 def demo_retrieve_analog_data_and_save_csv():
     from pipeline.env import SecretConfig
@@ -199,14 +201,12 @@ def demo_retrieve_analog_data_and_save_csv():
     username = secrets_dict.get("contractor_apis", {}).get("Mission", {}).get("username")
     password = secrets_dict.get("contractor_apis", {}).get("Mission", {}).get("password")
 
-    
     client = MissionClient.login(api_url,username,password)
 
     # Example request:
     resp = client.session.get(f"{client.base_url}/account/GetSettings/?viewMode=1")
     client.customer_id = resp.json()['user']['customerId']
-    print(client.customer_id)
-    
+
     # Get the last 24 hours of analog table data
     end = datetime.now()
     start = end - timedelta(days=1)
