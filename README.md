@@ -487,8 +487,7 @@ To maintain compatibility across this range, **Poetry** automatically pins sever
 
 ---
 
-[Comparing the pipeline-eds Python Package to the Emerson Ovation EDS Excel Add-In and the EDS Portal Webapp]
-(https://github.com/City-of-Memphis-Wastewater/pipeline/wiki/Comparison-of-%60pipeline%E2%80%90eds%60-Python-Package-vs-Emerson-Ovation-EDS-Excel-Add%E2%80%90In-vs-EDS-Portal-Webapp)
+[Comparing the pipeline-eds Python Package to the Emerson Ovation EDS Excel Add-In and the EDS Portal Webapp](https://github.com/City-of-Memphis-Wastewater/pipeline/wiki/Comparison-of-%60pipeline%E2%80%90eds%60-Python-Package-vs-Emerson-Ovation-EDS-Excel-Add%E2%80%90In-vs-EDS-Portal-Webapp)
 
 ---
 
