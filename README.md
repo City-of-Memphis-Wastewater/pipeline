@@ -9,7 +9,7 @@
 This guide provides instructions for installing and running `pipeline-eds`. To ensure you follow the right path, first choose the method that best fits your needs.
 
 ---
-## 🚀 Quick Start
+## ⚡Quick Start
 
 For detailed installation and usage instructions, see [QUICKSTART.md](./QUICKSTART.md).  
 This guide includes step-by-step commands for Windows, Linux, Termux, and developer setups.
