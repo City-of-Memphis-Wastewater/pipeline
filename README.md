@@ -28,7 +28,7 @@ This detailed guide provides instructions for installing and running `pipeline-e
 -----
 
 <details>
-<summary> Method 1: Using Pre-Built Binaries (`.exe`, `.elf`, `.pyz`)
+<summary> Method 1: Using Pre-Built Binaries (`.exe`, `.elf`, `.pyz`)</summary>
 
 This is the easiest way to get started, especially on systems where you don't have Python installed. These are standalone packages that you can download and run directly.
 
@@ -63,7 +63,7 @@ For more details on the pros and cons of each binary type, see the **Distributio
 -----
 
 <details>
-<summary> Method 2: CLI Installation with `pipx` (Recommended for CLI Users)
+<summary> Method 2: CLI Installation with `pipx` (Recommended for CLI Users)</summary>
 
 `pipx` installs and runs Python applications in isolated environments. This is the best way to get easy updates and avoid conflicts with other Python packages.
 
@@ -138,7 +138,7 @@ eds trend M100FI --start June3 --end June17
 
 -----
 <details>
-<summary> Method 3: Developer Setup with Poetry
+<summary> Method 3: Developer Setup with Poetry</summary>
 
 This method is for contributors who need a full development environment to modify the source code.
 Learn more about [git](https://www.youtube.com/watch?v=qrD3z9_9DXU).
@@ -192,7 +192,7 @@ poetry run eds ping
 -----
 
 </details>
-<summary> Method 4: Installing from a Git Clone with `pip` (Advanced)
+<summary> Method 4: Installing from a Git Clone with `pip` (Advanced)</summary>
 
 This method is for users who have cloned the repository but prefer to manage the environment with `pip` and `venv`. This is often necessary on platforms like **Termux** or **iSH (Alpine)**.
 A use-case for this is for generating binaries on a system such that it is compatible with that system (Note that **iSH** emulates x86_64).
@@ -449,7 +449,7 @@ When using `pipeline-eds` in Termux to generate plots (e.g., with `eds trend`), 
 ---
 
 <details>
-<summary> 🐍 Python Version Compatibility
+<summary> 🐍 Python Version Compatibility</summary>
 
 The `pipeline-eds` project is designed to support a broad range of modern Python versions, from Python 3.8 up to the latest stable releases, ensuring accessibility across various operating environments (desktop, server, and mobile environments like Termux).
 
