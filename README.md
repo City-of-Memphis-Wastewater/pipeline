@@ -1,145 +1,257 @@
 # `pipeline-eds`
 
-`pipeline-eds` is a Python project designed to simplify API access to Emerson Enterprise Data Server (EDS) machines. It facilitates seamless data exchange between Emerson's Ovation local systems and various external parties, including third-party contractors and internal employees. The project is distributed on PyPI under the package name `pipeline-eds`.
+`pipeline-eds` is a Python project designed to simplify API access to Emerson Enterprise Data Server (EDS) machines. It facilitates seamless data exchange between Emerson's Ovation EDS system and various external parties, including third-party contractors and internal employees. The project is distributed on PyPI under the package name `pipeline-eds`.
 
-<br>
-<hr>
-<br>
+---
 
 ## 🚀 Getting Started
 
-This section provides a quick guide to help you get `pipeline` up and running. Choose the setup method that best suits your needs: CLI-only usage or local development.
+This guide provides instructions for installing and running `pipeline-eds`. To ensure you follow the right path, first choose the method that best fits your needs.
 
-### 💻 CLI Installation (Recommended for End-Users)
+### Choosing Your Installation Method
 
-For a simple command-line interface (CLI) experience, **`pipx`** is the recommended installation method. `pipx` installs and runs Python applications in isolated environments, preventing conflicts with your system's Python packages.
-For more information about installing Python, pip, and any environment-specific dependencies, see the section below, `Building from Source (pip)`.
+  * **For the absolute simplest setup (No Python required):** If you want to run the tool without installing Python or managing dependencies, use a pre-built binary. Follow **Method 1: Using Pre-Built Binaries**.
+  * **For an easy CLI setup with simple updates:** If you are comfortable with the command line and want to easily keep the tool updated, `pipx` is the recommended approach. Follow **Method 2: CLI Installation with `pipx`**.
+  * **For developing and contributing to the project:** If you plan to modify the source code, you need a full development environment. Follow **Method 3: Developer Setup with Poetry**.
+  * **For installing from a Git clone without Poetry (Advanced):** If you have cloned the repository and need to install dependencies manually with `pip`, follow **Method 4: Installing from a Git Clone with `pip`**.
 
-1.  **Install `pipx`**
-    If you don't have `pipx` installed, you can get it with `pip`:
+-----
+
+### Method 1: Using Pre-Built Binaries (`.exe`, `.elf`, `.pyz`)
+
+This is the easiest way to get started, especially on systems where you don't have Python installed. These are standalone packages that you can download and run directly.
+
+1.  **Download the appropriate binary** for your system from the project's [**GitHub Releases page**](https://github.com/City-of-Memphis-Wastewater/pipeline/releases).
+
+    - `pipeline-eds*.exe`: For Windows.
+    - `pipeline-eds* (ELF has no extension)`: For Linux and Termux on Android.
+    - `pipeline-eds*.pyz`: A zipapp for any system that has Python installed.
+
+2.  **Place the file** in a convenient location.
+	```bash
+	# On Termux (Android)
+	termux-setup-storage
+	cp storage/downloads/ . to copy the file from your Android downloads folder to your $HOME folder
+	```
+	On iSH, you launch by default in the `root` directory, and the executible can be copied here (if you would like) manually using the file browser.
+
+3.  **Run the command** from your terminal. You may need to make the `.elf` file executable first (`chmod +x pipeline-eds-*`).
+
     ```bash
-    pip install pipx
-    python -m pipx ensurepath
-    ```
-2.  **Install `pipeline-eds` with `pipx`**
-    Install the package directly from PyPI. If you need Windows-specific dependencies like `pyodbc` and `matplotlib`, use the `[windows]` extra.
-    ```bash
-    pipx install pipeline-eds
-    # For Windows users. who want to use matplotlib:
-    pipx install "pipeline-eds[windows]"
-    ```
-3.  **Run CLI Commands**
-    The `pyproject.toml` file defines `pipeline`, `eds`, and `pipeline-eds` as command-line aliases. Once installed, you can use any of these aliases directly from your terminal.
-    ```bash
-    eds configure
-    eds trend M100FI --start June3 --end June17
+    # On Windows
+    .\pipeline-eds-*.exe config
+
+    # On Linux or Termux
+    ./pipeline-eds-* config
     ```
 
+For more details on the pros and cons of each binary type, see the **Distribution and Packaging** section below.
 
+-----
 
-### 🛠️ Developer & Contributor Setup
+### Method 2: CLI Installation with `pipx` (Recommended for CLI Users)
 
-If you plan to contribute to the project or need to work with the source code, follow these steps to set up a full development environment.
+`pipx` installs and runs Python applications in isolated environments. This is the best way to get easy updates and avoid conflicts with other Python packages.
 
-1.  **Clone the Repository**
-    Start by cloning the project from GitHub and navigating into the directory:
-    ```bash
-    git clone https://github.com/City-of-Memphis-Wastewater/pipeline.git
-    cd pipeline
-    ```
-2.  **Install `pyenv` and `Poetry`**
-    This project uses **`pyenv`** for managing Python versions and **`Poetry`** for dependency management. This combination ensures a clean, reproducible development environment without interfering with your system's Python installation.
-      * **Install `pyenv`:** Refer to the official `pyenv` documentation for your operating system ([pyenv-win](https://github.com/pyenv-win/pyenv-win) for Windows, [pyenv](https://github.com/pyenv/pyenv) for Linux/macOS).
-      * **Install `Poetry`:** See the [Poetry documentation](https://www.google.com/search?q=https://python-poetry.org/docs/%23installation) for installation instructions.
-3.  **Configure the Environment**
-    Use `pyenv` to set the Python version for the project and then tell Poetry to use that version:
-    ```bash
-    pyenv install 3.11.9
-    pyenv local 3.11.9
-    poetry env use 3.11.9
-    ```
-4.  **Install Dependencies**
-    Poetry will read the `pyproject.toml` file and install all necessary packages into a new virtual environment:
-    ```bash
-    poetry install
-    ```
-5.  **Run Development Commands**
-    Once installed, you can execute commands using `poetry run`:
-    ```bash
-    poetry run python -m pipeline.cli
-    poetry run eds ping # 
-    ```
-    This ensures that all commands run within the project's isolated environment.
-	You can run `poetry run eds` directly because of the `[tool.poetry.scripts]` section in the `pyproject.toml`, which states that `eds = "pipeline.cli:app"`.
-	
-### 🛠️ Alternative Setup: Building from Source (pip)
-This method is necessary for environments like Termux and Alpine/iSH where full Poetry support is not practical or where you prefer to use standard pip for dependency management after cloning the repository or unpacking the .tar.gz source distribution.
+**1. Install Python and `pip`**
 
-##### For Termux (Android)
-Termux does not support Poetry. You must manually install system dependencies and then use pip in a virtual environment.
+If you don't have them, install them using your system's package manager or an official installer.
+> **Windows Note:** If installing from the `.exe` installer from [python.org](https://www.python.org/downloads/), be sure to check the box for **"Add Python to PATH"** during setup.
 
-1.  Install Python and System Dependencies
+```bash
+# On Windows (using a package manager in PowerShell)
+winget install Python.Python.3.11
+# Or with Chocolatey:
+# choco install python
 
-```bash     
-# Update package lists and upgrade existing packages
-pkg update && pkg upgrade -y
-# Install core Termux packages needed for Python scientific libraries
-pkg install python python-pip python-numpy rust clang make
+# On Ubuntu/Debian
+sudo apt update && sudo apt install python3 python3-pip python-is-python3
+
+# On Termux (Android)
+pkg update && pkg install python
+pkg install python python-cryptography python-numpy 
+
+# Some of these are likely overkill given prepackaged cryptography, but I want you to succeed, and I will continue testing.
+plg install clang make libffi openssl-dev libffi-dev
+# pkg install rust # probably not necessary, with `python-cryptography` installed
+
+# On Alpine (iSH on iOS)
+apk update && apk add python3 py3-pip
+apk add py3-cryptography py3-numpy
+
+# Some of these are likely overkill given prepackaged cryptography, but I want you to succeed, and I will continue testing.
+apk add openssl-dev libffi-dev
 ```
 
-2.  Create and Activate a Virtual Environment
-    *Though not strictly required by Termux, using a virtual environment is a strong best practice.*
+**2. Install `pipx`**
+
+Use `pip` to install `pipx` and add its scripts to your system's PATH.
+
+```bash
+python3 -m pip install --user pipx
+python3 -m pipx ensurepath
+```
+
+*(You may need to restart your terminal for the PATH change to take effect.)*
+
+**3. Install `pipeline-eds`**
+
+Install the package from PyPI using `pipx`.
+
+```bash
+# For all systems (Linux, macOS, Termux, iSH, Windows)
+pipx install pipeline-eds
+
+# For Windows users who want database features from the pyodbc library (the usefulness of this has not yet been developed).
+pipx install "pipeline-eds[windows]"
+
+# If you want non-browser plotting with Matplotlib (Linux, macOS, Windows)
+pipx install "pipeline-eds[mpl]"
+# With the `trend` command, use the `--webplot` flag to direct the plot to plotly HTML anyways and circumvent Matplotlib.
+```
+
+**4. Run Commands**
+
+You can now use the `eds` alias directly in your terminal. There is also the `pipeline` alias and the `pipeline-eds` alias.
+
+```bash
+eds config
+eds trend M100FI --start June3 --end June17
+```
+
+-----
+
+### Method 3: Developer Setup with Poetry
+
+This method is for contributors who need a full development environment to modify the source code.
+Learn more about [git](https://www.youtube.com/watch?v=qrD3z9_9DXU).
+
+**1. Clone the Repository**
+
+```bash
+git clone https://github.com/City-of-Memphis-Wastewater/pipeline.git
+cd pipeline
+```
+
+**2. Install `pyenv` and `Poetry`**
+
+This project uses `pyenv` to manage Python versions and `Poetry` for dependency management.
+You do not need `pyenv`.
+This project is is compatible with Python 3.8 to 3.14, so there's not a huge demand for your to dial in a specific version.
+
+  * **`pyenv`:** Follow the official installation guide for your OS ([pyenv](https://github.com/pyenv/pyenv) for Linux/macOS, [pyenv-win](https://github.com/pyenv-win/pyenv-win) for Windows).
+  * **`Poetry`:** Follow the official [Poetry installation guide](https://www.google.com/search?q=https://python-poetry.org/docs/%23installation).
+
+**3. Configure the Project Environment**
+
+If you so choose.
+
+```bash
+pyenv install 3.11.9
+pyenv local 3.11.9
+poetry env use 3.11.9
+```
+
+**4. Install Dependencies**
+
+Yes, this part is entirely necessary.
+
+```bash
+poetry install
+```
+
+**5. Run Commands**
+
+Execute all commands with `poetry run`. The `[tool.poetry.scripts]` section in `pyproject.toml` allows `eds` to work as an alias for `python -m pipeline.cli`.
+
+```bash
+poetry run eds config
+poetry run eds ping
+```
+
+-----
+
+### Method 4: Installing from a Git Clone with `pip` (Advanced)
+
+This method is for users who have cloned the repository but prefer to manage the environment with `pip` and `venv`. This is often necessary on platforms like **Termux** or **iSH (Alpine)**.
+A use-case for this is for generating binaries on a system such that it is compatible with that system (Note that **iSH** emulates x86_64).
+
+**1. Clone the Repository**
+
+If you haven't already, clone the project from GitHub.
+
+```bash
+git clone https://github.com/City-of-Memphis-Wastewater/pipeline.git
+cd pipeline
+```
+
+**2. Export Dependencies to `requirements.txt`**
+
+This project's dependencies are in `pyproject.toml` and I have tried to export as necessary to the `requirements.txt` file. 
+The `requirements.txt` is availible in the root of the package.
+But, if you need to update the `requirements.txt` file, you can though on another system because `poetry` is unavailable on Termux.
+
+```bash
+# Install poetry if you don't have it
+pip install poetry
+# Export the requirements file
+poetry export -f requirements.txt --output requirements.txt --without-hashes
+# You can now uninstall poetry if you wish
+# pip uninstall poetry
+```
+
+**3. Install System Dependencies and Create a Virtual Environment**
+
+The steps below are platform-specific.
+
+#### For Termux (Android)
+
+1.  **Install System Build Dependencies:**
+    ```bash
+    pkg update && pkg upgrade -y
+	pkg install python python-cryptography python-numpy rust clang make openssl-dev libffi-dev
     
-```bash
-python -m venv .venv     
-source .venv/bin/activate
-```
-   
-3.  Install Python Dependencies
-    First, generate the requirements.txt file from pyproject.toml (if not already present), then install.    
-```bash
-pip install -r requirements.txt 
-```
-4.  Run Commands
+	# Some of these are likely overkill given prepackaged cryptography, but I want you to succeed, and I will continue testing.
+    pkg install rust clang make openssl-dev libffi-dev
+    ```
+2.  **Create and Activate a Virtual Environment:**
+    ```bash
+    python -m venv .venv
+    source .venv/bin/activate
+    ```
+3.  **Install Python Dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+4.  **Run Commands:**
+    ```bash
+    python -m pipeline.cli config
+    ```
 
-```bash
-python -m pipeline.cli configure     
-```
-##### For Alpine Linux / iSH (iOS)
-Alpine uses MUSL, which requires installing specific package variants. `cryptography`, `keyring`, and `numpy` are notable blockers due to MUSL compatibility, but a workaround is possible.
+#### For iSH / Alpine Linux (iOS)
 
-1.  Install System Dependencies
+1.  **Install System Build Dependencies:**
+    ```bash
+    apk update
+	apk add python3 py3-pip py3-cryptography py3-numpy 
     
-```bash     
-# Install pip and the required cryptography backend for MUSL
-apk update
-apk add python3 \
-    py3-pip \
-    gcc \
-	musl-dev \
-	build-base \
-	py3-cryptography \
-	py3-numpy
-```
-     
-2.  Create and Activate a Virtual Environment
-    *Using a virtual environment is a strong best practice for keeping your system Python clean and consolidating .*
-   
-```bash 
-python3 -m venv .venv
-source .venv/bin/activate
-```
-
-3.  Install Python Dependencies
-```bash 
-pip install -r requirements.txt
-```
-4.  Run Commands
-
-```bash 
-python3 -m pipeline.cli trend M100FI
-```
-
+	# Some of these are likely overkill given prepackaged cryptography, but I want you to succeed, and I will continue testing.
+    apk add gcc musl-dev build-base openssl-dev libffi-dev 
+    
+	```
+2.  **Create and Activate a Virtual Environment:**
+    ```bash
+    python3 -m venv .venv
+    source .venv/bin/activate
+    ```
+3.  **Install Python Dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+4.  **Run Commands:**
+    ```bash
+    python3 -m pipeline.cli trend M100FI
+    ```
 <br>
 <hr>
 <br>
@@ -211,12 +323,15 @@ While some formats allow installation on systems without internet access, note t
 
 ### ⚠️ Notes and Limitations
 - These packages simplify **installation** on disconnected systems, but the application itself requires internet access to function (API calls).
-- **Alpine / iSH (iPhone)**: MUSL‑compatible packaging is not yet available. The main barrier is credential storage, as current builds rely on `cryptography` and `keyring`.
+- **Alpine / iSH (iPhone)**: Pre-built MUSL-compatible executables (.elf) are not yet available but are expected soon. However, a source installation using pip and the specific steps in Method 4 is possible on iSH.
 - **Docker orchestration**: Currently builds are processed manually. Future goals include automated orchestration and registry publishing.
 
 ---
 
 ## 🛠️ Build Scripts
+
+If you want to build a binary from source, it is recommended to do it on the system you are targetting, specifically in regards to the architecture (ARM vs x86_64).
+Example: Recall that iSH emulates x86_64, so an ELF built on a x86_64 architecture laptop using Alpine in WSL2 should succeed on running in iSH.
 
 ### `build_executable.py`
 - Automates creation of `.exe` and `.elf` binaries.
@@ -252,11 +367,10 @@ This command will update pipeline-eds and its dependencies in its isolated pipx 
 - Termux Users: Regularly update your Termux environment and packages to ensure compatibility and security:
 ```bash
 pkg update && pkg upgrade
-pkg install rust
 ```
 
-### Understanding eds configure and Credential Management:
-The first time you execute a command requiring access to your EDS API (e.g., eds trend), `pipeline-eds` will guide you through a one-time configuration process. Your sensitive API credentials (URL, username, password) are securely stored using your operating system's native keyring service. This is a robust and secure method that avoids storing plaintext passwords in files. If your credentials change, you can re-run eds configure at any time to update them.
+### Understanding eds config and Credential Management:
+The first time you execute a command requiring access to your EDS API (e.g., eds trend), `pipeline-eds` will guide you through a one-time configuration process. Your sensitive API credentials (URL, username, password) are securely stored using your operating system's native keyring service. This is a robust and secure method that avoids storing plaintext passwords in files. If your credentials change, you can re-run eds config at any time to update them.
 
 ### Network Connectivity (VPN Essential):
 A critical requirement for `pipeline-eds` to function is proper network connectivity to your Emerson Ovation EDS machine. If your EDS server is located on a private network (e.g., within your organization's internal network), you must be connected to the appropriate Virtual Private Network (VPN). Failure to do so will result in connection errors when `pipeline-eds` attempts to fetch data.
@@ -280,7 +394,7 @@ It would be great if terms like "yesterday" worked, but these fail to be recogni
 `pipeline` uses a two-tiered approach to manage configuration and secrets.
 
   * **Non-Sensitive Configuration**: Non-sensitive settings like URLs and paths are stored in a local JSON file (`~/.pipeline-eds/config.json`). This file is easy to inspect and manage.
-  * **Secrets and Credentials**: For CLI users, API credentials and passwords are **securely stored** using your operating system's native keyring. This is a much safer alternative to storing plaintext passwords in a file. The `pipeline configure` command guides you through this one-time setup process.
+  * **Secrets and Credentials**: For CLI users, API credentials and passwords are **securely stored** using your operating system's native keyring. This is a much safer alternative to storing plaintext passwords in a file. The `pipeline config` command guides you through this one-time setup process.
 
 **Note for Developers**: While the CLI now uses the keyring, some functionality within the codebase still relies on the `secrets.yaml` file for credential management. This file is not required for general CLI usage but may be necessary for specific development workflows and legacy components.
 
@@ -313,7 +427,7 @@ There are several ways to run `pipeline` inside Termux, depending on your needs:
 
 - **`pipx` (Recommended)**  
   - Provides rolling updates and integrates with the Termux home‑screen widget.  
-  - As of **v0.3.8**, you can add a **shortcut button** to update `pipeline` directly from the Termux widget without opening the terminal.  
+  - As of **v0.3.8**, you `eds install` will generate a **shortcut button** in the Termux widget to update `pipeline-eds` without needing to open the terminal.  
   - Requires Python and `pipx` to be installed.  
   - Best choice if you want to keep up with frequent changes.
 
@@ -321,24 +435,10 @@ There are several ways to run `pipeline` inside Termux, depending on your needs:
   - A prebuilt `.elf` binary is available specifically for Termux.  
   - Runs without requiring Python to be installed.  
   - Avoids the `.shortcuts` widget permission error that can occur when launching `.pyz` apps.  
-  - Smoothest rollout for users who just want the CLI tool without managing Python environments.
+  - Smoothest rollout for users who just want the CLI tool without expecting updates.
 
 - **`.pyz` Zipapp**  
-  - Works if Python is already installed in Termux.  
-  - More maintainable than static binaries since you can replace the `.pyz` file with newer versions.  
   - ⚠️ Known limitation: launching `.pyz` directly from the Termux `.shortcuts` widget may trigger a **permission error**.
-
----
-
-### Termux Limitations
-
-- **No `pyenv` or `Poetry`**: Package management must be done with `pip` directly. You can and should use `venv` for isolation.  
-- **Limited Library Support**: Some libraries that require native compilation (e.g., `pandas`, `numpy`) or GUI dependencies are not supported on Termux.  
-- **HTML Viewer**: You may need to manually configure the default HTML viewer to a full‑featured browser on Android.  
-
-### Comparable Apple iPhone Rollout
-
-- **Alpine (iSH on iOS)**: Not yet supported; credential storage via `cryptography` and `keyring` is the current blocker because they are not MUSL compatible..
 
 ---
 
@@ -351,7 +451,7 @@ There are several ways to run `pipeline` inside Termux, depending on your needs:
 
 
 ### 🌐 Termux and Web-Based Visuals (Plotly)
-When using `pipeline-eds` in Termux to generate plots (e.g., with `eds trend`), the visuals are displayed as web-based HTML pages using libraries like Plotly. Instead of directly opening a graphical window (which is not typically supported by Termux's command-line environment), `pipeline-eds serves` these HTML files via a local web server (often on localhost).
+When using `pipeline-eds` in Termux to generate plots (e.g., with `eds trend`), the visuals are displayed as web-based HTML pages using libraries like Plotly. Instead of directly opening a graphical window (which is not typically supported by Termux's command-line environment), `pipeline-eds` serves these HTML files via a local web server (often on localhost).
 
 ### Why localhost
 

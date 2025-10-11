@@ -12,7 +12,7 @@ class MissionClient:
     """
     MissionClient handles login and data retrieval from the 123scada API.
     📝 Note: Handling Hashed Passwords
-
+    
     - The system uses a hashed version of the password for authentication.
     - If the password ever changes, you’ll need to update the stored credentials with whatever authentication values the service requires for non-interactive access.
     - Do not attempt to reverse the hash — it’s a one-way cryptographic function and cannot be decrypted to retrieve the original password.
