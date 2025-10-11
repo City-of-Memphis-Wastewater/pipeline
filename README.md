@@ -8,6 +8,12 @@
 
 This guide provides instructions for installing and running `pipeline-eds`. To ensure you follow the right path, first choose the method that best fits your needs.
 
+---
+## 🚀 Quick Start
+
+For detailed installation and usage instructions, see [QUICKSTART.md](./QUICKSTART.md).  
+This guide includes step-by-step commands for Windows, Linux, Termux, and developer setups.
+
 ### Choosing Your Installation Method
 
   * **For the absolute simplest setup (No Python required):** If you want to run the tool without installing Python or managing dependencies, use a pre-built binary. Follow **Method 1: Using Pre-Built Binaries**.
@@ -99,8 +105,11 @@ python3 -m pipx ensurepath
 Install the package from PyPI using `pipx`.
 
 ```bash
-# For all systems (Linux, macOS, Termux, iSH, Windows)
+# For all systems (Linux, macOS, Windows)
 pipx install pipeline-eds
+
+# For Termux and iSH, which require dedicated system site packages like py3-cryptography
+pipx install --system-site-packages pipeline-eds
 
 # For Windows users who want database features from the pyodbc library (the usefulness of this has not yet been developed).
 pipx install "pipeline-eds[windows]"
@@ -211,12 +220,16 @@ The steps below are platform-specific.
     pkg update && pkg upgrade -y
 	pkg install python python-cryptography python-numpy rust clang make openssl-dev libffi-dev
     
-	# Some of these are likely overkill given prepackaged cryptography, but I want you to succeed, and I will continue testing.
+	# The build tools (rust, clang, etc.) are generally not needed IF the 
+    # Termux-installed packages satisfy the requirements.
+    # The below line can likely be removed if --system-site-packages is used, 
+    # but we will leave it for max compatibility.
     pkg install rust clang make openssl-dev libffi-dev
     ```
 2.  **Create and Activate a Virtual Environment:**
     ```bash
-    python -m venv .venv
+	# CRITICAL: Use the --system-site-packages flag to access Termux's pre-compiled packages.
+    python -m venv --system-site-packages .venv
     source .venv/bin/activate
     ```
 3.  **Install Python Dependencies:**
@@ -233,7 +246,10 @@ The steps below are platform-specific.
 1.  **Install System Build Dependencies:**
     ```bash
     apk update
-	apk add python3 py3-pip py3-cryptography py3-numpy 
+	
+	# Install the core Python environment tools and essential pre-compiled Python libraries
+    # Installing 'py3-cryptography' and 'py3-numpy' via apk avoids difficult, lengthy compilation from source later.
+    apk add python3 py3-pip py3-cryptography py3-numpy
     
 	# Some of these are likely overkill given prepackaged cryptography, but I want you to succeed, and I will continue testing.
     apk add gcc musl-dev build-base openssl-dev libffi-dev 
@@ -241,16 +257,34 @@ The steps below are platform-specific.
 	```
 2.  **Create and Activate a Virtual Environment:**
     ```bash
-    python3 -m venv .venv
-    source .venv/bin/activate
+	# The '--system-site-packages' flag is crucial: it allows this venv to access the
+    # pre-compiled Python packages (like py3-cryptography) installed in the previous step 
+    # by the system package manager (apk). This satisfies their requirements without re-installing.
+	python3 -m venv --system-site-packages .venv
+    
+	# Activate the virtual environment
+	source .venv/bin/activate
     ```
 3.  **Install Python Dependencies:**
     ```bash
+	# Install all project-specific dependencies defined in the requirements file.
+    # 'pip' will install these packages into the isolated '.venv', while still
+    # using the system packages (if needed) due to the venv's configuration.
     pip install -r requirements.txt
     ```
 4.  **Run Commands:**
     ```bash
+	 # Execute the main application command using the Python interpreter from the activated venv.
     python3 -m pipeline.cli trend M100FI
+	
+	# Deactivate the virtual environment. This resets the shell's PATH to the system's 
+    # default Python environment.
+    deactivate
+    
+    # NOTE: If you run the software after deactivating, the 'python3' command will only see
+    # system-installed libraries, not the packages installed specifically for this project.
+    # You can reactivate the environment anytime using 'source .venv/bin/activate' if you are 
+    # in the project's directory.
     ```
 <br>
 <hr>
