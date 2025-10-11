@@ -636,7 +636,7 @@ The project is internally referred to as `pipeline`, but the PyPI package is nam
 
 ## ⚡Quick Start
 
-For detailed installation and usage instructions, see [QUICKSTART.md](./QUICKSTART.md).  
+For detailed installation and usage instructions, see [QUICKSTART.md](https://github.com/City-of-Memphis-Wastewater/pipeline/blob/main/QUICKSTART.md).  
 This guide includes step-by-step commands for Windows, Linux, Termux, and developer setups.
 
 
