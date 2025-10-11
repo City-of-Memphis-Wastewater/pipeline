@@ -11,7 +11,10 @@ import re
 import inspect
 import subprocess
 import platform
-import mysql.connector
+try:
+    import mysql.connector
+except:
+    pass
 from functools import lru_cache
 import typer # for CLI
 
