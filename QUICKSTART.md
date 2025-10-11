@@ -105,6 +105,12 @@ deactivate
 
 ### **5️⃣ Optional: Pre-built Binaries (Windows / Linux / Termux)**
 
+Available at [**GitHub Releases page**](https://github.com/City-of-Memphis-Wastewater/pipeline/releases)
+- .pyz ⬇️🐍
+- .exe ⬇️🪟
+- ELF Binaries ⬇️📱🐧🍎
+
+
 ```bash
 # Make executable if needed (Linux/Termux)
 chmod +x pipeline-eds-*
@@ -114,7 +120,13 @@ chmod +x pipeline-eds-*
 ./pipeline-eds-* trend M100FI --start 2025-10-01 --end 2025-10-10
 ```
 
-✅ Works without Python installed. Smoothest for Termux or Windows offline systems.
+Key:
+🐍: Requires Python on the system (but not dependencies)
+⬇️: Download the file, or transfer the file via cable or USB.
+🪟: Windows
+📱: Mobile
+🐧: Linux
+🍎: Apple
 
 ---
 
