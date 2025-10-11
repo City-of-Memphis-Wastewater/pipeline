@@ -1,15 +1,12 @@
 # pipeline/api/mission.py
-from __future__ import annotations # Delays annotation evaluat>
+from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
 from datetime import datetime, timedelta
 import requests
 import time
 from urllib.parse import quote_plus
 import json
 
-<<<<<<< HEAD
-=======
 
->>>>>>> rjn
 class MissionClient:
 
     """
@@ -209,12 +206,8 @@ def demo_retrieve_analog_data_and_save_csv():
 
     # Example request:
     resp = client.session.get(f"{client.base_url}/account/GetSettings/?viewMode=1")
-<<<<<<< HEAD
-    client.customer_id = resp.json()['user']['customerId']
-=======
     #client.customer_id = resp.json()['user']['customerId']
     client.customer_id = resp.json().get('user',{}).get('customerId',{})
->>>>>>> rjn
 
     # Get the last 24 hours of analog table data
     end = datetime.now()
