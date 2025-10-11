@@ -191,7 +191,7 @@ poetry run eds ping
 
 -----
 
-</details>
+<details>
 <summary> Method 4: Installing from a Git Clone with `pip` (Advanced)</summary>
 
 This method is for users who have cloned the repository but prefer to manage the environment with `pip` and `venv`. This is often necessary on platforms like **Termux** or **iSH (Alpine)**.
