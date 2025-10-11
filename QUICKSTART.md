@@ -120,13 +120,13 @@ chmod +x pipeline-eds-*
 ./pipeline-eds-* trend M100FI --start 2025-10-01 --end 2025-10-10
 ```
 
-Key:
-🐍: Requires Python on the system (but not dependencies)
-⬇️: Download the file, or transfer the file via cable or USB.
-🪟: Windows
-📱: Mobile
-🐧: Linux
-🍎: Apple
+#### Key:
+- 🐍: Requires Python on the system (but not dependencies)
+- ⬇️: Download the file, or transfer the file via cable or USB.
+- 🪟: Windows
+- 📱: Mobile
+- 🐧: Linux
+- 🍎: Apple
 
 ---
 
