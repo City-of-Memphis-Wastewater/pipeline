@@ -6,6 +6,10 @@ import time
 from urllib.parse import quote_plus
 import json
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> rjn
 class MissionClient:
 
     """
@@ -205,7 +209,12 @@ def demo_retrieve_analog_data_and_save_csv():
 
     # Example request:
     resp = client.session.get(f"{client.base_url}/account/GetSettings/?viewMode=1")
+<<<<<<< HEAD
     client.customer_id = resp.json()['user']['customerId']
+=======
+    #client.customer_id = resp.json()['user']['customerId']
+    client.customer_id = resp.json().get('user',{}).get('customerId',{})
+>>>>>>> rjn
 
     # Get the last 24 hours of analog table data
     end = datetime.now()
