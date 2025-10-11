@@ -2,17 +2,14 @@
 
 `pipeline-eds` is a Python project designed to simplify API access to Emerson Enterprise Data Server (EDS) machines. It facilitates seamless data exchange between Emerson's Ovation EDS system and various external parties, including third-party contractors and internal employees. The project is distributed on PyPI under the package name `pipeline-eds`.
 
+
 ---
 
 ## 🚀 Getting Started
 
-This guide provides instructions for installing and running `pipeline-eds`. To ensure you follow the right path, first choose the method that best fits your needs.
+This detailed guide provides instructions for installing and running `pipeline-eds`. To ensure you follow the right path, first choose the method that best fits your needs.
 
 ---
-## ⚡Quick Start
-
-For detailed installation and usage instructions, see [QUICKSTART.md](./QUICKSTART.md).  
-This guide includes step-by-step commands for Windows, Linux, Termux, and developer setups.
 
 ### Choosing Your Installation Method
 
@@ -630,8 +627,16 @@ If you want **fast, automated, scriptable access**, with the flexibility to inte
 
 If **mobile access without extra license costs** is important, `pipeline-eds` on Termux or similar CLI apps is a strong advantage.
 
-
 ---
 
 ## 📝 Final Note on Naming
 The project is internally referred to as `pipeline`, but the PyPI package is named `pipeline-eds` to avoid a name conflict with an existing, unrelated package on PyPI. For CLI usage, the pyproject.toml file creates aliases so you can use `pipeline`, `eds`, and `pipeline-eds` interchangeably in your terminal. This allows for a more intuitive command-line experience without the need to use the full PyPI package name.
+
+---
+
+## ⚡Quick Start
+
+For detailed installation and usage instructions, see [QUICKSTART.md](./QUICKSTART.md).  
+This guide includes step-by-step commands for Windows, Linux, Termux, and developer setups.
+
+
