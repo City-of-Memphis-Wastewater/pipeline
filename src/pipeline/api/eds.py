@@ -11,10 +11,6 @@ import re
 import inspect
 import subprocess
 import platform
-try:
-    import mysql.connector
-except:
-    pass
 from functools import lru_cache
 import typer # for CLI
 
@@ -24,6 +20,12 @@ from pipeline.workspace_manager import WorkspaceManager
 from pipeline import helpers
 from pipeline.decorators import log_function_call
 from pipeline.time_manager import TimeManager
+from pipeline.environment import is_windows
+
+if is_windows():
+    import mysql.connector
+else:
+    pass
 
 logger = logging.getLogger(__name__)
 #logger.setLevel(logging.INFO)
