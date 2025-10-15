@@ -91,7 +91,7 @@ pkg install clang make libffi openssl-dev libffi-dev
 
 # On Alpine (iSH on iOS)
 apk update && apk add python3 py3-pip
-apk add py3-cryptography py3-numpy
+apk add py3-cryptography py3-numpy py3-virtualenv
 apk add openssl-dev libffi-dev
 ```
 
@@ -261,7 +261,7 @@ The steps below are platform-specific.
 	
 	# Install the core Python environment tools and essential pre-compiled Python libraries
     # Installing 'py3-cryptography' and 'py3-numpy' via apk avoids difficult, lengthy compilation from source later.
-    apk add python3 py3-pip py3-cryptography py3-numpy
+    apk add python3 py3-pip py3-cryptography py3-numpy py3-virtualenv
     apk add gcc musl-dev build-base openssl-dev libffi-dev 
     
 	```
