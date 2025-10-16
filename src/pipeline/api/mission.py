@@ -5,7 +5,30 @@ import requests
 import time
 from urllib.parse import quote_plus
 import json
+import typer
+from requests.exceptions import Timeout
 
+from pipeline.security_and_config import get_external_api_credentials
+
+
+
+class MissionLoginException(Exception):
+    """
+    Custom exception raised when a login to the Mission 'API' fails.
+
+    This exception is used to differentiate between a simple network timeout
+    and a specific authentication or API-related login failure.
+    """
+
+    def __init__(self, message: str = "Login failed for the Mission 'API'. Check hashed credentials."):
+        """
+        Initializes the MissionLoginException with a custom message.
+
+        Args:
+            message: A descriptive message for the error.
+        """
+        self.message = message
+        super().__init__(self.message)
 
 class MissionClient:
 
@@ -72,7 +95,45 @@ class MissionClient:
         return client
 
     @staticmethod
-    def login(api_url: str, username: str, password: str, timeout=10) -> "MissionClient":
+    def login_to_session_with_api_credentials(api_credentials):
+        """
+        Like login_to_sessesion, plug with custom session attributes added to the session object.
+        """
+        # Expected to be used in terminal, so typer is acceptable, but should be scaled.
+        session = None
+        try:
+            client = MissionClient.login_to_session(
+                api_url=api_credentials.get("url"),# + "/api",
+                username=api_credentials.get("username"),
+                password=api_credentials.get("password"),
+                timeout=10 # Add a 10-second timeout to the request
+            )
+            
+            # --- Add custom session attributes to the session object ---
+            ##client.session.base_url = api_credentials.get("url")
+        except Timeout:
+            typer.echo(
+                typer.style(
+                    "\nConnection to the EDS API timed out. Please check your VPN connection and try again.",
+                    fg=typer.colors.RED,
+                    bold=True,
+                )
+            )
+            raise typer.Exit(code=1)
+        except MissionLoginException as e:
+            typer.echo(
+                typer.style(
+                    f"\nLogin failed for EDS API: {e}",
+                    fg=typer.colors.RED,
+                    bold=True,
+                )
+            )
+            raise typer.Exit(code=1)
+        
+        return client
+    
+    @staticmethod
+    def login_to_session(api_url: str, username: str, password: str, timeout=10) -> "MissionClient":
         """
         Login using OAuth2 password grant, returns a MissionClient with valid token.
         """
@@ -192,19 +253,26 @@ class MissionClient:
         return r.content  # CSV bytes
 
 def demo_retrieve_analog_data_and_save_csv():
-    from pipeline.env import SecretConfig
-    from pipeline.workspace_manager import WorkspaceManager
-    workspace_name = WorkspaceManager.identify_default_workspace_name()
-    workspace_manager = WorkspaceManager(workspace_name)
+    #from pipeline.env import SecretConfig
+    #from pipeline.workspace_manager import WorkspaceManager
 
-    secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_secrets_file_path())
-    api_url = secrets_dict.get("contractor_apis", {}).get("Mission", {}).get("url").rstrip("/")
-    username = secrets_dict.get("contractor_apis", {}).get("Mission", {}).get("username")
-    password = secrets_dict.get("contractor_apis", {}).get("Mission", {}).get("password")
+    mission_api_creds = get_external_api_credentials("Mission")
+    #mission_api_creds["username"] = mission_api_creds["client_id"] # rectify the way this is stored for RJN
+    
+    #workspace_name = WorkspaceManager.identify_default_workspace_name()
+    #workspace_manager = WorkspaceManager(workspace_name)
 
-    client = MissionClient.login(api_url,username,password)
+    
+    client = MissionClient.login_to_session_with_api_credentials(mission_api_creds)
 
-    # Example request:
+    #secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_secrets_file_path())
+    #api_url = secrets_dict.get("contractor_apis", {}).get("Mission", {}).get("url").rstrip("/")
+    #username = secrets_dict.get("contractor_apis", {}).get("Mission", {}).get("username")
+    #password = secrets_dict.get("contractor_apis", {}).get("Mission", {}).get("password")
+    #client = MissionClient.login_to_session(api_url,username,password)
+    
+
+    # Example request:  
     resp = client.session.get(f"{client.base_url}/account/GetSettings/?viewMode=1")
     #client.customer_id = resp.json()['user']['customerId']
     client.customer_id = resp.json().get('user',{}).get('customerId',{})
