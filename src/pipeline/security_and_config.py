@@ -1,22 +1,34 @@
 # pipeline/security.py
 from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
-import getpass
 import json
-import keyring
 from pathlib import Path
 import re
+import keyring
 from typing import Dict, Set, List
 import typer
 
-from pipeline.environment import is_termux, is_interactive_terminal, tkinter_is_available, web_browser_is_available
+from pipeline.environment import is_termux, is_ish_alpine, is_interactive_terminal, tkinter_is_available, web_browser_is_available
 
 # Define a standard configuration path for your package
 CONFIG_PATH = Path.home() / ".pipeline-eds" / "config.json" ## configuration-example
+CONFIG_FILE = Path.home() / ".pipeline-eds" / "secure_config.json"
+KEY_FILE = Path.home() / ".pipeline-eds" / ".key"
+
+def init_security():
+    if is_termux() or is_ish_alpine():
+        try: # mid refactor, try the new function first
+            configure_filebased_secure_config() # to be run on import
+        except:
+            configure_keyring()
+    else:
+        pass
+
 def configure_keyring():
     """
     Configures the keyring backend to use the file-based keyring.
     This is useful for environments where the default keyring is not available,
     such as Termux on Android.
+    Defunct, use configure_filebased_secure_config() instead.
     """
     if is_termux():
         #typer.echo("Termux environment detected. Configuring file-based keyring backend.")
@@ -25,20 +37,48 @@ def configure_keyring():
         #typer.echo("Keyring configured to use file-based backend.")
     else:
         pass
-def init_security():
+
+
+def configure_filebased_secure_config():
+    """
+    Configures the keyring backend to use the file-based keyring.
+    This is useful for environments where the default keyring is not available,
+    such as Termux on Android or iSH on iPhone.
+    """
     if is_termux():
-        configure_keyring() # to be run on import
+        #typer.echo("Termux environment detected. Configuring file-based keyring backend.")
+        from cryptography.fernet import Fernet
+        cryptography.fernet-1 # error on purpose
+        
+        # MORE CODE NEEDED
+
+        #keyring.set_keyring(keyrings.alt.file.PlaintextKeyring())
+        #typer.echo("Keyring configured to use file-based backend.")
+    else:
+        pass
+
 
 def _prompt_for_value(prompt_message: str, hide_input: bool) -> str:
     """Handles prompting with a fallback from CLI to GUI."""
     # Block these off for testing the browser_get_input, which is not expeceted in this iteration but is good practice for future proofing a hypothetical console-less GUI 
     if is_interactive_terminal():
-        # 1. CLI Mode (Interactive)
-        typer.echo(f"\n --- Use CLI input --- ")
-        if hide_input:
-            new_value = getpass.getpass(f"{prompt_message}: ")
-        else:
-            new_value = input(f"{prompt_message}: ")
+        try:
+            # 1. CLI Mode (Interactive)
+            typer.echo(f"\n --- Use CLI input --- ")
+            if hide_input:
+                try:
+                    from rich.prompt import Prompt
+                    def secure_prompt(msg: str) -> str:
+                        return Prompt.ask(msg, password=True)
+                except ImportError:
+                    def secure_prompt(msg: str) -> str:
+                        return typer.prompt(msg, hide_input=True)
+                new_value = secure_prompt(prompt_message)
+            else:
+                new_value = typer.prompt(prompt_message, hide_input=False)
+        except KeyboardInterrupt:
+            typer.echo("\nInput cancelled by user.")
+            pass
         return new_value
         
     elif tkinter_is_available():
@@ -109,8 +149,6 @@ def _get_config_with_prompt(config_key: str, prompt_message: str, overwrite: boo
             prompt_message=prompt_message, 
             hide_input=False
         )
-
-        #new_value = input(f"{prompt_message}: ")
         
         # Save the new value back to the file
         CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -153,10 +191,6 @@ def _get_credential_with_prompt(service_name: str, item_name: str, prompt_messag
     # If the credential is None (not found), or if a confirmation to overwrite was given,
     # prompt for a new value.
     if credential is None or overwrite:
-        #if hide_password:
-        #    new_credential = getpass.getpass(f"{prompt_message}: ")
-        #else:
-        #    new_credential = input(f"{prompt_message}: ")
 
         new_credential = _prompt_for_value(
             prompt_message=prompt_message, 

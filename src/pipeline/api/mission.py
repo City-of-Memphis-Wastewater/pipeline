@@ -255,7 +255,7 @@ class MissionClient:
 def demo_retrieve_analog_data_and_save_csv():
     #from pipeline.env import SecretConfig
     #from pipeline.workspace_manager import WorkspaceManager
-
+    mission_api_creds = get_external_api_credentials("TestMission")
     mission_api_creds = get_external_api_credentials("Mission")
     #mission_api_creds["username"] = mission_api_creds["client_id"] # rectify the way this is stored for RJN
     
@@ -270,7 +270,6 @@ def demo_retrieve_analog_data_and_save_csv():
     #username = secrets_dict.get("contractor_apis", {}).get("Mission", {}).get("username")
     #password = secrets_dict.get("contractor_apis", {}).get("Mission", {}).get("password")
     #client = MissionClient.login_to_session(api_url,username,password)
-    
 
     # Example request:  
     resp = client.session.get(f"{client.base_url}/account/GetSettings/?viewMode=1")
