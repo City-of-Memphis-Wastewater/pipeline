@@ -400,9 +400,7 @@ The `eds trend` command offers highly flexible date and time parsing for its --s
 
 Experiment with different formats to suit your query needs. Remember to use quotes around values if they contain spaces.
 
-<br>
-<hr>
-<br>
+---
 
 
 ## ⚙️ Project Implementation & Use Cases
@@ -413,9 +411,7 @@ Aside from being a CLI tool for visualing sensor data at will, `pipeline` is des
   * The iterative timing (e.g., hourly execution) is handled by the `Task Scheduler`, not by Python.
   * For these automated tasks, a standard `venv` is used, as `Task Scheduler` can run under different user accounts.
 
-<br>
-<hr>
-<br>
+---
 
 ## 📱 Running on Android (`Termux`)
 

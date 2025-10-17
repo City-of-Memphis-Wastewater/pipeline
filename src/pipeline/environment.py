@@ -62,6 +62,13 @@ def is_apple():
     else:
         apple=False
     return apple
+
+def is_ish_alpine() -> bool:
+    # platform.system() usually returns 'Linux' in iSH
+    return (
+        'ish' in os.uname().release.lower() and
+        'alpine' in platform.version().lower()
+    )
     
 def pyinstaller():
     if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
@@ -96,7 +103,12 @@ def open_text_file_in_default_app(filepath):
         print("Unsupported operating system.")
 
 def is_interactive_terminal():
-    """Check if the script is running in an interactive terminal."""
+    """
+    Check if the script is running in an interactive terminal. 
+    Assumpton: 
+        If is_interactive_terminal() returns True, 
+        then typer.prompt() will work reliably.
+    """
     # Check if a tty is attached to stdin
     return sys.stdin.isatty() and sys.stdout.isatty()
 
