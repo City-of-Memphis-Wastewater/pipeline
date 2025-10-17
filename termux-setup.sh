@@ -46,6 +46,9 @@ EXCLUDE_PATTERN='^(cryptography|secretstorage|numpy)$'
 #   to a new file named 'requirements-termux.txt'.
 grep -Ev "$EXCLUDE_PATTERN" requirements.txt > requirements-termux.txt
 
+# $excludePattern = '^(cryptography|secretstorage|numpy)$'
+# Get-Content requirements.txt | Where-Object { $_ -notmatch $excludePattern } | Set-Content requirements-termux.txt # powershell version
+
 # Install the filtered list of Python packages using pip.
 # --no-deps: Do not install dependencies for these packages. This is safe
 #   *only* because we assume 'requirements.txt' is a "frozen" list with
