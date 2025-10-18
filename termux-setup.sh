@@ -36,7 +36,8 @@ source .venv/bin/activate
 #   - 'cryptography' & 'numpy': Already installed via 'pkg'.
 #   - 'secretstorage': Often relies on desktop components (like D-Bus)
 #     that don't exist in Termux, so it's excluded to prevent errors.
-EXCLUDE_PATTERN='^(cryptography|secretstorage|numpy)$'
+# EXCLUDE_PATTERN='^(cryptography|secretstorage|numpy)$'
+EXCLUDE_PATTERN='^(cryptography|secretstorage|numpy)([=><!].*)?$'
 
 # Create a new, filtered requirements file.
 # grep: Searches the 'requirements.txt' file.
@@ -59,3 +60,6 @@ grep -Ev "$EXCLUDE_PATTERN" requirements.txt > requirements-termux.txt
 #   source distributions, which is much faster as it avoids compilation.
 # -r requirements-termux.txt: Install from the specified file.
 pip install --no-deps --no-cache-dir --prefer-binary -r requirements-termux.txt
+
+# Withour poetry, we need to poiint to the source code so that import refs work.
+export PYTHONPATH=$(pwd)/src
