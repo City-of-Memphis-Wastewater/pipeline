@@ -6,6 +6,7 @@ import re
 import keyring
 from typing import Dict, Set, List
 import typer
+import click.exceptions
 
 from pipeline.environment import is_termux, is_ish_alpine, is_interactive_terminal, tkinter_is_available, web_browser_is_available
 
@@ -59,8 +60,22 @@ def configure_filebased_secure_config():
 
 
 def _prompt_for_value(prompt_message: str, hide_input: bool) -> str:
-    """Handles prompting with a fallback from CLI to GUI."""
+    """Handles prompting with a fallback from CLI to GUI.
+    ### **Platform Quirk: Input Cancellation ({Ctrl}+C)**
+    Due to the underlying POSIX terminal handling on Linux and Termux,
+    using {Ctrl}+C to cancel an input prompt will require the user
+    to press {Enter} (or {Return}) immediately afterward to fully 
+    submit the interrupt and abort the operation. 
+    This behavior, the Enter key being necessary to finalize the interruption,
+     is expected for POSIX systems, when using either the 
+    `typer`/`click` framework, Python's built in input() function, or any alternative.
+    This extra step is necessary due to the standard input terminal behavior
+    in "cooked mode.".
+    On  Windows, however, just {Ctrl}+C is expected to successfully perform a keyboard interrupt..
+    """
     # Block these off for testing the browser_get_input, which is not expeceted in this iteration but is good practice for future proofing a hypothetical console-less GUI 
+    
+    value = None # ensure safe defeault so that the except block handles properly, namely if the user cancels the typer.prompt() input with control+ c
     if is_interactive_terminal():
         try:
             # 1. CLI Mode (Interactive)
@@ -73,13 +88,16 @@ def _prompt_for_value(prompt_message: str, hide_input: bool) -> str:
                 except ImportError:
                     def secure_prompt(msg: str) -> str:
                         return typer.prompt(msg, hide_input=True)
-                new_value = secure_prompt(prompt_message)
+                value = secure_prompt(prompt_message)
             else:
-                new_value = typer.prompt(prompt_message, hide_input=False)
+                value = typer.prompt(prompt_message, hide_input=False)
+        #except click.exceptions.Abort:
+        #    typer.echo("\nInput cancelled by user.")
+        #    return None
         except KeyboardInterrupt:
             typer.echo("\nInput cancelled by user.")
-            pass
-        return new_value
+            return None
+        return value
         
     elif tkinter_is_available():
         # 2. GUI Mode (Non-interactive fallback)
