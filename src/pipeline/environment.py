@@ -65,10 +65,10 @@ def is_apple():
 
 def is_ish_alpine() -> bool:
     # platform.system() usually returns 'Linux' in iSH
-    return (
-        'ish' in os.uname().release.lower() and
-        'alpine' in platform.version().lower()
-    )
+    if hasattr(os,'uname'):
+        release = os.uname().release.lower()
+        return 'ish' in release and 'alpine' in release
+    return False
     
 def pyinstaller():
     if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
