@@ -375,7 +375,17 @@ def cleanup_start_menu_shortcut():
         except Exception as e:
             log_message(f"Warning: Failed to delete Start Menu shortcut {bat_path}: {e}", is_error=True)
 
-
+def cleanup_credential_manager_keyring_entries():
+    """
+    Placeholder for remocing key ring items from Windows Credential Manager.
+    A consistent username relevant to pipeline can be used for easy removal."
+    """
+    # We must define all added credentials discern which are relevant to pipeline.
+    from keyring.errors import PasswordDeleteError
+    try:
+        keyring.delete_password("service_name_placeholder", "username_placeholder")
+    except PasswordDeleteError:
+        pass
 def cleanup_appdata_script():
     """Removes the PowerShell setup information script from AppData."""
     config_dir = setup_appdata_dir()
@@ -463,6 +473,7 @@ def cleanup_windows_install():
     cleanup_install_version_file() # Ensure this goes before attempting to remove the directory
     cleanup_appdata_script()
     cleanup_appdata_dir_if_empty()
+    cleanup_credential_manager_keyring_entries()
     
     print("Windows cleanup complete.")
 
