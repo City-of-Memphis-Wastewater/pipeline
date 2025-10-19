@@ -23,7 +23,7 @@ except ImportError:
 from pipeline.time_manager import TimeManager
 from pipeline.create_sensors_db import get_db_connection, create_packaged_db, reset_user_db # get_user_db_path, ensure_user_db, 
 from pipeline.api.eds import demo_eds_webplot_point_live, EdsClient, load_historic_data, EdsLoginException, demo_eds_save_point_export
-from pipeline.environment import is_termux, is_windows, is_pyz, is_elf, is_pipx, matplotlib_enabled, open_text_file_in_default_app
+from pipeline.environment import is_termux, is_windows, is_pyz, is_elf, is_pipx, matplotlib_is_available_for_gui_plotting, open_text_file_in_default_app
 from pipeline.security_and_config import get_eds_api_credentials, get_external_api_credentials, get_eds_db_credentials, get_all_configured_urls, get_configurable_plant_name, init_security, CONFIG_PATH
 from pipeline.termux_setup import setup_termux_install, cleanup_termux_install
 from pipeline.windows_setup import setup_windows_install, cleanup_windows_install
@@ -269,7 +269,7 @@ def trend(
     # Once the loop is done, you can call your show_static function
     # with the single, populated data_buffer.
 
-    if not matplotlib_enabled() or webplot:
+    if webplot or not matplotlib_is_available_for_gui_plotting():
         from pipeline import gui_plotly_static
         #from pipeline import gui_plotly_static_backup_06Oct25 as gui_plotly_static
         #gui_fastapi_plotly_live.run_gui(data_buffer)
