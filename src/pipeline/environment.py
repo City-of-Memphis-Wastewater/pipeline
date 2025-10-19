@@ -21,7 +21,7 @@ _MATPLOTLIB_EXPORT_AVAILABILITY: bool | None = None
 _MATPLOTLIB_WINDOWED_AVAILABILITY: bool | None = None
 
 # --- GUI CHECKS ---
-def matplotlib_is_available_for_gui_plotting():
+def matplotlib_is_available_for_gui_plotting(termux_has_gui=False):
     """Check if Matplotlib is available AND can use a GUI backend for a popup window."""
     global _MATPLOTLIB_WINDOWED_AVAILABILITY
 
@@ -29,7 +29,8 @@ def matplotlib_is_available_for_gui_plotting():
         return _MATPLOTLIB_WINDOWED_AVAILABILITY
 
     # 1. Termux exclusion check (assume no X11/GUI)
-    if is_termux(): 
+    # Exclude Termux UNLESS the user explicitly provides termux_has_gui=True.
+    if is_termux() and not termux_has_gui: 
         _MATPLOTLIB_WINDOWED_AVAILABILITY = False
         return False
     
