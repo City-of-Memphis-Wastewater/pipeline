@@ -324,6 +324,45 @@ def is_windows_portable_executable(exec_path: Path = None, debug=False) -> bool:
         # Handle exceptions like PermissionError, IsADirectoryError, etc.
         return False
     
+def is_macos_executable(exec_path: Path = None, debug=False) -> bool:
+    """
+    Checks if the currently running executable is a macOS/Darwin Mach-O binary, 
+    and explicitly excludes pipx-managed environments.
+    """
+    if exec_path is None:
+        exec_path = Path(sys.argv[0]).resolve()
+
+    if is_pipx():
+        if debug: print("DEBUG: is_macos_executable: False (is_pipx is True)")
+        return False
+        
+    if not exec_path.is_file():
+        return False
+
+    try:
+        # Check the magic number: Mach-O binaries start with specific 4-byte headers.
+        # Common ones are: b'\xfe\xed\xfa\xce' (32-bit) or b'\xfe\xed\xfa\xcf' (64-bit)
+        with open(exec_path, 'rb') as f:
+            magic_bytes = f.read(4)
+
+        # Common Mach-O magic numbers (including their reversed-byte counterparts)
+        MACHO_MAGIC = {
+            b'\xfe\xed\xfa\xce',  # MH_MAGIC
+            b'\xce\xfa\xed\xfe',  # MH_CIGAM (byte-swapped)
+            b'\xfe\xed\xfa\xcf',  # MH_MAGIC_64
+            b'\xcf\xfa\xed\xfe',  # MH_CIGAM_64 (byte-swapped)
+        }
+        
+        is_macho = magic_bytes in MACHO_MAGIC
+        
+        if debug: 
+            print(f"DEBUG: is_macos_executable: {is_macho} (Non-pipx check)")
+            
+        return is_macho
+        
+    except Exception:
+        return False
+    
 def is_pipx(debug=False) -> bool:
     """Checks if the executable is running from a pipx managed environment."""
     try:
