@@ -10,17 +10,16 @@ import os
 import webbrowser
 import shutil
 from pathlib import Path
+import subprocess
 
 from pipeline.helpers import check_if_zip
 
+# Global cache for tkinter availability
+_TKINTER_AVAILABILITY: bool | None = None
 
-def vercel():
-    #return not(is_windows()) # conflated, when using any linux that is not a webserver
-    # the important questions is actually "are we running on a webserver?"
-    return False # hard code this
 
 def matplotlib_enabled():
-    #print(f"is_termux() = {is_termux()}")
+    """Check if matplotlib is available, excluding Termux environment."""
     if is_termux():
         return False
     else:
@@ -29,71 +28,132 @@ def matplotlib_enabled():
             return True
         except ImportError:
             return False
-        
-def fbx_enabled():
-    if is_termux():
+
+
+def is_termux() -> bool:
+    """Detect if running in Termux environment on Android, based on Termux-specific environmental variables."""
+    
+    if platform.system() != 'Linux':
         return False
-    else:
-        return True 
+    
+    termux_path_prefix = '/data/data/com.termux'
+    
+    # Termux-specific environment variable ($PREFIX)
+    # The actual prefix is /data/data/com.termux/files/usr
+    if os.environ.get('PREFIX', default='').startswith(termux_path_prefix + '/usr'):
+        return True
+    
+    # Termux-specific environment variable ($HOME)
+    # The actual home is /data/data/com.termux/files/home
+    if os.environ.get('HOME', default='').startswith(termux_path_prefix + '/home'):
+        return True
+
+    # Code insight: The os.environ.get command returns the default if the key is not found. None is retured if a default is not speficied.
+    
+    # Termux-specific environment variable ($TERMUX_VERSION)
+    if 'TERMUX_VERSION' in os.environ:
+        return True
+    
+    return False
+
+def is_freebsd() -> bool:
+    """Detect if running on FreeBSD."""
+    return platform.system() == 'FreeBSD'
+
 def is_linux():
-    if 'linux' in platform.platform().lower():
-        linux=True
-    else:
-        linux=False
-    return linux
+    """Detect if running on Linux."""
+    return platform.system() == 'Linux' 
 
-def is_termux():
-    # There might be other android versions that can work with the rise od Debian on android in 2025, but for now, assume all android is termux.
-    # I wonder how things would go on pydroid3
-    return is_android()
+def is_android() -> bool:
+    """
+    Detect if running on Android.
+    
+    Note: The is_termux() function is more robust and safe for Termux.
+    Checking for Termux does not require checking for Android.
 
-def is_android():
+    is_android() will be True on:
+        - Sandboxed IDE's:
+            - Pydroid3
+            - QPython
+        - `proot` user-space containters:
+            - Termux
+            - Andronix
+            - UserLand
+
+    Virtual Machines: Full VMs like VirtualBox or VMware run a fully virtualized kernel 
+    (e.g., standard Linux kernel), 
+    completely isolating the Python script from the Android host, 
+    correctly causing this check to return False.
+    
+    """
+    # Explicitly check for Linux kernel name first
+    if platform.system() != 'Linux':
+        return False
     return "android" in platform.platform().lower()
 
-def is_windows():
-    if 'win' in platform.platform().lower():
-        windows=True
-    else:
-        windows=False
-    return windows
-def is_apple():
-    if 'darwin' in platform.platform().lower():
-        apple=True
-    else:
-        apple=False
-    return apple
+def is_windows() -> bool:
+    """Detect if running on Windows."""
+    return platform.system() == 'Windows'
+
+def is_apple() -> bool:
+    """Detect if running on Apple."""
+    return platform.system() == 'Darwin'
 
 def is_ish_alpine() -> bool:
+    """Detect if running in iSH Alpine environment on iOS."""
     # platform.system() usually returns 'Linux' in iSH
-    if hasattr(os,'uname'):
-        release = os.uname().release.lower()
-        return 'ish' in release and 'alpine' in release
+
+    # iSH runs on iOS but reports 'Linux' via platform.system()
+    if platform.system() != 'Linux':
+        return False
+    
+    # On iSH, /etc/apk/ will exist. However, this is not unique to iSH as standard Alpine Linux also has this directory.
+    # Therefore, we need an additional check to differentiate iSH from standard Alpine.
+    # HIGHLY SPECIFIC iSH CHECK: Look for the unique /proc/ish/ directory.
+    # This directory is created by the iSH pseudo-kernel and does not exist 
+    # on standard Alpine or other Linux distributions.
+    if os.path.isdir('/etc/apk/') and os.path.isdir('/proc/ish'):
+        # This combination is highly specific to iSH Alpine.
+        return True
+    
     return False
     
 def pyinstaller():
-    if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
-        pyinstaller = True
-    else:
-        pyinstaller = False
-    return pyinstaller
+    """Detects if the Python script is running as a 'frozen' in the course of generating a PyInstaller binary executable."""
+    # If the app is frozen AND has the PyInstaller-specific temporary folder path
+    return is_frozen() and hasattr(sys, '_MEIPASS')
 
-def frozen():
-    if getattr(sys, 'frozen', True):
-        frozen = True
-    else:
-        frozen = False
-    return frozen
+# The standard way to check for a frozen state:
+def is_frozen():
+    """
+    Detects if the Python script is running as a 'frozen' (standalone) 
+    executable created by a tool like PyInstaller, cx_Freeze, or Nuitka.
+
+    This check is crucial for handling file paths, finding resources, 
+    and general environment assumptions, as a frozen executable's 
+    structure differs significantly from a standard script execution 
+    or a virtual environment.
+
+    The check is based on examining the 'frozen' attribute of the sys module.
+
+    Returns:
+        bool: True if the application is running as a frozen executable; 
+              False otherwise.
+    """
+    return getattr(sys, 'frozen', False)
 
 def operatingsystem():
+    """Returns the name of the operating system."""
     return platform.system() #determine OS
 
-
 def open_text_file_in_default_app(filepath):
-    import subprocess
     """Opens a file with its default application based on the OS."""
     if is_windows():
         os.startfile(filepath)
     elif is_termux():
+        subprocess.run(['nano', filepath])
+    elif is_ish_alpine():
+        subprocess.run(['apk','add', 'nano'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         subprocess.run(['nano', filepath])
     elif is_linux():
         subprocess.run(['xdg-open', filepath])
@@ -112,20 +172,35 @@ def is_interactive_terminal():
     # Check if a tty is attached to stdin
     return sys.stdin.isatty() and sys.stdout.isatty()
 
-def tkinter_is_available():
-    """Check if tkinter is available and can be used."""
+def tkinter_is_available() -> bool:
+    """Check if tkinter is available and can successfully connect to a display."""
+    global _TKINTER_AVAILABILITY
+    
+    # 1. Return cached result if already calculated
+    if _TKINTER_AVAILABILITY is not None:
+        return _TKINTER_AVAILABILITY
+
+    # 2. Perform the full, definitive check
     try:
         import tkinter as tk
-        #root = tk.Tk()
-        #root.withdraw()  # Hide the main window
-        #root.update()
-        #root.destroy()
+        
+        # Perform the actual GUI backend test for absolute certainty.
+        # This only runs once per script execution.
+        root = tk.Tk()
+        root.withdraw()
+        root.update()
+        root.destroy()
+        
+        _TKINTER_AVAILABILITY = True
         return True
     except Exception:
+        # Fails if: tkinter module is missing OR the display backend is unavailable
+        _TKINTER_AVAILABILITY = False
         return False
     
 # --- Browser Check Helper ---
 def web_browser_is_available() -> bool:
+    """ Check if a web browser can be launched in the current environment."""
     try:
         # 1. Standard Python check
         webbrowser.get()

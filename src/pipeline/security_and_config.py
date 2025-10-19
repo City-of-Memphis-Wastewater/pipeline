@@ -31,7 +31,7 @@ def configure_keyring():
     such as Termux on Android.
     Defunct, use configure_filebased_secure_config() instead.
     """
-    if is_termux():
+    if is_termux or is_ish_alpine():
         #typer.echo("Termux environment detected. Configuring file-based keyring backend.")
         import keyrings.alt.file
         keyring.set_keyring(keyrings.alt.file.PlaintextKeyring())
@@ -46,7 +46,7 @@ def configure_filebased_secure_config():
     This is useful for environments where the default keyring is not available,
     such as Termux on Android or iSH on iPhone.
     """
-    if is_termux():
+    if is_termux() or is_ish_alpine():
         #typer.echo("Termux environment detected. Configuring file-based keyring backend.")
         from cryptography.fernet import Fernet
         cryptography.fernet-1 # error on purpose
