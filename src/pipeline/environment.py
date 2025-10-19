@@ -11,25 +11,113 @@ import webbrowser
 import shutil
 from pathlib import Path
 import subprocess
+import io
 
 from pipeline.helpers import check_if_zip
 
-# Global cache for tkinter availability
+# Global cache for tkinter and matplotlib (mpl) availability
 _TKINTER_AVAILABILITY: bool | None = None
+_MATPLOTLIB_EXPORT_AVAILABILITY: bool | None = None
+_MATPLOTLIB_WINDOWED_AVAILABILITY: bool | None = None
 
+# --- GUI CHECKS ---
+def matplotlib_is_available_for_gui_plotting():
+    """Check if Matplotlib is available AND can use a GUI backend for a popup window."""
+    global _MATPLOTLIB_WINDOWED_AVAILABILITY
 
-def matplotlib_enabled():
-    """Check if matplotlib is available, excluding Termux environment."""
-    if is_termux():
+    if _MATPLOTLIB_WINDOWED_AVAILABILITY is not None:
+        return _MATPLOTLIB_WINDOWED_AVAILABILITY
+
+    # 1. Termux exclusion check (assume no X11/GUI)
+    if is_termux(): 
+        _MATPLOTLIB_WINDOWED_AVAILABILITY = False
         return False
-    else:
-        try:
-            import matplotlib
-            return True
-        except ImportError:
-            return False
+    
+    # 2. Tkinter check (The most definitive check for a working display environment)
+    # If tkinter can't open a window, Matplotlib's TkAgg backend will fail.
+    if not tkinter_is_available():
+        _MATPLOTLIB_WINDOWED_AVAILABILITY = False
+        return False
 
+    # 3. Matplotlib + TkAgg check
+    try:
+        import matplotlib
+        # Force the common GUI backend. At this point, we know tkinter is *available*.
+        # # 'TkAgg' is often the most reliable cross-platform test.
+        # 'TkAgg' != 'Agg'. The Agg backend is for non-gui image export. 
+        matplotlib.use('TkAgg', force=True)
+        import matplotlib.pyplot as plt
+        # A simple test call to ensure the backend initializes
+        # This final test catches any edge cases where tkinter is present but 
+        # Matplotlib's *integration* with it is broken
+        plt.figure()
+        plt.close()
 
+        _MATPLOTLIB_WINDOWED_AVAILABILITY = True
+        return True
+
+    except Exception:
+        # Catches Matplotlib ImportError or any runtime error from the plt.figure() call
+        _MATPLOTLIB_WINDOWED_AVAILABILITY = False
+        return False
+    
+
+def matplotlib_is_available_for_headless_image_export():
+    """Check if Matplotlib is available AND can use the Agg backend for image export."""
+    global _MATPLOTLIB_EXPORT_AVAILABILITY
+    
+    if _MATPLOTLIB_EXPORT_AVAILABILITY is not None:
+        return _MATPLOTLIB_EXPORT_AVAILABILITY
+    
+    try:
+        import matplotlib
+        # The Agg backend (for PNG/JPEG export) is very basic and usually available 
+        # if the core library is installed. We explicitly set it just in case.
+        # 'Agg' != 'TkAgg'. The TkAgg backend is for interactive gui image display. 
+        matplotlib.use('Agg', force=True) 
+        import matplotlib.pyplot as plt
+        
+        # A simple test to ensure a figure can be generated
+        plt.figure()
+        # Ensure it can save to an in-memory buffer (to avoid disk access issues)
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png')
+        plt.close()
+        
+        _MATPLOTLIB_EXPORT_AVAILABILITY = True
+        return True
+        
+    except Exception:
+        _MATPLOTLIB_EXPORT_AVAILABILITY = False
+        return False
+        
+def tkinter_is_available() -> bool:
+    """Check if tkinter is available and can successfully connect to a display."""
+    global _TKINTER_AVAILABILITY
+    
+    # 1. Return cached result if already calculated
+    if _TKINTER_AVAILABILITY is not None:
+        return _TKINTER_AVAILABILITY
+
+    # 2. Perform the full, definitive check
+    try:
+        import tkinter as tk
+        
+        # Perform the actual GUI backend test for absolute certainty.
+        # This only runs once per script execution.
+        root = tk.Tk()
+        root.withdraw()
+        root.update()
+        root.destroy()
+        
+        _TKINTER_AVAILABILITY = True
+        return True
+    except Exception:
+        # Fails if: tkinter module is missing OR the display backend is unavailable
+        _TKINTER_AVAILABILITY = False
+        return False
+
+# --- ENVIRONMENT AND OPERATING SYSTEM CHECKS ---
 def is_termux() -> bool:
     """Detect if running in Termux environment on Android, based on Termux-specific environmental variables."""
     
@@ -71,20 +159,23 @@ def is_android() -> bool:
     Note: The is_termux() function is more robust and safe for Termux.
     Checking for Termux does not require checking for Android.
 
-    is_android() will be True on:
+    is_android() will be True on:   
         - Sandboxed IDE's:
             - Pydroid3
             - QPython
-        - `proot` user-space containters:
+        - `proot`-reliant user-space containters:
             - Termux
             - Andronix
             - UserLand
+            - AnLinux
 
-    Virtual Machines: Full VMs like VirtualBox or VMware run a fully virtualized kernel 
-    (e.g., standard Linux kernel), 
-    completely isolating the Python script from the Android host, 
-    correctly causing this check to return False.
-    
+    is_android() will be False on:
+        - Full Virtual Machines:
+            - VirtualBox
+            - VMware
+            - QEMU
+
+             
     """
     # Explicitly check for Linux kernel name first
     if platform.system() != 'Linux':
@@ -117,6 +208,9 @@ def is_ish_alpine() -> bool:
         return True
     
     return False
+
+
+# --- BUILD AND EXECUTIBLE CHECKS ---
     
 def pyinstaller():
     """Detects if the Python script is running as a 'frozen' in the course of generating a PyInstaller binary executable."""
@@ -141,103 +235,6 @@ def is_frozen():
               False otherwise.
     """
     return getattr(sys, 'frozen', False)
-
-def operatingsystem():
-    """Returns the name of the operating system."""
-    return platform.system() #determine OS
-
-def open_text_file_in_default_app(filepath):
-    """Opens a file with its default application based on the OS."""
-    if is_windows():
-        os.startfile(filepath)
-    elif is_termux():
-        subprocess.run(['nano', filepath])
-    elif is_ish_alpine():
-        subprocess.run(['apk','add', 'nano'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        subprocess.run(['nano', filepath])
-    elif is_linux():
-        subprocess.run(['xdg-open', filepath])
-    elif is_apple():
-        subprocess.run(['open', filepath])
-    else:
-        print("Unsupported operating system.")
-
-def is_interactive_terminal():
-    """
-    Check if the script is running in an interactive terminal. 
-    Assumpton: 
-        If is_interactive_terminal() returns True, 
-        then typer.prompt() will work reliably.
-    """
-    # Check if a tty is attached to stdin
-    return sys.stdin.isatty() and sys.stdout.isatty()
-
-def tkinter_is_available() -> bool:
-    """Check if tkinter is available and can successfully connect to a display."""
-    global _TKINTER_AVAILABILITY
-    
-    # 1. Return cached result if already calculated
-    if _TKINTER_AVAILABILITY is not None:
-        return _TKINTER_AVAILABILITY
-
-    # 2. Perform the full, definitive check
-    try:
-        import tkinter as tk
-        
-        # Perform the actual GUI backend test for absolute certainty.
-        # This only runs once per script execution.
-        root = tk.Tk()
-        root.withdraw()
-        root.update()
-        root.destroy()
-        
-        _TKINTER_AVAILABILITY = True
-        return True
-    except Exception:
-        # Fails if: tkinter module is missing OR the display backend is unavailable
-        _TKINTER_AVAILABILITY = False
-        return False
-    
-# --- Browser Check Helper ---
-def web_browser_is_available() -> bool:
-    """ Check if a web browser can be launched in the current environment."""
-    try:
-        # 1. Standard Python check
-        webbrowser.get()
-        return True
-    except webbrowser.Error:
-        # Fallback needed. Check for external launchers.
-        # 2. Termux specific check
-        if shutil.which("termux-open-url"):
-            return True
-        # 3. General Linux check
-        if shutil.which("xdg-open"):
-            return True
-        return False
-    
-
-def get_pipx_paths():
-    """Returns the configured/default pipx binary and home directories."""
-    # 1. PIPX_BIN_DIR (where the symlinks live, e.g., ~/.local/bin)
-    pipx_bin_dir_str = os.environ.get('PIPX_BIN_DIR')
-    if pipx_bin_dir_str:
-        pipx_bin_path = Path(pipx_bin_dir_str).resolve()
-    else:
-        # Default binary path (common across platforms for user installs)
-        pipx_bin_path = Path.home() / '.local' / 'bin'
-
-    # 2. PIPX_HOME (where the isolated venvs live, e.g., ~/.local/pipx/venvs)
-    pipx_home_str = os.environ.get('PIPX_HOME')
-    if pipx_home_str:
-        # PIPX_HOME is the base, venvs are in PIPX_HOME/venvs
-        pipx_venv_base = Path(pipx_home_str).resolve() / 'venvs'
-    else:
-        # Fallback to the modern default for PIPX_HOME (XDG standard)
-        # Note: pipx is smart and may check the older ~/.local/pipx too
-        # but the XDG one is the current standard.
-        pipx_venv_base = Path.home() / '.local' / 'share' / 'pipx' / 'venvs'
-
-    return pipx_bin_path, pipx_venv_base.resolve()
 
 def is_pipx(debug=False) -> bool:
     """Checks if the executable is running from a pipx managed environment."""
@@ -291,8 +288,6 @@ def is_pipx(debug=False) -> bool:
         # Fallback for unexpected path errors
         return False
     
-    
-    
 
 def is_elf(exec_path : Path = None, debug=False) -> bool:
     """Checks if the currently running executable (sys.argv[0]) is a standalone PyInstaller-built ELF binary."""
@@ -337,3 +332,73 @@ def is_pyz(exec_path: Path=None, debug=False) -> bool:
     
     if not check_if_zip():
         return False
+
+
+# --- TTY CHECK ---
+def is_interactive_terminal():
+    """
+    Check if the script is running in an interactive terminal. 
+    Assumpton: 
+        If is_interactive_terminal() returns True, 
+        then typer.prompt() will work reliably.
+    """
+    # Check if a tty is attached to stdin
+    return sys.stdin.isatty() and sys.stdout.isatty()
+
+    
+# --- Browser Check ---
+def web_browser_is_available() -> bool:
+    """ Check if a web browser can be launched in the current environment."""
+    try:
+        # 1. Standard Python check
+        webbrowser.get()
+        return True
+    except webbrowser.Error:
+        # Fallback needed. Check for external launchers.
+        # 2. Termux specific check
+        if shutil.which("termux-open-url"):
+            return True
+        # 3. General Linux check
+        if shutil.which("xdg-open"):
+            return True
+        return False
+    
+# --- LAUNCH MECHANISMS BASED ON ENVIRONMENT ---
+def open_text_file_in_default_app(filepath):
+    """Opens a file with its default application based on the OS."""
+    if is_windows():
+        os.startfile(filepath)
+    elif is_termux():
+        subprocess.run(['nano', filepath])
+    elif is_ish_alpine():
+        subprocess.run(['apk','add', 'nano'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(['nano', filepath])
+    elif is_linux():
+        subprocess.run(['xdg-open', filepath])
+    elif is_apple():
+        subprocess.run(['open', filepath])
+    else:
+        print("Unsupported operating system.")
+
+def get_pipx_paths():
+    """Returns the configured/default pipx binary and home directories."""
+    # 1. PIPX_BIN_DIR (where the symlinks live, e.g., ~/.local/bin)
+    pipx_bin_dir_str = os.environ.get('PIPX_BIN_DIR')
+    if pipx_bin_dir_str:
+        pipx_bin_path = Path(pipx_bin_dir_str).resolve()
+    else:
+        # Default binary path (common across platforms for user installs)
+        pipx_bin_path = Path.home() / '.local' / 'bin'
+
+    # 2. PIPX_HOME (where the isolated venvs live, e.g., ~/.local/pipx/venvs)
+    pipx_home_str = os.environ.get('PIPX_HOME')
+    if pipx_home_str:
+        # PIPX_HOME is the base, venvs are in PIPX_HOME/venvs
+        pipx_venv_base = Path(pipx_home_str).resolve() / 'venvs'
+    else:
+        # Fallback to the modern default for PIPX_HOME (XDG standard)
+        # Note: pipx is smart and may check the older ~/.local/pipx too
+        # but the XDG one is the current standard.
+        pipx_venv_base = Path.home() / '.local' / 'share' / 'pipx' / 'venvs'
+
+    return pipx_bin_path, pipx_venv_base.resolve()
