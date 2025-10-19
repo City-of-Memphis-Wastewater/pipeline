@@ -209,7 +209,7 @@ def is_ish_alpine() -> bool:
     return False
 
 
-# --- BUILD AND EXECUTIBLE CHECKS ---
+# --- BUILD AND EXECUTABLE CHECKS ---
     
 def pyinstaller():
     """Detects if the Python script is running as a 'frozen' in the course of generating a PyInstaller binary executable."""
@@ -279,7 +279,7 @@ def is_pyz(exec_path: Path=None, debug=False) -> bool:
     if not check_if_zip():
         return False
 
-def is_windows_portable_executible(exec_path: Path = None, debug=False) -> bool:
+def is_windows_portable_executable(exec_path: Path = None, debug=False) -> bool:
     """
     Checks if the currently running executable (sys.argv[0]) is a 
     Windows Portable Executable (PE) binary, and explicitly excludes 
