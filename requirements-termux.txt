@@ -44,6 +44,7 @@ plotly==6.3.1 ; python_version >= "3.8" and python_version < "3.15"
 portend==3.2.0 ; python_version >= "3.8" and python_version < "3.15"
 pycparser==2.23 ; python_version >= "3.8" and python_version < "3.15" and sys_platform == "linux" and platform_python_implementation != "PyPy" and (implementation_name != "PyPy" or python_version == "3.8")
 pydantic==1.10.13 ; python_version >= "3.8" and python_version < "3.15"
+pyhabitat==1.0.14 ; python_version >= "3.8" and python_version < "3.15"
 pygments==2.19.2 ; python_version >= "3.8" and python_version < "3.15"
 python-dateutil==2.9.0.post0 ; python_version >= "3.8" and python_version < "3.15"
 pytzdata==2020.1 ; python_version == "3.8"
