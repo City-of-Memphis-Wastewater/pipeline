@@ -8,8 +8,14 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 
 ## [0.3.44] - 2025-10-20
 
-### Changed:
-- PyHabitat: Reference the pyhabitat library, added as a requirement, rather than using the local src/pipeline/environment.py file
+### Breaking Change / Deprecation
+- **Removed Local Environment Module:** The local file containing environment checks (src/pipeline/environment.py) has been removed and replaced by the external pyhabitat library. Action Required: All code must update imports from src.pipeline.environment to pyhabitat.
+
+### Features & Improvements
+- **PyHabitat Integration:** Environment checks and capability detection logic (like is_termux() and tkinter_is_available()) are now sourced from the pyhabitat dependency, ensuring consistent behavior across all projects that use it.
+
+### Dependency Update: 
+- Added pyhabitat as a direct project requirement.
 
 ---
 
