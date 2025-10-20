@@ -2507,14 +2507,14 @@ windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "pyhabitat"
-version = "1.0.11"
+version = "1.0.12"
 description = "A lightweight library for detecting system environment, GUI, and build properties."
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "pyhabitat-1.0.11-py3-none-any.whl", hash = "sha256:0ee328fff16ccada3136312a433f030f1a3482f0183a06df8074fdcba4f140a8"},
-    {file = "pyhabitat-1.0.11.tar.gz", hash = "sha256:6b0011c87706980ce2bec42fc3bcf85a2deb3462d4850a68d0909bad7d6522ff"},
+    {file = "pyhabitat-1.0.12-py3-none-any.whl", hash = "sha256:acbf799dacf649680b8485ea0696445ea2935d5d2e7b39036368fa4cc6661a35"},
+    {file = "pyhabitat-1.0.12.tar.gz", hash = "sha256:cd1187bad42e0ddcb6349c484a266d120034d15c72be35d259ac4c1fff06de2c"},
 ]
 
 [[package]]
@@ -3275,4 +3275,4 @@ windows = ["matplotlib", "matplotlib", "matplotlib", "pyodbc"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.8.0,<3.15"
-content-hash = "b3b7a9398c660ca125099cada5b725cc01d3c53660dc588cc65b6d43863ce435"
+content-hash = "d9b6960d75cb733684c6fa4042803f2f6f7505a182968c0e5335256b5579673c"
