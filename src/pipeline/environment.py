@@ -375,7 +375,7 @@ def is_pipx(debug=False) -> bool:
         # This is the path to the interpreter running the script (e.g., venv/bin/python)
         # In a pipx-managed execution, this is the venv python.
         interpreter_path = Path(sys.executable).resolve()
-        pipx_bin_path, pipx_venv_base_path = get_pipx_paths()
+        pipx_bin_path, pipx_venv_base_path = _get_pipx_paths()
         # Normalize paths for comparison
         norm_exec_path = normalize_path(exec_path)
         norm_interp_path = normalize_path(interpreter_path)
@@ -418,11 +418,11 @@ def is_pipx(debug=False) -> bool:
 
 
 # --- TTY CHECK ---
-def is_interactive_terminal():
+def interactive_terminal_is_available():
     """
     Check if the script is running in an interactive terminal. 
     Assumpton: 
-        If is_interactive_terminal() returns True, 
+        If interactive_terminal_is_available() returns True, 
         then typer.prompt() will work reliably.
     """
     # Check if a tty is attached to stdin
@@ -439,7 +439,7 @@ def web_browser_is_available() -> bool:
     except webbrowser.Error:
         # Fallback needed. Check for external launchers.
         # 2. Termux specific check
-        if shutil.which("termux-open-url"):
+        if is_termux() and shutil.which("termux-open-url"):
             return True
         # 3. General Linux check
         if shutil.which("xdg-open"):
@@ -447,7 +447,7 @@ def web_browser_is_available() -> bool:
         return False
     
 # --- LAUNCH MECHANISMS BASED ON ENVIRONMENT ---
-def open_text_file_in_default_app(filepath):
+def open_text_file_for_editing(filepath):
     """Opens a file with its default application based on the OS."""
     if is_windows():
         os.startfile(filepath)
@@ -463,8 +463,11 @@ def open_text_file_in_default_app(filepath):
     else:
         print("Unsupported operating system.")
 
-def get_pipx_paths():
-    """Returns the configured/default pipx binary and home directories."""
+def _get_pipx_paths():
+    """
+    Returns the configured/default pipx binary and home directories.
+    Assumes you indeed have a pipx dir.
+    """
     # 1. PIPX_BIN_DIR (where the symlinks live, e.g., ~/.local/bin)
     pipx_bin_dir_str = os.environ.get('PIPX_BIN_DIR')
     if pipx_bin_dir_str:

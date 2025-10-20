@@ -6,6 +6,13 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 
 ---
 
+## [0.3.44] - 2025-10-20
+
+### Changed:
+- PyHabitat: Reference the pyhabitat library, added as a requirement, rather than using the local src/pipeline/environment.py file
+
+---
+
 ## [0.3.23] - 2025-10-07
 
 We need to make sure these changes impact the static tmp files as well as continuously served html.

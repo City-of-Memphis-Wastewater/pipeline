@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pipeline-eds"
-version = "0.3.43"
+version = "0.3.44"
 description = "The API pipeline library, with CLI tools. Key target: The Emerson Ovation EDS REST API."
 authors = ["George Clayton Bennett <george.bennett@memphistn.gov>"]
 license = "BSD-3"
@@ -94,6 +94,7 @@ uvicorn = [
     { version = "^0.33.0", python = "3.8.*" },
 ]
 distro = "^1.9.0"
+pyhabitat = "^1.0.11"
 
 [tool.poetry.dependencies."backports.zoneinfo"] # known poetry quirk necessary when freezing, a la "poetry export -f requirements.txt --without-hashes > requirements.txt"
 version = "^0.2.1"

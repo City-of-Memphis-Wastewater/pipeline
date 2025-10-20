@@ -8,7 +8,7 @@ from typing import Dict, Set, List
 import typer
 import click.exceptions
 
-from pipeline.environment import is_termux, is_ish_alpine, is_interactive_terminal, tkinter_is_available, web_browser_is_available
+from pyhabitat import is_termux, is_ish_alpine, interactive_terminal_is_available, tkinter_is_available, web_browser_is_available
 
 # Define a standard configuration path for your package
 CONFIG_PATH = Path.home() / ".pipeline-eds" / "config.json" ## configuration-example
@@ -76,7 +76,7 @@ def _prompt_for_value(prompt_message: str, hide_input: bool) -> str:
     # Block these off for testing the browser_get_input, which is not expeceted in this iteration but is good practice for future proofing a hypothetical console-less GUI 
     
     value = None # ensure safe defeault so that the except block handles properly, namely if the user cancels the typer.prompt() input with control+ c
-    if is_interactive_terminal():
+    if interactive_terminal_is_available():
         try:
             # 1. CLI Mode (Interactive)
             typer.echo(f"\n --- Use CLI input --- ")
@@ -91,9 +91,7 @@ def _prompt_for_value(prompt_message: str, hide_input: bool) -> str:
                 value = secure_prompt(prompt_message)
             else:
                 value = typer.prompt(prompt_message, hide_input=False)
-        #except click.exceptions.Abort:
-        #    typer.echo("\nInput cancelled by user.")
-        #    return None
+
         except KeyboardInterrupt:
             typer.echo("\nInput cancelled by user.")
             return None

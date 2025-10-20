@@ -20,7 +20,7 @@ from pipeline.workspace_manager import WorkspaceManager
 from pipeline import helpers
 from pipeline.decorators import log_function_call
 from pipeline.time_manager import TimeManager
-from pipeline.environment import is_windows
+from pyhabitat import is_windows
 
 if is_windows():
     import mysql.connector
