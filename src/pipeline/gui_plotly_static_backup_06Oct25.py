@@ -6,7 +6,7 @@ import plotly.offline as pyo
 import webbrowser
 import tempfile
 import threading
-from pipeline.environment import is_termux
+from pyhabitat import is_termux
 import http.server
 import time
 from pathlib import Path

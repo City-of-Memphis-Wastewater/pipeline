@@ -6,7 +6,7 @@ from pathlib import Path
 import subprocess
 import datetime
 
-from pipeline.environment import is_windows
+from pyhabitat import is_windows
 from pipeline.version_info import get_package_name, get_package_version
 
 # Importing winreg is necessary for proper Windows registry access.
