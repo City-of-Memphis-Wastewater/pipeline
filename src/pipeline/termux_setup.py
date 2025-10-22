@@ -3,8 +3,8 @@ from __future__ import annotations # Delays annotation evaluation, allowing mode
 import os
 from pathlib import Path
 import sys
+from pyhabitat import on_termux, is_pipx, is_pyz, is_elf
 
-from pyhabitat import is_termux, is_pipx, is_pyz, is_elf
 from pipeline.version_info import get_package_name
     
 # Constants
@@ -31,7 +31,7 @@ def setup_termux_install(force=False):
     """
     Main dispatcher for Termux shortcut setup.
     """
-    if not is_termux():
+    if not on_termux():
         return
     exec_path = Path(sys.argv[0]).resolve()
     # Check the type of file being run, whether a pipx binary in PIPX_BIN_DIR or an ELF file or a PYZ, etc
@@ -60,7 +60,7 @@ def setup_termux_widget_pipx_shortcut(force=False):
     Creates the Termux widget shortcut script if running in Termux and the 
     shortcut does not already exist.
     """
-    if not is_termux():
+    if not on_termux():
         return
 
     # Termux shortcut directory and file path
@@ -170,7 +170,7 @@ def setup_termux_widget_executable_shortcut(force=False, shortcut_name=None):
     shortcut does not already exist. It uses the filename of the currently 
     running ELF executable (wrapper) for the command.
     """
-    if not is_termux():
+    if not on_termux():
         return
     if shortcut_name is None:
         print(f"shortcut_name not provided")
@@ -356,7 +356,7 @@ def cleanup_termux_install():
     """
     Removes all Termux widget shortcut scripts and the shell alias.
     """
-    if not is_termux():
+    if not on_termux():
         return
         
     shortcut_dir = _get_termux_shortcut_path()

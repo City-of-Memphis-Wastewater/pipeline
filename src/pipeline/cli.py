@@ -10,6 +10,8 @@ from requests.exceptions import Timeout
 import sys
 import pendulum
 import re
+from pyhabitat import on_termux, on_windows, is_pyz, is_elf, is_pipx, matplotlib_is_available_for_gui_plotting, edit_textfile
+
 
 try:
     import colorama # explicitly added so for the shiv build
@@ -23,7 +25,6 @@ except ImportError:
 from pipeline.time_manager import TimeManager
 from pipeline.create_sensors_db import get_db_connection, create_packaged_db, reset_user_db # get_user_db_path, ensure_user_db, 
 from pipeline.api.eds import demo_eds_webplot_point_live, EdsClient, load_historic_data, EdsLoginException, demo_eds_save_point_export
-from pyhabitat import is_termux, is_windows, is_pyz, is_elf, is_pipx, matplotlib_is_available_for_gui_plotting, open_text_file_for_editing
 from pipeline.security_and_config import get_eds_api_credentials, get_external_api_credentials, get_eds_db_credentials, get_all_configured_urls, get_configurable_plant_name, init_security, CONFIG_PATH
 from pipeline.termux_setup import setup_termux_install, cleanup_termux_install
 from pipeline.windows_setup import setup_windows_install, cleanup_windows_install
@@ -36,9 +37,9 @@ from pipeline.version_info import  PIP_PACKAGE_NAME, PIPELINE_VERSION, __version
 # This runs on every command (including --version and --help or without sub commands), 
 # but the function's internal logic
 # ensures the shortcut file is only created once in the Termux environment.
-if is_termux():
+if on_termux():
     setup_termux_install()
-elif is_windows():
+elif on_windows():
     setup_windows_install()
 
 # -- Versioning --
@@ -307,7 +308,7 @@ def configure_credentials(
     """
     if textedit:
         typer.echo(F"Config filepath: {CONFIG_PATH}")
-        open_text_file_for_editing(CONFIG_PATH)
+        edit_textfile(CONFIG_PATH)
         return
             
     typer.echo("")
@@ -385,17 +386,17 @@ def install(
         return
     
     if uninstall:
-        if is_windows():
+        if on_windows():
             if typer.confirm("Are you sure you want to uninstall the registry context-menu item, the launcher BAT, and empty out the AppData folder?"):
                 cleanup_windows_install()
-        elif is_termux():
+        elif on_termux():
             cleanup_termux_install()
         return
 
-    if is_windows():
+    if on_windows():
         typer.echo("AppData will be set up explicity and a content menu item will be added to your Registry.")
         setup_windows_install()
-    elif is_termux():
+    elif on_termux():
         typer.echo("Scripts will now be added to the $HOME/.shortcuts/ directory for launching from the Termux Widget.")
         setup_termux_install(force=upgrade)
         typer.echo("Update complete.")

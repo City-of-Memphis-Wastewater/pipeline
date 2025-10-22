@@ -6,7 +6,7 @@ import plotly.offline as pyo
 import webbrowser
 import tempfile
 import threading
-from pyhabitat import is_termux
+from pyhabitat import on_termux
 import http.server
 import time
 from pathlib import Path
@@ -32,7 +32,7 @@ COLORS = [
     'rgba(23, 190, 207, 0.7)'   # #17becf
 ] """  
 COLORS = []
-font_size = 20 if is_termux() else 14
+font_size = 20 if on_termux() else 14
 
 
 buffer_lock = threading.Lock()  # Optional, if you want thread safety
@@ -307,14 +307,14 @@ def show_static(plot_buffer):
     original_cwd = os.getcwd() # Save original CWD to restore later if needed
 
     # --- Inject the button based on environment ---
-    is_termux_mode = is_termux()
-    tmp_path = inject_buttons(tmp_path, is_server_mode=is_termux_mode)
+    on_termux_mode = on_termux()
+    tmp_path = inject_buttons(tmp_path, is_server_mode=on_termux_mode)
 
     
     os.chdir(str(tmp_dir))
 
     # If running in Windows, open the file directly
-    if not is_termux():
+    if not on_termux():
         webbrowser.open(f"file://{tmp_file.name}")
         # Restore CWD before exiting
         os.chdir(original_cwd) 

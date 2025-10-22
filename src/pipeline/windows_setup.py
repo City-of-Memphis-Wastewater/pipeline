@@ -5,8 +5,8 @@ import platform
 from pathlib import Path
 import subprocess
 import datetime
+from pyhabitat import on_windows
 
-from pyhabitat import is_windows
 from pipeline.version_info import get_package_name, get_package_version
 
 # Importing winreg is necessary for proper Windows registry access.
@@ -53,7 +53,7 @@ def log_message(message: str, is_error: bool = False):
 
 # --- Environment and Path Functions ---
 
-def is_windows() -> bool:
+def on_windows() -> bool:
     """Checks if the current operating system is Windows."""
     return platform.system() == "Windows"
 
@@ -64,7 +64,7 @@ def get_executable_path() -> Path | None:
     Returns None if the application is running as a Python script (e.g., via 
     'python -m' or 'poetry run') to prevent setup from running with a source path.
     """
-    if not is_windows():
+    if not on_windows():
         return None
     try:
         # sys.argv[0] is the path to the currently running entry point
@@ -89,7 +89,7 @@ def setup_appdata_dir() -> Path:
     Returns the path to the configuration directory.
     """
     # Use environment variable for robustness
-    if not is_windows():
+    if not on_windows():
         return
     local_appdata = os.environ.get('LOCALAPPDATA')
     if not local_appdata:
@@ -168,7 +168,7 @@ def setup_windows_install():
     on a Windows system. It now includes a version check to prevent running 
     on every startup, and logs verbose output instead of printing it.
     """
-    if not is_windows():
+    if not on_windows():
         return
 
     # 1. Ensure AppData is set up first, so we have a log file location
@@ -461,7 +461,7 @@ def cleanup_windows_install():
     Performs full uninstallation cleanup of all artifacts created by 
     setup_windows_install.
     """
-    if not is_windows():
+    if not on_windows():
         return
         
     # We must print the start of cleanup since the main loop needs to know
