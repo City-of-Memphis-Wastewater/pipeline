@@ -151,9 +151,9 @@ def defaultplant(
 def trend(
     idcs: list[str] = typer.Argument(None, help="Provide known idcs values that match the given zd."), # , "--idcs", "-i"
     starttime: str = typer.Option(None, "--start", "-s", help="Identify start time. Use any reasonable format, to be parsed automatically. If you must use spaces, use quotes."),
-    endtime: str = typer.Option(None, "--end", "-end", help="Identify end time. Use any reasonable format, to be parsed automatically. If you must use spaces, use quotes."),
+    endtime: str = typer.Option(None, "--end", "-e", help="Identify end time. Use any reasonable format, to be parsed automatically. If you must use spaces, use quotes."),
+    days: float = typer.Option(None, "--days", "-ds", help="Identify end time. Use any reasonable format, to be parsed automatically. If you must use spaces, use quotes."),
     plant_name: str = typer.Option(None, "--plantname", "-pn", help = "Provide the EDS ZD for your credentials."),
-    #workspacename: str = typer.Option(None,"--workspace","-w", help = "Provide the name of the workspace you want to use, for the secrets.yaml credentials and for the timezone config. If a start time is not provided, the workspace queries can checked for the most recent successful timestamp. "),
     print_csv: bool = typer.Option(False,"--print-csv","-p",help = "Print the CSV style for pasting into Excel."),
     step_seconds: int = typer.Option(None, "--step-seconds", help="You can explicitly provide the delta between datapoints. If not, ~400 data points will be used, based on the nice_step() function."), 
     webplot: bool = typer.Option(False,"--webplot","-w",help = "Use a browser-based plot instead of local (matplotlib). Useful for remote servers without display."),
@@ -219,19 +219,10 @@ def trend(
     session = EdsClient.login_to_session_with_api_credentials(api_credentials)
 
     points_data = EdsClient.get_points_metadata(session, filter_iess=iess_list)
-    
-    
-    if endtime is None:
-        dt_finish = pendulum.from_timestamp(helpers.get_now_time_rounded())
-        print(f"No endtime provided, so defaulting to now: {dt_finish.to_datetime_string()}")
-    else:
-        dt_finish = pendulum.parse(helpers.sanitize_date_input(endtime), strict=False)
-    if starttime is None:
-        days_past = 2
-        dt_start = dt_finish.subtract(days=days_past) # default to 2 days ago
-        print(f"No starttime provided, so defaulting to {days_past} days before endtime: {dt_start.to_datetime_string()}")
-    else:
-        dt_start = pendulum.parse(helpers.sanitize_date_input(starttime), strict=False)
+
+
+    # --- Assess time range --
+    dt_start, dt_finish = helpers.asses_time_range(starttime=starttime, endtime=endtime, days=days)
 
     # Should automatically choose time step granularity based on time length; map 
     if step_seconds is None:

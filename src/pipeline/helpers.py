@@ -10,6 +10,7 @@ import socket
 import re
 import zipfile
 from pathlib import Path
+import pendulum
 
 from pipeline.time_manager import TimeManager
 
@@ -130,3 +131,49 @@ if __name__ == "__main__":
     function_view()
     # Example
     sanitize_date_input("December12,2024")  # -> "December 12,2024"
+
+def asses_time_range(starttime : str = None, endtime : str = None, days:float = None, default_days : int = 2) -> tuple[pendulum.DateTime, pendulum.DateTime]:
+    """
+    Determines dt_start and dt_finish based on provided time range inputs.
+    
+    Returns:
+        tuple[pendulum.DateTime, pendulum.DateTime]: (dt_start, dt_finish)
+    """
+    # --- Assess time range ---
+    dt_start = None
+    dt_finish = None
+
+    # 1. Handle user constraint: If both starttime and endtime are provided, ignore 'days'.
+    if starttime is not None and endtime is not None:
+        days = None 
+
+    # 2. Determine dt_finish (End Time)
+    # Priority A: Explicit endtime provided.
+    if endtime is not None:
+        dt_finish = pendulum.parse(sanitize_date_input(endtime), strict=False)
+
+    # Priority B: endtime is missing, but starttime and days are provided. Calculate finish from start + days.
+    elif starttime is not None and days is not None:
+        dt_start = pendulum.parse(sanitize_date_input(starttime), strict=False)
+        dt_finish = dt_start.add(days=days)
+
+    # Priority C (Default): Endtime is missing in all other cases (e.g., only starttime, only days, or neither). Default to now.
+    else:
+        dt_finish = pendulum.from_timestamp(get_now_time_rounded())
+        print(f"No explicit endtime provided, defaulting to now: {dt_finish.to_datetime_string()}")
+
+    # 3. Determine dt_start (Start Time)
+    # Priority A: Explicit starttime provided (and not already parsed in step 2).
+    if starttime is not None and dt_start is None:
+        dt_start = pendulum.parse(sanitize_date_input(starttime), strict=False)
+
+    # Priority B (Default): Starttime is missing. Calculate start by subtracting days from dt_finish.
+    if dt_start is None:
+        # Determine look-back period (use 'days' if available, otherwise use default)
+        days_past = days if days is not None else default_days
+        
+        dt_start = dt_finish.subtract(days=days_past)
+        print(f"No starttime provided, defaulting to {days_past} days before endtime: {dt_start.to_datetime_string()}")
+        
+    # NOTE: dt_start and dt_finish are guaranteed to be defined here.
+    return dt_start, dt_finish
