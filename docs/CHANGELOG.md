@@ -6,6 +6,13 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 
 ---
 
+## [0.3.47] - 2025-10-22
+
+### Breaking Change / Deprecation
+- **PyHabitat Version :** User pyhabitat ^1.0.18, due to function name changes like is_termux() now being on_termux().
+
+---
+
 ## [0.3.44] - 2025-10-20
 
 ### Breaking Change / Deprecation
