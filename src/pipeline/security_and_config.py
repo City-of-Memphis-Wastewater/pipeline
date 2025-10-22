@@ -7,7 +7,7 @@ import keyring
 from typing import Dict, Set, List
 import typer
 import click.exceptions
-from pyhabitat import on_termux, is_ish_alpine, interactive_terminal_is_available, tkinter_is_available, web_browser_is_available
+from pyhabitat import on_termux, on_ish_alpine, interactive_terminal_is_available, tkinter_is_available, web_browser_is_available
 
 # Define a standard configuration path for your package
 CONFIG_PATH = Path.home() / ".pipeline-eds" / "config.json" ## configuration-example
@@ -15,7 +15,7 @@ CONFIG_FILE = Path.home() / ".pipeline-eds" / "secure_config.json"
 KEY_FILE = Path.home() / ".pipeline-eds" / ".key"
 
 def init_security():
-    if on_termux() or is_ish_alpine():
+    if on_termux() or on_ish_alpine():
         try: # mid refactor, try the new function first
             configure_filebased_secure_config() # to be run on import
         except:
@@ -30,7 +30,7 @@ def configure_keyring():
     such as Termux on Android.
     Defunct, use configure_filebased_secure_config() instead.
     """
-    if on_termux or is_ish_alpine():
+    if on_termux or on_ish_alpine():
         #typer.echo("Termux environment detected. Configuring file-based keyring backend.")
         import keyrings.alt.file
         keyring.set_keyring(keyrings.alt.file.PlaintextKeyring())
@@ -45,7 +45,7 @@ def configure_filebased_secure_config():
     This is useful for environments where the default keyring is not available,
     such as Termux on Android or iSH on iPhone.
     """
-    if on_termux() or is_ish_alpine():
+    if on_termux() or on_ish_alpine():
         #typer.echo("Termux environment detected. Configuring file-based keyring backend.")
         from cryptography.fernet import Fernet
         cryptography.fernet-1 # error on purpose

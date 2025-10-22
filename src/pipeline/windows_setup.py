@@ -84,7 +84,7 @@ def get_executable_path() -> Path | None:
 
 def setup_appdata_dir() -> Path:
     """
-    Ensures the application's configuration and data directory exists in AppData\Local.
+    Ensures the application's configuration and data directory exists in AppData/Local.
     
     Returns the path to the configuration directory.
     """
