@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pipeline-eds"
-version = "0.3.46"
+version = "0.3.47"
 description = "The API pipeline library, with CLI tools. Key target: The Emerson Ovation EDS REST API."
 authors = ["George Clayton Bennett <george.bennett@memphistn.gov>"]
 license = "BSD-3"
@@ -75,7 +75,7 @@ pendulum = [
 
 plotly = "^6.2.0"
 pydantic = "1.10.13"
-pyhabitat = "^1.0.14"	
+pyhabitat = "^1.0.18"	
 pyodbc = { version = "^5.1.0", optional = true }
 pyyaml = ">=6.0.2,<7.0.0"
 requests = ">=2.32.3,<3.0.0"

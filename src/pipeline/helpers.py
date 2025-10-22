@@ -86,15 +86,6 @@ def function_view(globals_passed=None):
     print("\n")
 
 
-def check_if_zip(file_path: str | Path) -> bool:
-    """Checks if the file at the given path is a valid ZIP archive."""
-    try:
-        return zipfile.is_zipfile(file_path)
-    except Exception:
-        # Handle cases where the path might be invalid, or other unexpected errors
-        return False
-
-
 def human_readable(ts):
     return datetime.fromtimestamp(ts).strftime("%H:%M:%S")
 
