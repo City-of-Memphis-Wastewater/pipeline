@@ -94,11 +94,13 @@ def assess_unit_stats(data):
     unit_stats = {}
     for label, series in data.items():
         unit = series["unit"]
-        y_data = np.array(series["y"], dtype="float")
+        #y_data = np.array(series["y"], dtype="float")
+        y_data = [float(x) for x in series["y"]]
         
         #if not np.any(y_data): continue # Skip empty series
 
-        current_min, current_max = np.min(y_data), np.max(y_data)
+        #current_min, current_max = np.min(y_data), np.max(y_data)
+        current_min, current_max = min(y_data), max(y_data)
         
         if unit not in unit_stats:
             unit_stats[unit] = {"min": current_min, "max": current_max}
@@ -136,9 +138,16 @@ def y_normalize_global(y_original,unit_stats, unit=None):
     # VISUAL NORMALIZATION: Normalize using the GLOBAL range for the unit.
     # This ensures all traces on the same axis share the same scale.
     if global_max == global_min:
-        y_normalized = np.zeros_like(y_original)
+        #y_normalized = np.zeros_like(y_original)
+        y_normalized = [0.0] * len(y_original)
+        
     else:
-        y_normalized = (y_original - global_min) / (global_max - global_min)
+        #y_normalized = (y_original - global_min) / (global_max - global_min)
+        range_val = global_max - global_min
+        y_normalized = [
+            (y_val - global_min) / range_val
+            for y_val in y_original
+        ]
     return y_normalized
 
 def build_y_axis(y_min, y_max,axis_index,axis_label,tick_count = 10):
@@ -204,11 +213,13 @@ def show_static(plot_buffer):
     
     for i, (label, series) in enumerate(data.items()):
         
-        y_original = np.array(series["y"],dtype="float")
+        #y_original = np.array(series["y"],dtype="float")
+        y_original = [float(x) for x in series["y"]]
         unit = series["unit"]
         # 1. VISUAL NORMALIZATION: Normalize y-data for plotting
         #y_normalized , y_min, y_max = normalize(y_original)
-        if y_original.size == 0: continue
+        #if y_original.size == 0: continue
+        if len(y_original)==0: continue
         y_normalized = y_normalize_global(y_original,unit_stats, unit)
         
         current_axis_idx = unit_to_axis_index[unit]

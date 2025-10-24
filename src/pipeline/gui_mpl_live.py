@@ -1,5 +1,5 @@
 from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
-import numpy as np
+#import numpy as np
 import logging
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
@@ -10,6 +10,7 @@ from threading import Thread
 from pipeline import helpers
 from pipeline.plotbuffer import PlotBuffer  # Adjust import path as needed
 from pipeline.time_manager import TimeManager
+from pipeline.plottools import linspace_indices
 
 
 
@@ -58,8 +59,9 @@ def run_gui(buffer: PlotBuffer, update_interval_ms=1000):
             num_ticks = min(6, len(x_vals))
 
             # Choose evenly spaced indices
-            indices = np.linspace(0, len(x_vals) - 1, num_ticks, dtype=int)
-
+            #indices = np.linspace(0, len(x_vals) - 1, num_ticks, dtype=int)
+            indices = linspace_indices(start=0, stop = len(x_vals) - 1, num=num_ticks, length=len(x_vals))
+            
             if label not in lines:
                 # Create new line
                 line, = ax.plot(x_vals, y_vals, label=label)
@@ -72,8 +74,7 @@ def run_gui(buffer: PlotBuffer, update_interval_ms=1000):
         # Format x-axis ticks as human readable time strings
 
         # Tick positions are x values at those indices
-        #tick_positions = x_vals[indices]
-        tick_positions = np.array(x_vals)[indices]
+        tick_positions = [x_vals[i] for i in indices]
         tick_labels = [TimeManager(ts).as_formatted_time() for ts in tick_positions]
         # Convert UNIX timestamps to formatted strings on x-axis
         #xticks = ax.get_xticks()
@@ -116,6 +117,7 @@ def show_static(buffer: PlotBuffer):
         # Convert strings to datetime objects for better handling
         x_vals = [TimeManager(ts).as_datetime() for ts in series["x"]]
         y_vals = series["y"]
+        print(f"x_vals = {x_vals}")
 
         ax.plot(x_vals, y_vals, marker='o', linestyle='-', label=label)
 
