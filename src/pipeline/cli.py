@@ -33,14 +33,17 @@ from pipeline.plotbuffer import PlotBuffer
 from pipeline.version_info import  PIP_PACKAGE_NAME, PIPELINE_VERSION, __version__, get_package_version, get_package_name
 #from pipeline.helpers import setup_logging
 
-# --- TERMUX SETUP HOOK ---
+# --- SETUP / INSTALL HOOK ---
 # This runs on every command (including --version and --help or without sub commands), 
 # but the function's internal logic
 # ensures the shortcut file is only created once in the Termux environment.
-if on_termux():
+#-- SUPPRESS with "False and" as of 0.3.53 - automaic installation on every run is invasive and is annyoring for troubleshooting, like if the user changes the .shortcut/filename
+#-- user may directly run 'install' command
+if False and on_termux():
     setup_termux_install()
-elif on_windows():
+elif False and on_windows():
     setup_windows_install()
+# --- end SETUP / INSTALL HOOK ---
 
 # -- Versioning --
 def print_version(value: bool):
