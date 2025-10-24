@@ -6,8 +6,23 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 
 ---
 
+## [0.3.53] - 2025-10-24
 
-## [0.3.51] - 2025-10-22
+### Changed:
+-  Block automatic installation on each CLI run, in `--- SETUP / INSTALL HOOK ---` section. Artifact left in place. Termux Widgets Shortcuts can now e installed by using the install CLI command.
+
+### Coming Soon:
+- cli folder, with cli-rjn.py, cli-mission.py, cli-eds.py, and cli-transmit.py; the currrent cli.py will ultimately be moved to cli-eds.py, after cli-mission.py is established and stable and can be referenced. 
+- cli-transmit.py will be a bit more complex, to establish and configure the bones to be called by Windows Task Scheduler or the appropriate alternative. [See issue 44](https://github.com/City-of-Memphis-Wastewater/pipeline/issues/44).
+- .pex. 
+
+### Stability status
+- Currently Termux installation is stable using `pipx install --system-site-packages pipeline-eds` and can be ugraded with `pipx upgrade pipeline-eds`.  Now that numpy has been removed as a dependenency. For fallback security, install both `pkg install python-cryptography` and `pkg install rust`; with rust, if the pre installed python-cryptography library is not picked up for whatever reason from system site packages, rust enables `pip install cryptography` to build from source. This fallback approach is not possible with numpy; `pkg install python-numpy` works, but `pip install numpy` is tenuous with pitfalls, so, burn it. 
+
+
+---
+
+## [0.3.51] - 2025-10-23
 
 ### Dependency reduction:
 - Isolate normalization for gui_plotly_static.py, splitting off helper functions into the plottools.file. Alter these functions to use raw python math and to not require numpy, because dealing with numpy for pipx install on termux is no longer a fun game, and testing on termux for rolling verions is a key development aspect.
