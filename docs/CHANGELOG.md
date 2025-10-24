@@ -6,7 +6,7 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 
 ---
 
-## [0.3.55] - 2025-10-24
+## [0.3.56] - 2025-10-24
 
 ### Changed:
 - CLI command name: `pipeline-eds install` -> `pipeline-eds setup`. Clearly differentiates pipx install or source code build or binary installation from the setup / integration process. Function name: **setup_integration()**, with Typer command alias **setup**. 
