@@ -69,7 +69,7 @@ eds ping
 eds trend M100FI --start 2025-10-01 --end 2025-10-10
 
 # Optional: Update later via Termux widget shortcut
-eds install --upgrade
+eds setup --upgrade
 ```
 
 💡 Tip: `eds trend` will generate Plotly HTML plots. Open with `termux-open <filename>` or the localhost URL printed in the terminal.

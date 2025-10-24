@@ -427,7 +427,7 @@ There are several ways to run `pipeline` inside Termux, depending on your needs:
 
 - **`pipx` (Recommended)**  
   - Provides rolling updates and integrates with the Termux home‑screen widget.  
-  - As of **v0.3.8**, you `eds install` will generate a **shortcut button** in the Termux widget to update `pipeline-eds` without needing to open the terminal.  
+  - As of **v0.3.8**, you `eds setup` will generate a **shortcut button** in the Termux widget to update `pipeline-eds` without needing to open the terminal.  
   - Requires Python and `pipx` to be installed.  
   - Best choice if you want to keep up with frequent changes.
 
