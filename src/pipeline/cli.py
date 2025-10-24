@@ -361,15 +361,15 @@ def list_workspaces():
     for name in workspaces_list:
         typer.echo(f" - {name}")
 
-@app.command()
-def install(
+@app.command(name="setup", help="Setup touch point like widget entries, context menu items, and AppData folder for system integration. Based on environment.")
+def setup_integration(
     uninstall: bool = typer.Option(False,"--uninstall","-un",help = "Remove the installation artifacts for the current operating system."),
     upgrade: bool = typer.Option(False, "--upgrade", "-up", help = "Uppgrades will be forece, namely shortcut scripts on Termux will be overwritten even if they already exist."),
     debug: bool = typer.Option(False, "--debug", "-d", help = "Show debugging output and do not actually perform any installation or uninstallation actions.")
 ):
     """
-    Windows: Uninstall the registry context-menu item, the launcher BAT, and the AppData folder
-    Termux: Remove the scripts from the .shortcuts/ folder.
+    Windows: Un/install the registry context-menu item, the launcher BAT, and the AppData folder
+    Termux: Add / remove the scripts from the .shortcuts/ folder.
     """
 
     if debug:
