@@ -117,7 +117,6 @@ def show_static(buffer: PlotBuffer):
         # Convert strings to datetime objects for better handling
         x_vals = [TimeManager(ts).as_datetime() for ts in series["x"]]
         y_vals = series["y"]
-        print(f"x_vals = {x_vals}")
 
         ax.plot(x_vals, y_vals, marker='o', linestyle='-', label=label)
 
