@@ -7,7 +7,7 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 ---
 
 
-## [0.3.50] - 2025-10-22
+## [0.3.51] - 2025-10-22
 
 ### Dependency reduction:
 - Isolate normalization for gui_plotly_static.py, splitting off helper functions into the plottools.file. Alter these functions to use raw python math and to not require numpy, because dealing with numpy for pipx install on termux is no longer a fun game, and testing on termux for rolling verions is a key development aspect.
