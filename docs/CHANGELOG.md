@@ -6,6 +6,13 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 
 ---
 
+## [0.3.54] - 2025-10-24
+
+### Added:
+-  Implement github workflow publish.yaml, to replace manual "poetry build" and "twine upload .\dist\*VERSION_NUMBER*", to be managed automatically when running "gh release create v**VERSION_NUMBER** -F .\docs\CHANGELOG.md". Note that testing is limited to successful build and successful minimal run of "pipeline-eds"; plotting and api calls are not tested.
+
+---
+
 ## [0.3.53] - 2025-10-24
 
 ### Changed:
