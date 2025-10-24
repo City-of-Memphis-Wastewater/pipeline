@@ -83,11 +83,13 @@ sudo apt update && sudo apt install python3 python3-pip python-is-python3
 
 # On Termux (Android)
 pkg update && pkg install python
-pkg install python python-cryptography python-numpy
+pkg install python python-cryptography # python-numpy # numpy dependency removed for 0.3.50
+pip install --upgrade setuptools wheel # Just to be sure.
 
 # Some of these are likely overkill given prepackaged cryptography, but I want you to succeed, and I will continue testing.
 pkg install clang make libffi openssl-dev libffi-dev
 # pkg install rust # probably not necessary, with `python-cryptography` installed
+# Alterative to python-cryptography, you could `pip install cryptography` after `pip install setuptools`
 
 # On Alpine (iSH on iOS)
 apk update && apk add python3 py3-pip
@@ -114,7 +116,7 @@ Install the package from PyPI using `pipx`.
 # For all systems (Linux, macOS, Windows)
 pipx install pipeline-eds
 
-# For Termux and iSH, which require dedicated system site packages like py3-cryptography
+# For Termux and iSH, which require dedicated system site packages like py3-cryptography, as seen above
 pipx install --system-site-packages pipeline-eds
 
 # For Windows users who want database features from the pyodbc library (the usefulness of this has not yet been developed).
