@@ -60,7 +60,6 @@ mysql-connector-python = [
     { version = "^9.3.0", python = ">=3.9" },
     { version = "^8.3.0", python = "3.8.*" },
 ]
-# numpy 
 # pendulum: Version 3.x requires Python >=3.9, so we pin 2.x for 3.8. 
 pendulum = [
     { version = "^3.1.0", python = ">=3.9" },
