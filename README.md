@@ -230,13 +230,14 @@ The steps below are platform-specific.
 1.  **Install System Build Dependencies:**
     ```bash
     pkg update && pkg upgrade -y
-	pkg install python python-cryptography python-numpy rust clang make openssl-dev libffi-dev
+	pkg install python python-cryptography # python-numpy # numpy is no longer needed as of 0.3.50
     
 	# The build tools (rust, clang, etc.) are generally not needed IF the 
     # Termux-installed packages satisfy the requirements.
     # The below line can likely be removed if --system-site-packages is used, 
     # but we will leave it for max compatibility.
     pkg install rust clang make openssl-dev libffi-dev
+	pip install --no-cache-dir cryptography
     ```
 2.  **Create and Activate a Virtual Environment:**
     ```bash
