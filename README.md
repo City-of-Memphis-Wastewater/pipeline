@@ -83,7 +83,7 @@ sudo apt update && sudo apt install python3 python3-pip python-is-python3
 
 # On Termux (Android)
 pkg update && pkg install python
-pkg install python python-cryptography python-numpy 
+pkg install python python-cryptography python-numpy
 
 # Some of these are likely overkill given prepackaged cryptography, but I want you to succeed, and I will continue testing.
 pkg install clang make libffi openssl-dev libffi-dev
