@@ -16,6 +16,8 @@ from urllib.parse import urlparse
 import numpy as np
 
 from pipeline.web_utils import launch_browser
+from pipeline.plottools import normalize, normalize_ticks, get_ticks_array_n
+
 
 PLOTLY_THEME = 'seaborn'
 """
@@ -83,37 +85,6 @@ class MockBuffer:
         }
 #plot_buffer = MockBuffer()
 
-# --- Helper Function for Normalization ---
-# It's good practice to have this as a separate, robust function.
-# Normalization function (scaling to range [0, 1])
-# Returns the normalized array, min, and max of the original data
-def normalize(data):
-    """Normalizes a numpy array to the range [0, 1], 
-    and return max and min."""
-    min_val = np.min(data)
-    max_val = np.max(data)
-    # Handle the case where max_val == min_val to avoid division by zero
-    if max_val == min_val:
-        return np.zeros_like(data), min_val, max_val
-    return (data - min_val) / (max_val - min_val), min_val, max_val
-
-# Function to normalize a set of ticks based on the original data's min/max
-def normalize_ticks(ticks, data_min, data_max):
-    # Handle the case where max_val == min_val
-    ticks_arr = np.asarray(ticks, dtype=np.float64)
-    if not np.isfinite(data_min) or not np.isfinite(data_max):
-        return np.array(ticks_arr - float(data_min)) / (float(data_max) - float(data_min))
-    if data_max == data_min:
-        return np.zeros_like(ticks_arr)
-    return np.array((ticks_arr - float(data_min)) / (float(data_max) - float(data_min)))
-
-def get_ticks_array_n(y_min, y_max, steps):
-    # Calculate the step size
-    step = (y_max - y_min) / steps
-    array_tick_location = []
-    for i in range(steps+1): 
-        array_tick_location.append(y_min+i*step)
-    return array_tick_location
 
 def assess_unit_stats(data):
     """
