@@ -26,7 +26,7 @@ from pipeline.time_manager import TimeManager
 from pipeline.create_sensors_db import get_db_connection, create_packaged_db, reset_user_db # get_user_db_path, ensure_user_db, 
 from pipeline.api.eds import demo_eds_webplot_point_live, EdsClient, load_historic_data, EdsLoginException, demo_eds_save_point_export
 from pipeline.security_and_config import get_eds_api_credentials, get_external_api_credentials, get_eds_db_credentials, get_all_configured_urls, get_configurable_plant_name, init_security, CONFIG_PATH
-from pipeline.termux_setup import setup_termux_intergration, cleanup_termux_integration
+from pipeline.termux_setup import setup_termux_integration, cleanup_termux_integration
 from pipeline.windows_setup import setup_windows_integration, cleanup_windows_integration
 from pipeline import helpers
 from pipeline.plotbuffer import PlotBuffer
@@ -137,7 +137,7 @@ def live(
     idcs: list[str] = typer.Argument(..., help="Provide known idcs values that match the given zd."), # , "--idcs", "-i"
     zd: str = typer.Option('Maxson', "--zd", "-z", help = "Define the EDS ZD from your secrets file. This must correlate with your idcs point selection(s)."),
     force_webplot: bool = typer.Option(False,"--webplot","-w",help = "Use a web-based plot (plotly) instead of matplotlib. Useful for remote servers without display."),
-    force_mpl: bool = typer.Option(False,"--matplotlib","-mpl",help="Forcr matplotlib to be used for plotting. This will not work if matplotlib is not available.")
+    force_mpl: bool = typer.Option(False,"--matplotlib","-mpl",help = "Force matplotlib to be used for plotting. This will not work if matplotlib is not available.")
 ):
     """live data plotting, based on CSV query files. Coming soon - call any, like the 'trend' command."""
     typer.echo(f"Coming soon!")
@@ -161,7 +161,7 @@ def trend(
     print_csv: bool = typer.Option(False,"--print-csv","-p",help = "Print the CSV style for pasting into Excel."),
     step_seconds: int = typer.Option(None, "--step-seconds", help="You can explicitly provide the delta between datapoints. If not, ~400 data points will be used, based on the nice_step() function."), 
     force_webplot: bool = typer.Option(False,"--webplot","-w",help = "Use a browser-based plot instead of local (matplotlib). Useful for remote servers without display."),
-    force_mpl: bool = typer.Option(False,"--matplotlib","-mpl",help="Forcr matplotlib to be used for plotting. This will not work if matplotlib is not available.")
+    force_mpl: bool = typer.Option(False,"--matplotlib","-mpl",help="Forcr matplotlib to be used for plotting. This will not work if matplotlib is not available."),
     default_idcs: bool = typer.Option(False, "--default-idcs", "-d", help="Use the default IDCS values for the configured plant name, instead of providing them as arguments.")
     ):
     """
