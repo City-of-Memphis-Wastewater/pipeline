@@ -18,12 +18,16 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 - Change the function names in termux_setup.py from setup_termux_install() to setup_termux_integration(), and from cleanup_termux_install() to cleanup_termux_integration(). Only use was in cli.py
 - Change the function names in windows_setup.py from setup_windows_install() to setup_windows_integration(), and from cleanup_windows_install() to cleanup_windows_integration(). Only use was in cli.py
 
+### To Do:
+- Push existing fix to src/pipeline/gui_fastapi_plotly_live.py from laptop, for stability and updated pydantic and fastapi specifications above and below 3.12.
+
 ---
 
 ## [0.3.54] - 2025-10-24
 
 ### Added:
--  Implement github workflow publish.yaml, to replace manual "poetry build" and "twine upload .\dist\*VERSION_NUMBER*", to be managed automatically when running "gh release create v**VERSION_NUMBER** -F .\docs\CHANGELOG.md". Note that testing is limited to successful build and successful minimal run of "pipeline-eds"; plotting and api calls are not tested.
+-  Implement github workflow publish.yaml, to replace manual "poetry build" and "twine upload .\dist\*VERSION_NUMBER*", to be managed automatically when running "gh release create v**VERSION_NUMBER** -F .\docs\CHANGELOG.md". 
+- Note that testing is limited to successful build and successful minimal run of "pipeline-eds"; plotting and api calls are not tested.
 
 ---
 
