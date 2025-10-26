@@ -136,7 +136,8 @@ def list_sensors(
 def live(
     idcs: list[str] = typer.Argument(..., help="Provide known idcs values that match the given zd."), # , "--idcs", "-i"
     zd: str = typer.Option('Maxson', "--zd", "-z", help = "Define the EDS ZD from your secrets file. This must correlate with your idcs point selection(s)."),
-    webplot: bool = typer.Option(False,"--webplot","-w",help = "Use a web-based plot (plotly) instead of matplotlib. Useful for remote servers without display.")
+    force_webplot: bool = typer.Option(False,"--webplot","-w",help = "Use a web-based plot (plotly) instead of matplotlib. Useful for remote servers without display."),
+    force_mpl: bool = typer.Option(False,"--matplotlib","-mpl",help="Forcr matplotlib to be used for plotting. This will not work if matplotlib is not available.")
 ):
     """live data plotting, based on CSV query files. Coming soon - call any, like the 'trend' command."""
     typer.echo(f"Coming soon!")
@@ -159,7 +160,8 @@ def trend(
     plant_name: str = typer.Option(None, "--plantname", "-pn", help = "Provide the EDS ZD for your credentials."),
     print_csv: bool = typer.Option(False,"--print-csv","-p",help = "Print the CSV style for pasting into Excel."),
     step_seconds: int = typer.Option(None, "--step-seconds", help="You can explicitly provide the delta between datapoints. If not, ~400 data points will be used, based on the nice_step() function."), 
-    webplot: bool = typer.Option(False,"--webplot","-w",help = "Use a browser-based plot instead of local (matplotlib). Useful for remote servers without display."),
+    force_webplot: bool = typer.Option(False,"--webplot","-w",help = "Use a browser-based plot instead of local (matplotlib). Useful for remote servers without display."),
+    force_mpl: bool = typer.Option(False,"--matplotlib","-mpl",help="Forcr matplotlib to be used for plotting. This will not work if matplotlib is not available.")
     default_idcs: bool = typer.Option(False, "--default-idcs", "-d", help="Use the default IDCS values for the configured plant name, instead of providing them as arguments.")
     ):
     """
@@ -264,12 +266,12 @@ def trend(
     # Once the loop is done, you can call your show_static function
     # with the single, populated data_buffer.
 
-    if webplot or not matplotlib_is_available_for_gui_plotting():
+    if force_webplot or not force-matplotlib or not matplotlib_is_available_for_gui_plotting():
         from pipeline import gui_plotly_static
         #from pipeline import gui_plotly_static_backup_06Oct25 as gui_plotly_static
         #gui_fastapi_plotly_live.run_gui(data_buffer)
         gui_plotly_static.show_static(data_buffer)
-    else:
+    elif matplotlib_is_available_for_gui_plotting():
         from pipeline import gui_mpl_live
         #gui_mpl_live.run_gui(data_buffer)
         gui_mpl_live.show_static(data_buffer)
