@@ -6,12 +6,12 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 
 ---
 
-## [0.3.56] - 2025-10-24
+## [0.3.57] - 2025-10-24
 
 ### Changed:
 - CLI command name: `pipeline-eds install` -> `pipeline-eds setup`. Clearly differentiates pipx install or source code build or binary installation from the setup / integration process. Function name: **setup_integration()**, with Typer command alias **setup**. 
 - Flag added to trend and live CLI commands -mpl/--matplotlib. logic adjusted to use webplot unless matplotlib is both available and explicitly specified.
-- Minimum pyhabitat version changed to 1.0.29, so that constrained environments with false positives for interactive_terminal_is_available() will fall back to tkinter or web-based input for configuration.
+- Minimum pyhabitat version changed to 1.0.30, so that constrained environments with false positives for interactive_terminal_is_available() will fall back to tkinter or web-based input for configuration.
 
 ### Fixed:
 - Resolved incomplete function name migration. The setup CLI command, meant to set up Termux shortcuts, et cetera, is utilized explicitly in termux_setup.py. At this point, the 'install' was migrated to 'setup'.
