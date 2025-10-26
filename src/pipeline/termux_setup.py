@@ -1,4 +1,4 @@
-# pipeline/install_termux.py
+# pipeline/termux_setup.py
 from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
 import os
 from pathlib import Path
@@ -27,7 +27,8 @@ BASHRC_PATH = Path.home() / ".bashrc"
 ALIAS_START_MARKER = f"# >>> Start {APP_NAME} Alias >>>"
 ALIAS_END_MARKER = f"# <<< End {APP_NAME} Alias <<<"
 
-def setup_termux_install(force=False):
+def setup_termux_integration(force=False):
+#def setup_termux_install(force=False):
     """
     Main dispatcher for Termux shortcut setup.
     """
@@ -142,9 +143,9 @@ if command -v {PACKAGE_NAME} &> /dev/null; then
     echo "{PACKAGE_NAME} upgrade complete."
     
     echo "Upgrading shortcut script {UPGRADE_SHORTCUT_NAME}..."
-    # The 'install' command with the --upgrade flag
+    # The 'setup' CLI command with the --upgrade flag
     # forces the Python code to re-generate both shortcut scripts.
-    {PACKAGE_NAME} install --upgrade
+    {PACKAGE_NAME} setup --upgrade
     echo "{PACKAGE_NAME} upgrade complete. This should impact all Termux widget shortcut scripts relevant to a pipx installation."
     # Things might get weird here if the {PACKAGE_NAME} package name alias is pointed at a binary rather than at the pipx CLI installation.
 else
@@ -352,7 +353,7 @@ def _remove_file_if_exists(path: Path, description: str):
             print(f"Warning: Failed to delete {description} {path.name}: {e}")
 
 
-def cleanup_termux_install():
+def cleanup_termux_integration():
     """
     Removes all Termux widget shortcut scripts and the shell alias.
     """

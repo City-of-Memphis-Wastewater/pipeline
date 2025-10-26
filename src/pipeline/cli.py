@@ -26,8 +26,8 @@ from pipeline.time_manager import TimeManager
 from pipeline.create_sensors_db import get_db_connection, create_packaged_db, reset_user_db # get_user_db_path, ensure_user_db, 
 from pipeline.api.eds import demo_eds_webplot_point_live, EdsClient, load_historic_data, EdsLoginException, demo_eds_save_point_export
 from pipeline.security_and_config import get_eds_api_credentials, get_external_api_credentials, get_eds_db_credentials, get_all_configured_urls, get_configurable_plant_name, init_security, CONFIG_PATH
-from pipeline.termux_setup import setup_termux_install, cleanup_termux_install
-from pipeline.windows_setup import setup_windows_install, cleanup_windows_install
+from pipeline.termux_setup import setup_termux_intergration, cleanup_termux_integration
+from pipeline.windows_setup import setup_windows_integration, cleanup_windows_integration
 from pipeline import helpers
 from pipeline.plotbuffer import PlotBuffer
 from pipeline.version_info import  PIP_PACKAGE_NAME, PIPELINE_VERSION, __version__, get_package_version, get_package_name
@@ -40,9 +40,9 @@ from pipeline.version_info import  PIP_PACKAGE_NAME, PIPELINE_VERSION, __version
 #-- SUPPRESS with "False and" as of 0.3.53 - automaic installation on every run is invasive and is annyoring for troubleshooting, like if the user changes the .shortcut/filename
 #-- user may directly run 'install' command
 if False and on_termux():
-    setup_termux_install()
+    setup_termux_integration()
 elif False and on_windows():
-    setup_windows_install()
+    setup_windows_integration()
 # --- end SETUP / INSTALL HOOK ---
 
 # -- Versioning --
@@ -384,22 +384,22 @@ def setup_integration(
     if uninstall:
         if on_windows():
             if typer.confirm("Are you sure you want to uninstall the registry context-menu item, the launcher BAT, and empty out the AppData folder?"):
-                cleanup_windows_install()
+                cleanup_windows_integration()
         elif on_termux():
-            cleanup_termux_install()
+            cleanup_termux_integration()
         return
 
     if on_windows():
         typer.echo("AppData will be set up explicity and a content menu item will be added to your Registry.")
-        setup_windows_install()
+        setup_windows_integration()
     elif on_termux():
         typer.echo("Scripts will now be added to the $HOME/.shortcuts/ directory for launching from the Termux Widget.")
-        setup_termux_install(force=upgrade)
+        setup_termux_integration(force=upgrade)
         typer.echo("Update complete.")
         typer.echo(f"\n{get_package_name()} --version")
         typer.secho(f"{get_package_name()} {get_package_version()}", fg=typer.colors.GREEN, bold=True)
         typer.echo("\n")
-        input("Press Enter to exit...") # moved to internal of setup_termux_install()
+        input("Press Enter to exit...") # moved to internal of setup_termux_integration()
 
 
 @app.command()
