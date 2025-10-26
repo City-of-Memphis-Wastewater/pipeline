@@ -1,5 +1,5 @@
 # src/pipeline/gui_fastapi_plotly_live.py
-from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
+
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, JSONResponse
 from threading import Lock
@@ -57,32 +57,13 @@ HTML_TEMPLATE = """
 async def index():
     return HTML_TEMPLATE
 
-
 @app.get("/data", response_class=JSONResponse)
 async def get_data():
-    if plot_buffer is None:
-        print("plot_buffer is None")
-        return {}
     with buffer_lock:
-        data = plot_buffer.get_all()
-    #print("Data in buffer:", data)  # <-- DEBUG
-    fixed_data = {}
-    for label, series in data.items():
-        fixed_data[label] = {
-            "x": [ts + "Z" if not ts.endswith("Z") else ts for ts in series["x"]],
-            "y": series["y"]
-        }
-    return fixed_data
-"""
-@app.get("/data", response_class=JSONResponse)
-async def get_data():
-    return {
-        "Test Series": {
-            "x": ["2025-09-05T15:00:00Z", "2025-09-05T15:05:00Z", "2025-09-05T15:10:00Z"],
-            "y": [1, 3, 2]
-        }
-    }
-"""
+        # The plot_buffer is expected to have a method get_all()
+        data = plot_buffer.get_all()  # Should return { label: {"x": [...], "y": [...]}, ... }
+    return data
+
 def open_browser(port):
     time.sleep(1)  # Give server a moment to start
     ## Open in a new Chrome window (if installed)
@@ -91,14 +72,27 @@ def open_browser(port):
 
     webbrowser.open(f"http://127.0.0.1:{port}")
 
-#def run_gui(buffer, port=8000):
-#    global plot_buffer
-#    plot_buffer = buffer
-#    threading.Thread(target=open_browser, args=(port,), daemon=True).start()
-#    uvicorn.run("src.pipeline.gui_fastapi_plotly_live:app", host="127.0.0.1", port=port, log_level="info", reload=False)
-
 def run_gui(buffer, port=8000):
     global plot_buffer
-    plot_buffer = buffer  # set the buffer in this process
+    plot_buffer = buffer
+    # Start the browser thread right away
     threading.Thread(target=open_browser, args=(port,), daemon=True).start()
-    uvicorn.run(app, host="127.0.0.1", port=port, log_level="info", reload=False)  # <- reload=False
+
+    try:
+        # Attempt to run the FastAPI server
+        uvicorn.run("src.pipeline.gui_fastapi_plotly_live:app", host="127.0.0.1", port=port, log_level="info", reload=False)
+    except TypeError as e: 
+        # Catch the known Pydantic v1/Python 3.12+ incompatibility error
+        if "ForwardRef._evaluate() missing 1 required keyword-only argument: 'recursive_guard'" in str(e):
+            print("\n" + "="*80)
+            print("FATAL DEPENDENCY ERROR: Incompatible Pydantic/Python Version Detected")
+            print("The web GUI failed to start because the version of Pydantic (likely v1) used by FastAPI")
+            print("is incompatible with your current Python version (likely 3.12 or 3.13).")
+            print("\nTo fix this, please take one of the following steps:")
+            print("1. UPGRADE PYDANTIC to version ^2.0.0 in your dependency configuration, OR")
+            print("2. DOWNGRADE PYTHON to version 3.11 or older.")
+            print("The application cannot proceed until this environment issue is resolved.")
+            print("="*80 + "\n")
+        else:
+            # Re-raise any other TypeError
+            raise
