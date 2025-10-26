@@ -17,8 +17,7 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 - Resolved incomplete function name migration. The setup CLI command, meant to set up Termux shortcuts, et cetera, is utilized explicitly in termux_setup.py. At this point, the 'install' was migrated to 'setup'.
 - Change the function names in termux_setup.py from setup_termux_install() to setup_termux_integration(), and from cleanup_termux_install() to cleanup_termux_integration(). Only use was in cli.py
 - Change the function names in windows_setup.py from setup_windows_install() to setup_windows_integration(), and from cleanup_windows_install() to cleanup_windows_integration(). Only use was in cli.py
-
-### To Do:
+- gnore poetry.lock in Termux to allow ci.yml to succeed when pushing from Termux.
 - Push existing fix to src/pipeline/gui_fastapi_plotly_live.py from laptop, for stability and updated pydantic and fastapi specifications above and below 3.12.
 
 ---
