@@ -11,6 +11,12 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 ### Changed:
 - CLI command name: `pipeline-eds install` -> `pipeline-eds setup`. Clearly differentiates pipx install or source code build or binary installation from the setup / integration process. Function name: **setup_integration()**, with Typer command alias **setup**. 
 
+### Fixed:
+- Resolved incomplete function name migration. The setup CLI command, meant to set up Termux shortcuts, et cetera, is utilized explicitly in termux_setup.py. At this point, the 'install' was migrated to 'setup'.
+- Change the function names in termux_setup.py from setup_termux_install() to setup_termux_integration(), and from cleanup_termux_install() to cleanup_termux_integration(). Only use was in cli.py
+- Change the function names in windows_setup.py from setup_windows_install() to setup_windows_integration(), and from cleanup_windows_install() to cleanup_windows_integration(). Only use was in cli.py
+
+
 ---
 
 ## [0.3.54] - 2025-10-24

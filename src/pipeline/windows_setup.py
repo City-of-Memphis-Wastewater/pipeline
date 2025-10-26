@@ -160,7 +160,7 @@ def finalize_install_version(exe_path: Path):
 
 # --- Setup Dispatcher ---
 
-def setup_windows_install():
+def setup_windows_integration():
     """
     Main dispatcher for all Windows-specific setup tasks.
     
@@ -181,7 +181,7 @@ def setup_windows_install():
         #print("Error: Could not determine running executable path (likely running from source). Aborting Windows setup.", file=sys.stderr)
         return
     else:
-        print("pipeline.windows_setup.setup_windows_install() ...")
+        print("pipeline.windows_setup.setup_windows_integration() ...")
     
     short_path_ref = fr"%LOCALAPPDATA%\{PACKAGE_NAME}"
 
@@ -456,10 +456,10 @@ def cleanup_context_menu_registry():
     except Exception as e:
         log_message(f"Error cleaning up registry main key: {e}", is_error=True)
 
-def cleanup_windows_install():
+def cleanup_windows_integration():
     """
     Performs full uninstallation cleanup of all artifacts created by 
-    setup_windows_install.
+    setup_windows_integration.
     """
     if not on_windows():
         return
@@ -479,4 +479,4 @@ def cleanup_windows_install():
 
 # Example of how this might be executed during application startup:
 # if __name__ == "__main__":
-#     setup_windows_install()
+#     setup_windows_integration()
