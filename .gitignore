@@ -12,7 +12,7 @@ myenv/
 test-pypi-venv/
 
 # Poetry lock files (optional, but recommended to commit poetry.lock)
-# poetry.lock
+poetry.lock
 
 # Environment variables, secrets, etc.
 .env
@@ -54,3 +54,5 @@ Postman*
 .dockerignore
 .python-version
 Gayoso_Analog.csv
+
+
