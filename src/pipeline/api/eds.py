@@ -14,12 +14,15 @@ import platform
 from functools import lru_cache
 import typer # for CLI
 from pyhabitat import on_windows
+from suds.client import Client
 
 from pipeline.env import SecretConfig
 from pipeline.workspace_manager import WorkspaceManager
 from pipeline import helpers
 from pipeline.decorators import log_function_call
 from pipeline.time_manager import TimeManager
+from pipeline.security_and_config import get_configurable_default_plant_name, _get_credential_with_prompt, _get_eds_base_url_config_with_prompt, _get_config_with_prompt, get_configurable_idcs_list, get_temporary_input
+
 
 if on_windows():
     import mysql.connector
@@ -48,6 +51,9 @@ class EdsLoginException(Exception):
         super().__init__(self.message)
 
 class EdsClient:
+    rest_api_port = 43084
+    soap_api_port = 43080
+    soap_api_wsdl_path = "eds.wsdl"
 
     @staticmethod
     def login_to_session(api_url, username, password, timeout=10):
@@ -468,8 +474,9 @@ class EdsClient:
 
         If 'tables' is provided, only query those tables; otherwise fall back to most recent table.
     
-
         Returns a list (per sensor id) of dicts with keys 'ts', 'value', 'quality'.
+
+        This is provided as a fallback if API access fails.
         """
 
         logger.info("Accessing MariaDB directly — local SQL mode enabled.")
@@ -544,8 +551,377 @@ class EdsClient:
 
         logger.info(f"Successfully retrieved data for {len(point)} point(s)")
         return results
+    
+    @staticmethod
+    def get_service_name(plant_name: str|None = None) -> str | None:
+        """
+        Describe the standardized string describing the service name that will be known to the system keyring for secure credentials.
+        """
+        if plant_name is None:
+            plant_name = get_configurable_default_plant_name()
+        if plant_name is None:
+            return None
+        service_name = f"pipeline-eds-api-{plant_name}" 
+        return service_name
+    
+    @classmethod
+    def soap_api_iess_request_tabular(cls, plant_name: str | None= None, idcs: list[str] | None = None):
+        soapclient = None
+        authstring = None
+        use_default_idcs = True
+        if plant_name is None:
+            plant_name = get_configurable_default_plant_name()
+        print(f"plant_name = {plant_name}")
+        print(f"len(plant_name) = {len(plant_name)}")
+        print(f"isinstance(plant_name,str) = {isinstance(plant_name,str)}")  
+        service_name = EdsClient.get_service_name(plant_name = plant_name) # for secure credentials
+    
+        if idcs is None:
+            if use_default_idcs:
+                idcs = get_configurable_idcs_list(plant_name)
+            else:
+                idcs = get_temporary_input()
         
+        base_url = _get_eds_base_url_config_with_prompt(f"{plant_name}_eds_base_url", f"Enter {plant_name} EDS BASE URL (e.g., http://000.00.0.000, or just 000.00.0.000)")
+        #eds_soap_api_port = _get_credential_with_prompt(f"{plant_name}_eds_soap_api_port", f"Enter {plant_name} EDS SOAP API PORT (e.g., 43080)")
+        #eds_soap_api_wsdl_path = _get_credential_with_prompt(f"{plant_name}_eds_soap_api_wsdl_path", f"Enter {plant_name} EDS SOAP API WSDL PATH (e.g., 'eds.wsdl')")
+        username = _get_credential_with_prompt(service_name, "username", f"Enter your EDS API username for {plant_name} (e.g. admin)", hide_password=False)
+        #password = _get_credential_with_prompt(service_name, "password", f"Enter your EDS API password for {plant_name} (e.g. '')")
+        password = ''
+        idcs_to_iess_suffix = _get_config_with_prompt(f"{plant_name}_eds_api_iess_suffix", f"Enter iess suffix for {plant_name} (e.g., .UNIT0@NET0)")
+        
+        #session = EdsClient.login_to_session_with_api_credentials(api_credentials)
+        
+        wsdl_url = EdsClient.get_wsdl_url(base_url = base_url)
 
+        try:
+            # 1. Create the SOAP client
+            print(f"Attempting to connect to WSDL at: {wsdl_url}")
+            soapclient = Client(wsdl_url)
+            print("SOAP client created successfully.")
+            # You can uncomment the line below to see all available services
+            # print(soapclient)
+
+            # 2. Login to get the authstring
+            # This is the "authstring assignment" you asked for.
+            print(f"Logging in as user: '{username}'...")
+            authstring = soapclient.service.login(username, password)
+            
+            if not authstring:
+                print("Login failed. Received an empty authstring.")
+                return
+
+            print(f"Login successful. Received authstring: {authstring}")
+
+            # 3. Use the authstring to make other API calls
+            
+            # Example 1: ping (to keep authstring valid)
+            print("\n--- Example 1: Pinging server ---")
+            soapclient.service.ping(authstring)
+            print("Ping successful.")
+
+            # Example 2: getServerTime
+            print("\n--- Example 2: Requesting server time ---")
+            server_time_response = soapclient.service.getServerTime(authstring)
+            print("Received server time response:")
+            print(server_time_response)
+
+            # Example 3: getServerStatus
+            print("\n--- Example 3: Requesting server status ---")
+            server_status_response = soapclient.service.getServerStatus(authstring)
+            print("Received server status response:")
+            print(server_status_response)
+            
+            # --- NEW EXAMPLES BASED ON YOUR CSV DATA ---
+
+            # Example 4: Get a specific point by IESS name
+            # We will use 'I-0300A.UNIT1@NET1' from your latest output
+            print("\n--- Example 4: Requesting point by IESS name ('I-0300A.UNIT1@NET1') ---")
+            try:
+                # Create a PointFilter object
+                point_filter_iess = soapclient.factory.create('PointFilter')
+                
+                # Set the iessRe (IESS regular expression) filter
+                # We use the exact name, but it also accepts wildcards
+                
+                idcs = [s.upper() for s in idcs]
+                iess_list = [x+idcs_to_iess_suffix for x in idcs]
+                for iess in iess_list:
+                    point_filter_iess.iessRe = iess
+                    
+                    # Call getPoints(authstring, filter, order, startIdx, maxCount)
+                    # We set order, startIdx, and maxCount to None
+                    points_response_iess = soapclient.service.getPoints(authstring, point_filter_iess, None, None, None)
+                    print("Received getPoints response (by IESS):")
+                    print(points_response_iess)
+
+            except Exception as e:
+                print(f"Error during getPoints (by IESS): {e}")
+
+
+            # Example 5: Get a specific point by SID
+            # We will use '5395' from your latest output
+            print("\n--- Example 5: Requesting point by SID ('5395') ---")
+            try:
+                # Create another PointFilter object
+                point_filter_sid = soapclient.factory.create('PointFilter')
+                
+                # Add the SID to the 'sid' array in the filter
+                # (PointFilter definition on page 19 shows sid[] = <empty>)
+                point_filter_sid.sid.append(5395)
+                
+                # Call getPoints
+                points_response_sid = soapclient.service.getPoints(authstring, point_filter_sid, None, None, None)
+                print("Received getPoints response (by SID):")
+                print(points_response_sid)
+
+            except Exception as e:
+                print(f"Error during getPoints (by SID): {e}")
+
+            # -----------------------------------------------
+
+            # Example 6: Request Tabular (Trend) Data
+            # This will request historical data for 'I-0300A.UNIT1@NET1'
+            print("\n--- Example 6: Requesting tabular data for 'I-0300A.UNIT1@NET1' ---")
+            request_id = None # Initialize request_id
+            try:
+                # 1. Define time range (e.g., last 10 minutes)
+                end_time = int(time.time())
+                start_time = end_time - 600 # 600 seconds = 10 minutes
+                
+                print(f"Requesting data from {start_time} to {end_time}")
+
+                # 2. Create the main TabularRequest object (see PDF page 32)
+                tab_request = soapclient.factory.create('TabularRequest')
+
+                # 3. Create and set the time period
+                period = soapclient.factory.create('TimePeriod')
+                # Use getattr() for 'from' as it's a Python keyword
+                getattr(period, 'from').second = start_time
+                period.till.second = end_time
+                tab_request.period = period
+                
+                # 4. Set the step (e.g., one value every 60 seconds)
+                tab_request.step = soapclient.factory.create('TimeDuration')
+                tab_request.step.seconds = 60
+                
+                # 5. Create a request item for the point
+                item = soapclient.factory.create('TabularRequestItem')
+                item.pointId = soapclient.factory.create('PointId')
+                item.pointId.iess = 'I-0300A.UNIT1@NET1' # Using point from Example 4
+                
+                # 6. Set the function (e.g., 'AVG', 'RAW', 'MIN', 'MAX')
+                # 'AVG' gives averages. Use 'RAW' to get raw recorded samples.
+                item.function = 'AVG'
+                
+                # 7. Add the item to the request
+                tab_request.items.append(item)
+
+                # 8. Send the request
+                print("Submitting tabular data request...")
+                request_id = soapclient.service.requestTabular(authstring, tab_request)
+                print(f"Request submitted. Got request_id: {request_id}")
+
+                # 9. Poll for request status (see PDF page 30)
+                status = None
+                max_retries = 10
+                retries = 0
+                while status != 'REQUEST-SUCCESS' and retries < max_retries:
+                    retries += 1
+                    time.sleep(1) # Wait 1 second before checking
+                    status_response = soapclient.service.getRequestStatus(authstring, request_id)
+                    status = status_response.status
+                    print(f"Polling status (Attempt {retries}): {status}")
+
+                    if status == 'REQUEST-FAILURE':
+                        print(f"Request failed: {status_response.message}")
+                        break
+                
+                # 10. Get the data if successful (see PDF page 40)
+                if status == 'REQUEST-SUCCESS':
+                    print("Request successful. Fetching data...")
+                    tabular_data = soapclient.service.getTabular(authstring, request_id)
+                    print("Received tabular data:")
+                    print(tabular_data)
+                else:
+                    print(f"Failed to get tabular data after {max_retries} retries.")
+
+            except Exception as e:
+                print(f"Error during tabular data request: {e}")
+                # If the request was made but failed mid-poll, try to drop it
+                if request_id and authstring and soapclient:
+                    try:
+                        print(f"Attempting to drop request {request_id} after error...")
+                        soapclient.service.dropRequest(authstring, request_id)
+                        print(f"Dropped request {request_id}.")
+                    except Exception as drop_e:
+                        print(f"Error trying to drop request {request_id}: {drop_e}")
+
+
+        except Exception as e:
+            print(f"\n--- AN ERROR OCCURRED ---")
+            print(e)
+            print("\nPlease check:")
+            print(f"1. Is the IP address {wsdl_url} correct and reachable?")
+            print("2. Is the EDS server running?")
+            print("3. Are your username and password correct?")
+            
+        finally:
+            # Removed diagram close logic
+            
+            # 5. Logout using the authstring
+            if authstring and soapclient:
+                print(f"\nLogging out with authstring: {authstring}...")
+                try:
+                    soapclient.service.logout(authstring)
+                    print("Logout successful.")
+                except Exception as e:
+                    print(f"Error during logout: {e}")
+            else:
+                print("\nSkipping logout (was not logged in).")
+
+    @staticmethod
+    def soap_api_iess_request_single(plant_name: str|None, idcs:list[str]|None):
+        soapclient = None
+        authstring = None
+        
+        if plant_name is None:
+            plant_name = str(input("Enter plant_name: "))
+
+        if plant_name is None:
+            plant_name = get_configurable_default_plant_name()
+
+        service_name = EdsClient.get_service_name(plant_name = plant_name) # for secure credentials
+        base_url = _get_eds_base_url_config_with_prompt(f"{plant_name}_eds_base_url", f"Enter {plant_name} EDS BASE URL (e.g., http://000.00.0.000, or just 000.00.0.000)")
+        #eds_soap_api_port = _get_credential_with_prompt(f"{plant_name}_eds_soap_api_port", f"Enter {plant_name} EDS SOAP API PORT (e.g., 43080)")
+        #eds_soap_api_wsdl_path = _get_credential_with_prompt(f"{plant_name}_eds_soap_api_wsdl_path", f"Enter {plant_name} EDS SOAP API WSDL PATH (e.g., 'eds.wsdl')")
+        username = _get_credential_with_prompt(service_name, "username", f"Enter your EDS API username for {plant_name} (e.g. admin)", hide_password=False)
+        password = _get_credential_with_prompt(service_name, "password", f"Enter your EDS API password for {plant_name} (e.g. '')")
+        idcs_to_iess_suffix = _get_config_with_prompt(f"{plant_name}_eds_api_iess_suffix", f"Enter iess suffix for {plant_name} (e.g., .UNIT0@NET0)")
+        
+        #session = EdsClient.login_to_session_with_api_credentials(api_credentials)
+
+        wsdl_url = EdsClient.get_wsdl_url(base_url = base_url)
+
+        try:
+            # 1. Create the SOAP client
+            print(f"Attempting to connect to WSDL at: {wsdl_url}")
+            soapclient = Client(wsdl_url)
+            print("SOAP client created successfully.")
+            # You can uncomment the line below to see all available services
+            # print(soapclient)
+
+            # 2. Login to get the authstring
+            # This is the "authstring assignment" you asked for.
+            print(f"Logging in as user: '{username}'...")
+            authstring = soapclient.service.login(username, password)
+            
+            if not authstring:
+                print("Login failed. Received an empty authstring.")
+                return
+
+            print(f"Login successful. Received authstring: {authstring}")
+
+            # 3. Use the authstring to make other API calls
+            
+            # Example 1: ping (to keep authstring valid)
+            print("\n--- Example 1: Pinging server ---")
+            soapclient.service.ping(authstring)
+            print("Ping successful.")
+
+            # Example 2: getServerTime
+            print("\n--- Example 2: Requesting server time ---")
+            server_time_response = soapclient.service.getServerTime(authstring)
+            print("Received server time response:")
+            print(server_time_response)
+
+            # Example 3: getServerStatus
+            print("\n--- Example 3: Requesting server status ---")
+            server_status_response = soapclient.service.getServerStatus(authstring)
+            print("Received server status response:")
+            print(server_status_response)
+            
+            # --- NEW EXAMPLES BASED ON YOUR CSV DATA ---
+
+            # Example 4: Get a specific point by IESS name
+            # We will use 'I-0300A.UNIT1@NET1' from your CSV
+            ## WWTF,I-0300A,I-0300A.UNIT1@NET1,87,WELL,47EE48FD-904F-4EDA-9ED9-C622D1944194,eefe228a-39a2-4742-a9e3-c07314544ada,229,Wet Well
+            print("\n--- Example 4: Requesting point by IESS name ('I-0300A.UNIT1@NET1') ---")
+            try:
+                # Create a PointFilter object
+                point_filter_iess = soapclient.factory.create('PointFilter')
+                
+                # Set the iessRe (IESS regular expression) filter
+                # We use the exact name, but it also accepts wildcards
+                point_filter_iess.iessRe = 'I-0300A.UNIT1@NET1'
+                
+                # Call getPoints(authstring, filter, order, startIdx, maxCount)
+                # We set order, startIdx, and maxCount to None
+                points_response_iess = soapclient.service.getPoints(authstring, point_filter_iess, None, None, None)
+                print("Received getPoints response (by IESS):")
+                print(points_response_iess)
+
+            except Exception as e:
+                print(f"Error during getPoints (by IESS): {e}")
+
+
+            
+            # Example 5: Get a specific point by SID
+            # We will use '5395' (for I-5005A.UNIT1@NET1) from your CSV
+            print("\n--- Example 5: Requesting point by SID ('5392') ---")
+            try:
+                # Create another PointFilter object
+                point_filter_sid = soapclient.factory.create('PointFilter')
+                
+                # Add the SID to the 'sid' array in the filter
+                # (PointFilter definition on page 19 shows sid[] = <empty>)
+                point_filter_sid.sid.append(5395)
+                
+                # Call getPoints
+                points_response_sid = soapclient.service.getPoints(authstring, point_filter_sid, None, None, None)
+                print("Received getPoints response (by SID):")
+                print(points_response_sid)
+
+            except Exception as e:
+                print(f"Error during getPoints (by SID): {e}")
+
+            # -----------------------------------------------
+
+        except Exception as e:
+            print(f"\n--- AN ERROR OCCURRED ---")
+            print(e)
+            print("\nPlease check:")
+            print(f"1. Is the IP address {wsdl_url} correct and reachable?")
+            print("2. Is the EDS server running?")
+            print("3. Are your username and password correct?")
+            
+        finally:
+            # 4. Logout using the authstring
+            if authstring and soapclient:
+                print(f"\nLogging out with authstring: {authstring}...")
+                try:
+                    soapclient.service.logout(authstring)
+                    print("Logout successful.")
+                except Exception as e:
+                    print(f"Error during logout: {e}")
+            else:
+                print("\nSkipping logout (was not logged in).")    
+    @classmethod
+    def get_wsdl_url(cls,base_url: str | None = None,
+                               eds_soap_api_port: int | None = None, 
+                               eds_soap_api_wsdl_path: str = None 
+                               ) -> str | None:
+        if base_url is None:
+            return None
+        if eds_soap_api_port is None:
+            eds_soap_api_port = cls.soap_api_port
+        if eds_soap_api_wsdl_path is None:
+            eds_soap_api_wsdl_path = cls.soap_api_wsdl_path
+        
+        wsdl_url = base_url + ":" + str(eds_soap_api_port) + "/" + eds_soap_api_wsdl_path
+
+        return wsdl_url
+    
 def table_has_ts_column(conn, table_name, db_type="mysql"):
     if db_type == "sqlite":
         with conn.cursor() as cur:
@@ -1116,6 +1492,10 @@ def demo_eds_ping():
 
     response = call_ping(session_maxson.base_url)
 
+@log_function_call(level=logging.DEBUG)
+def demo_eds_soap_api_tabular():
+    #EdsClient.soap_api_iess_request_tabular(idcs = ['I-0300A','I-0301A'])
+    EdsClient.soap_api_iess_request_tabular(plant_name = "Stiles",idcs = ['I-0300A','I-0301A'])
 if __name__ == "__main__":
 
     '''
@@ -1140,6 +1520,8 @@ if __name__ == "__main__":
         demo_eds_webplot_point_live()
     elif cmd == "demo-plot-trend":
         demo_eds_plot_trend()
+    elif cmd == "demo_soap_tabular":
+        demo_eds_soap_api_tabular()
     elif cmd == "demo-point-export":
         #demo_eds_print_point_export()
         demo_eds_save_point_export()
@@ -1160,6 +1542,7 @@ if __name__ == "__main__":
         "poetry run python -m pipeline.api.eds demo-live \n"
         "poetry run python -m pipeline.api.eds demo-live-alt \n"  
         "poetry run python -m pipeline.api.eds demo-trend \n"
+        "poetry run python -m pipeline.api.eds demo_soap_tabular \n"
         "poetry run python -m pipeline.api.eds demo-plot-live \n"
         "poetry run python -m pipeline.api.eds demo-webplot-live \n"
         "poetry run python -m pipeline.api.eds demo-plot-trend \n"
