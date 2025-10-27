@@ -15,7 +15,7 @@ include = [
     "src/pipeline/data/*"
 ]
 
-classifier = [
+classifiers = [
     "License :: OSI Approved :: MIT License"
 ]
 	
