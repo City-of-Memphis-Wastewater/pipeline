@@ -587,7 +587,6 @@ class EdsClient:
         #eds_soap_api_wsdl_path = _get_credential_with_prompt(f"{plant_name}_eds_soap_api_wsdl_path", f"Enter {plant_name} EDS SOAP API WSDL PATH (e.g., 'eds.wsdl')")
         username = _get_credential_with_prompt(service_name, "username", f"Enter your EDS API username for {plant_name} (e.g. admin)", hide_password=False)
         password = _get_credential_with_prompt(service_name, "password", f"Enter your EDS API password for {plant_name} (e.g. '')")
-        #password = ''
         idcs_to_iess_suffix = _get_config_with_prompt(f"{plant_name}_eds_api_iess_suffix", f"Enter iess suffix for {plant_name} (e.g., .UNIT0@NET0)")
         
         #session = EdsClient.login_to_session_with_api_credentials(api_credentials)
