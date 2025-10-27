@@ -8,6 +8,7 @@ from typing import Dict, Set, List
 import typer
 import click.exceptions
 from pyhabitat import on_termux, on_ish_alpine, interactive_terminal_is_available, tkinter_is_available, web_browser_is_available
+import pyhabitat as ph
 
 # Define a standard configuration path for your package
 CONFIG_PATH = Path.home() / ".pipeline-eds" / "config.json" ## configuration-example
@@ -128,7 +129,37 @@ def _prompt_for_value(prompt_message: str, hide_input: bool) -> str:
         f"Please use a configuration utility or provide the value programmatically."
     )
 
-def _get_config_with_prompt(config_key: str, prompt_message: str, overwrite: bool = False) -> str:
+def get_temporary_input(prompt_message: str | None) -> str|None :
+    """
+    Seek a temporary user input value, not to be stored.
+    Input options include console, pop-up window, or web browser input field, depending on what is available.
+    """ 
+    typer.echo(f"\n --- One-time temporary value required --- ")
+    typer.echo("You may cancel the input to avoid entering a value.")
+
+    try:
+        new_value = _prompt_for_value(
+            prompt_message=prompt_message,
+            hide_input=False
+        )
+    except (KeyboardInterrupt, EOFError):
+        typer.echo("\n⚠️  Configuration prompt cancelled.")
+        return None
+    except Exception as e:
+        typer.echo(f"\n⚠️  Unexpected error during prompt: {e}")
+        return None
+    if new_value is None:
+        typer.echo("⚠️  No input provided. Returning None.")
+        return None
+    elif new_value == "":
+        if ph.interactive_terminal_is_available() and not typer.confirm("⚠️  An empty string was provided. Are you sure about this?", default=True):
+            return None
+    # Normalize user input for empty-string passwords
+    elif new_value in ("''", '""'):
+        new_value = ""
+    return new_value
+
+def _get_config_with_prompt(config_key: str, prompt_message: str, overwrite: bool = False) -> str | None:
     """
     Retrieves a config value from a local file, prompting the user and saving it if missing.
     
@@ -137,15 +168,34 @@ def _get_config_with_prompt(config_key: str, prompt_message: str, overwrite: boo
         prompt_message: The message to display if prompting is needed.
         overwrite: If True, the function will always prompt for a new value,
                    even if one already exists.
+    
+    Returns:
+        The configuration value (str) if successful, or None if the user cancels.
+    
     """
-    config = {}
-    if CONFIG_PATH.exists():
-        with open(CONFIG_PATH, "r") as f:
-            config = json.load(f)
 
+    config = {}
+
+     # --- Load existing config file safely ---
+    if CONFIG_PATH.exists():
+        try:
+            with open(CONFIG_PATH, "r") as f:
+                config = json.load(f)
+        except json.JSONDecodeError:
+            typer.echo(f"⚠️  Warning: Existing config file '{CONFIG_PATH.name}' is corrupted.")
+            if not typer.confirm("Do you want to reset the corrupted file to an empty file?", default=False):
+                typer.echo("-> Keeping existing corrupted file. Returning None for the requested value.")
+                return None
+            typer.echo("-> Resetting config file...")
+            config = {}
+        except Exception as e:
+            typer.echo(f"⚠️  Failed to read config file: {e}")
+            return None
+        
     # Get the value from the config file, which will be None if not found
     value = config.get(config_key)
     
+    # --- Handle existing value and overwrite logic ---
     # Check if a value exists and if the user wants to be sure about overwriting
     if value is not None and overwrite:
         typer.echo(f"\nValue for '{prompt_message}' is already set:")
@@ -154,29 +204,51 @@ def _get_config_with_prompt(config_key: str, prompt_message: str, overwrite: boo
             typer.echo("-> Keeping existing value.")
             return value
 
+    # --- Prompt for new value if needed ---
     # If the value is None (not found), or if a confirmation to overwrite was given,
-    # prompt for a new value.
-    
+    # prompt for a new value
     if value is None or overwrite:
         typer.echo(f"\n --- One-time configuration required --- ")
+        typer.echo("You may cancel the input to avoid entering a value.")
 
-        new_value = _prompt_for_value(
-            prompt_message=prompt_message, 
-            hide_input=False
-        )
+        try:
+            new_value = _prompt_for_value(
+                prompt_message=prompt_message,
+                hide_input=False
+            )
+        except (KeyboardInterrupt, EOFError):
+            typer.echo("\n⚠️  Configuration prompt cancelled.")
+            return None
+        except Exception as e:
+            typer.echo(f"\n⚠️  Unexpected error during prompt: {e}")
+            return None
+        if new_value is None:
+            typer.echo("⚠️  No input provided. Configuration not saved.")
+            return None
+        # Normalize user input for empty-string passwords
+        elif new_value in ("''", '""'):
+            new_value = ""
+        elif new_value == "":
+            if ph.interactive_terminal_is_available() and not typer.confirm("⚠️  An empty string was provided. Are you sure about this?", default=True):
+                return None
         
+        # --- Save updated configuration safely ---
         # Save the new value back to the file
-        CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
-        config[config_key] = new_value
-        with open(CONFIG_PATH, "w") as f:
-            json.dump(config, f, indent=4)
-        typer.echo("Configuration stored.")
+        try:
+            CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
+            config[config_key] = new_value
+            with open(CONFIG_PATH, "w") as f:
+                json.dump(config, f, indent=4)
+            typer.echo("Configuration stored.")
+        except Exception as e:
+            typer.echo(f"⚠️  Failed to save configuration: {e}")
+            return None
         return new_value
     
-    # If a value existed and overwrite was False, simply return the existing value.
+    # --- Return existing value if no overwrite requested ---
     return value
 
-def _get_credential_with_prompt(service_name: str, item_name: str, prompt_message: str, hide_password: bool = True, overwrite: bool = False) -> str:
+def _get_credential_with_prompt(service_name: str, item_name: str, prompt_message: str, hide_password: bool = True, overwrite: bool = False) -> str | None:
     """
     Retrieves a secret from the keyring, prompting the user and saving it if missing.
     
@@ -187,6 +259,10 @@ def _get_credential_with_prompt(service_name: str, item_name: str, prompt_messag
         hide_password: True if the input should be hidden (getpass), False otherwise (input).
         overwrite: If True, the function will always prompt for a new credential,
                    even if one already exists.
+
+    Returns:
+        The configuration value (str) if successful, or None if the user cancels.
+    
     """
 
     credential = keyring.get_password(service_name, item_name)
@@ -207,19 +283,39 @@ def _get_credential_with_prompt(service_name: str, item_name: str, prompt_messag
     # prompt for a new value.
     if credential is None or overwrite:
 
-        new_credential = _prompt_for_value(
-            prompt_message=prompt_message, 
-            hide_input=hide_password
-        )
-            
-        # Store the new credential
-        if new_credential == "''" or new_credential == '""':
-            new_credential = str("") # ensure empty string if user types '' or "" 
-        keyring.set_password(service_name, item_name, new_credential) ## configuration-example
-        typer.echo("Credential stored securely.")
+        try:
+            new_credential = _prompt_for_value(
+                prompt_message=prompt_message, 
+                hide_input=hide_password
+            )
+        except (KeyboardInterrupt, EOFError):
+            typer.echo("\n⚠️  Credential prompt cancelled.")
+            return None
+        except Exception as e:
+            typer.echo(f"\n⚠️  Unexpected error during credential prompt: {e}")
+            return None
+
+        if new_credential is None:
+            typer.echo("⚠️  No input provided. Credential not saved.")
+            return None
+        elif new_credential == "":
+            if ph.interactive_terminal_is_available() and not typer.confirm("⚠️  An empty string was provided. Are you sure about this?", default=True):
+                return None
+        # Normalize user input for empty-string passwords
+        if new_credential in ("''", '""'):
+            new_credential = ""
+        # Store the new credential to keyring
+        try:
+            keyring.set_password(service_name, item_name, new_credential)
+        except Exception as e:
+            typer.echo(f"⚠️  Failed to store credential: {e}")
+            return None
+
+        typer.echo("✅  Credential stored securely.")
+
         return new_credential
     
-    # If a credential existed and overwrite was False, simply return the existing value.
+    # Return existing credential if no overwrite
     return credential
     
 def get_configurable_idcs_list(plant_name: str, overwrite: bool = False) -> List[str]:
@@ -279,7 +375,7 @@ def get_eds_db_credentials(plant_name: str, overwrite: bool = False) -> Dict[str
     }
 
 
-def get_configurable_plant_name(overwrite=False) -> str:
+def get_configurable_default_plant_name(overwrite=False) -> str :
     '''Comma separated list of plant names to be used as the default if none is provided in other commands.'''
     plant_name = _get_config_with_prompt(f"configurable_plantname_eds_api", f"Enter plant name(s) to be used as the default", overwrite=overwrite)
     if ',' in plant_name:
@@ -293,9 +389,14 @@ def get_eds_api_credentials(plant_name: str, overwrite: bool = False) -> Dict[st
     service_name = f"pipeline-eds-api-{plant_name}"
     
     #url = _get_config_with_prompt(f"{plant_name}_eds_api_url", f"Enter {plant_name} API URL (e.g., http://000.00.0.000:43084/api/v1)", overwrite=overwrite)
-    url = _get_eds_url_config_with_prompt(f"{plant_name}_eds_api_url", f"Enter {plant_name} API URL (e.g., http://000.00.0.000:43084/api/v1, or just 000.00.0.000)", overwrite=overwrite)
-    username = _get_credential_with_prompt(service_name, "username", f"Enter your API username for {plant_name} (e.g. admin)", hide_password=False, overwrite=overwrite)
-    password = _get_credential_with_prompt(service_name, "password", f"Enter your API password for {plant_name} (e.g. '')", overwrite=overwrite)
+    url = _get_eds_url_config_with_prompt(f"{plant_name}_eds_api_url", f"Enter {plant_name} EDS API URL (e.g., http://000.00.0.000:43084/api/v1, or just 000.00.0.000)", overwrite=overwrite)
+    base_url = _get_eds_base_url_config_with_prompt(f"{plant_name}_eds_base_url", f"Enter {plant_name} EDS BASE URL (e.g., http://000.00.0.000, or just 000.00.0.000)", overwrite=overwrite)
+    eds_rest_api_port = _get_credential_with_prompt(f"{plant_name}_eds_rest_api_port", f"Enter {plant_name} EDS REST API PORT (e.g., 43084)", overwrite=overwrite)
+    eds_rest_api_sub_path = _get_credential_with_prompt(f"{plant_name}_eds_rest_api_sub_path", f"Enter {plant_name} EDS REST API SUB PATH (e.g., 'api/v1')", overwrite=overwrite)
+    eds_soap_api_port = _get_credential_with_prompt(f"{plant_name}_eds_soap_api_port", f"Enter {plant_name} EDS SOAP API PORT (e.g., 43080)", overwrite=overwrite)
+    eds_soap_api_wsdl_path = _get_credential_with_prompt(f"{plant_name}_eds_soap_api_wsdl_path", f"Enter {plant_name} EDS SOAP API WSDL PATH (e.g., 'eds.wsdl')", overwrite=overwrite)
+    username = _get_credential_with_prompt(service_name, "username", f"Enter your EDS API username for {plant_name} (e.g. admin)", hide_password=False, overwrite=overwrite)
+    password = _get_credential_with_prompt(service_name, "password", f"Enter your EDS API password for {plant_name} (e.g. '')", overwrite=overwrite)
     idcs_to_iess_suffix = _get_config_with_prompt(f"{plant_name}_eds_api_iess_suffix", f"Enter iess suffix for {plant_name} (e.g., .UNIT0@NET0)", overwrite=overwrite)
     zd = _get_config_with_prompt(f"{plant_name}_eds_api_zd", f"Enter {plant_name} ZD (e.g., 'Maxson' or 'WWTF')", overwrite=overwrite)
     
@@ -372,8 +473,18 @@ def _is_likely_ip(url: str) -> bool:
 
 def _get_eds_url_config_with_prompt(config_key: str, prompt_message: str, overwrite: bool = False) -> str:
     url = _get_config_with_prompt(config_key, prompt_message, overwrite=overwrite)
+    if url is None:
+        return None
     if _is_likely_ip(url):
-        url = f"http://{url}:43084/api/v1" # assume EDS patterna and port http and append api/v1 if user just put in an IP
+        url = f"http://{url}:43084/api/v1" # assume EDS patterna and port http and append api/v1 if user just puts in an IP
+    return url
+
+def _get_eds_base_url_config_with_prompt(config_key: str, prompt_message: str, overwrite: bool = False) -> str:
+    url = _get_config_with_prompt(config_key, prompt_message, overwrite=overwrite)
+    if url is None:
+        return None
+    if _is_likely_ip(url):
+        url = f"http://{url}" # assume EDS patterns and port http if user just puts in an IP
     return url
 
 class CredentialsNotFoundError(Exception):

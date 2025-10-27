@@ -25,7 +25,7 @@ except ImportError:
 from pipeline.time_manager import TimeManager
 from pipeline.create_sensors_db import get_db_connection, create_packaged_db, reset_user_db # get_user_db_path, ensure_user_db, 
 from pipeline.api.eds import demo_eds_webplot_point_live, EdsClient, load_historic_data, EdsLoginException, demo_eds_save_point_export
-from pipeline.security_and_config import get_eds_api_credentials, get_external_api_credentials, get_eds_db_credentials, get_all_configured_urls, get_configurable_plant_name, init_security, CONFIG_PATH
+from pipeline.security_and_config import get_eds_api_credentials, get_external_api_credentials, get_eds_db_credentials, get_all_configured_urls, get_configurable_default_plant_name, init_security, CONFIG_PATH
 from pipeline.termux_setup import setup_termux_integration, cleanup_termux_integration
 from pipeline.windows_setup import setup_windows_integration, cleanup_windows_integration
 from pipeline import helpers
@@ -148,7 +148,7 @@ def defaultplant(
     overwrite: bool = typer.Option(False, "--overwrite", "-o", help = "Overwrite existing plant name(s) to be used as default.")
     ):
     """Set the plant name(s) to be used if one is not explicitly provided in other commands, like trend. Comma separate for multiple."""
-    configurable_plant_name = get_configurable_plant_name(overwrite=overwrite)
+    configurable_plant_name = get_configurable_default_plant_name(overwrite=overwrite)
     typer.echo(f"Configurable plant name(s) for EDS API: {configurable_plant_name}")
 
 @app.command()
@@ -170,15 +170,16 @@ def trend(
 
     #zd = api_credentials.get("zd")
     if plant_name is None:
-        plant_name = get_configurable_plant_name()
+        plant_name = get_configurable_default_plant_name()
 
     # --- Conditional IDCS Input ---
     if idcs is None:
         if default_idcs:
+            
             from pipeline.security_and_config import get_configurable_idcs_list
             # plant_name is resolved below, but we need a valid name for the helper
             # Temporarily resolve plant_name for the prompt if needed
-            current_plant_name = plant_name if plant_name is not None else get_configurable_plant_name()
+            current_plant_name = plant_name if plant_name is not None else get_configurable_default_plant_name()
             idcs = get_configurable_idcs_list(current_plant_name)
             
             if not idcs:
@@ -435,7 +436,7 @@ def points_export(
     """
     filter_idcs=None # trouble getting multiple points back, suppress for now
     if plant_name is None:
-        plant_name = get_configurable_plant_name()
+        plant_name = get_configurable_default_plant_name()
 
 
     if isinstance(plant_name,str):
