@@ -5,9 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is (read: strives to be) based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 
+
 ---
 
-## [0.3.58] - 2025-10-24
+## [0.3.59] - 2025-10-27
+
+### Added:
+- SOAP API access demo function and bones added for EdsClient. Testing success for both of our EDS servers.
+
+---
+
+## [0.3.58] - 2025-10-26
 
 ### Changed:
 - BSD-3-clause license changed to MIT license.
