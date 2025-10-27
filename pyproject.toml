@@ -1,7 +1,8 @@
 [tool.poetry]
 name = "pipeline-eds"
 version = "0.3.58"
-description = "The API pipeline library, with CLI tools. Key target: The Emerson Ovation EDS REST API."
+description = "A Python API pipeline library and CLI toolkit for Emerson Ovation EDS systems — built for engineers, control technicians, and wastewater SCADA teams."
+
 authors = ["George Clayton Bennett <george.bennett@memphistn.gov>"]
 license = "MIT"
 readme = "README.md"
@@ -15,8 +16,19 @@ include = [
     "src/pipeline/data/*"
 ]
 
-classifiers = [
-    "License :: OSI Approved :: MIT License"
+
+classifiers=[
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Developers",
+	"Intended Audience :: System Administrators",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Scientific/Engineering :: Visualization",
+    "Environment :: Console",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+	"Topic :: Utilities",
 ]
 	
 [tool.poetry.scripts]
