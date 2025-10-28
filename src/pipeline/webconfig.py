@@ -233,6 +233,7 @@ class WebPromptService(object):
             </div>
             
             <button type="submit">Submit Value</button>
+            <button type="submit">Cancel</button>
         </form>
         
     </div>

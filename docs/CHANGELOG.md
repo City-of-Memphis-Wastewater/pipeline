@@ -10,6 +10,8 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 
 ## [0.3.59] - 2025-10-27
 
+Add: Cancel button for inputs sought with WebConfigurationManager.
+
 ### Added:
 - SOAP API access demo function and bones added for EdsClient. Testing success for both of our EDS servers.
 - Provide link and copy-pasted information about WSDL (Web Service Description Language), which is intrinsic to SOAP-based services.
