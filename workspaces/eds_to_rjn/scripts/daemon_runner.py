@@ -1,9 +1,10 @@
-#workspaces/eds_to_rjndaemon_runner.py
-import schedule, time
+#workspaces/eds_to_rjn/scripts/daemon_runner.py
+from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
+# import schedule # not used - now we use Microsoft Task Scheduler # left here for reference. (was 1.2.2 at time of poetry remove, schedule==1.2.2 ; python_version >= "3.8" and python_version < "3.15")
+import time
 import logging
 import csv
 from datetime import datetime
-from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
 
 from pipeline.api.eds import EdsClient, identify_relevant_tables
 from pipeline.api.rjn import RjnClient
@@ -178,6 +179,9 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
             
                     
 def setup_schedules():
+    """
+    Defunct. Use Microsoft Task Scheduler to call iterative runs.
+    """
     testing = False
     if not testing:
         schedule.every().hour.do(run_hourly_tabular_trend_eds_to_rjn)
@@ -193,6 +197,9 @@ def main():
         setup_schedules()
 
 def start_daemon():
+    """
+    Defunct. Use Microsoft Task Scheduler to call iterative runs.
+    """
     logging.info(f"Daemon started at {datetime.now()} and running...")
     setup_schedules()
     while True:
