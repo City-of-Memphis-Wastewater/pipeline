@@ -7,7 +7,7 @@ from typing import Optional
 
 def gui_get_input(prompt_message: str, hide_input: bool = False) -> Optional[str]:
     """
-    Displays a modal GUI popup to get input when no terminal is available.
+    Displays a modal GUI popup to get input, such as when when no terminal is available.
     """
     try:
         root = tk.Tk()
