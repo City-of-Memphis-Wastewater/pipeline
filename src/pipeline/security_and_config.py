@@ -441,17 +441,21 @@ def get_eds_rest_api_credentials(plant_name: str, overwrite: bool = False, forge
     eds_soap_api_sub_path = eds_soap_api_sub_path
 
     # EDS REST API Pattern: url = f"http://{url}:43084/api/v1" # assume EDS patterna and port http and append api/v1 if user just puts in an IP
-    if eds_base_url and str(eds_soap_api_port) and eds_soap_api_sub_path:
-        #eds_soap_api_url = eds_base_url + ":" + str(eds_soap_api_port) + "/" + eds_soap_api_sub_path + "/"
-        eds_soap_api_url = EdsClient.get_soap_api_wsdl_url(eds_base_url = eds_base_url,
-                                                           eds_soap_api_port = str(eds_soap_api_port),
-                                                           eds_soap_api_sub_path = eds_soap_api_sub_path)
-    else:
+    
+    #eds_soap_api_url = eds_base_url + ":" + str(eds_soap_api_port) + "/" + eds_soap_api_sub_path + "/"
+    eds_soap_api_url = EdsClient.get_soap_api_url(eds_base_url = eds_base_url,
+                                                        eds_soap_api_port = str(eds_soap_api_port),
+                                                        eds_soap_api_sub_path = eds_soap_api_sub_path)
+    if eds_soap_api_url is None:
         logging.info("Not enough information provided to build: eds_soap_api_url.")
         logging.info("Please rerun your last command or try something else.")
         sys.exit()
     
-    if eds_base_url and str(eds_rest_api_port) and eds_rest_api_sub_path:
+    
+    eds_rest_api_url = EdsClient.get_rest_api_url(eds_base_url, 
+                                        str(eds_rest_api_port),
+                                        eds_rest_api_sub_path
+                                        ) 
         eds_rest_api_url = eds_base_url + ":" + str(eds_rest_api_port) + "/" + eds_rest_api_sub_path + "/"
     else:
         logging.info("Not enough information provided to build: eds_rest_api_url.")
