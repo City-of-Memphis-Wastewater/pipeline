@@ -165,6 +165,7 @@ def _get_config_with_prompt(config_key: str,
                             prompt_message: str, 
                             overwrite: bool = False, 
                             forget: bool = False,
+                            refresh: bool = False,
                             ) -> str | None:
     """
     Retrieves a config value from a local file, prompting the user and saving it if missing.
@@ -186,7 +187,7 @@ def _get_config_with_prompt(config_key: str,
     config = {}
 
      # --- Load existing config file safely ---
-    if CONFIG_PATH.exists():
+    if CONFIG_PATH.exists() and refresh:
         try:
             with open(CONFIG_PATH, "r") as f:
                 config = json.load(f)
@@ -265,6 +266,7 @@ def _get_credential_with_prompt(service_name: str,
                                 hide_password: bool = False, 
                                 overwrite: bool = False,
                                 forget: bool = False,
+                                refresh: bool = False,
                                 ) -> str | None:
     """
     Retrieves a secret from the keyring, prompting the user and saving it if missing.
@@ -310,7 +312,7 @@ def _get_credential_with_prompt(service_name: str,
 
     # If the credential is None (not found), or if a confirmation to overwrite was given,
     # prompt for a new value.
-    if credential is None or overwrite:
+    if credential is None or refresh: 
 
         try:
             new_credential = _prompt_for_value(
