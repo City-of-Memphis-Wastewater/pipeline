@@ -255,6 +255,8 @@ class MissionClient:
 def demo_retrieve_analog_data_and_save_csv():
     #from pipeline.env import SecretConfig
     #from pipeline.workspace_manager import WorkspaceManager
+    typer.echo("Running: pipeline.api.mission.demo_retrieve_analog_data_and_save_csv()...")
+    typer.echo("Running: Calling 123scada.com using the Mission Client ...")
     mission_api_creds = get_external_api_credentials("TestMission")
     mission_api_creds = get_external_api_credentials("Mission")
     #mission_api_creds["username"] = mission_api_creds["client_id"] # rectify the way this is stored for RJN
@@ -295,8 +297,10 @@ def demo_retrieve_analog_data_and_save_csv():
         start_date="20251006",
         end_date="20251011"
     )
+    typer.echo("\nRunning: Generating sample file... ")
     with open("Gayoso_Analog.csv", "wb") as f:
         f.write(csv_bytes)
-
+typer.echo("\nJob Complete.")
+typer.echo("\nAdvice: Do no git add Gayoso_Analog.csv.")
 if __name__ == "__main__":
     demo_retrieve_analog_data_and_save_csv()
