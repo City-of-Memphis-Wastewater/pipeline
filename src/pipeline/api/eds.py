@@ -657,26 +657,6 @@ class EdsClient:
             except Exception as e:
                 print(f"Error during getPoints (by IESS): {e}")
 
-
-            # Example 5: Get a specific point by SID
-            # We will use '5395' from your latest output
-            print("\n--- Example 5: Requesting point by SID ('5395') ---")
-            try:
-                # Create another PointFilter object
-                point_filter_sid = soapclient.factory.create('PointFilter')
-                
-                # Add the SID to the 'sid' array in the filter
-                # (PointFilter definition on page 19 shows sid[] = <empty>)
-                point_filter_sid.sid.append(5395)
-                
-                # Call getPoints
-                points_response_sid = soapclient.service.getPoints(authstring, point_filter_sid, None, None, None)
-                print("Received getPoints response (by SID):")
-                print(points_response_sid)
-
-            except Exception as e:
-                print(f"Error during getPoints (by SID): {e}")
-
             # -----------------------------------------------
 
             # Example 6: Request Tabular (Trend) Data
