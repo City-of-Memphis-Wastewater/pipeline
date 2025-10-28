@@ -572,8 +572,6 @@ class EdsClient:
         if plant_name is None:
             plant_name = get_configurable_default_plant_name()
         print(f"plant_name = {plant_name}")
-        print(f"len(plant_name) = {len(plant_name)}")
-        print(f"isinstance(plant_name,str) = {isinstance(plant_name,str)}")  
         service_name = EdsClient.get_service_name(plant_name = plant_name) # for secure credentials
     
         if idcs is None:
@@ -738,14 +736,10 @@ class EdsClient:
 
 
         except Exception as e:
-            print(f"\n--- AN ERROR OCCURRED ---")
-            print(e)
-            print("\nPlease check:")
-            print(f"1. Is the IP address {wsdl_url} correct and reachable?")
-            print("2. Is the EDS server running?")
-            print("3. Are your username and password correct?")
+            EdsClient.connection_error_message()
             
         finally:
+            
             # Removed diagram close logic
             
             # 5. Logout using the authstring
@@ -759,6 +753,16 @@ class EdsClient:
             else:
                 print("\nSkipping logout (was not logged in).")
 
+    @staticmethod
+    def connection_error_message()-> None:
+        print(f"\n--- AN ERROR OCCURRED ---")
+        print(e)
+        print("\nPlease check:")
+        print(f"1. Is the IP address {wsdl_url} correct and reachable?")
+        print("2. Is the EDS server running?")
+        print("3. Are your username and password correct?")
+        return None
+    
     @staticmethod
     def soap_api_iess_request_single(plant_name: str|None, idcs:list[str]|None):
         soapclient = None
@@ -867,12 +871,7 @@ class EdsClient:
             # -----------------------------------------------
 
         except Exception as e:
-            print(f"\n--- AN ERROR OCCURRED ---")
-            print(e)
-            print("\nPlease check:")
-            print(f"1. Is the IP address {wsdl_url} correct and reachable?")
-            print("2. Is the EDS server running?")
-            print("3. Are your username and password correct?")
+            EdsClient.connection_error_message()
             
         finally:
             # 4. Logout using the authstring
