@@ -78,7 +78,17 @@ def _prompt_for_value(prompt_message: str, hide_input: bool) -> str:
     # Block these off for testing the browser_get_input, which is not expeceted in this iteration but is good practice for future proofing a hypothetical console-less GUI 
     
     value = None # ensure safe defeault so that the except block handles properly, namely if the user cancels the typer.prompt() input with control+ c
-    if interactive_terminal_is_available():
+    
+    if tkinter_is_available():
+        # 2. GUI Mode (Non-interactive fallback)
+        from pipeline.guiconfig import gui_get_input
+        typer.echo(f"\n --- Non-interactive process detected. Opening GUI prompt. --- ")
+        value = gui_get_input(prompt_message, hide_input)
+        
+        if value is not None:
+            return value
+    
+    elif interactive_terminal_is_available():
         try:
             # 1. CLI Mode (Interactive)
             typer.echo(f"\n --- Use CLI input --- ")
@@ -99,14 +109,6 @@ def _prompt_for_value(prompt_message: str, hide_input: bool) -> str:
             return None
         return value
         
-    elif tkinter_is_available() and False:
-        # 2. GUI Mode (Non-interactive fallback)
-        from pipeline.guiconfig import gui_get_input
-        typer.echo(f"\n --- Non-interactive process detected. Opening GUI prompt. --- ")
-        value = gui_get_input(prompt_message, hide_input)
-        
-        if value is not None:
-            return value
 
     elif web_browser_is_available(): # 3. Check for browser availability
         # 3. Browser Mode (Web Browser as a fallback)

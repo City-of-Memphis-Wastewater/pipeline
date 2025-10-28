@@ -801,7 +801,8 @@ class EdsClient:
         
         #session = EdsClient.login_to_session_with_api_credentials(api_credentials)
 
-        eds_soap_api_url = EdsClient.get_soap_api_url(base_url = base_url)
+        # Let API Port and the sub path be None, such that the defaults will be used.
+        eds_soap_api_url = EdsClient.get_soap_api_url(base_url = base_url, eds_soap_api_port = None, eds_soap_api_sub_path = None)
         if eds_soap_api_url is None:
             logging.info("Not enough information provided to build: eds_soap_api_url.")
             logging.info("Please rerun your last command or try something else.")
