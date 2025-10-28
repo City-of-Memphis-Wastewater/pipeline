@@ -248,7 +248,12 @@ def _get_config_with_prompt(config_key: str, prompt_message: str, overwrite: boo
     # --- Return existing value if no overwrite requested ---
     return value
 
-def _get_credential_with_prompt(service_name: str, item_name: str, prompt_message: str, hide_password: bool = True, overwrite: bool = False) -> str | None:
+def _get_credential_with_prompt(service_name: str, 
+                                item_name: str, 
+                                prompt_message: str, 
+                                hide_password: bool = True, 
+                                overwrite: bool = False
+                                ) -> str | None:
     """
     Retrieves a secret from the keyring, prompting the user and saving it if missing.
     
@@ -259,6 +264,16 @@ def _get_credential_with_prompt(service_name: str, item_name: str, prompt_messag
         hide_password: True if the input should be hidden (getpass), False otherwise (input).
         overwrite: If True, the function will always prompt for a new credential,
                    even if one already exists.
+
+    Examples:
+        OVERWRITE = False
+        HIDEPASSWORD = False 
+
+        service_name: service_name = f"pipeline-eds-db-{plant_name}"
+        item_name: The credential key.
+        prompt_message: f"Enter the IP address for your SOAP API (e.g., XXX.XX.X.XXX)" # no colon necessary, managed internally.
+        hide_password: hide_password = HIDEPASSWORD 
+        overwrite: overwrite = OVERWRITE
 
     Returns:
         The configuration value (str) if successful, or None if the user cancels.
@@ -332,7 +347,7 @@ def get_configurable_idcs_list(plant_name: str, overwrite: bool = False) -> List
         f"(e.g., M100FI FI8001 M310LI)"
     )
     
-    idcs_value = _get_config_with_prompt(service_name, prompt_message, overwrite=overwrite)
+    idcs_value = _get_config_with_prompt(config_key = service_name, prompt_message = prompt_message, overwrite=overwrite)
     
     if not idcs_value:
         return []
@@ -351,18 +366,18 @@ def get_configurable_idcs_list(plant_name: str, overwrite: bool = False) -> List
     
     return idcs_list
     
-def get_eds_db_credentials(plant_name: str, overwrite: bool = False) -> Dict[str, str]: # generalized for stiles and maxson
+def get_eds_local_db_credentials(plant_name: str, overwrite: bool = False) -> Dict[str, str]: # generalized for stiles and maxson
     """Retrieves all credentials and config for Stiles EDS Fallback DB, prompting if necessary."""
     service_name = f"pipeline-eds-db-{plant_name}"
 
     # 1. Get non-secret configuration from the local file
-    port = _get_config_with_prompt("eds_db_port", "Enter EDS DB Port (e.g., 3306)")
-    storage_path = _get_config_with_prompt("eds_db_storage_path", "Enter EDS database SQL storage path on your system (e.g., 'E:/SQLData/stiles')")
-    database = _get_config_with_prompt("eds_db_database", "Enter EDS database name on your system (e.g., stiles)")
+    port = _get_config_with_prompt(config_key = "eds_db_port", prompt_message = "Enter EDS DB Port (e.g., 3306)")
+    storage_path = _get_config_with_prompt(config_key = "eds_db_storage_path", prompt_message = "Enter EDS database SQL storage path on your system (e.g., 'E:/SQLData/stiles')")
+    database = _get_config_with_prompt(config_key = "eds_db_database", prompt_message = "Enter EDS database name on your system (e.g., stiles)")
 
     # 2. Get secrets from the keyring
-    username = _get_credential_with_prompt(service_name, "username", "Enter your EDS system username (e.g. root)", hide_password=False, overwrite=overwrite)
-    password = _get_credential_with_prompt(service_name, "password", "Enter your EDS system password (e.g. Ovation1)", hide_password=True, overwrite=overwrite)
+    username = _get_credential_with_prompt(service_name = service_name, item_name = "username", prompt_message = "Enter your EDS system username (e.g. root)", hide_password=False, overwrite=overwrite)
+    password = _get_credential_with_prompt(service_name = service_name, item_name = "password", prompt_message = "Enter your EDS system password (e.g. Ovation1)", hide_password=True, overwrite=overwrite)
 
     return {
         'username': username,
@@ -377,34 +392,37 @@ def get_eds_db_credentials(plant_name: str, overwrite: bool = False) -> Dict[str
 
 def get_configurable_default_plant_name(overwrite=False) -> str :
     '''Comma separated list of plant names to be used as the default if none is provided in other commands.'''
-    plant_name = _get_config_with_prompt(f"configurable_plantname_eds_api", f"Enter plant name(s) to be used as the default", overwrite=overwrite)
+    plant_name = _get_config_with_prompt(config_key = f"configurable_plantname_eds_api", prompt_message = f"Enter plant name(s) to be used as the default", overwrite=overwrite)
     if ',' in plant_name:
         plant_names = plant_name.split(',')
         return plant_names
     else:
         return plant_name
 
-def get_eds_api_credentials(plant_name: str, overwrite: bool = False) -> Dict[str, str]:
+def get_eds_rest_api_credentials(plant_name: str, overwrite: bool = False, forget: bool = False) -> Dict[str, str]:
     """Retrieves API credentials for a given plant, prompting if necessary."""
     service_name = f"pipeline-eds-api-{plant_name}"
-    
-    #url = _get_config_with_prompt(f"{plant_name}_eds_api_url", f"Enter {plant_name} API URL (e.g., http://000.00.0.000:43084/api/v1)", overwrite=overwrite)
-    url = _get_eds_url_config_with_prompt(f"{plant_name}_eds_api_url", f"Enter {plant_name} EDS API URL (e.g., http://000.00.0.000:43084/api/v1, or just 000.00.0.000)", overwrite=overwrite)
-    base_url = _get_eds_base_url_config_with_prompt(f"{plant_name}_eds_base_url", f"Enter {plant_name} EDS BASE URL (e.g., http://000.00.0.000, or just 000.00.0.000)", overwrite=overwrite)
-    eds_rest_api_port = _get_credential_with_prompt(f"{plant_name}_eds_rest_api_port", f"Enter {plant_name} EDS REST API PORT (e.g., 43084)", overwrite=overwrite)
-    eds_rest_api_sub_path = _get_credential_with_prompt(f"{plant_name}_eds_rest_api_sub_path", f"Enter {plant_name} EDS REST API SUB PATH (e.g., 'api/v1')", overwrite=overwrite)
-    eds_soap_api_port = _get_credential_with_prompt(f"{plant_name}_eds_soap_api_port", f"Enter {plant_name} EDS SOAP API PORT (e.g., 43080)", overwrite=overwrite)
-    eds_soap_api_wsdl_path = _get_credential_with_prompt(f"{plant_name}_eds_soap_api_wsdl_path", f"Enter {plant_name} EDS SOAP API WSDL PATH (e.g., 'eds.wsdl')", overwrite=overwrite)
-    username = _get_credential_with_prompt(service_name, "username", f"Enter your EDS API username for {plant_name} (e.g. admin)", hide_password=False, overwrite=overwrite)
-    password = _get_credential_with_prompt(service_name, "password", f"Enter your EDS API password for {plant_name} (e.g. '')", overwrite=overwrite)
-    idcs_to_iess_suffix = _get_config_with_prompt(f"{plant_name}_eds_api_iess_suffix", f"Enter iess suffix for {plant_name} (e.g., .UNIT0@NET0)", overwrite=overwrite)
-    zd = _get_config_with_prompt(f"{plant_name}_eds_api_zd", f"Enter {plant_name} ZD (e.g., 'Maxson' or 'WWTF')", overwrite=overwrite)
+    overwrite = False
+    #url = _get_config_with_prompt(config_key =f"{plant_name}_eds_api_url", prompt_message = f"Enter {plant_name} API URL (e.g., http://000.00.0.000:43084/api/v1)", overwrite=overwrite)
+    url = _get_eds_url_config_with_prompt(config_key = f"{plant_name}_eds_api_url", prompt_message = f"Enter {plant_name} EDS API URL (e.g., http://000.00.0.000:43084/api/v1, or just 000.00.0.000)", overwrite=overwrite)
+    eds_base_url = _get_eds_base_url_config_with_prompt(config_key = f"{plant_name}_eds_base_url", prompt_message =  f"Enter {plant_name} EDS BASE URL (e.g., http://000.00.0.000, or just 000.00.0.000)", overwrite=overwrite)
+    eds_rest_api_port = _get_credential_with_prompt(service_name = service_name, item_name = f"{plant_name}_eds_rest_api_port", prompt_message = f"Enter {plant_name} EDS REST API PORT (e.g., 43084)", overwrite=overwrite)
+    eds_rest_api_sub_path = _get_credential_with_prompt(service_name, item_name = f"{plant_name}_eds_rest_api_sub_path", prompt_message = f"Enter {plant_name} EDS REST API SUB PATH (e.g., 'api/v1')", overwrite=overwrite)
+    #eds_soap_api_port = _get_credential_with_prompt(service_name, item_name = f"{plant_name}_eds_soap_api_port", prompt_message = f"Enter {plant_name} EDS SOAP API PORT (e.g., 43080)", overwrite=overwrite)
+    #eds_soap_api_wsdl_path = _get_credential_with_prompt(f"{plant_name}_eds_soap_api_wsdl_path", prompt_message = f"Enter {plant_name} EDS SOAP API WSDL PATH (e.g., 'eds.wsdl')", overwrite=overwrite)
+    username = _get_credential_with_prompt(service_name = service_name, item_name = "username", prompt_message = f"Enter your EDS API username for {plant_name} (e.g. admin)", hide_password=False, overwrite=overwrite)
+    password = _get_credential_with_prompt(service_name = service_name, item_name = "password", prompt_message = f"Enter your EDS API password for {plant_name} (e.g. '')", overwrite=overwrite)
+    idcs_to_iess_suffix = _get_config_with_prompt(config_key = f"{plant_name}_eds_api_iess_suffix", prompt_message = f"Enter iess suffix for {plant_name} (e.g., .UNIT0@NET0)", overwrite=overwrite)
+    zd = _get_config_with_prompt(config_key = f"{plant_name}_eds_api_zd", prompt_message = f"Enter {plant_name} ZD (e.g., 'Maxson' or 'WWTF')", overwrite=overwrite)
     
     #if not all([username, password]):
     #    raise CredentialsNotFoundError(f"API credentials for '{plant_name}' not found. Please run the setup utility.")
-        
+    eds_rest_api_sub_path = str(eds_rest_api_sub_path).rstrip("/").lstrip("/").replace(r"\\","/")
+    eds_soap_api_port = int(eds_soap_api_port)
+
+    eds_rest_api_url = eds_base_url + ":" + str(eds_soap_api_port) + "/" + eds_rest_api_sub_path + "/"
     return {
-        'url': url,
+        'url': eds_rest_api_url,
         'username': username,
         'password': password,
         'zd': zd,
@@ -421,10 +439,10 @@ def get_external_api_credentials(party_name: str, overwrite: bool = False) -> Di
     The RJN API client was the first external API client, and it uses the term 'client_id' in place of the term 'username'."""
     service_name = f"pipeline-external-api-{party_name}"
     
-    url = _get_config_with_prompt(service_name, f"Enter {party_name} API URL (e.g., http://api.example.com)", overwrite=overwrite)
-    username = _get_credential_with_prompt(service_name, "username", f"Enter the username AKA client_id for the {party_name} API",hide_password=False, overwrite=overwrite)
-    #client_id = _get_credential_with_prompt(service_name, "client_id", f"Enter the client_id for the {party_name} API",hide_password=False, overwrite=overwrite)
-    password = _get_credential_with_prompt(service_name, "password", f"Enter the password for the {party_name} API", overwrite=overwrite)
+    url = _get_config_with_prompt(config_key = service_name, prompt_message = f"Enter {party_name} API URL (e.g., http://api.example.com)", overwrite=overwrite)
+    username = _get_credential_with_prompt( service_name = service_name, item_name = "username", prompt_message = f"Enter the username AKA client_id for the {party_name} API",hide_password=False, overwrite=overwrite)
+    #client_id = _get_credential_with_prompt(service_name = service_name, item_name = "client_id", prompt_message = f"Enter the client_id for the {party_name} API",hide_password=False, overwrite=overwrite)
+    password = _get_credential_with_prompt(service_name = service_name, item_name = "password", prompt_message = f"Enter the password for the {party_name} API", overwrite=overwrite)
 
     client_id = username
     
@@ -472,7 +490,7 @@ def _is_likely_ip(url: str) -> bool:
     return True
 
 def _get_eds_url_config_with_prompt(config_key: str, prompt_message: str, overwrite: bool = False) -> str:
-    url = _get_config_with_prompt(config_key, prompt_message, overwrite=overwrite)
+    url = _get_config_with_prompt(config_key = config_key, prompt_message = prompt_message, overwrite=overwrite)
     if url is None:
         return None
     if _is_likely_ip(url):
@@ -492,7 +510,7 @@ class CredentialsNotFoundError(Exception):
     pass
 
 # Example usage in your main pipeline
-def frontload_build_all_credentials():
+def frontload_build_all_credentials(forget : bool = False):
     """
     Sets up all possible API and database credentials for the pipeline.
     
@@ -505,12 +523,22 @@ def frontload_build_all_credentials():
     
     Note: This will prompt for credentials for all supported plants and external
     APIs in sequence.
+
+    'forget' should be an option that can be toggled with env var PIPELINE_FORGET, which has a default of False when set up.
+    Functions that require forget:
+        - frontload_build_all_credentials()
+        - _get_config_with_prompt() # stored as plaintext
+        - _get_credential_with_prompt() # stored to keyring
+        
+    Functions that store things are antithetical to 'forget':
+        - _get_eds_url_config_with_prompt() # a helper functon, which should be made defunct and it's place of use can be made more explicit about the constituent elements required. 
+        - _get_eds_local_db_credentials() # helper functon
     """
     
     try:
-        maxson_api_creds = get_eds_api_credentials(plant_name = "Maxson")
-        stiles_api_creds = get_eds_api_credentials(plant_name = "Stiles")
-        stiles_db_creds = get_eds_db_credentials(plant_name = "Stiles")
+        maxson_api_creds = get_eds_rest_api_credentials(plant_name = "Maxson")
+        stiles_api_creds = get_eds_rest_api_credentials(plant_name = "Stiles")
+        stiles_db_creds = get_eds_local_db_credentials(plant_name = "Stiles")
         rjn_api_creds = get_external_api_credentials("RJN")
         
         # Now use the credentials normally in your application logic

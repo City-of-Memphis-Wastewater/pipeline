@@ -25,7 +25,7 @@ except ImportError:
 from pipeline.time_manager import TimeManager
 from pipeline.create_sensors_db import get_db_connection, create_packaged_db, reset_user_db # get_user_db_path, ensure_user_db, 
 from pipeline.api.eds import demo_eds_webplot_point_live, EdsClient, load_historic_data, EdsLoginException, demo_eds_save_point_export
-from pipeline.security_and_config import get_eds_api_credentials, get_external_api_credentials, get_eds_db_credentials, get_all_configured_urls, get_configurable_default_plant_name, init_security, CONFIG_PATH
+from pipeline.security_and_config import get_eds_rest_api_credentials, get_external_api_credentials, get_eds_local_db_credentials, get_all_configured_urls, get_configurable_default_plant_name, init_security, CONFIG_PATH
 from pipeline.termux_setup import setup_termux_integration, cleanup_termux_integration
 from pipeline.windows_setup import setup_windows_integration, cleanup_windows_integration
 from pipeline import helpers
@@ -205,13 +205,13 @@ def trend(
     # Retrieve all necessary API credentials and config values.
     # This will prompt the user if any are missing.
     if isinstance(plant_name,str):
-        api_credentials = get_eds_api_credentials(plant_name=plant_name)
+        api_credentials = get_eds_rest_api_credentials(plant_name=plant_name)
     if isinstance(plant_name,list):
         typer.echo("")
         typer.echo(f"Multiple plant names provided: {plant_name} ")
         typer.echo("Querying multiple plants at once currently supported.") 
         typer.echo("Defaulting to use the first name.")
-        api_credentials = get_eds_api_credentials(plant_name=plant_name[0])
+        api_credentials = get_eds_rest_api_credentials(plant_name=plant_name[0])
 
     typer.echo(f"")
     typer.echo(f"Data request processing...")
@@ -335,11 +335,11 @@ def configure_credentials(
         
         # Configure API for this plant
         if typer.confirm(f"Do you want to configure the EDS API for '{name}'?", default=True):
-            get_eds_api_credentials(plant_name=name, overwrite=overwrite)
+            get_eds_rest_api_credentials(plant_name=name, overwrite=overwrite)
 
         # Configure DB for this plant
         if False and typer.confirm(f"Do you want to configure the EDS database for '{name}'?",  default=False):
-            get_eds_db_credentials(plant_name=name, overwrite=overwrite)
+            get_eds_local_db_credentials(plant_name=name, overwrite=overwrite)
     
     # Configure any other external APIs
     if False and typer.confirm("Do you want to configure external API credentials? (e.g., RJN)"):
@@ -440,14 +440,14 @@ def points_export(
 
 
     if isinstance(plant_name,str):
-        api_credentials = get_eds_api_credentials(plant_name=plant_name)
+        api_credentials = get_eds_rest_api_credentials(plant_name=plant_name)
 
     if isinstance(plant_name,list):
         typer.echo("")
         typer.echo(f"Multiple plant names provided: {plant_name} ")
         typer.echo("Querying multiple plants at once currently supported.") 
         typer.echo("Defaulting to use the first name.")
-        api_credentials = get_eds_api_credentials(plant_name=plant_name[0])
+        api_credentials = get_eds_rest_api_credentials(plant_name=plant_name[0])
     
     # Use the retrieved credentials to log in to the API, including custom session attributes
     typer.echo("Logging in to session...")
