@@ -99,7 +99,7 @@ def _prompt_for_value(prompt_message: str, hide_input: bool) -> str:
             return None
         return value
         
-    elif tkinter_is_available():
+    elif tkinter_is_available() or False:
         # 2. GUI Mode (Non-interactive fallback)
         from pipeline.guiconfig import gui_get_input
         typer.echo(f"\n --- Non-interactive process detected. Opening GUI prompt. --- ")
