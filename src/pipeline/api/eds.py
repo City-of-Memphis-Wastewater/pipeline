@@ -809,8 +809,8 @@ class EdsClient:
 
         try:
             # 1. Create the SOAP client
-            print(f"Attempting to connect to WSDL at: {soap_api_url}")
-            soapclient = SudsClient(soap_api_url)
+            print(f"Attempting to connect to WSDL at: {eds_soap_api_url}")
+            soapclient = SudsClient(eds_soap_api_url)
             print("SOAP client created successfully.")
             # You can uncomment the line below to see all available services
             # print(soapclient)
