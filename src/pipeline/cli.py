@@ -161,7 +161,7 @@ def trend(
     print_csv: bool = typer.Option(False,"--print-csv","-p",help = "Print the CSV style for pasting into Excel."),
     step_seconds: int = typer.Option(None, "--step-seconds", help="You can explicitly provide the delta between datapoints. If not, ~400 data points will be used, based on the nice_step() function."), 
     force_webplot: bool = typer.Option(False,"--webplot","-w",help = "Use a browser-based plot instead of local (matplotlib). Useful for remote servers without display."),
-    force_matplotlib: bool = typer.Option(False,"--matplotlib","-mpl",help="Forcr matplotlib to be used for plotting. This will not work if matplotlib is not available."),
+    force_matplotlib: bool = typer.Option(False,"--matplotlib","-mpl",help="Force matplotlib to be used for plotting. This will not work if matplotlib is not available."),
     default_idcs: bool = typer.Option(False, "--default-idcs", "-d", help="Use the default IDCS values for the configured plant name, instead of providing them as arguments.")
     ):
     """

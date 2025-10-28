@@ -595,9 +595,9 @@ class EdsClient:
                 idcs = get_temporary_input()
         
         base_url = _get_base_url_config_with_prompt(service_name = f"{plant_name}_eds_base_url", prompt_message=f"Enter {plant_name} EDS base url (e.g., http://000.00.0.000, or just 000.00.0.000)")
-        eds_soap_api_port = _get_credential_with_prompt(service_name = f"{plant_name}_eds_soap_api_port", prompt_message=f"Enter {plant_name} EDS SOAP API port (e.g., 43080)")
-        eds_soap_api_sub_path = _get_credential_with_prompt(f"{plant_name}_eds_soap_api_sub_path", f"Enter {plant_name} EDS SOAP API WSDL PATH (e.g., 'eds.wsdl')", default = cls.access_database_files_locally)
-        username = _get_credential_with_prompt(service_name, "username", f"Enter your EDS API username for {plant_name} (e.g. admin)", hide_password=False)
+        eds_soap_api_port = _get_config_with_prompt(config_key = f"{plant_name}_eds_soap_api_port", prompt_message=f"Enter {plant_name} EDS SOAP API port (e.g., 43080)")
+        eds_soap_api_sub_path = _get_config_with_prompt(config_key = f"{plant_name}_eds_soap_api_sub_path", prompt_message=f"Enter {plant_name} EDS SOAP API WSDL PATH (e.g., 'eds.wsdl')")
+        username = _get_credential_with_prompt(service_name, "username", f"Enter your EDS API username for {plant_name} (e.g. admin)", hide=False)
         password = _get_credential_with_prompt(service_name, "password", f"Enter your EDS API password for {plant_name} (e.g. '')")
         idcs_to_iess_suffix = _get_config_with_prompt(f"{plant_name}_eds_api_iess_suffix", f"Enter iess suffix for {plant_name} (e.g., .UNIT0@NET0)")
         
@@ -610,8 +610,8 @@ class EdsClient:
             sys.exit()
         try:
             # 1. Create the SOAP client
-            print(f"Attempting to connect to WSDL at: {soap_api_url}")
-            soapclient = SudsClient(soap_api_url)
+            print(f"Attempting to connect to WSDL at: {eds_soap_api_url}")
+            soapclient = SudsClient(eds_soap_api_url)
             print("SOAP client created successfully.")
             # You can uncomment the line below to see all available services
             # print(soapclient)
@@ -775,7 +775,7 @@ class EdsClient:
         print(f"\n--- AN ERROR OCCURRED ---")
         print(e)
         print("\nPlease check:")
-        print(f"1. Is the IP address {soap_api_url} correct and reachable?")
+        print(f"1. Is the IP address {eds_soap_api_url} correct and reachable?")
         print("2. Is the EDS server running?")
         print("3. Are your username and password correct?")
         return None
@@ -795,7 +795,7 @@ class EdsClient:
         base_url = _get_base_url_config_with_prompt(service_name=f"{plant_name}_eds_base_url", prompt_message=f"Enter {plant_name} EDS base url (e.g., http://000.00.0.000, or just 000.00.0.000)")
         #eds_soap_api_port = _get_credential_with_prompt(f"{plant_name}_eds_soap_api_port", f"Enter {plant_name} EDS SOAP API port (e.g., 43080)")
         #eds_soap_api_sub_path = _get_credential_with_prompt(f"{plant_name}_eds_soap_api_sub_path", f"Enter {plant_name} EDS SOAP API WSDL sub path (e.g., 'eds.wsdl')")
-        username = _get_credential_with_prompt(service_name, "username", f"Enter your EDS API username for {plant_name} (e.g. admin)", hide_password=False)
+        username = _get_credential_with_prompt(service_name, "username", f"Enter your EDS API username for {plant_name} (e.g. admin)", hide=False)
         password = _get_credential_with_prompt(service_name, "password", f"Enter your EDS API password for {plant_name} (e.g. '')")
         idcs_to_iess_suffix = _get_config_with_prompt(f"{plant_name}_eds_api_iess_suffix", f"Enter iess suffix for {plant_name} (e.g., .UNIT0@NET0)")
         
