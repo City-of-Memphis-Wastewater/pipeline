@@ -12,6 +12,11 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 
 ### Added:
 - SOAP API access demo function and bones added for EdsClient. Testing success for both of our EDS servers.
+- Provide link and copy-pasted information about WSDL (Web Service Description Language), which is intrinsic to SOAP-based services.
+- Add defaults to get_soap_api_url() and get_eds_api_url() for automated use if credentials are not provided.
+
+### Changed:
+- from suds.client import Client' -> 'from suds.client import Client as SudsClient', for rigor; I worry the parlance 'Client' will get lost, and this way it is easier to cntrl+F. 
 
 ---
 
