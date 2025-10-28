@@ -452,6 +452,8 @@ class EdsClient:
         with open(output_file_path, "wb") as f:
             f.write(graphic_bytes)
 
+    def _get_eds_local_db_credentials(service_name = "pipeline-eds-local-database",item_name = "eds_dbs") -> dict:
+        return {}
     
     @staticmethod
     #def access_database_files_locally(
@@ -482,6 +484,21 @@ class EdsClient:
         logger.info("Accessing MariaDB directly — local SQL mode enabled.")
         workspace_name = 'eds_to_rjn'
         workspace_manager = WorkspaceManager(workspace_name)
+
+        local_database_dict = EdsClient._get_eds_local_db_credentials(service_name = "pipeline-eds-local-database",item_name = "eds_dbs")
+        if not isinstance(local_database_dict,dict) or len(local_database_dict):
+            typer.echo("Please develop _get_eds_local_db_credentials() to return a JSON-like dict structure, " \
+            "after drawing database credentials from the keyring and compiling them into a dictionary. " \
+            "And then, make the function defunct, " \
+            "by implementing prompt or loading of each " \
+            "secure credentialed string to at the point of sale, " \
+            "with clear documentation but not and intermediate helper-funciton. " \
+            "In this way, " \
+            "we avoid spaghetti code and tie the demand for " \
+            "information closely to the source for information." \
+            "Implement the argument 'forget', "
+            "if you do not want the value saved to the plaintext config file or " \
+            "the cryptography-secure store credentials. ")
         secrets_dict = SecretConfig.load_config(secrets_file_path=workspace_manager.get_secrets_file_path())
         #full_config = secrets_dict["eds_dbs"][session_key]
         #conn_config = {k: v for k, v in full_config.items() if k != "storage_path"}
