@@ -9,14 +9,15 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 ---
 
 ## [0.3.59] - 2025-10-27
-
-Add: Cancel button for inputs sought with WebConfigurationManager.
-Fix: Upgrade pyhabitiat ^1.0.31, which should not block interactice terminal without good reason.
+ 
+### Fixed: 
+- Upgrade pyhabitiat ^1.0.35, which should not block interactice terminal without good reason.
 
 ### Added:
 - SOAP API access demo function and bones added for EdsClient. Testing success for both of our EDS servers.
 - Provide link and copy-pasted information about WSDL (Web Service Description Language), which is intrinsic to SOAP-based services.
 - Add defaults to get_soap_api_url() and get_eds_api_url() for automated use if credentials are not provided.
+- Add and test Cancel button for inputs sought with WebConfigurationManager.
 
 ### Changed:
 - from suds.client import Client' -> 'from suds.client import Client as SudsClient', for rigor; I worry the parlance 'Client' will get lost, and this way it is easier to cntrl+F. 
