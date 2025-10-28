@@ -12,6 +12,8 @@ import sys
 from pyhabitat import on_termux, on_ish_alpine, interactive_terminal_is_available, tkinter_is_available, web_browser_is_available
 import pyhabitat as ph
 
+from pipeline.api.eds import EdsClient
+
 # Define a standard configuration path for your package
 CONFIG_PATH = Path.home() / ".pipeline-eds" / "config.json" ## configuration-example
 CONFIG_FILE = Path.home() / ".pipeline-eds" / "secure_config.json"
@@ -165,7 +167,6 @@ def _get_config_with_prompt(config_key: str,
                             prompt_message: str, 
                             overwrite: bool = False, 
                             forget: bool = False,
-                            refresh: bool = False,
                             ) -> str | None:
     """
     Retrieves a config value from a local file, prompting the user and saving it if missing.
@@ -187,7 +188,7 @@ def _get_config_with_prompt(config_key: str,
     config = {}
 
      # --- Load existing config file safely ---
-    if CONFIG_PATH.exists() and refresh:
+    if CONFIG_PATH.exists():
         try:
             with open(CONFIG_PATH, "r") as f:
                 config = json.load(f)
@@ -263,10 +264,9 @@ def _get_config_with_prompt(config_key: str,
 def _get_credential_with_prompt(service_name: str, 
                                 item_name: str, 
                                 prompt_message: str, 
-                                hide_password: bool = False, 
+                                hide: bool = False, 
                                 overwrite: bool = False,
                                 forget: bool = False,
-                                refresh: bool = False,
                                 ) -> str | None:
     """
     Retrieves a secret from the keyring, prompting the user and saving it if missing.
@@ -275,7 +275,7 @@ def _get_credential_with_prompt(service_name: str,
         service_name: The keyring service name.
         item_name: The credential key.
         prompt_message: The message to display if prompting is needed.
-        hide_password: True if the input should be hidden (getpass), False otherwise (input).
+        hide: True if the input should be hidden (getpass), False otherwise (input).
         overwrite: If True, the function will always prompt for a new credential,
                    even if one already exists.
         forget: If True, credentials should not be sotred to system keyring, 
@@ -286,9 +286,9 @@ def _get_credential_with_prompt(service_name: str,
         HIDEPASSWORD = False 
 
         service_name: service_name = f"pipeline-eds-db-{plant_name}"
-        item_name: The credential key.
-        prompt_message: f"Enter the IP address for your SOAP API (e.g., XXX.XX.X.XXX)" # no colon necessary, managed internally.
-        hide_password: hide_password = HIDEPASSWORD 
+        item_name: item_name = "username"
+        prompt_message: prompt_message = f"Enter the IP address for your SOAP API (e.g., XXX.XX.X.XXX)" # no colon necessary, managed internally.
+        hide_input: hide_input = HIDEPASSWORD 
         overwrite: overwrite = OVERWRITE
 
     Returns:
@@ -301,7 +301,7 @@ def _get_credential_with_prompt(service_name: str,
     # Check if a credential exists and if the user wants to be sure about overwriting
     if credential is not None and overwrite:
         typer.echo(f"\nCredential for '{prompt_message}' already exists:")
-        if hide_password:
+        if hide:
             typer.echo(f"  '***'")
         else:
             typer.echo(f"  '{credential}'")
@@ -312,12 +312,12 @@ def _get_credential_with_prompt(service_name: str,
 
     # If the credential is None (not found), or if a confirmation to overwrite was given,
     # prompt for a new value.
-    if credential is None or refresh: 
-
+    if credential is None or overwrite: 
+        # -- Assign value of new_credential --
         try:
             new_credential = _prompt_for_value(
                 prompt_message=prompt_message, 
-                hide_input=hide_password
+                hide_input=hide
             )
         except (KeyboardInterrupt, EOFError):
             typer.echo("\n⚠️  Credential prompt cancelled.")
@@ -336,9 +336,10 @@ def _get_credential_with_prompt(service_name: str,
         if new_credential in ("''", '""'):
             new_credential = ""
 
-        if forget:
-            return new_credential
+    if forget:
+        return new_credential
         
+    if not forget:
         # Store the new credential to keyring
         try:
             keyring.set_password(service_name, item_name, new_credential)
@@ -348,8 +349,6 @@ def _get_credential_with_prompt(service_name: str,
 
         typer.echo("✅  Credential stored securely.")
 
-        return new_credential
-    
     # Return existing credential if no overwrite
     return credential
     
@@ -396,8 +395,8 @@ def get_eds_local_db_credentials(plant_name: str, overwrite: bool = False) -> Di
     database = _get_config_with_prompt(config_key = "eds_db_database", prompt_message = "Enter EDS database name on your system (e.g., stiles)")
 
     # 2. Get secrets from the keyring
-    username = _get_credential_with_prompt(service_name = service_name, item_name = "username", prompt_message = "Enter your EDS system username (e.g. root)", hide_password=False, overwrite=overwrite)
-    password = _get_credential_with_prompt(service_name = service_name, item_name = "password", prompt_message = "Enter your EDS system password (e.g. Ovation1)", hide_password=True, overwrite=overwrite)
+    username = _get_credential_with_prompt(service_name = service_name, item_name = "username", prompt_message = "Enter your EDS system username (e.g. root)", hide=False, overwrite=overwrite)
+    password = _get_credential_with_prompt(service_name = service_name, item_name = "password", prompt_message = "Enter your EDS system password (e.g. Ovation1)", hide=True, overwrite=overwrite)
 
     return {
         'username': username,
@@ -429,8 +428,8 @@ def get_eds_rest_api_credentials(plant_name: str, overwrite: bool = False, forge
     eds_rest_api_port = _get_config_with_prompt(config_key = f"{plant_name}_eds_rest_api_port", prompt_message = f"Enter {plant_name} EDS REST API PORT (e.g., 43084)", overwrite=overwrite)
     eds_rest_api_sub_path = _get_config_with_prompt(config_key = f"{plant_name}_eds_rest_api_sub_path", prompt_message = f"Enter {plant_name} EDS REST API sub path (e.g., 'api/v1')", overwrite=overwrite)
     eds_soap_api_port = _get_config_with_prompt(config_key = f"{plant_name}_eds_soap_api_port", prompt_message = f"Enter {plant_name} EDS SOAP API port (e.g., 43080)", overwrite=overwrite)
-    eds_soap_api_wsdl_path = _get_config_with_prompt(config_key = f"{plant_name}_eds_soap_api_wsdl_path", prompt_message = f"Enter {plant_name} EDS SOAP API WSDL path (e.g., 'eds.wsdl')", overwrite=overwrite)
-    username = _get_credential_with_prompt(service_name = service_name, item_name = "username", prompt_message = f"Enter your EDS API username for {plant_name} (e.g. admin)", hide_password=False, overwrite=overwrite)
+    eds_soap_api_sub_path = _get_config_with_prompt(config_key = f"{plant_name}_eds_soap_api_sub_path", prompt_message = f"Enter {plant_name} EDS SOAP API WSDL path (e.g., 'eds.wsdl')", overwrite=overwrite)
+    username = _get_credential_with_prompt(service_name = service_name, item_name = "username", prompt_message = f"Enter your EDS API username for {plant_name} (e.g. admin)", hide=False, overwrite=overwrite)
     password = _get_credential_with_prompt(service_name = service_name, item_name = "password", prompt_message = f"Enter your EDS API password for {plant_name} (e.g. '')", overwrite=overwrite)
     idcs_to_iess_suffix = _get_config_with_prompt(config_key = f"{plant_name}_eds_api_iess_suffix", prompt_message = f"Enter iess suffix for {plant_name} (e.g., .UNIT0@NET0)", overwrite=overwrite)
     zd = _get_config_with_prompt(config_key = f"{plant_name}_eds_api_zd", prompt_message = f"Enter {plant_name} ZD (e.g., 'Maxson' or 'WWTF')", overwrite=overwrite)
@@ -439,11 +438,14 @@ def get_eds_rest_api_credentials(plant_name: str, overwrite: bool = False, forge
     #    raise CredentialsNotFoundError(f"API credentials for '{plant_name}' not found. Please run the setup utility.")
     eds_rest_api_sub_path = str(eds_rest_api_sub_path).rstrip("/").lstrip("/").replace(r"\\","/").lower()
     eds_soap_api_port = int(eds_soap_api_port)
-    eds_soap_api_sub_path = eds_soap_api_wsdl_path
+    eds_soap_api_sub_path = eds_soap_api_sub_path
 
     # EDS REST API Pattern: url = f"http://{url}:43084/api/v1" # assume EDS patterna and port http and append api/v1 if user just puts in an IP
     if eds_base_url and str(eds_soap_api_port) and eds_soap_api_sub_path:
-        eds_soap_api_url = eds_base_url + ":" + str(eds_soap_api_port) + "/" + eds_soap_api_sub_path + "/"
+        #eds_soap_api_url = eds_base_url + ":" + str(eds_soap_api_port) + "/" + eds_soap_api_sub_path + "/"
+        eds_soap_api_url = EdsClient.get_soap_api_wsdl_url(eds_base_url = eds_base_url,
+                                                           eds_soap_api_port = str(eds_soap_api_port),
+                                                           eds_soap_api_sub_path = eds_soap_api_sub_path)
     else:
         logging.info("Not enough information provided to build: eds_soap_api_url.")
         logging.info("Please rerun your last command or try something else.")
@@ -475,8 +477,8 @@ def get_external_api_credentials(party_name: str, overwrite: bool = False) -> Di
     service_name = f"pipeline-external-api-{party_name}"
     
     url = _get_config_with_prompt(config_key = service_name, prompt_message = f"Enter {party_name} API URL (e.g., http://api.example.com)", overwrite=overwrite)
-    username = _get_credential_with_prompt( service_name = service_name, item_name = "username", prompt_message = f"Enter the username AKA client_id for the {party_name} API",hide_password=False, overwrite=overwrite)
-    #client_id = _get_credential_with_prompt(service_name = service_name, item_name = "client_id", prompt_message = f"Enter the client_id for the {party_name} API",hide_password=False, overwrite=overwrite)
+    username = _get_credential_with_prompt( service_name = service_name, item_name = "username", prompt_message = f"Enter the username AKA client_id for the {party_name} API",hide=False, overwrite=overwrite)
+    #client_id = _get_credential_with_prompt(service_name = service_name, item_name = "client_id", prompt_message = f"Enter the client_id for the {party_name} API",hide=False, overwrite=overwrite)
     password = _get_credential_with_prompt(service_name = service_name, item_name = "password", prompt_message = f"Enter the password for the {party_name} API", overwrite=overwrite)
 
     client_id = username
