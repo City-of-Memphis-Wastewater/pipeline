@@ -14,7 +14,7 @@ import platform
 from functools import lru_cache
 import typer # for CLI
 from pyhabitat import on_windows
-from suds.client import Client
+from suds.client import Client as SudsClient
 
 from pipeline.env import SecretConfig
 from pipeline.workspace_manager import WorkspaceManager
@@ -51,9 +51,10 @@ class EdsLoginException(Exception):
         super().__init__(self.message)
 
 class EdsClient:
-    rest_api_port = 43084
-    soap_api_port = 43080
-    soap_api_wsdl_path = "eds.wsdl"
+    REST_API_PORT = 43084
+    REST_API_SUBPATH = 'api/v1'
+    SOAP_API_PORT = 43080
+    SOAP_API_WSDL_SUBPATH = "eds.wsdl"
 
     @staticmethod
     def login_to_session(api_url, username, password, timeout=10):
@@ -598,20 +599,20 @@ class EdsClient:
                 idcs = get_temporary_input()
         
         base_url = _get_eds_base_url_config_with_prompt(f"{plant_name}_eds_base_url", f"Enter {plant_name} EDS BASE URL (e.g., http://000.00.0.000, or just 000.00.0.000)")
-        #eds_soap_api_port = _get_credential_with_prompt(f"{plant_name}_eds_soap_api_port", f"Enter {plant_name} EDS SOAP API PORT (e.g., 43080)")
-        #eds_soap_api_wsdl_path = _get_credential_with_prompt(f"{plant_name}_eds_soap_api_wsdl_path", f"Enter {plant_name} EDS SOAP API WSDL PATH (e.g., 'eds.wsdl')")
+        eds_soap_api_port = _get_credential_with_prompt(f"{plant_name}_eds_soap_api_port", f"Enter {plant_name} EDS SOAP API PORT (e.g., 43080)")
+        eds_soap_api_sub_path = _get_credential_with_prompt(f"{plant_name}_eds_soap_api_sub_path", f"Enter {plant_name} EDS SOAP API WSDL PATH (e.g., 'eds.wsdl')")
         username = _get_credential_with_prompt(service_name, "username", f"Enter your EDS API username for {plant_name} (e.g. admin)", hide_password=False)
         password = _get_credential_with_prompt(service_name, "password", f"Enter your EDS API password for {plant_name} (e.g. '')")
         idcs_to_iess_suffix = _get_config_with_prompt(f"{plant_name}_eds_api_iess_suffix", f"Enter iess suffix for {plant_name} (e.g., .UNIT0@NET0)")
         
         #session = EdsClient.login_to_session_with_api_credentials(api_credentials)
         
-        wsdl_url = EdsClient.get_wsdl_url(base_url = base_url)
+        wsdl_url = EdsClient.get_soap_api_wsdl_url(base_url = base_url, eds_soap_api_port = eds_soap_api_port, eds_soap_api_sub_path = eds_soap_api_sub_path)
 
         try:
             # 1. Create the SOAP client
             print(f"Attempting to connect to WSDL at: {wsdl_url}")
-            soapclient = Client(wsdl_url)
+            soapclient = SudsClient(wsdl_url)
             print("SOAP client created successfully.")
             # You can uncomment the line below to see all available services
             # print(soapclient)
@@ -794,14 +795,14 @@ class EdsClient:
         service_name = EdsClient.get_service_name(plant_name = plant_name) # for secure credentials
         base_url = _get_eds_base_url_config_with_prompt(f"{plant_name}_eds_base_url", f"Enter {plant_name} EDS BASE URL (e.g., http://000.00.0.000, or just 000.00.0.000)")
         #eds_soap_api_port = _get_credential_with_prompt(f"{plant_name}_eds_soap_api_port", f"Enter {plant_name} EDS SOAP API PORT (e.g., 43080)")
-        #eds_soap_api_wsdl_path = _get_credential_with_prompt(f"{plant_name}_eds_soap_api_wsdl_path", f"Enter {plant_name} EDS SOAP API WSDL PATH (e.g., 'eds.wsdl')")
+        #eds_soap_api_sub_path = _get_credential_with_prompt(f"{plant_name}_eds_soap_api_sub_path", f"Enter {plant_name} EDS SOAP API WSDL PATH (e.g., 'eds.wsdl')")
         username = _get_credential_with_prompt(service_name, "username", f"Enter your EDS API username for {plant_name} (e.g. admin)", hide_password=False)
         password = _get_credential_with_prompt(service_name, "password", f"Enter your EDS API password for {plant_name} (e.g. '')")
         idcs_to_iess_suffix = _get_config_with_prompt(f"{plant_name}_eds_api_iess_suffix", f"Enter iess suffix for {plant_name} (e.g., .UNIT0@NET0)")
         
         #session = EdsClient.login_to_session_with_api_credentials(api_credentials)
 
-        wsdl_url = EdsClient.get_wsdl_url(base_url = base_url)
+        wsdl_url = EdsClient.get_soap_api_wsdl_url(base_url = base_url)
 
         try:
             # 1. Create the SOAP client
@@ -902,20 +903,56 @@ class EdsClient:
             else:
                 print("\nSkipping logout (was not logged in).")    
     @classmethod
-    def get_wsdl_url(cls,base_url: str | None = None,
+    def get_soap_api_wsdl_url(cls,
+                              base_url: str | None = None,
                                eds_soap_api_port: int | None = None, 
-                               eds_soap_api_wsdl_path: str = None 
+                               eds_soap_api_sub_path: str = None 
                                ) -> str | None:
+        """
+        This is the recipe for forming the URL with which to make 
+        SOAP API data requests to the EDS server.
+        
+        WSDL (Web Service Description Language) is an XML-based language used
+          to describe the functionality of a SOAP-based web service. 
+          It acts as a contract between the service provider and the consumer, 
+          detailing the operations available, the input/output parameters, 
+          and the communication protocols.
+
+        source: https://www.soapui.org/docs/soap-and-wsdl/working-with-wsdls/
+
+        
+        """
         if base_url is None:
             return None
         if eds_soap_api_port is None:
-            eds_soap_api_port = cls.soap_api_port
-        if eds_soap_api_wsdl_path is None:
-            eds_soap_api_wsdl_path = cls.soap_api_wsdl_path
+            eds_soap_api_port = cls.SOAP_API_PORT
+        if eds_soap_api_sub_path is None:
+            eds_soap_api_sub_path = cls.SOAP_API_WSDL_SUBPATH
         
-        wsdl_url = base_url + ":" + str(eds_soap_api_port) + "/" + eds_soap_api_wsdl_path
+        soap_api_wsdl_url = base_url + ":" + str(eds_soap_api_port) + "/" + eds_soap_api_sub_path
 
-        return wsdl_url
+        return soap_api_wsdl_url
+    
+    @classmethod
+    def get_rest_api_url(cls,base_url: str | None = None,
+                            eds_rest_api_port: int | None = None, 
+                            eds_rest_api_subpath: str = None 
+                            ) -> str | None:
+        """
+        This is the recipe for forming the URL with which to make 
+        SOAP API data requests to the EDS server.
+        
+        """
+        if base_url is None:
+            return None
+        if eds_rest_api_port is None:
+            eds_rest_api_port = cls.SOAP_API_PORT
+        if eds_rest_api_subpath is None:
+            eds_rest_api_subpath = cls.REST_API_SUBPATH
+        
+        eds_rest_api_url = base_url + ":" + str(eds_rest_api_port) + "/" + eds_rest_api_subpath
+
+        return eds_rest_api_url
     
 def table_has_ts_column(conn, table_name, db_type="mysql"):
     if db_type == "sqlite":
