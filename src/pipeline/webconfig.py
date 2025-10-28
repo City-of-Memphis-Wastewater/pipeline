@@ -191,18 +191,35 @@ class WebPromptService(object):
             box-sizing: border-box;
             font-size: 1em;
         }}
-        button {{
-            width: 100%;
-            padding: 12px;
-            background-color: var(--primary-color);
-            color: white;
+        input[type="text"]:focus, input[type="password"]:focus {{
+            border-color: var(--primary-color);
+            outline: none;
+        }}
+        .button-group {{
+            display: flex;
+            justify-content: flex-end; /* Align buttons to the right */
+            gap: 10px;
+            margin-top: 25px; 
+        }}
+        .button-group button {{
+            padding: 12px 20px;
             border: none;
             border-radius: 6px;
             font-weight: 600;
             cursor: pointer;
             transition: background-color 0.2s;
+            color: white;
+            width: auto;
         }}
-        button:hover {{ background-color: #2563eb; }}
+        .submit-btn {{
+            background-color: var(--primary-color);
+            flex-grow: 1; 
+        }}
+        .submit-btn:hover {{ background-color: #2563eb; }}
+        .cancel-btn {{
+            background-color: var(--danger-color);
+        }}
+        .cancel-btn:hover {{ background-color: #b91c1c; }}
         .message {{
             background-color: var(--success-color);
             color: #1f2937;
@@ -212,6 +229,7 @@ class WebPromptService(object):
             font-weight: 600;
             text-align: center;
         }}
+        
     </style>
 </head>
 <body>
@@ -231,16 +249,21 @@ class WebPromptService(object):
                 <label for="value">{html.escape(prompt_message)}</label>
                 <input type="{input_type}" id="value" name="value" placeholder="{visibility_hint}" required autofocus>
             </div>
+
+            <div class="button-group">
+                <button type="submit" 
+                        class="cancel-btn"
+                        name="action" 
+                        value="cancel" 
+                        formaction="/cancel_prompt"
+                        formnovalidate>
+                    Cancel
+                </button>
+                <button type="submit" class="submit-btn">
+                    Submit Value
+                </button>
+            </div>
             
-            <button type="submit">Submit Value</button>
-        
-            <button type="submit" 
-                    name="action" 
-                    value="cancel" 
-                    formaction="/cancel_prompt"
-                    formnovalidate>
-                Cancel
-            </button>
         </form>
         
     </div>
@@ -277,24 +300,22 @@ class WebPromptService(object):
     # Assuming a basic Python web framework (like Flask or similar)
 
     @cherrypy.expose
-    #@app.route('/s ubmit_prompt', methods=['POST'])
-    def submit_prompt():
-        # Logic to process the form value and continue the pipeline
-        user_input = request.form.get('value')
-        # ... continue with user_input ...
-        pass
-
-    #@cherrypy.expose
-    @app.route('/cancel_prompt', methods=['POST'])
-    def cancel_prompt():
-        # Logic to signal to the pipeline that the user cancelled.
-        # This URL should return an appropriate response that your calling 
-        # Python code interprets as None (e.g., an empty response or a specific status code).
-        #
-        # How you return None depends on the framework/library you are using to launch
-        # the browser prompt, but the *action* is handled here.
-        return redirect(url_for('signal_cancel')) # Example: redirect to a "cancel" handler
-
+    def cancel_prompt(self, request_id, **kwargs):
+        """
+        Endpoint called when the user clicks the 'Cancel' button.
+        It sets the result to None to signal explicit cancellation.
+        **kwargs is used to absorb any extra parameters like 'action'.
+        """
+        with results_lock:
+            # Setting the result to None explicitly signals the waiting pipeline 
+            # to stop waiting and process the cancellation.
+            PROMPT_RESULTS[request_id] = None
+        
+        return get_self_closing_html(
+            message="Input cancelled by user. Returning 'None' to the application.",
+            delay_seconds=0.5 # Close quickly after cancellation
+        )
+    
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def check_result(self, request_id):

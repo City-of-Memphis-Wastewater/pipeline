@@ -99,7 +99,7 @@ def _prompt_for_value(prompt_message: str, hide_input: bool) -> str:
             return None
         return value
         
-    elif tkinter_is_available():
+    elif tkinter_is_available() and False:
         # 2. GUI Mode (Non-interactive fallback)
         from pipeline.guiconfig import gui_get_input
         typer.echo(f"\n --- Non-interactive process detected. Opening GUI prompt. --- ")
@@ -174,7 +174,7 @@ def _get_config_with_prompt(config_key: str,
         prompt_message: The message to display if prompting is needed.
         overwrite: If True, the function will always prompt for a new value,
                    even if one already exists.
-        forget: If True, credentials should not be sotred to system keyring, 
+        forget: If True, credentials should not be stored to system keyring, 
                 and configs should not be stored to program-wide plaintext stored in AppData. 
 
     
