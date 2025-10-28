@@ -7,6 +7,8 @@ import keyring
 from typing import Dict, Set, List
 import typer
 import click.exceptions
+import logging
+import sys
 from pyhabitat import on_termux, on_ish_alpine, interactive_terminal_is_available, tkinter_is_available, web_browser_is_available
 import pyhabitat as ph
 
@@ -124,8 +126,8 @@ def _prompt_for_value(prompt_message: str, hide_input: bool) -> str:
 
     # If all other options fail
     raise CredentialsNotFoundError(
-        f"Configuration for '{prompt_message}' is missing and "
-        f"neither an interactive terminal, GUI display, nor a web browser is available. "
+        f"Configuration for '{prompt_message}' is missing or cancelled. "
+        f"The program would cancel itself if neither an interactive terminal, nor a GUI display, nor a web browser is available. "
         f"Please use a configuration utility or provide the value programmatically."
     )
 
@@ -159,7 +161,11 @@ def get_temporary_input(prompt_message: str | None) -> str|None :
         new_value = ""
     return new_value
 
-def _get_config_with_prompt(config_key: str, prompt_message: str, overwrite: bool = False) -> str | None:
+def _get_config_with_prompt(config_key: str, 
+                            prompt_message: str, 
+                            overwrite: bool = False, 
+                            forget: bool = False,
+                            ) -> str | None:
     """
     Retrieves a config value from a local file, prompting the user and saving it if missing.
     
@@ -168,6 +174,9 @@ def _get_config_with_prompt(config_key: str, prompt_message: str, overwrite: boo
         prompt_message: The message to display if prompting is needed.
         overwrite: If True, the function will always prompt for a new value,
                    even if one already exists.
+        forget: If True, credentials should not be sotred to system keyring, 
+                and configs should not be stored to program-wide plaintext stored in AppData. 
+
     
     Returns:
         The configuration value (str) if successful, or None if the user cancels.
@@ -234,6 +243,8 @@ def _get_config_with_prompt(config_key: str, prompt_message: str, overwrite: boo
         
         # --- Save updated configuration safely ---
         # Save the new value back to the file
+        if forget:
+            return new_value
         try:
             CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
             config[config_key] = new_value
@@ -251,8 +262,9 @@ def _get_config_with_prompt(config_key: str, prompt_message: str, overwrite: boo
 def _get_credential_with_prompt(service_name: str, 
                                 item_name: str, 
                                 prompt_message: str, 
-                                hide_password: bool = True, 
-                                overwrite: bool = False
+                                hide_password: bool = False, 
+                                overwrite: bool = False,
+                                forget: bool = False,
                                 ) -> str | None:
     """
     Retrieves a secret from the keyring, prompting the user and saving it if missing.
@@ -264,6 +276,8 @@ def _get_credential_with_prompt(service_name: str,
         hide_password: True if the input should be hidden (getpass), False otherwise (input).
         overwrite: If True, the function will always prompt for a new credential,
                    even if one already exists.
+        forget: If True, credentials should not be sotred to system keyring, 
+                and configs should not be stored to program-wide plaintext stored in AppData. 
 
     Examples:
         OVERWRITE = False
@@ -319,6 +333,10 @@ def _get_credential_with_prompt(service_name: str,
         # Normalize user input for empty-string passwords
         if new_credential in ("''", '""'):
             new_credential = ""
+
+        if forget:
+            return new_credential
+        
         # Store the new credential to keyring
         try:
             keyring.set_password(service_name, item_name, new_credential)
@@ -404,12 +422,12 @@ def get_eds_rest_api_credentials(plant_name: str, overwrite: bool = False, forge
     service_name = f"pipeline-eds-api-{plant_name}"
     overwrite = False
     #url = _get_config_with_prompt(config_key =f"{plant_name}_eds_api_url", prompt_message = f"Enter {plant_name} API URL (e.g., http://000.00.0.000:43084/api/v1)", overwrite=overwrite)
-    url = _get_eds_url_config_with_prompt(config_key = f"{plant_name}_eds_api_url", prompt_message = f"Enter {plant_name} EDS API URL (e.g., http://000.00.0.000:43084/api/v1, or just 000.00.0.000)", overwrite=overwrite)
-    eds_base_url = _get_eds_base_url_config_with_prompt(config_key = f"{plant_name}_eds_base_url", prompt_message =  f"Enter {plant_name} EDS BASE URL (e.g., http://000.00.0.000, or just 000.00.0.000)", overwrite=overwrite)
-    eds_rest_api_port = _get_credential_with_prompt(service_name = service_name, item_name = f"{plant_name}_eds_rest_api_port", prompt_message = f"Enter {plant_name} EDS REST API PORT (e.g., 43084)", overwrite=overwrite)
-    eds_rest_api_sub_path = _get_credential_with_prompt(service_name, item_name = f"{plant_name}_eds_rest_api_sub_path", prompt_message = f"Enter {plant_name} EDS REST API SUB PATH (e.g., 'api/v1')", overwrite=overwrite)
-    #eds_soap_api_port = _get_credential_with_prompt(service_name, item_name = f"{plant_name}_eds_soap_api_port", prompt_message = f"Enter {plant_name} EDS SOAP API PORT (e.g., 43080)", overwrite=overwrite)
-    #eds_soap_api_wsdl_path = _get_credential_with_prompt(f"{plant_name}_eds_soap_api_wsdl_path", prompt_message = f"Enter {plant_name} EDS SOAP API WSDL PATH (e.g., 'eds.wsdl')", overwrite=overwrite)
+    #url = _get_eds_url_config_with_prompt(config_key = f"{plant_name}_eds_api_url", prompt_message = f"Enter {plant_name} EDS API URL (e.g., http://000.00.0.000:43084/api/v1, or just 000.00.0.000)", overwrite=overwrite)
+    eds_base_url = _get_credential_with_prompt(service_name = service_name, item_name = f"{plant_name}_eds_base_url", prompt_message =  f"Enter {plant_name} EDS base url (e.g., http://000.00.0.000, or just 000.00.0.000)", overwrite=overwrite)
+    eds_rest_api_port = _get_config_with_prompt(config_key = f"{plant_name}_eds_rest_api_port", prompt_message = f"Enter {plant_name} EDS REST API PORT (e.g., 43084)", overwrite=overwrite)
+    eds_rest_api_sub_path = _get_config_with_prompt(config_key = f"{plant_name}_eds_rest_api_sub_path", prompt_message = f"Enter {plant_name} EDS REST API sub path (e.g., 'api/v1')", overwrite=overwrite)
+    eds_soap_api_port = _get_config_with_prompt(config_key = f"{plant_name}_eds_soap_api_port", prompt_message = f"Enter {plant_name} EDS SOAP API port (e.g., 43080)", overwrite=overwrite)
+    eds_soap_api_wsdl_path = _get_config_with_prompt(config_key = f"{plant_name}_eds_soap_api_wsdl_path", prompt_message = f"Enter {plant_name} EDS SOAP API WSDL path (e.g., 'eds.wsdl')", overwrite=overwrite)
     username = _get_credential_with_prompt(service_name = service_name, item_name = "username", prompt_message = f"Enter your EDS API username for {plant_name} (e.g. admin)", hide_password=False, overwrite=overwrite)
     password = _get_credential_with_prompt(service_name = service_name, item_name = "password", prompt_message = f"Enter your EDS API password for {plant_name} (e.g. '')", overwrite=overwrite)
     idcs_to_iess_suffix = _get_config_with_prompt(config_key = f"{plant_name}_eds_api_iess_suffix", prompt_message = f"Enter iess suffix for {plant_name} (e.g., .UNIT0@NET0)", overwrite=overwrite)
@@ -417,10 +435,25 @@ def get_eds_rest_api_credentials(plant_name: str, overwrite: bool = False, forge
     
     #if not all([username, password]):
     #    raise CredentialsNotFoundError(f"API credentials for '{plant_name}' not found. Please run the setup utility.")
-    eds_rest_api_sub_path = str(eds_rest_api_sub_path).rstrip("/").lstrip("/").replace(r"\\","/")
+    eds_rest_api_sub_path = str(eds_rest_api_sub_path).rstrip("/").lstrip("/").replace(r"\\","/").lower()
     eds_soap_api_port = int(eds_soap_api_port)
+    eds_soap_api_sub_path = eds_soap_api_wsdl_path
 
-    eds_rest_api_url = eds_base_url + ":" + str(eds_soap_api_port) + "/" + eds_rest_api_sub_path + "/"
+    # EDS REST API Pattern: url = f"http://{url}:43084/api/v1" # assume EDS patterna and port http and append api/v1 if user just puts in an IP
+    if eds_base_url and str(eds_soap_api_port) and eds_soap_api_sub_path:
+        eds_soap_api_url = eds_base_url + ":" + str(eds_soap_api_port) + "/" + eds_soap_api_sub_path + "/"
+    else:
+        logging.info("Not enough information provided to build: eds_soap_api_url.")
+        logging.info("Please rerun your last command or try something else.")
+        sys.exit()
+    
+    if eds_base_url and str(eds_rest_api_port) and eds_rest_api_sub_path:
+        eds_rest_api_url = eds_base_url + ":" + str(eds_rest_api_port) + "/" + eds_rest_api_sub_path + "/"
+    else:
+        logging.info("Not enough information provided to build: eds_rest_api_url.")
+        logging.info("Please rerun your last command or try something else.")
+        sys.exit()
+
     return {
         'url': eds_rest_api_url,
         'username': username,
@@ -487,15 +520,7 @@ def _is_likely_ip(url: str) -> bool:
     for part in parts:
         if not part.isdigit() or not (0 <= int(part) <= 255):
             return False
-    return True
-
-def _get_eds_url_config_with_prompt(config_key: str, prompt_message: str, overwrite: bool = False) -> str:
-    url = _get_config_with_prompt(config_key = config_key, prompt_message = prompt_message, overwrite=overwrite)
-    if url is None:
-        return None
-    if _is_likely_ip(url):
-        url = f"http://{url}:43084/api/v1" # assume EDS patterna and port http and append api/v1 if user just puts in an IP
-    return url
+    return True    
 
 def _get_eds_base_url_config_with_prompt(config_key: str, prompt_message: str, overwrite: bool = False) -> str:
     url = _get_config_with_prompt(config_key, prompt_message, overwrite=overwrite)
@@ -531,7 +556,6 @@ def frontload_build_all_credentials(forget : bool = False):
         - _get_credential_with_prompt() # stored to keyring
         
     Functions that store things are antithetical to 'forget':
-        - _get_eds_url_config_with_prompt() # a helper functon, which should be made defunct and it's place of use can be made more explicit about the constituent elements required. 
         - _get_eds_local_db_credentials() # helper functon
     """
     
