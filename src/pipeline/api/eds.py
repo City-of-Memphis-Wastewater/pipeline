@@ -21,7 +21,7 @@ from pipeline.workspace_manager import WorkspaceManager
 from pipeline import helpers
 from pipeline.decorators import log_function_call
 from pipeline.time_manager import TimeManager
-from pipeline.security_and_config import get_configurable_default_plant_name, _get_credential_with_prompt, _get_eds_base_url_config_with_prompt, _get_config_with_prompt, get_configurable_idcs_list, get_temporary_input
+from pipeline.security_and_config import get_configurable_default_plant_name, _get_credential_with_prompt, _get_base_url_config_with_prompt, _get_config_with_prompt, get_configurable_idcs_list, get_temporary_input
 
 
 if on_windows():
@@ -594,8 +594,8 @@ class EdsClient:
             else:
                 idcs = get_temporary_input()
         
-        base_url = _get_eds_base_url_config_with_prompt(f"{plant_name}_eds_base_url", f"Enter {plant_name} EDS BASE URL (e.g., http://000.00.0.000, or just 000.00.0.000)")
-        eds_soap_api_port = _get_credential_with_prompt(f"{plant_name}_eds_soap_api_port", f"Enter {plant_name} EDS SOAP API PORT (e.g., 43080)")
+        base_url = _get_base_url_config_with_prompt(service_name = f"{plant_name}_eds_base_url", prompt_message=f"Enter {plant_name} EDS base url (e.g., http://000.00.0.000, or just 000.00.0.000)")
+        eds_soap_api_port = _get_credential_with_prompt(service_name = f"{plant_name}_eds_soap_api_port", prompt_message=f"Enter {plant_name} EDS SOAP API port (e.g., 43080)")
         eds_soap_api_sub_path = _get_credential_with_prompt(f"{plant_name}_eds_soap_api_sub_path", f"Enter {plant_name} EDS SOAP API WSDL PATH (e.g., 'eds.wsdl')", default = cls.access_database_files_locally)
         username = _get_credential_with_prompt(service_name, "username", f"Enter your EDS API username for {plant_name} (e.g. admin)", hide_password=False)
         password = _get_credential_with_prompt(service_name, "password", f"Enter your EDS API password for {plant_name} (e.g. '')")
@@ -792,9 +792,9 @@ class EdsClient:
             plant_name = get_configurable_default_plant_name()
 
         service_name = EdsClient.get_service_name(plant_name = plant_name) # for secure credentials
-        base_url = _get_eds_base_url_config_with_prompt(f"{plant_name}_eds_base_url", f"Enter {plant_name} EDS BASE URL (e.g., http://000.00.0.000, or just 000.00.0.000)")
-        #eds_soap_api_port = _get_credential_with_prompt(f"{plant_name}_eds_soap_api_port", f"Enter {plant_name} EDS SOAP API PORT (e.g., 43080)")
-        #eds_soap_api_sub_path = _get_credential_with_prompt(f"{plant_name}_eds_soap_api_sub_path", f"Enter {plant_name} EDS SOAP API WSDL PATH (e.g., 'eds.wsdl')")
+        base_url = _get_base_url_config_with_prompt(service_name=f"{plant_name}_eds_base_url", prompt_message=f"Enter {plant_name} EDS base url (e.g., http://000.00.0.000, or just 000.00.0.000)")
+        #eds_soap_api_port = _get_credential_with_prompt(f"{plant_name}_eds_soap_api_port", f"Enter {plant_name} EDS SOAP API port (e.g., 43080)")
+        #eds_soap_api_sub_path = _get_credential_with_prompt(f"{plant_name}_eds_soap_api_sub_path", f"Enter {plant_name} EDS SOAP API WSDL sub path (e.g., 'eds.wsdl')")
         username = _get_credential_with_prompt(service_name, "username", f"Enter your EDS API username for {plant_name} (e.g. admin)", hide_password=False)
         password = _get_credential_with_prompt(service_name, "password", f"Enter your EDS API password for {plant_name} (e.g. '')")
         idcs_to_iess_suffix = _get_config_with_prompt(f"{plant_name}_eds_api_iess_suffix", f"Enter iess suffix for {plant_name} (e.g., .UNIT0@NET0)")

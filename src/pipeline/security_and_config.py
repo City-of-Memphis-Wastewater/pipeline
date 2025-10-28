@@ -99,7 +99,7 @@ def _prompt_for_value(prompt_message: str, hide_input: bool) -> str:
             return None
         return value
         
-    elif tkinter_is_available() and False:
+    elif tkinter_is_available():
         # 2. GUI Mode (Non-interactive fallback)
         from pipeline.guiconfig import gui_get_input
         typer.echo(f"\n --- Non-interactive process detected. Opening GUI prompt. --- ")
@@ -313,10 +313,13 @@ def _get_credential_with_prompt(service_name: str,
     if credential is None or overwrite: 
         # -- Assign value of new_credential --
         try:
+            print("Trying to prompt for credential ...")
             new_credential = _prompt_for_value(
                 prompt_message=prompt_message, 
                 hide_input=hide
             )
+            print("Success: prompted for credential.")
+            print(f"new_credential = {new_credential}")
         except (KeyboardInterrupt, EOFError):
             typer.echo("\n⚠️  Credential prompt cancelled.")
             return None
@@ -333,17 +336,19 @@ def _get_credential_with_prompt(service_name: str,
         # Normalize user input for empty-string passwords
         if new_credential in ("''", '""'):
             new_credential = ""
-
-    if forget:
-        return new_credential
+        credential = new_credential
         
-    if not forget:
-        # Store the new credential to keyring
-        try:
-            keyring.set_password(service_name, item_name, new_credential)
-        except Exception as e:
-            typer.echo(f"⚠️  Failed to store credential: {e}")
-            return None
+
+        if forget:
+            return credential
+            
+        if not forget:
+            # Store the new credential to keyring
+            try:
+                keyring.set_password(service_name, item_name, new_credential)
+            except Exception as e:
+                typer.echo(f"⚠️  Failed to store credential: {e}")
+                return None
 
         typer.echo("✅  Credential stored securely.")
 
@@ -426,7 +431,8 @@ def get_eds_rest_api_credentials(plant_name: str, overwrite: bool = False, forge
     #url = _get_config_with_prompt(config_key =f"{plant_name}_eds_api_url", prompt_message = f"Enter {plant_name} API URL (e.g., http://000.00.0.000:43084/api/v1)", overwrite=overwrite)
     #url = _get_eds_url_config_with_prompt(config_key = f"{plant_name}_eds_api_url", prompt_message = f"Enter {plant_name} EDS API URL (e.g., http://000.00.0.000:43084/api/v1, or just 000.00.0.000)", overwrite=overwrite)
     eds_base_url = _get_credential_with_prompt(service_name = service_name, item_name = f"{plant_name}_eds_base_url", prompt_message =  f"Enter {plant_name} EDS base url (e.g., http://000.00.0.000, or just 000.00.0.000)", overwrite=overwrite)
-    eds_rest_api_port = _get_config_with_prompt(config_key = f"{plant_name}_eds_rest_api_port", prompt_message = f"Enter {plant_name} EDS REST API PORT (e.g., 43084)", overwrite=overwrite)
+    eds_base_url = _get_base_url_config_with_prompt(service_name = f"{plant_name}_eds_base_url", prompt_message = f"Enter {plant_name} EDS base url (e.g., http://000.00.0.000, or just 000.00.0.000)")
+    eds_rest_api_port = _get_config_with_prompt(config_key = f"{plant_name}_eds_rest_api_port", prompt_message = f"Enter {plant_name} EDS REST API port (e.g., 43084)", overwrite=overwrite)
     eds_rest_api_sub_path = _get_config_with_prompt(config_key = f"{plant_name}_eds_rest_api_sub_path", prompt_message = f"Enter {plant_name} EDS REST API sub path (e.g., 'api/v1')", overwrite=overwrite)
     eds_soap_api_port = _get_config_with_prompt(config_key = f"{plant_name}_eds_soap_api_port", prompt_message = f"Enter {plant_name} EDS SOAP API port (e.g., 43080)", overwrite=overwrite)
     eds_soap_api_sub_path = _get_config_with_prompt(config_key = f"{plant_name}_eds_soap_api_sub_path", prompt_message = f"Enter {plant_name} EDS SOAP API WSDL path (e.g., 'eds.wsdl')", overwrite=overwrite)
@@ -531,8 +537,12 @@ def _is_likely_ip(url: str) -> bool:
             return False
     return True    
 
-def _get_eds_base_url_config_with_prompt(config_key: str, prompt_message: str, overwrite: bool = False) -> str:
-    url = _get_config_with_prompt(config_key, prompt_message, overwrite=overwrite)
+def _get_base_url_config_with_prompt(service_name: str, 
+                                         prompt_message: str, 
+                                         overwrite: bool = False
+                                         ) -> str:
+    #url = _get_config_with_prompt(config_key = service_name, prompt_message = prompt_message, overwrite=overwrite)
+    url = _get_credential_with_prompt(service_name=service_name, item_name="base_url",prompt_message=prompt_message, overwrite=overwrite)
     if url is None:
         return None
     if _is_likely_ip(url):

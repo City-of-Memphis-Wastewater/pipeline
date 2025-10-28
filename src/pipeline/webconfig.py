@@ -233,7 +233,14 @@ class WebPromptService(object):
             </div>
             
             <button type="submit">Submit Value</button>
-            <button type="submit">Cancel</button>
+        
+            <button type="submit" 
+                    name="action" 
+                    value="cancel" 
+                    formaction="/cancel_prompt"
+                    formnovalidate>
+                Cancel
+            </button>
         </form>
         
     </div>
@@ -267,6 +274,26 @@ class WebPromptService(object):
             delay_seconds=1.0 # Example: 1.0 seconds delay
         )
 
+    # Assuming a basic Python web framework (like Flask or similar)
+
+    @cherrypy.expose
+    #@app.route('/s ubmit_prompt', methods=['POST'])
+    def submit_prompt():
+        # Logic to process the form value and continue the pipeline
+        user_input = request.form.get('value')
+        # ... continue with user_input ...
+        pass
+
+    #@cherrypy.expose
+    @app.route('/cancel_prompt', methods=['POST'])
+    def cancel_prompt():
+        # Logic to signal to the pipeline that the user cancelled.
+        # This URL should return an appropriate response that your calling 
+        # Python code interprets as None (e.g., an empty response or a specific status code).
+        #
+        # How you return None depends on the framework/library you are using to launch
+        # the browser prompt, but the *action* is handled here.
+        return redirect(url_for('signal_cancel')) # Example: redirect to a "cancel" handler
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
