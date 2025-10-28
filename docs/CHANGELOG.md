@@ -11,6 +11,7 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 ## [0.3.59] - 2025-10-27
 
 Add: Cancel button for inputs sought with WebConfigurationManager.
+Fix: Upgrade pyhabitiat ^1.0.31, which should not block interactice terminal without good reason.
 
 ### Added:
 - SOAP API access demo function and bones added for EdsClient. Testing success for both of our EDS servers.
