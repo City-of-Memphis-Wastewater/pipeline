@@ -12,8 +12,6 @@ import sys
 from pyhabitat import on_termux, on_ish_alpine, interactive_terminal_is_available, tkinter_is_available, web_browser_is_available
 import pyhabitat as ph
 
-from pipeline.api.eds import EdsClient
-
 # Define a standard configuration path for your package
 CONFIG_PATH = Path.home() / ".pipeline-eds" / "config.json" ## configuration-example
 CONFIG_FILE = Path.home() / ".pipeline-eds" / "secure_config.json"
@@ -420,6 +418,9 @@ def get_configurable_default_plant_name(overwrite=False) -> str :
 
 def get_eds_rest_api_credentials(plant_name: str, overwrite: bool = False, forget: bool = False) -> Dict[str, str]:
     """Retrieves API credentials for a given plant, prompting if necessary."""
+
+    from pipeline.api.eds import EdsClient
+
     service_name = f"pipeline-eds-api-{plant_name}"
     overwrite = False
     #url = _get_config_with_prompt(config_key =f"{plant_name}_eds_api_url", prompt_message = f"Enter {plant_name} API URL (e.g., http://000.00.0.000:43084/api/v1)", overwrite=overwrite)
@@ -442,10 +443,10 @@ def get_eds_rest_api_credentials(plant_name: str, overwrite: bool = False, forge
 
     # EDS REST API Pattern: url = f"http://{url}:43084/api/v1" # assume EDS patterna and port http and append api/v1 if user just puts in an IP
     
-    #eds_soap_api_url = eds_base_url + ":" + str(eds_soap_api_port) + "/" + eds_soap_api_sub_path + "/"
-    eds_soap_api_url = EdsClient.get_soap_api_url(eds_base_url = eds_base_url,
-                                                        eds_soap_api_port = str(eds_soap_api_port),
-                                                        eds_soap_api_sub_path = eds_soap_api_sub_path)
+    # Comparable SOAP API function, for documentation:
+    eds_soap_api_url = EdsClient.get_soap_api_url(base_url = eds_base_url,
+                                                    eds_soap_api_port = str(eds_soap_api_port),
+                                                    eds_soap_api_sub_path = eds_soap_api_sub_path)
     if eds_soap_api_url is None:
         logging.info("Not enough information provided to build: eds_soap_api_url.")
         logging.info("Please rerun your last command or try something else.")
@@ -456,8 +457,8 @@ def get_eds_rest_api_credentials(plant_name: str, overwrite: bool = False, forge
                                         str(eds_rest_api_port),
                                         eds_rest_api_sub_path
                                         ) 
-        eds_rest_api_url = eds_base_url + ":" + str(eds_rest_api_port) + "/" + eds_rest_api_sub_path + "/"
-    else:
+    
+    if eds_rest_api_url is None:
         logging.info("Not enough information provided to build: eds_rest_api_url.")
         logging.info("Please rerun your last command or try something else.")
         sys.exit()
