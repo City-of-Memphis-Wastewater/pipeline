@@ -500,7 +500,11 @@ def get_external_api_credentials(party_name: str, overwrite: bool = False) -> Di
     
     Interchangeble terms username and client_id are offered independantly and redundantly in the returned dictionary.
     This can be confusing for API clients that have both terms that mean different things (such as the MissionClient, though in that case the client=id is not sourced from stored credentials.) 
-    The RJN API client was the first external API client, and it uses the term 'client_id' in place of the term 'username'."""
+    The RJN API client was the first external API client, and it uses the term 'client_id' in place of the term 'username'.
+    
+    #mission_api_creds = get_external_api_credentials(party_name = party_name) # this function needs to be rewords to clarify which arguments are needed, so that a single configurable popup window can be served.
+    THIS FUNCTION NEEDS TO BE REWORKED TO PASS IN EXPLICIT ARGUMENT KEYS WHICH ARE NEEDED FOR EACH CLIENT, SO THAT A SINGLE CONFIGURED POPUP WINDOW CAN BE SERVED 
+    """
     service_name = f"pipeline-external-api-{party_name}"
     url = SecurityAndConfig.get_config_with_prompt(config_key = service_name, prompt_message = f"Enter {party_name} API URL (e.g., http://api.example.com)", overwrite=overwrite)
     username = SecurityAndConfig.get_credential_with_prompt( service_name = service_name, item_name = "username", prompt_message = f"Enter the username AKA client_id for the {party_name} API",hide=False, overwrite=overwrite)
