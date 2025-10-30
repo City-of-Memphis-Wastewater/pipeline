@@ -484,16 +484,17 @@ def get_eds_rest_api_credentials(plant_name: str, overwrite: bool = False, forge
 
 def get_external_api_credentials(party_name: str, overwrite: bool = False) -> Dict[str, str]:
     """Retrieves API credentials for a given plant, prompting if necessary. 
+    This is a standardized form. Alternative recommendation: Use piecemeal item by item closer to point of sale.
+    This function demonstrates calling each element. You can reduce spaghetti and improve diverse specificity (without having to foresee keys like client or username) by not routing here.
+    
     Interchangeble terms username and client_id are offered independantly and redundantly in the returned dictionary.
     This can be confusing for API clients that have both terms that mean different things (such as the MissionClient, though in that case the client=id is not sourced from stored credentials.) 
     The RJN API client was the first external API client, and it uses the term 'client_id' in place of the term 'username'."""
     service_name = f"pipeline-external-api-{party_name}"
-    
     url = _get_config_with_prompt(config_key = service_name, prompt_message = f"Enter {party_name} API URL (e.g., http://api.example.com)", overwrite=overwrite)
     username = _get_credential_with_prompt( service_name = service_name, item_name = "username", prompt_message = f"Enter the username AKA client_id for the {party_name} API",hide=False, overwrite=overwrite)
     #client_id = _get_credential_with_prompt(service_name = service_name, item_name = "client_id", prompt_message = f"Enter the client_id for the {party_name} API",hide=False, overwrite=overwrite)
     password = _get_credential_with_prompt(service_name = service_name, item_name = "password", prompt_message = f"Enter the password for the {party_name} API", overwrite=overwrite)
-
     client_id = username
     
     #if not all([client_id, password]):
