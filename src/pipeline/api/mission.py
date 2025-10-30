@@ -44,11 +44,12 @@ class MissionClient:
     - If password-based login fails, consider requesting an API key, service account, or OAuth client credentials for automation. These are more stable and secure for non-interactive use.
     - Enable logging of HTTP responses during development to inspect error messages and status codes. This can help pinpoint authentication issues.
     """
+    true_base_url = "https://123scada.com/"
+    services_api_url = "https://123scada.com/Mc.Services/api"
+    report_api_url = "https://123scada.com/Mc.Reports/api"
 
     def __init__(self, token: str):
-        self.true_base_url = "https://123scada.com/"
-        self.services_api_url = "https://123scada.com/Mc.Services/api"
-        self.report_api_url = "https://123scada.com/Mc.Reports/api"
+        
         self.customer_id = None # Optional, set after login if needed
         self.headers = {"Authorization": f"Bearer {token}"}
         self.session = requests.Session() # session caputure, such that client.session is available
@@ -57,8 +58,13 @@ class MissionClient:
     #@instancemethod
     def set_services_api_url(self,base_url:str|None=None)-> None: # ASK FOR CLARITY ABOUT RETURN IF THERE IS NO RETURN INTENDED ON TERMINATING FUNCTION
         if base_url is None:
-            self.services_api_url = "https://123scada.com/Mc.Services/api"
+            #self.services_api_url = "https://123scada.com/Mc.Services/api"
+            self.services_api_url = MissionClient.services_api_url            
             return 
+        
+    @classmethod
+    def get_account_settings_url(cls):
+        return f"{cls.services_api_url}/account/GetSettings/?viewMode=1"
         
     @classmethod
     def login_via_signalr(services_api_url: str, customer_id: int, timeout: int = 10) -> "MissionClient":
@@ -242,8 +248,9 @@ class MissionClient:
         """
         pass
 
-    @classmethod
-    def get_customer_id_from_fresh_login(services_api_url:str,
+    @staticmethod
+    def get_customer_id_from_fresh_login(cls,
+                                         services_api_url:str,
                                          username:str,
                                          password:str
                                          )->int:  
@@ -257,7 +264,8 @@ class MissionClient:
         #client = MissionClient.login_to_session(services_api_url,username,password)
         client = MissionClient.login_to_session(services_api_url,username,password)
         # Example request:  
-        resp = client.session.get(f"{client.services_api_url}/account/GetSettings/?viewMode=1")
+        #resp = client.session.get(f"{client.services_api_url}/account/GetSettings/?viewMode=1")
+        resp = client.session.get(MissionClient.get_account_settings_url())
         customer_id = resp.json().get('user',{}).get('customerId',{})
         # Add log out, like 
         client.logout()
@@ -279,7 +287,8 @@ class MissionClient:
         #client = MissionClient.login_to_session(services_api_url,username,password)
 
         # Example request:  
-        resp = self.session.get(f"{self.services_api_url}/account/GetSettings/?viewMode=1")
+        #resp = self.session.get(f"{self.services_api_url}/account/GetSettings/?viewMode=1")
+        resp = self.session.get(MissionClient.get_account_settings_url())
         customer_id = resp.json().get('user',{}).get('customerId',{})
         self.customer_id = customer_id # for rigor, assign the attribute to the client - this varibale will now be known to the class instance, wthout returning the client object, and without handling any output
         return customer_id # only give back the raw value, allowing the use to assign the atttribue as they wish
@@ -354,7 +363,10 @@ def demo_retrieve_analog_data_and_save_csv()->dict:
     #workspace_manager = WorkspaceManager(workspace_name)
     
     service_name = f"pipeline-external-api-{party_name}"
-    services_api_url = SecurityAndConfig.get_config_with_prompt(config_key = 'Mission-base-url', prompt_message = f"Enter {party_name} API URL (e.g., http://api.example.com)", overwrite=overwrite)
+    services_api_url = MissionClient.services_api_url
+    true_base_url = MissionClient.true_base_url
+    #services_api_url = SecurityAndConfig.get_config_with_prompt(config_key = 'Mission-base-url', prompt_message = f"Enter {party_name} API URL (e.g., http://api.example.com)", overwrite=overwrite)
+    #services_api_url = SecurityAndConfig.get_config_with_prompt(config_key = 'Mission-base-url', prompt_message = f"Enter {party_name} API URL (e.g., http://api.example.com)", overwrite=overwrite)
     username = SecurityAndConfig.get_credential_with_prompt( service_name = service_name, item_name = "username", prompt_message = f"Enter the username AKA client_id for the {party_name} API",hide=False, overwrite=overwrite)
     #client_id = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = "client_id", prompt_message = f"Enter the client_id for the {party_name} API",hide=False, overwrite=overwrite)
     password = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = "password", prompt_message = f"Enter the password for the {party_name} API", overwrite=overwrite)
@@ -379,9 +391,8 @@ def demo_retrieve_analog_data_and_save_csv()->dict:
     #    Redundancy.compare(client.services_api_url == services_api_url) # already known 
     
     # Example request:  
-    resp = client.session.get(f"{services_api_url}/account/GetSettings/?viewMode=1")
-    print(resp)
-    client.customer_id = resp.json().get('user',{}).get('customerId',{})
+    
+    customer_id = client.get_customer_id_from_known_client()
 
     # Get the last 24 hours of analog table data
     end = datetime.now()
