@@ -148,7 +148,9 @@ class MissionClient:
         session.cookies.set("userBaseLayer", "fc", domain="123scada.com")
 
         timestamp = int(time.time() * 1000)
-        url = f"{services_api_url}/token?timestamp={timestamp}"
+        #url = f"{services_api_url}/token?timestamp={timestamp}"
+        url = f"https://123scada.com/Mc.Services/token?timestamp={timestamp}"
+        
 
         data = {
             "grant_type": "password",
@@ -352,7 +354,7 @@ def demo_retrieve_analog_data_and_save_csv()->dict:
     #workspace_manager = WorkspaceManager(workspace_name)
     
     service_name = f"pipeline-external-api-{party_name}"
-    services_api_url = SecurityAndConfig.get_config_with_prompt(config_key = 'Mission-services-api-url', prompt_message = f"Enter {party_name} API URL (e.g., http://api.example.com)", overwrite=overwrite)
+    services_api_url = SecurityAndConfig.get_config_with_prompt(config_key = 'Mission-base-url', prompt_message = f"Enter {party_name} API URL (e.g., http://api.example.com)", overwrite=overwrite)
     username = SecurityAndConfig.get_credential_with_prompt( service_name = service_name, item_name = "username", prompt_message = f"Enter the username AKA client_id for the {party_name} API",hide=False, overwrite=overwrite)
     #client_id = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = "client_id", prompt_message = f"Enter the client_id for the {party_name} API",hide=False, overwrite=overwrite)
     password = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = "password", prompt_message = f"Enter the password for the {party_name} API", overwrite=overwrite)
@@ -373,11 +375,12 @@ def demo_retrieve_analog_data_and_save_csv()->dict:
     
     '''
     from pipeline_tests.variable_clarity import Redundancy
-    if 'services_api_url' in locals() and hasattr(client,'services_api_url'): 
-        Redundancy.compare(client.services_api_url == services_api_url) # already known 
+    #if 'services_api_url' in locals() and hasattr(client,'services_api_url'): 
+    #    Redundancy.compare(client.services_api_url == services_api_url) # already known 
     
     # Example request:  
     resp = client.session.get(f"{services_api_url}/account/GetSettings/?viewMode=1")
+    print(resp)
     client.customer_id = resp.json().get('user',{}).get('customerId',{})
 
     # Get the last 24 hours of analog table data
