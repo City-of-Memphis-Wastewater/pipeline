@@ -212,35 +212,6 @@ class MissionClient:
 
         return MissionClient(token=token)
 
-    @staticmethod
-    def login_defunct(services_api_url: str, username: str, password: str, timeout: int = 10) -> "MissionClient":
-        """
-        Logs in to the 123scada API and returns a MissionClient instance
-        with a session containing the bearer token.
-        """
-        session = requests.Session()
-        session.verify = False  # disable SSL verification if necessary
-
-        payload = {
-            "username": username,
-            "password": password,
-            "type": "script"  # matches your network trace
-        }
-
-        # POST to the token endpoint (or /login)
-        response = session.post(f"{services_api_url}/login", json=payload, timeout=timeout)
-        response.raise_for_status()
-        json_response = response.json()
-
-        # Extract the bearer/session token
-        bearer_token = json_response.get("sessionId")
-        if not bearer_token:
-            raise ValueError("Login failed: sessionId not returned.")
-
-        # Create a MissionClient using this token
-        client = MissionClient(token=bearer_token, customer_id=json_response.get("customerId", 0))
-        return client
-
     #@instancemethod
     def logout(self):
         """
@@ -249,8 +220,7 @@ class MissionClient:
         pass
 
     @staticmethod
-    def get_customer_id_from_fresh_login(cls,
-                                         services_api_url:str,
+    def get_customer_id_from_fresh_login(services_api_url:str,
                                          username:str,
                                          password:str
                                          )->int:  
@@ -260,32 +230,25 @@ class MissionClient:
         Please maintain this function, even if it is not used. 
         It serves as the simplest tip-to-tail example of a log in to the client, with a variable retrieved.
         """  
-        # Assumes that you have already logged in to a client with your api_url,username,password
-        #client = MissionClient.login_to_session(services_api_url,username,password)
         client = MissionClient.login_to_session(services_api_url,username,password)
         # Example request:  
-        #resp = client.session.get(f"{client.services_api_url}/account/GetSettings/?viewMode=1")
         resp = client.session.get(MissionClient.get_account_settings_url())
         customer_id = resp.json().get('user',{}).get('customerId',{})
         # Add log out, like 
-        client.logout()
+        #client.logout()
         return customer_id # only give back the raw value, allowing the use to assign the atttribue as they wish
     
     #@instancemethod
     def get_customer_id_from_known_client(self:"MissionClient")->int:    
         """ 
-        self is client object of type "MissionClient"
-        """
-        # Assumes that you have already logged in to a client with your api_url,username,password
-        """
+        Assumes that you have already logged in with your api_url,username,password
+        
         # Infers log in has already happened, like this:
         client = MissionClient.login_to_session(services_api_url,username,password)
         
         # And then this function is called like this:
         client_id = client.get_customer_id_from_client_account_settings()
         """
-        #client = MissionClient.login_to_session(services_api_url,username,password)
-
         # Example request:  
         #resp = self.session.get(f"{self.services_api_url}/account/GetSettings/?viewMode=1")
         resp = self.session.get(MissionClient.get_account_settings_url())
@@ -363,14 +326,10 @@ def demo_retrieve_analog_data_and_save_csv()->dict:
     #workspace_manager = WorkspaceManager(workspace_name)
     
     service_name = f"pipeline-external-api-{party_name}"
-    services_api_url = MissionClient.services_api_url
-    true_base_url = MissionClient.true_base_url
-    #services_api_url = SecurityAndConfig.get_config_with_prompt(config_key = 'Mission-base-url', prompt_message = f"Enter {party_name} API URL (e.g., http://api.example.com)", overwrite=overwrite)
-    #services_api_url = SecurityAndConfig.get_config_with_prompt(config_key = 'Mission-base-url', prompt_message = f"Enter {party_name} API URL (e.g., http://api.example.com)", overwrite=overwrite)
-    username = SecurityAndConfig.get_credential_with_prompt( service_name = service_name, item_name = "username", prompt_message = f"Enter the username AKA client_id for the {party_name} API",hide=False, overwrite=overwrite)
-    #client_id = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = "client_id", prompt_message = f"Enter the client_id for the {party_name} API",hide=False, overwrite=overwrite)
-    password = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = "password", prompt_message = f"Enter the password for the {party_name} API", overwrite=overwrite)
     
+    true_base_url = MissionClient.true_base_url
+    username = SecurityAndConfig.get_credential_with_prompt( service_name = service_name, item_name = "username", prompt_message = f"Enter the username for the {party_name} API",hide=False, overwrite=overwrite)
+    password = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = "password", prompt_message = f"Enter the password for the {party_name} API", overwrite=overwrite)
     
     #client = MissionClient.login_to_session_with_api_credentials(mission_api_creds)
 
@@ -379,20 +338,8 @@ def demo_retrieve_analog_data_and_save_csv()->dict:
     #username = secrets_dict.get("contractor_apis", {}).get("Mission", {}).get("username")
     #password = secrets_dict.get("contractor_apis", {}).get("Mission", {}).get("password")
     
-    client = MissionClient.login_to_session(services_api_url,username,password)
-
-    '''
-    Logic check
-    provided as a function input for clarity # opportunity for static class variable
-    
-    '''
-    from pipeline_tests.variable_clarity import Redundancy
-    #if 'services_api_url' in locals() and hasattr(client,'services_api_url'): 
-    #    Redundancy.compare(client.services_api_url == services_api_url) # already known 
-    
-    # Example request:  
-    
-    customer_id = client.get_customer_id_from_known_client()
+    client = MissionClient.login_to_session(MissionClient.services_api_url,username,password)
+    client.customer_id = client.get_customer_id_from_known_client()
 
     # Get the last 24 hours of analog table data
     end = datetime.now()
