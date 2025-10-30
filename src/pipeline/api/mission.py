@@ -168,7 +168,8 @@ class MissionClient:
 
 
         client=MissionClient(token=token)
-        client.session = session # make it a non-temporary session.
+        if not hasattr(client,"session"):
+            client.session = session # make it a non-temporary session. # this breaks everything if i
         
         return client
 
