@@ -595,11 +595,11 @@ class EdsClient:
                 idcs = get_temporary_input()
         
         base_url = _get_base_url_config_with_prompt(service_name = f"{plant_name}_eds_base_url", prompt_message=f"Enter {plant_name} EDS base url (e.g., http://000.00.0.000, or just 000.00.0.000)")
-        eds_soap_api_port = _get_config_with_prompt(config_key = f"{plant_name}_eds_soap_api_port", prompt_message=f"Enter {plant_name} EDS SOAP API port (e.g., 43080)")
-        eds_soap_api_sub_path = _get_config_with_prompt(config_key = f"{plant_name}_eds_soap_api_sub_path", prompt_message=f"Enter {plant_name} EDS SOAP API WSDL PATH (e.g., 'eds.wsdl')")
-        username = _get_credential_with_prompt(service_name, "username", f"Enter your EDS API username for {plant_name} (e.g. admin)", hide=False)
-        password = _get_credential_with_prompt(service_name, "password", f"Enter your EDS API password for {plant_name} (e.g. '')")
-        idcs_to_iess_suffix = _get_config_with_prompt(f"{plant_name}_eds_api_iess_suffix", f"Enter iess suffix for {plant_name} (e.g., .UNIT0@NET0)")
+        eds_soap_api_port = SecurityAndConfig.get_config_with_prompt(config_key = f"{plant_name}_eds_soap_api_port", prompt_message=f"Enter {plant_name} EDS SOAP API port (e.g., 43080)")
+        eds_soap_api_sub_path = SecurityAndConfig.get_config_with_prompt(config_key = f"{plant_name}_eds_soap_api_sub_path", prompt_message=f"Enter {plant_name} EDS SOAP API WSDL PATH (e.g., 'eds.wsdl')")
+        username = SecurityAndConfig.get_credential_with_prompt(service_name, "username", f"Enter your EDS API username for {plant_name} (e.g. admin)", hide=False)
+        password = SecurityAndConfig.get_credential_with_prompt(service_name, "password", f"Enter your EDS API password for {plant_name} (e.g. '')")
+        idcs_to_iess_suffix = SecurityAndConfig.get_config_with_prompt(f"{plant_name}_eds_api_iess_suffix", f"Enter iess suffix for {plant_name} (e.g., .UNIT0@NET0)")
         
         #session = EdsClient.login_to_session_with_api_credentials(api_credentials)
         
@@ -793,11 +793,11 @@ class EdsClient:
 
         service_name = EdsClient.get_service_name(plant_name = plant_name) # for secure credentials
         base_url = _get_base_url_config_with_prompt(service_name=f"{plant_name}_eds_base_url", prompt_message=f"Enter {plant_name} EDS base url (e.g., http://000.00.0.000, or just 000.00.0.000)")
-        #eds_soap_api_port = _get_credential_with_prompt(f"{plant_name}_eds_soap_api_port", f"Enter {plant_name} EDS SOAP API port (e.g., 43080)")
-        #eds_soap_api_sub_path = _get_credential_with_prompt(f"{plant_name}_eds_soap_api_sub_path", f"Enter {plant_name} EDS SOAP API WSDL sub path (e.g., 'eds.wsdl')")
-        username = _get_credential_with_prompt(service_name, "username", f"Enter your EDS API username for {plant_name} (e.g. admin)", hide=False)
-        password = _get_credential_with_prompt(service_name, "password", f"Enter your EDS API password for {plant_name} (e.g. '')")
-        idcs_to_iess_suffix = _get_config_with_prompt(f"{plant_name}_eds_api_iess_suffix", f"Enter iess suffix for {plant_name} (e.g., .UNIT0@NET0)")
+        #eds_soap_api_port = SecurityAndConfig.get_credential_with_prompt(f"{plant_name}_eds_soap_api_port", f"Enter {plant_name} EDS SOAP API port (e.g., 43080)")
+        #eds_soap_api_sub_path = SecurityAndConfig.get_credential_with_prompt(f"{plant_name}_eds_soap_api_sub_path", f"Enter {plant_name} EDS SOAP API WSDL sub path (e.g., 'eds.wsdl')")
+        username = SecurityAndConfig.get_credential_with_prompt(service_name, "username", f"Enter your EDS API username for {plant_name} (e.g. admin)", hide=False)
+        password = SecurityAndConfig.get_credential_with_prompt(service_name, "password", f"Enter your EDS API password for {plant_name} (e.g. '')")
+        idcs_to_iess_suffix = SecurityAndConfig.get_config_with_prompt(f"{plant_name}_eds_api_iess_suffix", f"Enter iess suffix for {plant_name} (e.g., .UNIT0@NET0)")
         
         #session = EdsClient.login_to_session_with_api_credentials(api_credentials)
 

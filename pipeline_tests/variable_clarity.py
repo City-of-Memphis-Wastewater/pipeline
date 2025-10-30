@@ -1,5 +1,6 @@
 # src/pipeline_tests/variable_clarity.py
 import sys
+import logging
 
 class Redundancy:
     
@@ -61,19 +62,21 @@ class Redundancy:
             
     def compare(match:bool=True):
         if not match:
-            print("The rigorously documented redundant variable does not match. Beware.")
+            print("Redundancy.compare(): The rigorously documented redundant variable does not match. Beware.")
             sys.exit()
 
-class MaintainUsageStatus():
-    def __init__():
+class FindThatFunctionInTheCodeBase:
+    pass
+class MaintainUsageStatus:
+    def __init__(self):
         
         self.status = ""
         
         from pipeline_tests.variable_clarity import compare_routes
         
         if FindThatFunctionInTheCodeBase(function=compare_routes).status() != (compare_routes.__dict__.status):
-            logger.info("Your function {compare_routes.__name__} is registered as being used but is not being used. ")
-            logger.info("Your function {compare_routes.__name__} is not being used but is registered as being used.")
+            logging.info("Your function {compare_routes.__name__} is registered as being used but is not being used. ")
+            logging.info("Your function {compare_routes.__name__} is not being used but is registered as being used.")
                 
 if __name__ == "__main__":
     status = MaintainUsageStatus()

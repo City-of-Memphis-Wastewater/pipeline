@@ -8,7 +8,7 @@ import json
 import typer
 from requests.exceptions import Timeout
 
-from pipeline.security_and_config import get_external_api_credentials
+from pipeline.security_and_config import SecurityAndConfig, get_external_api_credentials
 from pipeline_tests.variable_clarity import Redundancy
 
 class MissionLoginException(Exception):
@@ -107,7 +107,7 @@ class MissionClient:
         session = None
         try:
             client = MissionClient.login_to_session(
-                api_url=api_credentials.get("url"),# + "/api",
+                api_url=api_credentials.get("url"),# + "/api", # services url
                 username=api_credentials.get("username"),
                 password=api_credentials.get("password"),
                 timeout=10 # Add a 10-second timeout to the request
@@ -148,7 +148,7 @@ class MissionClient:
         session.cookies.set("userBaseLayer", "fc", domain="123scada.com")
 
         timestamp = int(time.time() * 1000)
-        url = f"{api_url}/token?timestamp={timestamp}"
+        url = f"{services_api_url}/token?timestamp={timestamp}"
 
         data = {
             "grant_type": "password",
@@ -205,7 +205,7 @@ class MissionClient:
         return MissionClient(token=token)
 
     @staticmethod
-    def login_defunct(api_url: str, username: str, password: str, timeout: int = 10) -> "MissionClient":
+    def login_defunct(services_api_url: str, username: str, password: str, timeout: int = 10) -> "MissionClient":
         """
         Logs in to the 123scada API and returns a MissionClient instance
         with a session containing the bearer token.
@@ -220,7 +220,7 @@ class MissionClient:
         }
 
         # POST to the token endpoint (or /login)
-        response = session.post(f"{api_url}/login", json=payload, timeout=timeout)
+        response = session.post(f"{services_api_url}/login", json=payload, timeout=timeout)
         response.raise_for_status()
         json_response = response.json()
 
@@ -233,7 +233,7 @@ class MissionClient:
         client = MissionClient(token=bearer_token, customer_id=json_response.get("customerId", 0))
         return client
 
-    @instancemethod
+    #@instancemethod
     def logout(self):
         """
         client.logout()
@@ -336,32 +336,35 @@ class MissionClient:
 
 
 
-def demo_retrieve_analog_data_and_save_csv(services_api_url:str=None)->dict:
+def demo_retrieve_analog_data_and_save_csv()->dict:
     #from pipeline.env import SecretConfig
     #from pipeline.workspace_manager import WorkspaceManager
+    overwrite=False
     typer.echo("Running: pipeline.api.mission.demo_retrieve_analog_data_and_save_csv()...")
     typer.echo("Running: Calling 123scada.com using the Mission Client ...")
-    #mission_api_creds = get_external_api_credentials("TestMission")
+    
     party_name = "Mission"
     mission_api_creds = get_external_api_credentials(party_name = party_name)
     #mission_api_creds["username"] = mission_api_creds["client_id"] # rectify the way this is stored for RJN
+    mission_api_creds["services_api_url"] = mission_api_creds["url"] # rectify the way this is stored for RJN
     
     #workspace_name = WorkspaceManager.identify_default_workspace_name()
     #workspace_manager = WorkspaceManager(workspace_name)
     
     service_name = f"pipeline-external-api-{party_name}"
-    api_url_full = _get_config_with_prompt(config_key = service_name, prompt_message = f"Enter {party_name} API URL (e.g., http://api.example.com)", overwrite=overwrite)
-    username = _get_credential_with_prompt( service_name = service_name, item_name = "username", prompt_message = f"Enter the username AKA client_id for the {party_name} API",hide=False, overwrite=overwrite)
-    #client_id = _get_credential_with_prompt(service_name = service_name, item_name = "client_id", prompt_message = f"Enter the client_id for the {party_name} API",hide=False, overwrite=overwrite)
-    password = _get_credential_with_prompt(service_name = service_name, item_name = "password", prompt_message = f"Enter the password for the {party_name} API", overwrite=overwrite)
+    services_api_url = SecurityAndConfig.get_config_with_prompt(config_key = 'Mission-services-api-url', prompt_message = f"Enter {party_name} API URL (e.g., http://api.example.com)", overwrite=overwrite)
+    username = SecurityAndConfig.get_credential_with_prompt( service_name = service_name, item_name = "username", prompt_message = f"Enter the username AKA client_id for the {party_name} API",hide=False, overwrite=overwrite)
+    #client_id = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = "client_id", prompt_message = f"Enter the client_id for the {party_name} API",hide=False, overwrite=overwrite)
+    password = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = "password", prompt_message = f"Enter the password for the {party_name} API", overwrite=overwrite)
     
     
-    client = MissionClient.login_to_session_with_api_credentials(mission_api_creds)
+    #client = MissionClient.login_to_session_with_api_credentials(mission_api_creds)
 
     #secrets_dict = SecretConfig.load_config(secrets_file_path = workspace_manager.get_secrets_file_path())
     #api_url = secrets_dict.get("contractor_apis", {}).get("Mission", {}).get("url").rstrip("/")
     #username = secrets_dict.get("contractor_apis", {}).get("Mission", {}).get("username")
     #password = secrets_dict.get("contractor_apis", {}).get("Mission", {}).get("password")
+    
     client = MissionClient.login_to_session(services_api_url,username,password)
 
     '''
@@ -370,7 +373,8 @@ def demo_retrieve_analog_data_and_save_csv(services_api_url:str=None)->dict:
     
     '''
     from pipeline_tests.variable_clarity import Redundancy
-    Redundancy.compare(client.services_api_url == services_api_url) # already known 
+    if 'services_api_url' in locals() and hasattr(client,'services_api_url'): 
+        Redundancy.compare(client.services_api_url == services_api_url) # already known 
     
     # Example request:  
     resp = client.session.get(f"{services_api_url}/account/GetSettings/?viewMode=1")

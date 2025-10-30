@@ -17,6 +17,311 @@ CONFIG_PATH = Path.home() / ".pipeline-eds" / "config.json" ## configuration-exa
 CONFIG_FILE = Path.home() / ".pipeline-eds" / "secure_config.json"
 KEY_FILE = Path.home() / ".pipeline-eds" / ".key"
 
+
+class SecurityAndConfig:
+    def __dict__(self):
+        pass
+    def __init__(self):
+        pass
+
+    def _prompt_for_value(prompt_message: str, hide_input: bool) -> str:
+        """Handles prompting with a fallback from CLI to GUI.
+        ### **Platform Quirk: Input Cancellation ({Ctrl}+C)**
+        Due to the underlying POSIX terminal handling on Linux and Termux,
+        using {Ctrl}+C to cancel an input prompt will require the user
+        to press {Enter} (or {Return}) immediately afterward to fully 
+        submit the interrupt and abort the operation. 
+        This behavior, the Enter key being necessary to finalize the interruption,
+        is expected for POSIX systems, when using either the 
+        `typer`/`click` framework, Python's built in input() function, or any alternative.
+        This extra step is necessary due to the standard input terminal behavior
+        in "cooked mode.".
+        On  Windows, however, just {Ctrl}+C is expected to successfully perform a keyboard interrupt..
+        """
+        # Block these off for testing the browser_get_input, which is not expeceted in this iteration but is good practice for future proofing a hypothetical console-less GUI 
+        
+        value = None # ensure safe defeault so that the except block handles properly, namely if the user cancels the typer.prompt() input with control+ c
+        
+        if tkinter_is_available():
+            # 2. GUI Mode (Non-interactive fallback)
+            from pipeline.guiconfig import gui_get_input
+            typer.echo(f"\n --- Non-interactive process detected. Opening GUI prompt. --- ")
+            value = gui_get_input(prompt_message, hide_input)
+            
+            if value is not None:
+                return value
+        
+        elif interactive_terminal_is_available():
+            try:
+                # 1. CLI Mode (Interactive)
+                typer.echo(f"\n --- Use CLI input --- ")
+                if hide_input:
+                    try:
+                        from rich.prompt import Prompt
+                        def secure_prompt(msg: str) -> str:
+                            return Prompt.ask(msg, password=True)
+                    except ImportError:
+                        def secure_prompt(msg: str) -> str:
+                            return typer.prompt(msg, hide_input=True)
+                    value = secure_prompt(prompt_message)
+                else:
+                    value = typer.prompt(prompt_message, hide_input=False)
+
+            except KeyboardInterrupt:
+                typer.echo("\nInput cancelled by user.")
+                return None
+            return value
+            
+
+        elif web_browser_is_available(): # 3. Check for browser availability
+            # 3. Browser Mode (Web Browser as a fallback)
+            from pipeline.webconfig import WebConfigurationManager, browser_get_input
+            typer.echo(f"\n --- TKinter nor console is not available to handle the configuration prompt. Opening browser-based configuration prompt --- ")
+            with WebConfigurationManager():
+                # We use the prompt message as the identifier key for the web service
+                # because the true config_key is not available in this function's signature.
+                value = browser_get_input(
+                    key=prompt_message, 
+                    prompt_message=prompt_message,
+                    hide_input=hide_input # <-- Passes input visibility to web config
+                )
+
+            if value is not None:
+                return value
+
+        # If all other options fail
+        raise CredentialsNotFoundError(
+            f"Configuration for '{prompt_message}' is missing or cancelled. "
+            f"The program would cancel itself if neither an interactive terminal, nor a GUI display, nor a web browser is available. "
+            f"Please use a configuration utility or provide the value programmatically."
+        )
+
+    def get_temporary_input(cls,prompt_message: str | None) -> str|None :
+        """
+        Seek a temporary user input value, not to be stored.
+        Input options include console, pop-up window, or web browser input field, depending on what is available.
+        """ 
+        typer.echo(f"\n --- One-time temporary value required --- ")
+        typer.echo("You may cancel the input to avoid entering a value.")
+
+        try:
+            new_value = SecurityAndConfig._prompt_for_value(
+                prompt_message=prompt_message,
+                hide_input=False
+            )
+        except (KeyboardInterrupt, EOFError):
+            typer.echo("\n⚠️  Configuration prompt cancelled.")
+            return None
+        except Exception as e:
+            typer.echo(f"\n⚠️  Unexpected error during prompt: {e}")
+            return None
+        if new_value is None:
+            typer.echo("⚠️  No input provided. Returning None.")
+            return None
+        elif new_value == "":
+            if ph.interactive_terminal_is_available() and not typer.confirm("⚠️  An empty string was provided. Are you sure about this?", default=True):
+                return None
+        # Normalize user input for empty-string passwords
+        elif new_value in ("''", '""'):
+            new_value = ""
+        return new_value
+
+    @staticmethod
+    def get_config_with_prompt(config_key: str, 
+                                prompt_message: str, 
+                                overwrite: bool = False, 
+                                forget: bool = False,
+                                ) -> str | None:
+        """
+        Retrieves a config value from a local file, prompting the user and saving it if missing.
+        
+        Args:
+            config_key: The key in the config file.
+            prompt_message: The message to display if prompting is needed.
+            overwrite: If True, the function will always prompt for a new value,
+                    even if one already exists.
+            forget: If True, credentials should not be stored to system keyring, 
+                    and configs should not be stored to program-wide plaintext stored in AppData. 
+
+        
+        Returns:
+            The configuration value (str) if successful, or None if the user cancels.
+        
+        """
+
+        config = {}
+
+        # --- Load existing config file safely ---
+        if CONFIG_PATH.exists():
+            try:
+                with open(CONFIG_PATH, "r") as f:
+                    config = json.load(f)
+            except json.JSONDecodeError:
+                typer.echo(f"⚠️  Warning: Existing config file '{CONFIG_PATH.name}' is corrupted.")
+                if not typer.confirm("Do you want to reset the corrupted file to an empty file?", default=False):
+                    typer.echo("-> Keeping existing corrupted file. Returning None for the requested value.")
+                    return None
+                typer.echo("-> Resetting config file...")
+                config = {}
+            except Exception as e:
+                typer.echo(f"⚠️  Failed to read config file: {e}")
+                return None
+            
+        # Get the value from the config file, which will be None if not found
+        value = config.get(config_key)
+        
+        # --- Handle existing value and overwrite logic ---
+        # Check if a value exists and if the user wants to be sure about overwriting
+        if value is not None and overwrite:
+            typer.echo(f"\nValue for '{prompt_message}' is already set:")
+            typer.echo(f"  '{value}'")
+            if not typer.confirm("Do you want to overwrite it?", default=False):
+                typer.echo("-> Keeping existing value.")
+                return value
+
+        # --- Prompt for new value if needed ---
+        # If the value is None (not found), or if a confirmation to overwrite was given,
+        # prompt for a new value
+        if value is None or overwrite:
+            typer.echo(f"\n --- One-time configuration required --- ")
+            typer.echo("You may cancel the input to avoid entering a value.")
+
+            try:
+                new_value = SecurityAndConfig._prompt_for_value(
+                    prompt_message=prompt_message,
+                    hide_input=False
+                )
+            except (KeyboardInterrupt, EOFError):
+                typer.echo("\n⚠️  Configuration prompt cancelled.")
+                return None
+            except Exception as e:
+                typer.echo(f"\n⚠️  Unexpected error during prompt: {e}")
+                return None
+            if new_value is None:
+                typer.echo("⚠️  No input provided. Configuration not saved.")
+                return None
+            # Normalize user input for empty-string passwords
+            elif new_value in ("''", '""'):
+                new_value = ""
+            elif new_value == "":
+                if ph.interactive_terminal_is_available() and not typer.confirm("⚠️  An empty string was provided. Are you sure about this?", default=True):
+                    return None
+            
+            # --- Save updated configuration safely ---
+            # Save the new value back to the file
+            if forget:
+                return new_value
+            try:
+                CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
+                config[config_key] = new_value
+                with open(CONFIG_PATH, "w") as f:
+                    json.dump(config, f, indent=4)
+                typer.echo("Configuration stored.")
+            except Exception as e:
+                typer.echo(f"⚠️  Failed to save configuration: {e}")
+                return None
+            return new_value
+        
+        # --- Return existing value if no overwrite requested ---
+        return value
+
+    @staticmethod
+    def get_credential_with_prompt(service_name: str, 
+                                    item_name: str, 
+                                    prompt_message: str, 
+                                    hide: bool = False, 
+                                    overwrite: bool = False,
+                                    forget: bool = False,
+                                    ) -> str | None:
+        """
+        Retrieves a secret from the keyring, prompting the user and saving it if missing.
+        
+        Args:
+            service_name: The keyring service name.
+            item_name: The credential key.
+            prompt_message: The message to display if prompting is needed.
+            hide: True if the input should be hidden (getpass), False otherwise (input).
+            overwrite: If True, the function will always prompt for a new credential,
+                    even if one already exists.
+            forget: If True, credentials should not be sotred to system keyring, 
+                    and configs should not be stored to program-wide plaintext stored in AppData. 
+
+        Examples:
+            OVERWRITE = False
+            HIDEPASSWORD = False 
+
+            service_name: service_name = f"pipeline-eds-db-{plant_name}"
+            item_name: item_name = "username"
+            prompt_message: prompt_message = f"Enter the IP address for your SOAP API (e.g., XXX.XX.X.XXX)" # no colon necessary, managed internally.
+            hide_input: hide_input = HIDEPASSWORD 
+            overwrite: overwrite = OVERWRITE
+
+        Returns:
+            The configuration value (str) if successful, or None if the user cancels.
+        
+        """
+
+        credential = keyring.get_password(service_name, item_name)
+        
+        # Check if a credential exists and if the user wants to be sure about overwriting
+        if credential is not None and overwrite:
+            typer.echo(f"\nCredential for '{prompt_message}' already exists:")
+            if hide:
+                typer.echo(f"  '***'")
+            else:
+                typer.echo(f"  '{credential}'")
+            
+            if not typer.confirm("Do you want to overwrite it?", default=False):
+                typer.echo("-> Keeping existing credential.")
+                return credential
+
+        # If the credential is None (not found), or if a confirmation to overwrite was given,
+        # prompt for a new value.
+        if credential is None or overwrite: 
+            # -- Assign value of new_credential --
+            try:
+                print("Trying to prompt for credential ...")
+                new_credential = Security._prompt_for_value(
+                    prompt_message=prompt_message, 
+                    hide_input=hide
+                )
+                print("Success: prompted for credential.")
+                print(f"new_credential = {new_credential}")
+            except (KeyboardInterrupt, EOFError):
+                typer.echo("\n⚠️  Credential prompt cancelled.")
+                return None
+            except Exception as e:
+                typer.echo(f"\n⚠️  Unexpected error during credential prompt: {e}")
+                return None
+
+            if new_credential is None:
+                typer.echo("⚠️  No input provided. Credential not saved.")
+                return None
+            elif new_credential == "":
+                if ph.interactive_terminal_is_available() and not typer.confirm("⚠️  An empty string was provided. Are you sure about this?", default=True):
+                    return None
+            # Normalize user input for empty-string passwords
+            if new_credential in ("''", '""'):
+                new_credential = ""
+            credential = new_credential
+            
+
+            if forget:
+                return credential
+                
+            if not forget:
+                # Store the new credential to keyring
+                try:
+                    keyring.set_password(service_name, item_name, new_credential)
+                except Exception as e:
+                    typer.echo(f"⚠️  Failed to store credential: {e}")
+                    return None
+
+            typer.echo("✅  Credential stored securely.")
+
+        # Return existing credential if no overwrite
+        return credential
+
 def init_security():
     if on_termux() or on_ish_alpine():
         try: # mid refactor, try the new function first
@@ -61,301 +366,7 @@ def configure_filebased_secure_config():
         pass
 
 
-def _prompt_for_value(prompt_message: str, hide_input: bool) -> str:
-    """Handles prompting with a fallback from CLI to GUI.
-    ### **Platform Quirk: Input Cancellation ({Ctrl}+C)**
-    Due to the underlying POSIX terminal handling on Linux and Termux,
-    using {Ctrl}+C to cancel an input prompt will require the user
-    to press {Enter} (or {Return}) immediately afterward to fully 
-    submit the interrupt and abort the operation. 
-    This behavior, the Enter key being necessary to finalize the interruption,
-     is expected for POSIX systems, when using either the 
-    `typer`/`click` framework, Python's built in input() function, or any alternative.
-    This extra step is necessary due to the standard input terminal behavior
-    in "cooked mode.".
-    On  Windows, however, just {Ctrl}+C is expected to successfully perform a keyboard interrupt..
-    """
-    # Block these off for testing the browser_get_input, which is not expeceted in this iteration but is good practice for future proofing a hypothetical console-less GUI 
-    
-    value = None # ensure safe defeault so that the except block handles properly, namely if the user cancels the typer.prompt() input with control+ c
-    
-    if tkinter_is_available():
-        # 2. GUI Mode (Non-interactive fallback)
-        from pipeline.guiconfig import gui_get_input
-        typer.echo(f"\n --- Non-interactive process detected. Opening GUI prompt. --- ")
-        value = gui_get_input(prompt_message, hide_input)
-        
-        if value is not None:
-            return value
-    
-    elif interactive_terminal_is_available():
-        try:
-            # 1. CLI Mode (Interactive)
-            typer.echo(f"\n --- Use CLI input --- ")
-            if hide_input:
-                try:
-                    from rich.prompt import Prompt
-                    def secure_prompt(msg: str) -> str:
-                        return Prompt.ask(msg, password=True)
-                except ImportError:
-                    def secure_prompt(msg: str) -> str:
-                        return typer.prompt(msg, hide_input=True)
-                value = secure_prompt(prompt_message)
-            else:
-                value = typer.prompt(prompt_message, hide_input=False)
 
-        except KeyboardInterrupt:
-            typer.echo("\nInput cancelled by user.")
-            return None
-        return value
-        
-
-    elif web_browser_is_available(): # 3. Check for browser availability
-        # 3. Browser Mode (Web Browser as a fallback)
-        from pipeline.webconfig import WebConfigurationManager, browser_get_input
-        typer.echo(f"\n --- TKinter nor console is not available to handle the configuration prompt. Opening browser-based configuration prompt --- ")
-        with WebConfigurationManager():
-            # We use the prompt message as the identifier key for the web service
-            # because the true config_key is not available in this function's signature.
-            value = browser_get_input(
-                key=prompt_message, 
-                prompt_message=prompt_message,
-                hide_input=hide_input # <-- Passes input visibility to web config
-            )
-
-        if value is not None:
-            return value
-
-    # If all other options fail
-    raise CredentialsNotFoundError(
-        f"Configuration for '{prompt_message}' is missing or cancelled. "
-        f"The program would cancel itself if neither an interactive terminal, nor a GUI display, nor a web browser is available. "
-        f"Please use a configuration utility or provide the value programmatically."
-    )
-
-def get_temporary_input(prompt_message: str | None) -> str|None :
-    """
-    Seek a temporary user input value, not to be stored.
-    Input options include console, pop-up window, or web browser input field, depending on what is available.
-    """ 
-    typer.echo(f"\n --- One-time temporary value required --- ")
-    typer.echo("You may cancel the input to avoid entering a value.")
-
-    try:
-        new_value = _prompt_for_value(
-            prompt_message=prompt_message,
-            hide_input=False
-        )
-    except (KeyboardInterrupt, EOFError):
-        typer.echo("\n⚠️  Configuration prompt cancelled.")
-        return None
-    except Exception as e:
-        typer.echo(f"\n⚠️  Unexpected error during prompt: {e}")
-        return None
-    if new_value is None:
-        typer.echo("⚠️  No input provided. Returning None.")
-        return None
-    elif new_value == "":
-        if ph.interactive_terminal_is_available() and not typer.confirm("⚠️  An empty string was provided. Are you sure about this?", default=True):
-            return None
-    # Normalize user input for empty-string passwords
-    elif new_value in ("''", '""'):
-        new_value = ""
-    return new_value
-
-def _get_config_with_prompt(config_key: str, 
-                            prompt_message: str, 
-                            overwrite: bool = False, 
-                            forget: bool = False,
-                            ) -> str | None:
-    """
-    Retrieves a config value from a local file, prompting the user and saving it if missing.
-    
-    Args:
-        config_key: The key in the config file.
-        prompt_message: The message to display if prompting is needed.
-        overwrite: If True, the function will always prompt for a new value,
-                   even if one already exists.
-        forget: If True, credentials should not be stored to system keyring, 
-                and configs should not be stored to program-wide plaintext stored in AppData. 
-
-    
-    Returns:
-        The configuration value (str) if successful, or None if the user cancels.
-    
-    """
-
-    config = {}
-
-     # --- Load existing config file safely ---
-    if CONFIG_PATH.exists():
-        try:
-            with open(CONFIG_PATH, "r") as f:
-                config = json.load(f)
-        except json.JSONDecodeError:
-            typer.echo(f"⚠️  Warning: Existing config file '{CONFIG_PATH.name}' is corrupted.")
-            if not typer.confirm("Do you want to reset the corrupted file to an empty file?", default=False):
-                typer.echo("-> Keeping existing corrupted file. Returning None for the requested value.")
-                return None
-            typer.echo("-> Resetting config file...")
-            config = {}
-        except Exception as e:
-            typer.echo(f"⚠️  Failed to read config file: {e}")
-            return None
-        
-    # Get the value from the config file, which will be None if not found
-    value = config.get(config_key)
-    
-    # --- Handle existing value and overwrite logic ---
-    # Check if a value exists and if the user wants to be sure about overwriting
-    if value is not None and overwrite:
-        typer.echo(f"\nValue for '{prompt_message}' is already set:")
-        typer.echo(f"  '{value}'")
-        if not typer.confirm("Do you want to overwrite it?", default=False):
-            typer.echo("-> Keeping existing value.")
-            return value
-
-    # --- Prompt for new value if needed ---
-    # If the value is None (not found), or if a confirmation to overwrite was given,
-    # prompt for a new value
-    if value is None or overwrite:
-        typer.echo(f"\n --- One-time configuration required --- ")
-        typer.echo("You may cancel the input to avoid entering a value.")
-
-        try:
-            new_value = _prompt_for_value(
-                prompt_message=prompt_message,
-                hide_input=False
-            )
-        except (KeyboardInterrupt, EOFError):
-            typer.echo("\n⚠️  Configuration prompt cancelled.")
-            return None
-        except Exception as e:
-            typer.echo(f"\n⚠️  Unexpected error during prompt: {e}")
-            return None
-        if new_value is None:
-            typer.echo("⚠️  No input provided. Configuration not saved.")
-            return None
-        # Normalize user input for empty-string passwords
-        elif new_value in ("''", '""'):
-            new_value = ""
-        elif new_value == "":
-            if ph.interactive_terminal_is_available() and not typer.confirm("⚠️  An empty string was provided. Are you sure about this?", default=True):
-                return None
-        
-        # --- Save updated configuration safely ---
-        # Save the new value back to the file
-        if forget:
-            return new_value
-        try:
-            CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
-            config[config_key] = new_value
-            with open(CONFIG_PATH, "w") as f:
-                json.dump(config, f, indent=4)
-            typer.echo("Configuration stored.")
-        except Exception as e:
-            typer.echo(f"⚠️  Failed to save configuration: {e}")
-            return None
-        return new_value
-    
-    # --- Return existing value if no overwrite requested ---
-    return value
-
-def _get_credential_with_prompt(service_name: str, 
-                                item_name: str, 
-                                prompt_message: str, 
-                                hide: bool = False, 
-                                overwrite: bool = False,
-                                forget: bool = False,
-                                ) -> str | None:
-    """
-    Retrieves a secret from the keyring, prompting the user and saving it if missing.
-    
-    Args:
-        service_name: The keyring service name.
-        item_name: The credential key.
-        prompt_message: The message to display if prompting is needed.
-        hide: True if the input should be hidden (getpass), False otherwise (input).
-        overwrite: If True, the function will always prompt for a new credential,
-                   even if one already exists.
-        forget: If True, credentials should not be sotred to system keyring, 
-                and configs should not be stored to program-wide plaintext stored in AppData. 
-
-    Examples:
-        OVERWRITE = False
-        HIDEPASSWORD = False 
-
-        service_name: service_name = f"pipeline-eds-db-{plant_name}"
-        item_name: item_name = "username"
-        prompt_message: prompt_message = f"Enter the IP address for your SOAP API (e.g., XXX.XX.X.XXX)" # no colon necessary, managed internally.
-        hide_input: hide_input = HIDEPASSWORD 
-        overwrite: overwrite = OVERWRITE
-
-    Returns:
-        The configuration value (str) if successful, or None if the user cancels.
-    
-    """
-
-    credential = keyring.get_password(service_name, item_name)
-    
-    # Check if a credential exists and if the user wants to be sure about overwriting
-    if credential is not None and overwrite:
-        typer.echo(f"\nCredential for '{prompt_message}' already exists:")
-        if hide:
-            typer.echo(f"  '***'")
-        else:
-            typer.echo(f"  '{credential}'")
-        
-        if not typer.confirm("Do you want to overwrite it?", default=False):
-            typer.echo("-> Keeping existing credential.")
-            return credential
-
-    # If the credential is None (not found), or if a confirmation to overwrite was given,
-    # prompt for a new value.
-    if credential is None or overwrite: 
-        # -- Assign value of new_credential --
-        try:
-            print("Trying to prompt for credential ...")
-            new_credential = _prompt_for_value(
-                prompt_message=prompt_message, 
-                hide_input=hide
-            )
-            print("Success: prompted for credential.")
-            print(f"new_credential = {new_credential}")
-        except (KeyboardInterrupt, EOFError):
-            typer.echo("\n⚠️  Credential prompt cancelled.")
-            return None
-        except Exception as e:
-            typer.echo(f"\n⚠️  Unexpected error during credential prompt: {e}")
-            return None
-
-        if new_credential is None:
-            typer.echo("⚠️  No input provided. Credential not saved.")
-            return None
-        elif new_credential == "":
-            if ph.interactive_terminal_is_available() and not typer.confirm("⚠️  An empty string was provided. Are you sure about this?", default=True):
-                return None
-        # Normalize user input for empty-string passwords
-        if new_credential in ("''", '""'):
-            new_credential = ""
-        credential = new_credential
-        
-
-        if forget:
-            return credential
-            
-        if not forget:
-            # Store the new credential to keyring
-            try:
-                keyring.set_password(service_name, item_name, new_credential)
-            except Exception as e:
-                typer.echo(f"⚠️  Failed to store credential: {e}")
-                return None
-
-        typer.echo("✅  Credential stored securely.")
-
-    # Return existing credential if no overwrite
-    return credential
     
 def get_configurable_idcs_list(plant_name: str, overwrite: bool = False) -> List[str]:
     """
@@ -371,7 +382,7 @@ def get_configurable_idcs_list(plant_name: str, overwrite: bool = False) -> List
         f"(e.g., M100FI FI8001 M310LI)"
     )
     
-    idcs_value = _get_config_with_prompt(config_key = service_name, prompt_message = prompt_message, overwrite=overwrite)
+    idcs_value = SecurityAndConfig.get_config_with_prompt(config_key = service_name, prompt_message = prompt_message, overwrite=overwrite)
     
     if not idcs_value:
         return []
@@ -395,13 +406,13 @@ def get_eds_local_db_credentials(plant_name: str, overwrite: bool = False) -> Di
     service_name = f"pipeline-eds-db-{plant_name}"
 
     # 1. Get non-secret configuration from the local file
-    port = _get_config_with_prompt(config_key = "eds_db_port", prompt_message = "Enter EDS DB Port (e.g., 3306)")
-    storage_path = _get_config_with_prompt(config_key = "eds_db_storage_path", prompt_message = "Enter EDS database SQL storage path on your system (e.g., 'E:/SQLData/stiles')")
-    database = _get_config_with_prompt(config_key = "eds_db_database", prompt_message = "Enter EDS database name on your system (e.g., stiles)")
+    port = SecurityAndConfig.get_config_with_prompt(config_key = "eds_db_port", prompt_message = "Enter EDS DB Port (e.g., 3306)")
+    storage_path = SecurityAndConfig.get_config_with_prompt(config_key = "eds_db_storage_path", prompt_message = "Enter EDS database SQL storage path on your system (e.g., 'E:/SQLData/stiles')")
+    database = SecurityAndConfig.get_config_with_prompt(config_key = "eds_db_database", prompt_message = "Enter EDS database name on your system (e.g., stiles)")
 
     # 2. Get secrets from the keyring
-    username = _get_credential_with_prompt(service_name = service_name, item_name = "username", prompt_message = "Enter your EDS system username (e.g. root)", hide=False, overwrite=overwrite)
-    password = _get_credential_with_prompt(service_name = service_name, item_name = "password", prompt_message = "Enter your EDS system password (e.g. Ovation1)", hide=True, overwrite=overwrite)
+    username = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = "username", prompt_message = "Enter your EDS system username (e.g. root)", hide=False, overwrite=overwrite)
+    password = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = "password", prompt_message = "Enter your EDS system password (e.g. Ovation1)", hide=True, overwrite=overwrite)
 
     return {
         'username': username,
@@ -416,7 +427,7 @@ def get_eds_local_db_credentials(plant_name: str, overwrite: bool = False) -> Di
 
 def get_configurable_default_plant_name(overwrite=False) -> str :
     '''Comma separated list of plant names to be used as the default if none is provided in other commands.'''
-    plant_name = _get_config_with_prompt(config_key = f"configurable_plantname_eds_api", prompt_message = f"Enter plant name(s) to be used as the default", overwrite=overwrite)
+    plant_name = SecurityAndConfig.get_config_with_prompt(config_key = f"configurable_plantname_eds_api", prompt_message = f"Enter plant name(s) to be used as the default", overwrite=overwrite)
     if ',' in plant_name:
         plant_names = plant_name.split(',')
         return plant_names
@@ -430,18 +441,18 @@ def get_eds_rest_api_credentials(plant_name: str, overwrite: bool = False, forge
 
     service_name = f"pipeline-eds-api-{plant_name}"
     overwrite = False
-    #url = _get_config_with_prompt(config_key =f"{plant_name}_eds_api_url", prompt_message = f"Enter {plant_name} API URL (e.g., http://000.00.0.000:43084/api/v1)", overwrite=overwrite)
+    #url = SecurityAndConfig.get_config_with_prompt(config_key =f"{plant_name}_eds_api_url", prompt_message = f"Enter {plant_name} API URL (e.g., http://000.00.0.000:43084/api/v1)", overwrite=overwrite)
     #url = _get_eds_url_config_with_prompt(config_key = f"{plant_name}_eds_api_url", prompt_message = f"Enter {plant_name} EDS API URL (e.g., http://000.00.0.000:43084/api/v1, or just 000.00.0.000)", overwrite=overwrite)
-    eds_base_url = _get_credential_with_prompt(service_name = service_name, item_name = f"{plant_name}_eds_base_url", prompt_message =  f"Enter {plant_name} EDS base url (e.g., http://000.00.0.000, or just 000.00.0.000)", overwrite=overwrite)
+    eds_base_url = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = f"{plant_name}_eds_base_url", prompt_message =  f"Enter {plant_name} EDS base url (e.g., http://000.00.0.000, or just 000.00.0.000)", overwrite=overwrite)
     eds_base_url = _get_base_url_config_with_prompt(service_name = f"{plant_name}_eds_base_url", prompt_message = f"Enter {plant_name} EDS base url (e.g., http://000.00.0.000, or just 000.00.0.000)")
-    eds_rest_api_port = _get_config_with_prompt(config_key = f"{plant_name}_eds_rest_api_port", prompt_message = f"Enter {plant_name} EDS REST API port (e.g., 43084)", overwrite=overwrite)
-    eds_rest_api_sub_path = _get_config_with_prompt(config_key = f"{plant_name}_eds_rest_api_sub_path", prompt_message = f"Enter {plant_name} EDS REST API sub path (e.g., 'api/v1')", overwrite=overwrite)
-    eds_soap_api_port = _get_config_with_prompt(config_key = f"{plant_name}_eds_soap_api_port", prompt_message = f"Enter {plant_name} EDS SOAP API port (e.g., 43080)", overwrite=overwrite)
-    eds_soap_api_sub_path = _get_config_with_prompt(config_key = f"{plant_name}_eds_soap_api_sub_path", prompt_message = f"Enter {plant_name} EDS SOAP API WSDL path (e.g., 'eds.wsdl')", overwrite=overwrite)
-    username = _get_credential_with_prompt(service_name = service_name, item_name = "username", prompt_message = f"Enter your EDS API username for {plant_name} (e.g. admin)", hide=False, overwrite=overwrite)
-    password = _get_credential_with_prompt(service_name = service_name, item_name = "password", prompt_message = f"Enter your EDS API password for {plant_name} (e.g. '')", overwrite=overwrite)
-    idcs_to_iess_suffix = _get_config_with_prompt(config_key = f"{plant_name}_eds_api_iess_suffix", prompt_message = f"Enter iess suffix for {plant_name} (e.g., .UNIT0@NET0)", overwrite=overwrite)
-    zd = _get_config_with_prompt(config_key = f"{plant_name}_eds_api_zd", prompt_message = f"Enter {plant_name} ZD (e.g., 'Maxson' or 'WWTF')", overwrite=overwrite)
+    eds_rest_api_port = SecurityAndConfig.get_config_with_prompt(config_key = f"{plant_name}_eds_rest_api_port", prompt_message = f"Enter {plant_name} EDS REST API port (e.g., 43084)", overwrite=overwrite)
+    eds_rest_api_sub_path = SecurityAndConfig.get_config_with_prompt(config_key = f"{plant_name}_eds_rest_api_sub_path", prompt_message = f"Enter {plant_name} EDS REST API sub path (e.g., 'api/v1')", overwrite=overwrite)
+    eds_soap_api_port = SecurityAndConfig.get_config_with_prompt(config_key = f"{plant_name}_eds_soap_api_port", prompt_message = f"Enter {plant_name} EDS SOAP API port (e.g., 43080)", overwrite=overwrite)
+    eds_soap_api_sub_path = SecurityAndConfig.get_config_with_prompt(config_key = f"{plant_name}_eds_soap_api_sub_path", prompt_message = f"Enter {plant_name} EDS SOAP API WSDL path (e.g., 'eds.wsdl')", overwrite=overwrite)
+    username = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = "username", prompt_message = f"Enter your EDS API username for {plant_name} (e.g. admin)", hide=False, overwrite=overwrite)
+    password = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = "password", prompt_message = f"Enter your EDS API password for {plant_name} (e.g. '')", overwrite=overwrite)
+    idcs_to_iess_suffix = SecurityAndConfig.get_config_with_prompt(config_key = f"{plant_name}_eds_api_iess_suffix", prompt_message = f"Enter iess suffix for {plant_name} (e.g., .UNIT0@NET0)", overwrite=overwrite)
+    zd = SecurityAndConfig.get_config_with_prompt(config_key = f"{plant_name}_eds_api_zd", prompt_message = f"Enter {plant_name} ZD (e.g., 'Maxson' or 'WWTF')", overwrite=overwrite)
     
     #if not all([username, password]):
     #    raise CredentialsNotFoundError(f"API credentials for '{plant_name}' not found. Please run the setup utility.")
@@ -491,11 +502,11 @@ def get_external_api_credentials(party_name: str, overwrite: bool = False) -> Di
     This can be confusing for API clients that have both terms that mean different things (such as the MissionClient, though in that case the client=id is not sourced from stored credentials.) 
     The RJN API client was the first external API client, and it uses the term 'client_id' in place of the term 'username'."""
     service_name = f"pipeline-external-api-{party_name}"
-    url = _get_config_with_prompt(config_key = service_name, prompt_message = f"Enter {party_name} API URL (e.g., http://api.example.com)", overwrite=overwrite)
-    username = _get_credential_with_prompt( service_name = service_name, item_name = "username", prompt_message = f"Enter the username AKA client_id for the {party_name} API",hide=False, overwrite=overwrite)
-    #client_id = _get_credential_with_prompt(service_name = service_name, item_name = "client_id", prompt_message = f"Enter the client_id for the {party_name} API",hide=False, overwrite=overwrite)
-    password = _get_credential_with_prompt(service_name = service_name, item_name = "password", prompt_message = f"Enter the password for the {party_name} API", overwrite=overwrite)
-    client_id = username
+    url = SecurityAndConfig.get_config_with_prompt(config_key = service_name, prompt_message = f"Enter {party_name} API URL (e.g., http://api.example.com)", overwrite=overwrite)
+    username = SecurityAndConfig.get_credential_with_prompt( service_name = service_name, item_name = "username", prompt_message = f"Enter the username AKA client_id for the {party_name} API",hide=False, overwrite=overwrite)
+    #client_id = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = "client_id", prompt_message = f"Enter the client_id for the {party_name} API",hide=False, overwrite=overwrite)
+    password = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = "password", prompt_message = f"Enter the password for the {party_name} API", overwrite=overwrite)
+    client_id = username # this only applies to RJN at last count
     
     #if not all([client_id, password]):
     #    raise CredentialsNotFoundError(f"API credentials for '{party_name}' not found. Please run the setup utility.")
@@ -503,7 +514,7 @@ def get_external_api_credentials(party_name: str, overwrite: bool = False) -> Di
     return {
         'url': url,
         'username': username,
-        'client_id': client_id,
+        'client_id': client_id, # confusing for mission
         'password': password
     }
 
@@ -544,8 +555,8 @@ def _get_base_url_config_with_prompt(service_name: str,
                                          prompt_message: str, 
                                          overwrite: bool = False
                                          ) -> str:
-    #url = _get_config_with_prompt(config_key = service_name, prompt_message = prompt_message, overwrite=overwrite)
-    url = _get_credential_with_prompt(service_name=service_name, item_name="base_url",prompt_message=prompt_message, overwrite=overwrite)
+    #url = SecurityAndConfig.get_config_with_prompt(config_key = service_name, prompt_message = prompt_message, overwrite=overwrite)
+    url = SecurityAndConfig.get_credential_with_prompt(service_name=service_name, item_name="base_url",prompt_message=prompt_message, overwrite=overwrite)
     if url is None:
         return None
     if _is_likely_ip(url):
@@ -574,8 +585,8 @@ def frontload_build_all_credentials(forget : bool = False):
     'forget' should be an option that can be toggled with env var PIPELINE_FORGET, which has a default of False when set up.
     Functions that require forget:
         - frontload_build_all_credentials()
-        - _get_config_with_prompt() # stored as plaintext
-        - _get_credential_with_prompt() # stored to keyring
+        - SecurityAndConfig.get_config_with_prompt() # stored as plaintext
+        - SecurityAndConfig.get_credential_with_prompt() # stored to keyring
         
     Functions that store things are antithetical to 'forget':
         - _get_eds_local_db_credentials() # helper functon
