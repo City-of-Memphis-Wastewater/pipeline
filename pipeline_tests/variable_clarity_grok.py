@@ -2,12 +2,16 @@
 """
 Redundancy helpers
 
-* ``set_hint`` – pure query → hint where the result *should* be stored.
-* ``set_and_return`` – command → automatically stores the result **and** returns it
-  (the classic “double-tap” you wanted to make explicit).
+* ``return_hint`` – pure query → hint where the result *should* be stored. 
+    The function is still available for modular use that mismatches the suggestion 
+    but the suggestion exists as a guide for how the value is returned to a script 
+    and the  exertnally added as an atttribute explicitly in the script.
 
-Both decorators assume the instance has a ``self._assignment_hints`` dict
-(initialised in ``__init__`` of the client class).
+* ``set_and_return`` – command → automatically stores the result **and** returns it
+    (the classic “double-tap” you wanted to make explicit).
+
+    Both decorators assume the instance has a ``self._assignment_hints`` dict
+    (initialised in ``__init__`` of the client class).
 
 The rest of the file is stripped to the essentials – the old
 ``check_for_match_of_versions_or_terminate``, ``compare`` and the
@@ -32,7 +36,7 @@ class Redundancy:
     # 1. Pure query → hint (no side-effect)
     # --------------------------------------------------------------------- #
     @staticmethod
-    def set_hint(recipient: str | None, attribute_name: str) -> Callable:
+    def return_hint(recipient: str | None, attribute_name: str) -> Callable:
         """
         Decorator for a *pure* query.
 
@@ -42,7 +46,7 @@ class Redundancy:
 
         Example
         -------
-        >>> @Redundancy.set_hint(recipient="self", attribute_name="customer_id")
+        >>> @Redundancy.return_hint(recipient="self", attribute_name="customer_id")
         ... def get_customer_id(self) -> int:
         ...     ...
         """
@@ -150,7 +154,7 @@ if __name__ == "__main__":
         def __init__(self):
             self._assignment_hints = {}
 
-        @Redundancy.set_hint(recipient="self", attribute_name="answer")
+        @Redundancy.return_hint(recipient="self", attribute_name="answer")
         def query_answer(self) -> int:
             return 42
 
@@ -187,5 +191,5 @@ if __name__ == "__main__":
 
 """
 
-#*Prefer `set_hint` for public query methods* – you keep the **pure-function** guarantee.  
+#*Prefer `return_hint` for public query methods* – you keep the **pure-function** guarantee.  
 #*Use `set_and_return` for internal helpers* where you **always** want the attribute set.
