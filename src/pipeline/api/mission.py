@@ -333,9 +333,12 @@ class MissionClient:
         return r.content  # CSV bytes
 
 def demo_retrieve_analog_data_table():
+    typer.echo("Running: pipeline.api.mission.demo_retrieve_analog_data_table()...")
+    typer.echo("Running: Calling 123scada.com using the Mission Client ...")
     party_name = "Mission"
     device_id = 22158
     service_name = f"pipeline-external-api-{party_name}"
+    overwrite=False
 
     username = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = "username", prompt_message = f"Enter the username for the {party_name} API",hide=False, overwrite=overwrite)
     password = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = "password", prompt_message = f"Enter the password for the {party_name} API", overwrite=overwrite)
