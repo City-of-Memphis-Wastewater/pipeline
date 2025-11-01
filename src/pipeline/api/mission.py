@@ -272,6 +272,7 @@ class MissionClient:
                          page_size: int = 50
                          )->dict:
         
+        
         url = f"{MissionClient.services_api_url}/Analog/Table"
         
         if self.customer_id is None:
@@ -299,7 +300,10 @@ class MissionClient:
     
     @instancemethod
     def download_analog_csv(self, device_id: int=None, customer_id: int | None = None, device_name: str = None, start_date: str = None, end_date: str = None, file_name: str = None)->str:
-        """Download CSV report for the device"""
+        """
+        Download CSV report for the device
+        Currently only granular to the day - we aim to achieve higher fidelity.
+        """
         
         url = MissionClient.get_analog_download_url()
 
@@ -328,25 +332,47 @@ class MissionClient:
         r.raise_for_status()
         return r.content  # CSV bytes
 
+def demo_retrieve_analog_data_table():
+    party_name = "Mission"
+    device_id = 22158
+    service_name = f"pipeline-external-api-{party_name}"
 
+    username = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = "username", prompt_message = f"Enter the username for the {party_name} API",hide=False, overwrite=overwrite)
+    password = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = "password", prompt_message = f"Enter the password for the {party_name} API", overwrite=overwrite)
+
+    with MissionClient.login_to_session(username, password) as client: # works
+        client.customer_id = client.get_customer_id_from_known_client()
+        # Get the last 24 hours of analog table data
+        end = datetime.now()
+        start = end - timedelta(days=1)
+        to_ms = lambda dt: int(dt.timestamp() * 1000)
+        table_data = client.get_analog_table(device_id=device_id, start_ms=to_ms(start), end_ms=to_ms(end))
+        #print(f"table_data = {table_data}")
+        print(f"Fetched {len(table_data.get('analogMeasurements', []))} rows from analog table.") # separate process
+        
 def demo_retrieve_analog_data_and_save_csv()->bytes:
-
+    """
+    The download function only accepts days as an input.
+    If Start Date and End Date value are identical, 
+    a 24-hour timeframe worth of data will be downloaded, 
+    for 00:00 to 23:58, every two minutes, 
+    for the date listed.
+    """
     typer.echo("Running: pipeline.api.mission.demo_retrieve_analog_data_and_save_csv()...")
     typer.echo("Running: Calling 123scada.com using the Mission Client ...")
     
-    device_id = 22158
+    from pipeline.time_manager import TimeManager
+
     party_name = "Mission"
     service_name = f"pipeline-external-api-{party_name}"
     overwrite=False
 
-    username = SecurityAndConfig.get_credential_with_prompt( service_name = service_name, item_name = "username", prompt_message = f"Enter the username for the {party_name} API",hide=False, overwrite=overwrite)
+    device_name="Gayoso Pump Station"
+    device_id = 22158
+    
+    username = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = "username", prompt_message = f"Enter the username for the {party_name} API",hide=False, overwrite=overwrite)
     password = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = "password", prompt_message = f"Enter the password for the {party_name} API", overwrite=overwrite)
 
-    # 1. Use the working login to establish customer_id and get the correct Bearer Token
-    customer_id = MissionClient.get_customer_id_from_fresh_login(username,password)
-    print(f"customer_id = {customer_id}")
-    
-    
     with MissionClient.login_to_session(username, password) as client: # works
         client.customer_id = client.get_customer_id_from_known_client()
         print(f"client.customer_id = {client.customer_id}")
@@ -355,25 +381,24 @@ def demo_retrieve_analog_data_and_save_csv()->bytes:
         # Get the last 24 hours of analog table data
         end = datetime.now()
         start = end - timedelta(days=1)
-        to_ms = lambda dt: int(dt.timestamp() * 1000)
-
-        table_data = client.get_analog_table(device_id=device_id, start_ms=to_ms(start), end_ms=to_ms(end))
-        #print(f"table_data = {table_data}")
-        print(f"Fetched {len(table_data.get('analogMeasurements', []))} rows from analog table.")
+        start_filename_str = TimeManager(start).as_yyyymmdd()
 
         # Or download CSV for 6–11 Oct 2025
         csv_bytes = client.download_analog_csv(
             device_id=device_id,
-            device_name="Gayoso Pump Station",
-            start_date="20251006",
-            end_date="20251011"
+            device_name=device_name,
+            #start_date="20251006", # start at 00:00 for date provided in format YYYYMMDD
+            #end_date="20251011" # end at 23:58 for date provided in format YYYYMMDD
+            start_date=start_filename_str, # start at 00:00 for date provided in format YYYYMMDD
+            end_date=start_filename_str # end at 23:58 for date provided in format YYYYMMDD
         )
         typer.echo("\nRunning: Generating sample file... ")
-        with open(Path("exports") / "Gayoso_Analog.csv", "wb") as f:
+        with open(Path("exports") / (f"Gayoso_Analog_{start_filename_str}.csv"), "wb") as f:
             f.write(csv_bytes)
         typer.echo("\nJob Complete.")
 
     return csv_bytes
 
 if __name__ == "__main__":
-    demo_retrieve_analog_data_and_save_csv()
+    #demo_retrieve_analog_data_and_save_csv()
+    demo_retrieve_analog_data_table()

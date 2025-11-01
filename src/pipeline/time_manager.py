@@ -30,6 +30,7 @@ class TimeManager:
         print(tm1.as_isoz())                  # → '2025-07-19T15:00:00Z'
         print(tm1.as_unix())                 # → 1752946800
         print(tm1.as_datetime())             # → datetime.datetime(2025, 7, 19, 15, 0)
+        print(tm6.as_yyyymmdd())             # → 20250719
 
         rounded_tm = tm1.round_down_to_nearest_five()
         print(rounded_tm.as_formatted_date_time())
@@ -103,6 +104,13 @@ class TimeManager:
         """Return the internal datetime object (UTC)."""
         return self._dt
     
+    def as_yyyymmdd(self) -> str:
+        """
+        Return a string representing YYYYMMDD.
+        Example: '20251101'
+        """
+        return self._dt.strftime("%Y%m%d")
+        
     def as_safe_isoformat_for_filename(self) -> str:
         """
         Returns an ISO 8601 formatted UTC time string safe for use in filenames.
@@ -110,9 +118,13 @@ class TimeManager:
         """
         return self.as_datetime().isoformat().replace(":", "-") + "Z"
 
-    def as_unix(self):# -> int:
+    def as_unix(self) -> int:
         """Return the Unix timestamp as an integer."""
         return int(self._dt.timestamp())
+    
+    def as_unix_ms(self) -> int:
+        """Return the Unix timestamp in milliseconds as an integer."""
+        return int(self._dt.timestamp()*1000)
 
     def as_isoz(self):# -> str:
         """Return ISO 8601 string (UTC) with 'Z' suffix."""
