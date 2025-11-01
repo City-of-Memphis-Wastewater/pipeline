@@ -21,7 +21,14 @@ from pipeline.workspace_manager import WorkspaceManager
 from pipeline import helpers
 from pipeline.decorators import log_function_call
 from pipeline.time_manager import TimeManager
-from pipeline.security_and_config import get_configurable_default_plant_name, _get_credential_with_prompt, _get_base_url_config_with_prompt, _get_config_with_prompt, get_configurable_idcs_list, get_temporary_input
+from pipeline.security_and_config import SecurityAndConfig, get_base_url_config_with_prompt
+#get_configurable_default_plant_name, 
+#_get_credential_with_prompt, 
+# 
+#_get_config_with_prompt, 
+#get_configurable_idcs_list, 
+#get_temporary_input
+
 
 
 if on_windows():
@@ -51,7 +58,8 @@ class EdsLoginException(Exception):
         super().__init__(self.message)
 
 class EdsClient:
-
+    def __init__(self):
+        pass
     @staticmethod
     def login_to_session(api_url, username, password, timeout=10):
         session = requests.Session()
@@ -572,7 +580,7 @@ class EdsClient:
         Describe the standardized string describing the service name that will be known to the system keyring for secure credentials.
         """
         if plant_name is None:
-            plant_name = get_configurable_default_plant_name()
+            plant_name = SecurityAndConfig.get_configurable_default_plant_name()
         if plant_name is None:
             return None
         service_name = f"pipeline-eds-api-{plant_name}" 
@@ -584,17 +592,17 @@ class EdsClient:
         authstring = None
         use_default_idcs = True
         if plant_name is None:
-            plant_name = get_configurable_default_plant_name()
+            plant_name = SecurityAndConfig.get_configurable_default_plant_name()
         print(f"plant_name = {plant_name}")
         service_name = EdsClient.get_service_name(plant_name = plant_name) # for secure credentials
     
         if idcs is None:
             if use_default_idcs:
-                idcs = get_configurable_idcs_list(plant_name)
+                idcs = SecurityAndConfig.get_configurable_idcs_list(plant_name)
             else:
-                idcs = get_temporary_input()
+                idcs = SecurityAndConfig.get_temporary_input()
         
-        base_url = _get_base_url_config_with_prompt(service_name = f"{plant_name}_eds_base_url", prompt_message=f"Enter {plant_name} EDS base url (e.g., http://000.00.0.000, or just 000.00.0.000)")
+        base_url = get_base_url_config_with_prompt(service_name = f"{plant_name}_eds_base_url", prompt_message=f"Enter {plant_name} EDS base url (e.g., http://000.00.0.000, or just 000.00.0.000)")
         eds_soap_api_port = SecurityAndConfig.get_config_with_prompt(config_key = f"{plant_name}_eds_soap_api_port", prompt_message=f"Enter {plant_name} EDS SOAP API port (e.g., 43080)")
         eds_soap_api_sub_path = SecurityAndConfig.get_config_with_prompt(config_key = f"{plant_name}_eds_soap_api_sub_path", prompt_message=f"Enter {plant_name} EDS SOAP API WSDL PATH (e.g., 'eds.wsdl')")
         username = SecurityAndConfig.get_credential_with_prompt(service_name, "username", f"Enter your EDS API username for {plant_name} (e.g. admin)", hide=False)
@@ -753,7 +761,7 @@ class EdsClient:
 
 
         except Exception as e:
-            EdsClient.connection_error_message(e)
+            EdsClient.connection_error_message(e, url = eds_soap_api_url)
             
         finally:
             
@@ -771,11 +779,11 @@ class EdsClient:
                 print("\nSkipping logout (was not logged in).")
 
     @staticmethod
-    def connection_error_message(e)-> None:
+    def connection_error_message(e, url)-> None:
         print(f"\n--- AN ERROR OCCURRED ---")
         print(e)
         print("\nPlease check:")
-        print(f"1. Is the IP address {eds_soap_api_url} correct and reachable?")
+        print(f"1. Is the IP address {url} correct and reachable?")
         print("2. Is the EDS server running?")
         print("3. Are your username and password correct?")
         return None
@@ -792,7 +800,7 @@ class EdsClient:
             plant_name = get_configurable_default_plant_name()
 
         service_name = EdsClient.get_service_name(plant_name = plant_name) # for secure credentials
-        base_url = _get_base_url_config_with_prompt(service_name=f"{plant_name}_eds_base_url", prompt_message=f"Enter {plant_name} EDS base url (e.g., http://000.00.0.000, or just 000.00.0.000)")
+        base_url = get_base_url_config_with_prompt(service_name=f"{plant_name}_eds_base_url", prompt_message=f"Enter {plant_name} EDS base url (e.g., http://000.00.0.000, or just 000.00.0.000)")
         #eds_soap_api_port = SecurityAndConfig.get_credential_with_prompt(f"{plant_name}_eds_soap_api_port", f"Enter {plant_name} EDS SOAP API port (e.g., 43080)")
         #eds_soap_api_sub_path = SecurityAndConfig.get_credential_with_prompt(f"{plant_name}_eds_soap_api_sub_path", f"Enter {plant_name} EDS SOAP API WSDL sub path (e.g., 'eds.wsdl')")
         username = SecurityAndConfig.get_credential_with_prompt(service_name, "username", f"Enter your EDS API username for {plant_name} (e.g. admin)", hide=False)
@@ -893,7 +901,7 @@ class EdsClient:
             # -----------------------------------------------
 
         except Exception as e:
-            EdsClient.connection_error_message(e)
+            EdsClient.connection_error_message(e, url = eds_soap_api_url)
             
         finally:
             # 4. Logout using the authstring
@@ -934,7 +942,22 @@ class EdsClient:
         else:
             logging.info("EdsClient.get_soap_api_url() returns None due to incomplete information.")
             return None
-            
+        """
+        Stash soap_api_url as a class variable. 
+        Why? 
+        Because it makes it easy to reference and find.
+        And, it does not to be recalculated.
+        This function is a class method.
+        I am not converting it to an instance method for this one thing,
+        when the class is not expected to have multiple instances.
+        
+        Actually, thats an interesting question - 
+        Stiles and Maxon.
+        Two instantes of EdsCient.
+        Well then.
+        We just won't use the class attribute.
+        """
+        #self.soap_api_url = soap_api_url 
         return soap_api_url
     
     @classmethod
@@ -1520,13 +1543,15 @@ def demo_eds_ping():
     from pipeline.calls import call_ping
     workspace_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
     session_maxson = sessions["Maxson"]
-
     response = call_ping(session_maxson.base_url)
 
 @log_function_call(level=logging.DEBUG)
 def demo_eds_soap_api_tabular():
     #EdsClient.soap_api_iess_request_tabular(idcs = ['I-0300A','I-0301A'])
+    
     EdsClient.soap_api_iess_request_tabular(plant_name = "Stiles",idcs = ['I-0300A','I-0301A'])
+    EdsClient.soap_api_iess_request_tabular(plant_name = "Maxson",idcs = ['FI8001','M310LI'])
+
 if __name__ == "__main__":
 
     '''

@@ -100,7 +100,7 @@ class Redundancy:
         return decorator
 
     @staticmethod
-    def set_hint(recipient: str | None, attribute_name: str) -> Callable:
+    def return_hint(recipient: str | None, attribute_name: str) -> Callable:
         """
         Decorator for Explicit Query Intent (The safest form of 'double-tap').
         1. Performs NO internal assignment, maintaining the pure Query principle.

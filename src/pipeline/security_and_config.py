@@ -281,7 +281,7 @@ class SecurityAndConfig:
             # -- Assign value of new_credential --
             try:
                 print("Trying to prompt for credential ...")
-                new_credential = Security._prompt_for_value(
+                new_credential = SecurityAndConfig._prompt_for_value(
                     prompt_message=prompt_message, 
                     hide_input=hide
                 )
@@ -444,7 +444,7 @@ def get_eds_rest_api_credentials(plant_name: str, overwrite: bool = False, forge
     #url = SecurityAndConfig.get_config_with_prompt(config_key =f"{plant_name}_eds_api_url", prompt_message = f"Enter {plant_name} API URL (e.g., http://000.00.0.000:43084/api/v1)", overwrite=overwrite)
     #url = _get_eds_url_config_with_prompt(config_key = f"{plant_name}_eds_api_url", prompt_message = f"Enter {plant_name} EDS API URL (e.g., http://000.00.0.000:43084/api/v1, or just 000.00.0.000)", overwrite=overwrite)
     eds_base_url = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = f"{plant_name}_eds_base_url", prompt_message =  f"Enter {plant_name} EDS base url (e.g., http://000.00.0.000, or just 000.00.0.000)", overwrite=overwrite)
-    eds_base_url = _get_base_url_config_with_prompt(service_name = f"{plant_name}_eds_base_url", prompt_message = f"Enter {plant_name} EDS base url (e.g., http://000.00.0.000, or just 000.00.0.000)")
+    eds_base_url = get_base_url_config_with_prompt(service_name = f"{plant_name}_eds_base_url", prompt_message = f"Enter {plant_name} EDS base url (e.g., http://000.00.0.000, or just 000.00.0.000)")
     eds_rest_api_port = SecurityAndConfig.get_config_with_prompt(config_key = f"{plant_name}_eds_rest_api_port", prompt_message = f"Enter {plant_name} EDS REST API port (e.g., 43084)", overwrite=overwrite)
     eds_rest_api_sub_path = SecurityAndConfig.get_config_with_prompt(config_key = f"{plant_name}_eds_rest_api_sub_path", prompt_message = f"Enter {plant_name} EDS REST API sub path (e.g., 'api/v1')", overwrite=overwrite)
     eds_soap_api_port = SecurityAndConfig.get_config_with_prompt(config_key = f"{plant_name}_eds_soap_api_port", prompt_message = f"Enter {plant_name} EDS SOAP API port (e.g., 43080)", overwrite=overwrite)
@@ -555,7 +555,7 @@ def _is_likely_ip(url: str) -> bool:
             return False
     return True    
 
-def _get_base_url_config_with_prompt(service_name: str, 
+def get_base_url_config_with_prompt(service_name: str, 
                                          prompt_message: str, 
                                          overwrite: bool = False
                                          ) -> str:

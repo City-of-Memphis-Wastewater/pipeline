@@ -55,14 +55,15 @@ class MissionClient:
         self._assignment_hints = {}  # for use with Redundancy class
         self.customer_id = None # Optional, set after login if needed
         self.headers = {"Authorization": f"Bearer {token}"}
-        self.session = requests.Session() # session caputure, such that client.session is available
-        self.session.headers.update(self.headers)
+        #self.session = requests.Session() # session caputure, such that client.session is available
+        #self.session.headers.update(self.headers)
         
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.session.close()
+        if hasattr(self, "session"):
+            self.session.close()
         
     @classmethod
     def get_account_settings_url(cls):
@@ -170,7 +171,7 @@ class MissionClient:
 
         client=MissionClient(token=token)
         if not hasattr(client,"session"):
-            client.session = session # make it a non-temporary session. # this breaks everything if i
+            client.session = session # make it a non-temporary session. # this breaks everything if already handled in intitializion
         
         return client
 
@@ -182,7 +183,7 @@ class MissionClient:
         self.__exit__()
 
     @classmethod 
-    @Redundancy.set_hint(recipient=None,attribute_name="customer_id")
+    @Redundancy.return_hint(recipient=None,attribute_name="customer_id")
     def get_customer_id_from_fresh_login(cls,
                                          username:str,
                                          password:str
@@ -198,7 +199,7 @@ class MissionClient:
         return customer_id # only give back the raw value, allowing the use to assign the atttribue as they wish, with functionoal programming
     
     #@instancemethod
-    @Redundancy.set_hint(recipient="self",attribute_name = "customer_id")
+    @Redundancy.return_hint(recipient="self",attribute_name = "customer_id")
     def get_customer_id_from_known_client(self:"MissionClient")->int:    
         """ 
         Assumes that you have already logged in with your api_url,username,password
