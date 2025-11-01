@@ -2,7 +2,7 @@
 """
 Redundancy helpers
 
-* ``return_hint`` – pure query → hint where the result *should* be stored. 
+* ``set_on_return_hint`` – pure query → hint where the result *should* be stored. 
     The function is still available for modular use that mismatches the suggestion 
     but the suggestion exists as a guide for how the value is returned to a script 
     and the  exertnally added as an atttribute explicitly in the script.
@@ -36,7 +36,7 @@ class Redundancy:
     # 1. Pure query → hint (no side-effect)
     # --------------------------------------------------------------------- #
     @staticmethod
-    def return_hint(recipient: str | None, attribute_name: str) -> Callable:
+    def set_on_return_hint(recipient: str | None, attribute_name: str) -> Callable:
         """
         Decorator for a *pure* query.
 
@@ -46,7 +46,7 @@ class Redundancy:
 
         Example
         -------
-        >>> @Redundancy.return_hint(recipient="self", attribute_name="customer_id")
+        >>> @Redundancy.set_on_return_hint(recipient="self", attribute_name="customer_id")
         ... def get_customer_id(self) -> int:
         ...     ...
         """
@@ -154,7 +154,7 @@ if __name__ == "__main__":
         def __init__(self):
             self._assignment_hints = {}
 
-        @Redundancy.return_hint(recipient="self", attribute_name="answer")
+        @Redundancy.set_on_return_hint(recipient="self", attribute_name="answer")
         def query_answer(self) -> int:
             return 42
 
@@ -191,5 +191,5 @@ if __name__ == "__main__":
 
 """
 
-#*Prefer `return_hint` for public query methods* – you keep the **pure-function** guarantee.  
+#*Prefer `set_on_return_hint` for public query methods* – you keep the **pure-function** guarantee.  
 #*Use `set_and_return` for internal helpers* where you **always** want the attribute set.

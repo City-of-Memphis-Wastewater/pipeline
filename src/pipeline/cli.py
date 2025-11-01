@@ -6,12 +6,9 @@ from click import BadParameter
 import typer
 from pathlib import Path
 from importlib.metadata import version, PackageNotFoundError
-from requests.exceptions import Timeout
 import sys
-import pendulum
 import re
-from pyhabitat import on_termux, on_windows, is_pyz, is_elf, is_pipx, matplotlib_is_available_for_gui_plotting, edit_textfile
-
+import pyhabitat as ph
 
 try:
     import colorama # explicitly added so for the shiv build
@@ -39,9 +36,9 @@ from pipeline.version_info import  PIP_PACKAGE_NAME, PIPELINE_VERSION, __version
 # ensures the shortcut file is only created once in the Termux environment.
 #-- SUPPRESS with "False and" as of 0.3.53 - automaic installation on every run is invasive and is annyoring for troubleshooting, like if the user changes the .shortcut/filename
 #-- user may directly run 'install' command
-if False and on_termux():
+if False and ph.on_termux():
     setup_termux_integration()
-elif False and on_windows():
+elif False and ph.on_windows():
     setup_windows_integration()
 # --- end SETUP / INSTALL HOOK ---
 
@@ -267,12 +264,12 @@ def trend(
     # Once the loop is done, you can call your show_static function
     # with the single, populated data_buffer.
 
-    if force_webplot or not force_matplotlib or not matplotlib_is_available_for_gui_plotting():
+    if force_webplot or not force_matplotlib or not ph.matplotlib_is_available_for_gui_plotting():
         from pipeline import gui_plotly_static
         #from pipeline import gui_plotly_static_backup_06Oct25 as gui_plotly_static
         #gui_fastapi_plotly_live.run_gui(data_buffer)
         gui_plotly_static.show_static(data_buffer)
-    elif matplotlib_is_available_for_gui_plotting():
+    elif ph.matplotlib_is_available_for_gui_plotting():
         from pipeline import gui_mpl_live
         #gui_mpl_live.run_gui(data_buffer)
         gui_mpl_live.show_static(data_buffer)
@@ -305,7 +302,7 @@ def configure_credentials(
     """
     if textedit:
         typer.echo(F"Config filepath: {CONFIG_PATH}")
-        edit_textfile(CONFIG_PATH)
+        ph.edit_textfile(CONFIG_PATH)
         return
             
     typer.echo("")
@@ -377,23 +374,23 @@ def setup_integration(
 
     if debug:
         # is_win_exe(debug=True) # inferred, not yet implemented
-        is_pipx(debug=True)
-        is_pyz(debug=True)
-        is_elf(debug=True)
+        ph.is_pipx(debug=True)
+        ph.is_pyz(debug=True)
+        ph.is_elf(debug=True)
         return
     
     if uninstall:
-        if on_windows():
+        if ph.on_windows():
             if typer.confirm("Are you sure you want to uninstall the registry context-menu item, the launcher BAT, and empty out the AppData folder?"):
                 cleanup_windows_integration()
-        elif on_termux():
+        elif ph.on_termux():
             cleanup_termux_integration()
         return
 
-    if on_windows():
+    if ph.on_windows():
         typer.echo("AppData will be set up explicity and a content menu item will be added to your Registry.")
         setup_windows_integration()
-    elif on_termux():
+    elif ph.on_termux():
         typer.echo("Scripts will now be added to the $HOME/.shortcuts/ directory for launching from the Termux Widget.")
         setup_termux_integration(force=upgrade)
         typer.echo("Update complete.")

@@ -447,8 +447,6 @@ def get_eds_rest_api_credentials(plant_name: str, overwrite: bool = False, forge
     eds_base_url = get_base_url_config_with_prompt(service_name = f"{plant_name}_eds_base_url", prompt_message = f"Enter {plant_name} EDS base url (e.g., http://000.00.0.000, or just 000.00.0.000)")
     eds_rest_api_port = SecurityAndConfig.get_config_with_prompt(config_key = f"{plant_name}_eds_rest_api_port", prompt_message = f"Enter {plant_name} EDS REST API port (e.g., 43084)", overwrite=overwrite)
     eds_rest_api_sub_path = SecurityAndConfig.get_config_with_prompt(config_key = f"{plant_name}_eds_rest_api_sub_path", prompt_message = f"Enter {plant_name} EDS REST API sub path (e.g., 'api/v1')", overwrite=overwrite)
-    eds_soap_api_port = SecurityAndConfig.get_config_with_prompt(config_key = f"{plant_name}_eds_soap_api_port", prompt_message = f"Enter {plant_name} EDS SOAP API port (e.g., 43080)", overwrite=overwrite)
-    eds_soap_api_sub_path = SecurityAndConfig.get_config_with_prompt(config_key = f"{plant_name}_eds_soap_api_sub_path", prompt_message = f"Enter {plant_name} EDS SOAP API WSDL path (e.g., 'eds.wsdl')", overwrite=overwrite)
     username = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = "username", prompt_message = f"Enter your EDS API username for {plant_name} (e.g. admin)", hide=False, overwrite=overwrite)
     password = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = "password", prompt_message = f"Enter your EDS API password for {plant_name} (e.g. '')", overwrite=overwrite)
     idcs_to_iess_suffix = SecurityAndConfig.get_config_with_prompt(config_key = f"{plant_name}_eds_api_iess_suffix", prompt_message = f"Enter iess suffix for {plant_name} (e.g., .UNIT0@NET0)", overwrite=overwrite)
@@ -457,20 +455,8 @@ def get_eds_rest_api_credentials(plant_name: str, overwrite: bool = False, forge
     #if not all([username, password]):
     #    raise CredentialsNotFoundError(f"API credentials for '{plant_name}' not found. Please run the setup utility.")
     eds_rest_api_sub_path = str(eds_rest_api_sub_path).rstrip("/").lstrip("/").replace(r"\\","/").lower()
-    eds_soap_api_port = int(eds_soap_api_port)
-    eds_soap_api_sub_path = eds_soap_api_sub_path
 
     # EDS REST API Pattern: url = f"http://{url}:43084/api/v1" # assume EDS patterna and port http and append api/v1 if user just puts in an IP
-    
-    # Comparable SOAP API function, for documentation:
-    eds_soap_api_url = EdsClient.get_soap_api_url(base_url = eds_base_url,
-                                                    eds_soap_api_port = str(eds_soap_api_port),
-                                                    eds_soap_api_sub_path = eds_soap_api_sub_path)
-    if eds_soap_api_url is None:
-        logging.info("Not enough information provided to build: eds_soap_api_url.")
-        logging.info("Please rerun your last command or try something else.")
-        sys.exit()
-    
     
     eds_rest_api_url = EdsClient.get_rest_api_url(eds_base_url, 
                                         str(eds_rest_api_port),
@@ -484,6 +470,50 @@ def get_eds_rest_api_credentials(plant_name: str, overwrite: bool = False, forge
 
     return {
         'url': eds_rest_api_url,
+        'username': username,
+        'password': password,
+        'zd': zd,
+        'idcs_to_iess_suffix': idcs_to_iess_suffix
+
+        # The URL and other non-secret config would come from a separate config file
+        # or be prompted just-in-time as we discussed previously.
+    }
+
+def get_eds_soap_api_credentials(plant_name: str, overwrite: bool = False, forget: bool = False) -> Dict[str, str]:
+    """Retrieves API credentials for a given plant, prompting if necessary."""
+
+    from pipeline.api.eds import EdsClient
+
+    service_name = f"pipeline-eds-api-{plant_name}"
+    overwrite = False
+    #url = SecurityAndConfig.get_config_with_prompt(config_key =f"{plant_name}_eds_api_url", prompt_message = f"Enter {plant_name} API URL (e.g., http://000.00.0.000:43084/api/v1)", overwrite=overwrite)
+    #url = _get_eds_url_config_with_prompt(config_key = f"{plant_name}_eds_api_url", prompt_message = f"Enter {plant_name} EDS API URL (e.g., http://000.00.0.000:43084/api/v1, or just 000.00.0.000)", overwrite=overwrite)
+    eds_base_url = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = f"{plant_name}_eds_base_url", prompt_message =  f"Enter {plant_name} EDS base url (e.g., http://000.00.0.000, or just 000.00.0.000)", overwrite=overwrite)
+    eds_base_url = get_base_url_config_with_prompt(service_name = f"{plant_name}_eds_base_url", prompt_message = f"Enter {plant_name} EDS base url (e.g., http://000.00.0.000, or just 000.00.0.000)")
+    eds_soap_api_port = SecurityAndConfig.get_config_with_prompt(config_key = f"{plant_name}_eds_soap_api_port", prompt_message = f"Enter {plant_name} EDS SOAP API port (e.g., 43080)", overwrite=overwrite)
+    eds_soap_api_sub_path = SecurityAndConfig.get_config_with_prompt(config_key = f"{plant_name}_eds_soap_api_sub_path", prompt_message = f"Enter {plant_name} EDS SOAP API WSDL path (e.g., 'eds.wsdl')", overwrite=overwrite)
+    username = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = "username", prompt_message = f"Enter your EDS API username for {plant_name} (e.g. admin)", hide=False, overwrite=overwrite)
+    password = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = "password", prompt_message = f"Enter your EDS API password for {plant_name} (e.g. '')", overwrite=overwrite)
+    idcs_to_iess_suffix = SecurityAndConfig.get_config_with_prompt(config_key = f"{plant_name}_eds_api_iess_suffix", prompt_message = f"Enter iess suffix for {plant_name} (e.g., .UNIT0@NET0)", overwrite=overwrite)
+    zd = SecurityAndConfig.get_config_with_prompt(config_key = f"{plant_name}_eds_api_zd", prompt_message = f"Enter {plant_name} ZD (e.g., 'Maxson' or 'WWTF')", overwrite=overwrite)
+    
+    #if not all([username, password]):
+    #    raise CredentialsNotFoundError(f"API credentials for '{plant_name}' not found. Please run the setup utility.")
+    eds_soap_api_port = int(eds_soap_api_port)
+    eds_soap_api_sub_path = eds_soap_api_sub_path
+
+    # Comparable SOAP API function, for documentation:
+    eds_soap_api_url = EdsClient.get_soap_api_url(base_url = eds_base_url,
+                                                    eds_soap_api_port = str(eds_soap_api_port),
+                                                    eds_soap_api_sub_path = eds_soap_api_sub_path)
+    if eds_soap_api_url is None:
+        logging.info("Not enough information provided to build: eds_soap_api_url.")
+        logging.info("Please rerun your last command or try something else.")
+        sys.exit()
+    
+    
+    return {
+        'url': eds_soap_api_url,
         'username': username,
         'password': password,
         'zd': zd,

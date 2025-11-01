@@ -7,10 +7,11 @@ from urllib.parse import quote_plus
 import json
 import typer
 from requests.exceptions import Timeout
+from pathlib import Path
 
 from pipeline.security_and_config import SecurityAndConfig
 #from pipeline_tests.variable_clarity_grok import Redundancy
-from pipeline_tests.variable_clarity import Redundancy
+from pipeline_tests.variable_clarity import Redundancy, instancemethod
 
 """
 ```
@@ -95,6 +96,11 @@ class MissionClient:
     @classmethod
     def get_account_settings_url(cls):
         return f"{cls.services_api_url}/account/GetSettings/?viewMode=1"
+    
+    @classmethod
+    def get_signalr_negotiate_url(cls):
+        return f"{cls.services_root_url}/signalr/negotiate"
+        
         
     @classmethod
     def login_via_signalr(cls, customer_id: int, timeout: int = 10) -> "MissionClient":
@@ -121,7 +127,9 @@ class MissionClient:
             "connectionData": json.dumps(connection_data)
         }
 
-        response = session.get(f"{cls.services_root_url}/signalr/negotiate", params=params, timeout=timeout)
+        
+        response = session.get(cls.get_signalr_negotiate_url(), params=params, timeout=timeout)
+        
         response.raise_for_status()
         json_resp = response.json()
         print(f"json_resp = {json_resp}")
@@ -206,7 +214,7 @@ class MissionClient:
         client.session.headers.update({"Authorization": f"Bearer {token}"})
         return client
 
-    #@instancemethod
+    @instancemethod
     def logout(self):
         """
         client.logout()
@@ -214,7 +222,7 @@ class MissionClient:
         self.__exit__()
 
     @classmethod 
-    @Redundancy.return_hint(recipient=None,attribute_name="customer_id")
+    @Redundancy.set_on_return_hint(recipient=None,attribute_name="customer_id")
     def get_customer_id_from_fresh_login(cls,
                                          username:str,
                                          password:str
@@ -229,8 +237,8 @@ class MissionClient:
             customer_id = client.get_customer_id_from_known_client()
         return customer_id # only give back the raw value, allowing the use to assign the atttribue as they wish, with functionoal programming
     
-    #@instancemethod
-    @Redundancy.return_hint(recipient="self",attribute_name = "customer_id")
+    @instancemethod
+    @Redundancy.set_on_return_hint(recipient="self",attribute_name = "customer_id")
     def get_customer_id_from_known_client(self:"MissionClient")->int:    
         """ 
         Assumes that you have already logged in with your api_url,username,password
@@ -242,9 +250,9 @@ class MissionClient:
         client_id = client.get_customer_id_from_known_client()
         """
         # Example request:  
-        resp = self.session.get(f"{MissionClient.services_api_url}/account/GetSettings/?viewMode=1")
-        #resp = self.session.get(MissionClient.get_account_settings_url())
-        print(f"resp = {resp}")
+        #resp = self.session.get(f"{MissionClient.services_api_url}/account/GetSettings/?viewMode=1")
+        resp = self.session.get(MissionClient.get_account_settings_url())
+        #print(f"resp = {resp}")
         customer_id = resp.json().get('user',{}).get('customerId',{})
         if not isinstance(customer_id, int):
             raise ValueError(f"Expected integer customerId, got: {customer_id}")
@@ -254,7 +262,7 @@ class MissionClient:
         
         return customer_id # only give back the raw value, allowing the use to assign the atttribue as they wish
 
-    #@instancemethod
+    @instancemethod
     def get_analog_table(self:"MissionClient", 
                          device_id: int = None, 
                          customer_id: int | None = None, 
@@ -289,6 +297,7 @@ class MissionClient:
         url = f"{MissionClient.report_api_url}/Download/AnalogDownload"
         return url
     
+    @instancemethod
     def download_analog_csv(self, device_id: int=None, customer_id: int | None = None, device_name: str = None, start_date: str = None, end_date: str = None, file_name: str = None)->str:
         """Download CSV report for the device"""
         
@@ -325,6 +334,7 @@ def demo_retrieve_analog_data_and_save_csv()->bytes:
     typer.echo("Running: pipeline.api.mission.demo_retrieve_analog_data_and_save_csv()...")
     typer.echo("Running: Calling 123scada.com using the Mission Client ...")
     
+    device_id = 22158
     party_name = "Mission"
     service_name = f"pipeline-external-api-{party_name}"
     overwrite=False
@@ -347,22 +357,21 @@ def demo_retrieve_analog_data_and_save_csv()->bytes:
         start = end - timedelta(days=1)
         to_ms = lambda dt: int(dt.timestamp() * 1000)
 
-        table_data = client.get_analog_table(device_id=22158, start_ms=to_ms(start), end_ms=to_ms(end))
+        table_data = client.get_analog_table(device_id=device_id, start_ms=to_ms(start), end_ms=to_ms(end))
         #print(f"table_data = {table_data}")
         print(f"Fetched {len(table_data.get('analogMeasurements', []))} rows from analog table.")
 
         # Or download CSV for 6–11 Oct 2025
         csv_bytes = client.download_analog_csv(
-            device_id=22158,
+            device_id=device_id,
             device_name="Gayoso Pump Station",
             start_date="20251006",
             end_date="20251011"
         )
         typer.echo("\nRunning: Generating sample file... ")
-        with open("Gayoso_Analog.csv", "wb") as f:
+        with open(Path("exports") / "Gayoso_Analog.csv", "wb") as f:
             f.write(csv_bytes)
         typer.echo("\nJob Complete.")
-        typer.echo("\nAdvice: Do no git add Gayoso_Analog.csv.")
 
     return csv_bytes
 
