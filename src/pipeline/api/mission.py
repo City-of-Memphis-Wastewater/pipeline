@@ -12,6 +12,36 @@ from pipeline.security_and_config import SecurityAndConfig
 #from pipeline_tests.variable_clarity_grok import Redundancy
 from pipeline_tests.variable_clarity import Redundancy
 
+"""
+```
+### What is SignalR?
+
+SignalR (specifically ASP.NET SignalR, though the concept is general) is a framework that simplifies adding **real-time web functionality** to applications.
+
+1. **Real-Time:** It allows server code to push content to connected clients (like a web browser or your Python application) instantly as it happens, rather than the client having to constantly poll the server for new data.
+    
+2. **Persistent Connection:** It automatically manages persistent connections between the server and client, using WebSockets where available, and gracefully falling back to older techniques (like long polling) if necessary.
+    
+3. **Bi-directional:** It enables two-way communication, meaning the client can call methods on the server, and the server can call methods on the client.
+    
+
+### When is the Right Time to Use SignalR?
+
+You use SignalR whenever you need **low-latency, asynchronous updates** from the server without the client repeatedly asking for them.
+
+|**Scenario**|**When to Use SignalR**|**When to Use Standard REST (like /Analog/Table)**|
+|---|---|---|
+|**Data Nature**|Real-time, streaming, or rapidly changing data.|Historical, batch, or configuration data.|
+|**Examples**|Live dashboards, instant alerts, chat applications, gaming, monitoring real-time SCADA events.|Retrieving a CSV report, fetching a page of historical measurements, updating account settings.|
+|**Client Behavior**|The client passively listens for server pushes.|The client actively requests (pulls) data when needed.|
+
+**In the context of your `MissionClient`:**
+
+- **`login_via_signalr`** is intended to establish the connection necessary to listen to **live updates** (e.g., a pump turned on, a pressure sensor spike, a heart-beat signal) which arrive via a WebSocket channel.
+    
+- **`login_to_session`** is intended to get the Bearer Token needed to access the **historical REST endpoints** (like `/Analog/Table` and `/Download/AnalogDownload`) that fetch stored data.
+```
+"""
 class MissionLoginException(Exception):
     """
     Custom exception raised when a login to the Mission 'API' fails.
@@ -54,9 +84,6 @@ class MissionClient:
         
         self._assignment_hints = {}  # for use with Redundancy class
         self.customer_id = None # Optional, set after login if needed
-        self.headers = {"Authorization": f"Bearer {token}"}
-        #self.session = requests.Session() # session caputure, such that client.session is available
-        #self.session.headers.update(self.headers)
         
     def __enter__(self):
         return self
@@ -94,16 +121,20 @@ class MissionClient:
             "connectionData": json.dumps(connection_data)
         }
 
-        response = session.get(f"{cls.services_api_url}/signalr/negotiate", params=params, timeout=timeout)
+        response = session.get(f"{cls.services_root_url}/signalr/negotiate", params=params, timeout=timeout)
         response.raise_for_status()
         json_resp = response.json()
-
-        token = json_resp.get("accessToken") or json_resp.get("sessionId")
+        print(f"json_resp = {json_resp}")
+        #token = json_resp.get("accessToken") or json_resp.get("sessionId")
+        token = json_resp.get("ConnectionToken")
         if not token:
             raise ValueError("No token returned from SignalR negotiate endpoint.")
 
         client = MissionClient(token=token)
         client.session = session
+
+        # WARNING: This sets the Authorization header with the SignalR token, 
+        # which will cause 401 on REST calls. This is corrected in the demo function below.
         client.session.headers.update({"Authorization": f"Bearer {token}"})
         return client
     
@@ -171,8 +202,8 @@ class MissionClient:
 
         client=MissionClient(token=token)
         if not hasattr(client,"session"):
-            client.session = session # make it a non-temporary session. # this breaks everything if already handled in intitializion
-        
+            client.session = session # make it  a non-temporary session. # this breaks everything if already handled in intitializion
+        client.session.headers.update({"Authorization": f"Bearer {token}"})
         return client
 
     #@instancemethod
@@ -213,6 +244,7 @@ class MissionClient:
         # Example request:  
         resp = self.session.get(f"{MissionClient.services_api_url}/account/GetSettings/?viewMode=1")
         #resp = self.session.get(MissionClient.get_account_settings_url())
+        print(f"resp = {resp}")
         customer_id = resp.json().get('user',{}).get('customerId',{})
         if not isinstance(customer_id, int):
             raise ValueError(f"Expected integer customerId, got: {customer_id}")
@@ -247,7 +279,8 @@ class MissionClient:
             "fromDate": "undefined",
             "timestamp": int(time.time() * 1000),
         }
-        r = requests.get(url, headers=self.headers, params=params)
+        # Use self.session.get() instead of requests.get() to use the authenticated session
+        r = self.session.get(url, params=params)
         r.raise_for_status()
         return r.json()
     
@@ -281,7 +314,8 @@ class MissionClient:
             "timestamp": int(time.time() * 1000),
             "emailAddress": "",
         }
-        r = requests.get(url, headers=self.headers, params=params)
+        ###r = requests.get(url, headers=self.headers, params=params)
+        r = self.session.get(url, params=params)
         r.raise_for_status()
         return r.content  # CSV bytes
 
@@ -298,13 +332,12 @@ def demo_retrieve_analog_data_and_save_csv()->bytes:
     username = SecurityAndConfig.get_credential_with_prompt( service_name = service_name, item_name = "username", prompt_message = f"Enter the username for the {party_name} API",hide=False, overwrite=overwrite)
     password = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = "password", prompt_message = f"Enter the password for the {party_name} API", overwrite=overwrite)
 
+    # 1. Use the working login to establish customer_id and get the correct Bearer Token
+    customer_id = MissionClient.get_customer_id_from_fresh_login(username,password)
+    print(f"customer_id = {customer_id}")
     
-    # Alternatively:
-    if False:
-        customer_id = MissionClient.get_customer_id_from_fresh_login(username,password)
-        print(f"customer_id = {customer_id}")
-
-    with MissionClient.login_to_session(username, password) as client:
+    
+    with MissionClient.login_to_session(username, password) as client: # works
         client.customer_id = client.get_customer_id_from_known_client()
         print(f"client.customer_id = {client.customer_id}")
         

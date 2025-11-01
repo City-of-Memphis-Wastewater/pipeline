@@ -22,6 +22,9 @@ from pipeline import helpers
 from pipeline.decorators import log_function_call
 from pipeline.time_manager import TimeManager
 from pipeline.security_and_config import SecurityAndConfig, get_base_url_config_with_prompt
+#from pipeline_tests.variable_clarity_grok import Redundancy
+from pipeline_tests.variable_clarity import Redundancy
+
 #get_configurable_default_plant_name, 
 #_get_credential_with_prompt, 
 # 
@@ -587,9 +590,13 @@ class EdsClient:
         return service_name
     
     @classmethod
+    @Redundancy.return_hint(recipient=None,attribute_name="tabular_data")
     def soap_api_iess_request_tabular(cls, plant_name: str | None= None, idcs: list[str] | None = None):
+        
+        tabular_data = None
         soapclient = None
         authstring = None
+        
         use_default_idcs = True
         if plant_name is None:
             plant_name = SecurityAndConfig.get_configurable_default_plant_name()
@@ -611,7 +618,9 @@ class EdsClient:
         
         #session = EdsClient.login_to_session_with_api_credentials(api_credentials)
         
-        eds_soap_api_url = EdsClient.get_soap_api_url(base_url = base_url, eds_soap_api_port = eds_soap_api_port, eds_soap_api_sub_path = eds_soap_api_sub_path)
+        eds_soap_api_url = EdsClient.get_soap_api_url(base_url = base_url, 
+                                                      eds_soap_api_port = eds_soap_api_port, 
+                                                      eds_soap_api_sub_path = eds_soap_api_sub_path)
         if eds_soap_api_url is None:
             logging.info("Not enough information provided to build: eds_soap_api_url.")
             logging.info("Please rerun your last command or try something else.")
@@ -658,7 +667,7 @@ class EdsClient:
 
             # Example 4: Get a specific point by IESS name
             # We will use 'I-0300A.UNIT1@NET1' from your latest output
-            print("\n--- Example 4: Requesting point by IESS name ('I-0300A.UNIT1@NET1') ---")
+            print("\n--- Example 4: Requesting point by IESS name ('{}') ---")
             try:
                 # Create a PointFilter object
                 point_filter_iess = soapclient.factory.create('PointFilter')
@@ -778,6 +787,8 @@ class EdsClient:
             else:
                 print("\nSkipping logout (was not logged in).")
 
+        return tabular_data
+    
     @staticmethod
     def connection_error_message(e, url)-> None:
         print(f"\n--- AN ERROR OCCURRED ---")
@@ -916,6 +927,7 @@ class EdsClient:
                 print("\nSkipping logout (was not logged in).")    
     
     @classmethod
+    @Redundancy.return_hint(recipient="cls"|None,attribute_name="soap_api_url")
     def get_soap_api_url(cls,
                     base_url: str | None = None,
                     eds_soap_api_port: int | None = 43080, 
@@ -957,7 +969,7 @@ class EdsClient:
         Well then.
         We just won't use the class attribute.
         """
-        #self.soap_api_url = soap_api_url 
+         
         return soap_api_url
     
     @classmethod
@@ -1547,8 +1559,7 @@ def demo_eds_ping():
 
 @log_function_call(level=logging.DEBUG)
 def demo_eds_soap_api_tabular():
-    #EdsClient.soap_api_iess_request_tabular(idcs = ['I-0300A','I-0301A'])
-    
+
     EdsClient.soap_api_iess_request_tabular(plant_name = "Stiles",idcs = ['I-0300A','I-0301A'])
     EdsClient.soap_api_iess_request_tabular(plant_name = "Maxson",idcs = ['FI8001','M310LI'])
 
