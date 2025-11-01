@@ -100,7 +100,7 @@ class Redundancy:
         return decorator
 
     @staticmethod
-    def return_hint(recipient: str | None, attribute_name: str) -> Callable:
+    def set_on_return_hint(recipient: str | None, attribute_name: str) -> Callable:
         """
         Decorator for Explicit Query Intent (The safest form of 'double-tap').
         1. Performs NO internal assignment, maintaining the pure Query principle.
@@ -133,6 +133,16 @@ class Redundancy:
             return wrapper
         return decorator
     
+
+    
+
+def instancemethod(func):
+    """
+    Decorator that allows explicit clarity about instance methods.
+    """
+    def wrapper(self, *args, **kwargs):
+        return func(self, *args, **kwargs)
+    return wrapper
 
 class FindThatFunctionInTheCodeBase:
     pass
