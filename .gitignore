@@ -54,5 +54,4 @@ Postman*
 .dockerignore
 .python-version
 Gayoso_Analog.csv
-
-
+export/

@@ -21,6 +21,18 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 ### Changed:
 - from suds.client import Client' -> 'from suds.client import Client as SudsClient', for rigor; I worry the parlance 'Client' will get lost, and this way it is easier to cntrl+F. 
 
+
+---
+
+## [0.3.61] - 2025-11-01
+
+### Added:
+- 
+
+### Changed:
+- BSD-3-clause license changed to MIT license.
+
+
 ---
 
 ## [0.3.58] - 2025-10-26

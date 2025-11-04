@@ -63,6 +63,36 @@ class EdsLoginException(Exception):
 class EdsClient:
     def __init__(self):
         pass
+
+    # --- Context Management (Pattern 2) ---
+    def __enter__(self):
+        """Called upon entering the 'with' block."""
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Called upon exiting the 'with' block (for cleanup)."""
+        
+        # 1. Close REST Session
+        if hasattr(self, "session"):
+            print(f"[{self.plant_name}] Closing REST session.")
+            self.session.close()
+            
+        # 2. Logout from SOAP (if login was performed)
+        if self.authstring:
+            print(f"[{self.plant_name}] Attempting SOAP logout...")
+            try:
+                # We need a SOAP client instance to perform the logout
+                if self.soapclient is None:
+                    # Initialize just to logout, if not done already
+                    self.soapclient = SudsClient(self.soap_url)
+                self.soapclient.service.logout(self.authstring)
+                print(f"[{self.plant_name}] Logout successful.")
+            except Exception as e:
+                print(f"[{self.plant_name}] Error during SOAP logout: {e}")
+                
+        # Return False to propagate exceptions, or True to suppress them
+        return False 
+    
     @staticmethod
     def login_to_session(api_url, username, password, timeout=10):
         session = requests.Session()
@@ -590,7 +620,7 @@ class EdsClient:
         return service_name
     
     @classmethod
-    @Redundancy.return_hint(recipient=None,attribute_name="tabular_data")
+    @Redundancy.set_on_return_hint(recipient=None,attribute_name="tabular_data")
     def soap_api_iess_request_tabular(cls, plant_name: str | None= None, idcs: list[str] | None = None):
         
         tabular_data = None
@@ -927,7 +957,7 @@ class EdsClient:
                 print("\nSkipping logout (was not logged in).")    
     
     @classmethod
-    @Redundancy.return_hint(recipient="cls"|None,attribute_name="soap_api_url")
+    @Redundancy.set_on_return_hint(recipient=None,attribute_name="soap_api_url")
     def get_soap_api_url(cls,
                     base_url: str | None = None,
                     eds_soap_api_port: int | None = 43080, 
