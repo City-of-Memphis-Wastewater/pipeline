@@ -156,8 +156,8 @@ def trend(
     days: float = typer.Option(None, "--days", "-ds", help="Identify end time. Use any reasonable format, to be parsed automatically. If you must use spaces, use quotes."),
     plant_name: str = typer.Option(None, "--plantname", "-pn", help = "Provide the EDS ZD for your credentials."),
     print_csv: bool = typer.Option(False,"--print-csv","-p",help = "Print the CSV style for pasting into Excel."),
-    step_seconds: int = typer.Option(None, "--step-seconds", "-sec", help="You can explicitly provide the delta between datapoints. If not, ~400 data points will be used, based on the nice_step() function."), 
-    datapoint_count: int = typer.Option(None, "--datapoints", "-dp", help="You can explicitly provide the number of datapoints. Default: ~400 data points will be used, based on the nice_step() function. If the --datapoints flag is provided, the --step-seconds flag will be ignored. "), 
+    seconds_between_points: int = typer.Option(None, "--seconds-between-points", "-sec", help="You can explicitly provide the delta between datapoints. If not, ~400 data points will be used, based on the nice_step() function."), 
+    datapoint_count: int = typer.Option(None, "--datapoint-count", "-dp", help="You can explicitly provide the number of datapoints. Default: ~400 data points will be used, based on the nice_step() function. If the --datapoints flag is provided, the --step-seconds flag will be ignored. "), 
     force_webplot: bool = typer.Option(False,"--webplot","-w",help = "Use a browser-based plot instead of local (matplotlib). Useful for remote servers without display."),
     force_matplotlib: bool = typer.Option(False,"--matplotlib","-mpl",help="Force matplotlib to be used for plotting. This will not work if matplotlib is not available."),
     default_idcs: bool = typer.Option(False, "--default-idcs", "-d", help="Use the default IDCS values for the configured plant name, instead of providing them as arguments.")
@@ -232,8 +232,10 @@ def trend(
     if datapoint_count is not None: # ignore step_seconds if datapoint_count is provided
         # Ensure step_seconds is an integer, as required by the EDS API
         step_seconds = int((TimeManager(dt_finish).as_unix()-TimeManager(dt_start).as_unix())/datapoint_count)
-    elif step_seconds is None and datapoint_count is None:
+    elif seconds_between_points is None and datapoint_count is None:
         step_seconds = helpers.nice_step(TimeManager(dt_finish).as_unix()-TimeManager(dt_start).as_unix()) # TimeManager(starttime).as_unix()
+    elif seconds_between_points is not None and datapoint_count is None:
+        step_seconds = seconds_between_points
     results = load_historic_data(session, iess_list, dt_start, dt_finish, step_seconds) 
     # results is a list of lists. Each inner list is a separate curve.
     if not results:
