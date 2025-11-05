@@ -270,6 +270,9 @@ def trend(
     # Once the loop is done, you can call your show_static function
     # with the single, populated data_buffer.
 
+    if force_matplotlib and not ph.matplotlib_is_available_for_gui_plotting():
+        typer.echo(f"force_matplotlib = {force_matplotlib}, but matplotlib is not available. Plotly, web-based plotting will be used.\n")
+    
     if force_webplot or not force_matplotlib or not ph.matplotlib_is_available_for_gui_plotting():
         from pipeline import gui_plotly_static
         #from pipeline import gui_plotly_static_backup_06Oct25 as gui_plotly_static
