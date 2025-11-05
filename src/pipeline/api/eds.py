@@ -1401,7 +1401,29 @@ def demo_eds_webplot_point_live():
 
 @log_function_call(level=logging.DEBUG)    
 def load_historic_data(session, filter_iess, starttime, endtime, step_seconds):    
-    
+    """
+    Retrieves historic time series data for a list of points (IESS)
+    within a specified time range and step interval using the EDS API.
+
+    This function converts the start and end times to Unix timestamps,
+    creates a tabular trend request, waits for its execution, and
+    then retrieves the results.
+
+    Args:
+        session (EdsSession): The authenticated EDS API session object.
+        filter_iess (list[str]): A list of point IDs (IESS) for which
+                                 to retrieve data.
+        starttime (str or int): The start time for the data request.
+                                Can be a datetime string or a Unix timestamp.
+        endtime (str or int): The end time for the data request.
+                              Can be a datetime string or a Unix timestamp.
+        step_seconds (int): The aggregation interval (step size) in seconds.
+
+    Returns:
+        list[dict] or list: A list of dictionaries containing the historic
+                            data results (tabular trend), or an empty list
+                            if the request creation failed.
+    """
 
     starttime = TimeManager(starttime).as_unix()
     endtime = TimeManager(endtime).as_unix() 

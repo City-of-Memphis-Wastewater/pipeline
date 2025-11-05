@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is (read: strives to be) based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+---
+
+## [0.3.61] - 2025-11-01
+
+### Added:
+- Redundancy class.
+
+### Changed:
+- Improve MissionClient for stability, rollout, and norms.
+- Start improving EdsClient to benefit from mimicking MissionClient in it's improved state.
+
+### Discourse:
+- Decorators and other mechanisms of hinting and documenting language intent, particularly function returns.
 
 ---
 
@@ -20,18 +33,6 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 
 ### Changed:
 - from suds.client import Client' -> 'from suds.client import Client as SudsClient', for rigor; I worry the parlance 'Client' will get lost, and this way it is easier to cntrl+F. 
-
-
----
-
-## [0.3.61] - 2025-11-01
-
-### Added:
-- 
-
-### Changed:
-- BSD-3-clause license changed to MIT license.
-
 
 ---
 
