@@ -8,10 +8,18 @@ import json
 import typer
 from requests.exceptions import Timeout
 from pathlib import Path
+from typing import Dict, List, Any
+from prettytable import PrettyTable
+from rich.console import Console
+from rich.table import Table
 
 from pipeline.security_and_config import SecurityAndConfig
 #from pipeline_tests.variable_clarity_grok import Redundancy
 from pipeline_tests.variable_clarity import Redundancy, instancemethod
+from pipeline.time_manager import TimeManager
+
+# Get the Rich console instance
+console = Console()
 
 """
 ```
@@ -61,6 +69,174 @@ class MissionLoginException(Exception):
         """
         self.message = message
         super().__init__(self.message)
+
+class MissionTransformation:
+    @staticmethod
+    def transform_analog_data(table_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """
+        Transforms the nested Mission API analog data structure into a flat
+        list of dictionaries, mapping scaledValues to their corresponding channel names.
+
+        Args:
+            table_data: The raw dictionary returned by the analog data table API call.
+
+        Returns:
+            A list of dictionaries, where each dictionary is a time-stamped row.
+        """
+        
+        # 1. Extract Channel Names and Units from 'setting'
+        # We need to build an ordered list of column headers (names and units).
+        # This assumes the order in 'scaledValues' matches the order in 'setting'.
+        channel_headers = []
+        
+        # The API includes channel numbers, but they might not be sequential or start at 1.
+        # We rely on the *order* of the 'setting' list matching the order of 'scaledValues'.
+        for setting in table_data.get('setting', []):
+            # Format the header as 'Name (Unit)' for clarity, or just 'Name'
+            header = f"{setting['name']} ({setting['unit']})" if setting.get('unit') else setting['name']
+            channel_headers.append(header)
+        
+        # 2. Iterate and Flatten the Data
+        flat_data_list = []
+        
+        # The actual data is in the 'analogMeasurements' list
+        for measurement in table_data.get('analogMeasurements', []):
+            row = {}
+            
+            # Add the timestamp column
+            # Formatting for readability and modularity (e.g., stripping milliseconds)
+            dt_str = measurement.get('localDateTime')
+            if dt_str:
+                try:
+                    # Parse and reformat the datetime string
+                    dt_obj = datetime.fromisoformat(dt_str)
+                    row['Date/Time'] = dt_obj.strftime("%Y-%m-%d %H:%M:%S")
+                except ValueError:
+                    row['Date/Time'] = dt_str # Keep original if parsing fails
+
+            # Extract the list of values (e.g., [{'value': 10923.0}, {'value': 14.18}, ...])
+            scaled_values = measurement.get('scaledValues', [])
+            
+            # Map values to their channel headers
+            for i, value_dict in enumerate(scaled_values):
+                if i < len(channel_headers):
+                    header = channel_headers[i]
+                    # Store the raw float value, which is better than converting to string here
+                    row[header] = value_dict.get('value')
+                # else: Skip if there are more scaledValues than channels defined in settings
+            
+            # Optionally include 'calculatedWeirGpm' if it's meaningful, but it's 'NaN' here.
+            # if measurement.get('calculatedWeirGpm') != 'NaN':
+            #     row['calculatedWeirGpm'] = measurement['calculatedWeirGpm']
+
+            flat_data_list.append(row)
+
+        return flat_data_list
+    
+    
+    @staticmethod
+    def display_table_with_prettytable(data_list: list):
+        """
+        Creates and prints a formatted table from a list of dictionaries.
+        """
+        if not data_list:
+            print("No data to display.")
+            return
+
+        # 1. Initialize the table and set field names
+        # Use the keys from the first dictionary as column headers
+        field_names = list(data_list[0].keys())
+        table = PrettyTable()
+        table.field_names = field_names
+
+        # 2. Add rows (using the list of dictionaries)
+        for row_dict in data_list:
+            # Get the values in the order defined by field_names
+            row_values = [row_dict.get(name) for name in field_names]
+            table.add_row(row_values)
+            
+        # 3. Apply formatting for better readability
+        table.align = "r"          # Right-align all data
+        table.align["Date/Time"] = "l" # Left-align the Date/Time column
+        table.float_format = ".2"  # Format floats to 2 decimal places
+
+        print(table)
+        # Example usage (assuming analog_table is available)
+        # display_table_with_prettytable(analog_table)
+
+
+    def display_table_with_rich(data_list: List[Dict[str, Any]]):
+        """
+        Creates and prints a formatted table from a list of dictionaries using Rich.
+        """
+        if not data_list:
+            console.print("[bold yellow]Warning:[/bold yellow] No data to display.")
+            return
+
+        # 1. Initialize the Rich Table
+        table = Table(title="Analog Data Measurements", show_header=True, header_style="bold magenta")
+        
+        # Get the keys (column headers) from the first row
+        field_names = list(data_list[0].keys())
+
+        # 2. Define Columns and Formatting
+        for name in field_names:
+            # Set alignment: Date/Time left-aligned, everything else right-aligned
+            align = "left" if name == "Date/Time" else "right"
+            
+            # Add a column. You can specify style, minimum width, and alignment.
+            table.add_column(name, style="cyan", justify=align)
+
+        # 3. Add Rows
+        for row_dict in data_list:
+            row_values = []
+            for name in field_names:
+                value = row_dict.get(name)
+                
+                # Format numbers for better readability (no need for a float_format setting)
+                if isinstance(value, (int, float)):
+                    # Format to 2 decimal places and convert back to string for Rich
+                    # Add a comma separator for large numbers, e.g., 11,432.00
+                    formatted_value = f"{value:,.2f}"
+                elif value is None:
+                    formatted_value = "[dim]N/A[/dim]"
+                else:
+                    formatted_value = str(value)
+
+                row_values.append(formatted_value)
+                
+            # Add the list of formatted string values as a row
+            table.add_row(*row_values)
+
+        # 4. Print the final table
+        console.print(table)
+
+
+    # --- Example Usage (assuming analog_table is available) ---
+    # display_table_with_rich(analog_table)
+
+
+    @staticmethod
+    def demo_transform_analog_table(table_data):
+    # --- Demonstration of Use ---
+
+        analog_table = MissionTransformation.transform_analog_data(table_data)
+
+        print("\n--- Transformed Modular Data (First 3 Rows) ---")
+        print(f"Total Rows Transformed: {len(analog_table)}")
+        for row in analog_table[:3]:
+            print(row)
+
+        # Example of modular use: Calculate the average Wet Well Level
+        if analog_table:
+            wet_well_key = "Wet Well Level (Feet)" # Use the generated key
+            valid_levels = [r[wet_well_key] for r in analog_table if isinstance(r[wet_well_key], (int, float))]
+            
+            if valid_levels:
+                average_level = sum(valid_levels) / len(valid_levels)
+                print(f"\nAverage {wet_well_key}: {average_level:.2f} Feet")
+
+        return analog_table
 
 class MissionClient:
     """
@@ -212,6 +388,10 @@ class MissionClient:
         if not hasattr(client,"session"):
             client.session = session # make it  a non-temporary session. # this breaks everything if already handled in intitializion
         client.session.headers.update({"Authorization": f"Bearer {token}"})
+
+        typer.echo(f"\n[bold green]CURL/External Bearer Token:[/bold green] {token}") # <-- Print the actual token
+
+
         return client
 
     @instancemethod
@@ -269,17 +449,22 @@ class MissionClient:
                          start_ms: int = None, 
                          end_ms: int = None, 
                          start_row: int = 1, 
-                         page_size: int = 50
+                         page_size: int = 1440, #720,
                          )->dict:
         
-        
+        print(f" MissionClient.get_analog_table() ...")
         url = f"{MissionClient.services_api_url}/Analog/Table"
         
-        if self.customer_id is None:
+
+        if customer_id is None and self.customer_id is None:
             self.customer_id = self.get_customer_id_from_known_client(self) # explicit assignment
+            customer_id = self.customer_id
+        
+        print(f"start_ms = {start_ms}")
+        print(f"end_ms = {end_ms}")
 
         params = {
-            "customerId": self.customer_id,
+            "customerId": customer_id,
             "deviceId": device_id,
             "StartRow": start_row,
             "PageSize": page_size,
@@ -291,6 +476,7 @@ class MissionClient:
         # Use self.session.get() instead of requests.get() to use the authenticated session
         r = self.session.get(url, params=params)
         r.raise_for_status()
+        print(f" MissionClient.get_analog_table() complete.")
         return r.json()
     
     @staticmethod
@@ -299,16 +485,52 @@ class MissionClient:
         return url
     
     @instancemethod
-    def download_analog_csv(self, device_id: int=None, customer_id: int | None = None, device_name: str = None, start_date: str = None, end_date: str = None, file_name: str = None)->str:
+    def get_analog_csv_bytes(self, device_id: int=None, 
+                            customer_id: int | None = None, 
+                            device_name: str = None, 
+                            start_date: str = None, 
+                            end_date: str = None, 
+                            resolution: int = 1,
+                            file_name: str = None)->bytes:
         """
-        Download CSV report for the device
-        Currently only granular to the day - we aim to achieve higher fidelity.
+        Generate report for the device.
+        
+        Calling this function does not actually download a file, like it would in browser. Only the response.content is returned and then is handled.
+
+        Retrieves the raw CSV file bytes for the device report from the server.
+        
+        This function is preferred over get_analog_table() due to supporting 
+        custom 'resolution' values and handling large data sets without pagination.
+        
+        Note: This method ONLY fetches the raw content (bytes); it does not 
+        save the file to the local disk. The caller must handle the file I/O.
+        
+        Args:
+            device_id (int, optional): The ID of the device to fetch data for. Defaults to None.
+            customer_id (int | None, optional): The customer ID associated with the device. 
+                Defaults to None, in which case the client's cached customer_id is used.
+            device_name (str, optional): The name of the device (used for URL encoding and default file name). 
+                Defaults to None.
+            start_date (str, optional): The start date of the data range (format: YYYYMMDD). Defaults to None.
+            end_date (str, optional): The end date of the data range (format: YYYYMMDD). 
+                If 'start_date' and 'end_date' are the same, the API provides a 
+                24-hour range for that day (00:00 to 23:58). Defaults to None.
+            resolution (int, optional): The sampling interval for the data. This is the primary reason 
+                to use this endpoint over /Analog/Table. 
+                Possible values include: {0, "All Points"}, {1, "5 min Samples"}, {22, "15 min Samples"}, {3, "30 min Samples"}. 
+                Defaults to 1 (5-minute samples).
+            file_name (str, optional): A suggested filename passed to the server to populate the 
+                Content-Disposition header. It does NOT control the local save path. Defaults to a generated name.
+        
+        Returns:
+            bytes: The raw CSV content. The calling function must write this to disk.
         """
         
         url = MissionClient.get_analog_download_url()
 
         if file_name is None:
-            file_name = f"Analog_{device_name.replace(' ', '')}_DataPoints_{start_date}.csv"
+            file_name = f"Analog_{device_name.replace(' ', '')}_DataPoints_{start_date}_MissionClient.csv"
+            # not used in this context of the Client, even when provided
         
         if customer_id is None:
             customer_id = self.customer_id
@@ -318,11 +540,11 @@ class MissionClient:
             "deviceName": quote_plus(device_name),
             "startDate": start_date,
             "endDate": end_date,
-            "fileName": file_name,
+            "fileName": file_name, # Server uses this for Content-Disposition header, but is expected to make no difference in this programmatic context (tested with curl, python, compred to Developer Tools Netwrok observations)
             "format": 1,
             "genII": False,
             "langId": "en",
-            "resolution": 0,
+            "resolution": resolution, # {0, "All Points"}, {1, "5 min Samples"}, {22, "15 min Samples"}, {3, "30 min Samples"},  
             "type": 0,
             "timestamp": int(time.time() * 1000),
             "emailAddress": "",
@@ -332,27 +554,7 @@ class MissionClient:
         r.raise_for_status()
         return r.content  # CSV bytes
 
-def demo_retrieve_analog_data_table():
-    typer.echo("Running: pipeline.api.mission.demo_retrieve_analog_data_table()...")
-    typer.echo("Running: Calling 123scada.com using the Mission Client ...")
-    party_name = "Mission"
-    device_id = 22158
-    service_name = f"pipeline-external-api-{party_name}"
-    overwrite=False
 
-    username = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = "username", prompt_message = f"Enter the username for the {party_name} API",hide=False, overwrite=overwrite)
-    password = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = "password", prompt_message = f"Enter the password for the {party_name} API", overwrite=overwrite)
-
-    with MissionClient.login_to_session(username, password) as client: # works
-        client.customer_id = client.get_customer_id_from_known_client()
-        # Get the last 24 hours of analog table data
-        end = datetime.now()
-        start = end - timedelta(days=1)
-        to_ms = lambda dt: int(dt.timestamp() * 1000)
-        table_data = client.get_analog_table(device_id=device_id, start_ms=to_ms(start), end_ms=to_ms(end))
-        #print(f"table_data = {table_data}")
-        print(f"Fetched {len(table_data.get('analogMeasurements', []))} rows from analog table.") # separate process
-        
 def demo_retrieve_analog_data_and_save_csv()->bytes:
     """
     The download function only accepts days as an input.
@@ -360,11 +562,11 @@ def demo_retrieve_analog_data_and_save_csv()->bytes:
     a 24-hour timeframe worth of data will be downloaded, 
     for 00:00 to 23:58, every two minutes, 
     for the date listed.
+
+    This function is not necessary to be a part of our API flow unless we want CSV backups, but it is smoother to use client.get_analog_table() rather than client.get_analog_csv_bytes().
     """
     typer.echo("Running: pipeline.api.mission.demo_retrieve_analog_data_and_save_csv()...")
     typer.echo("Running: Calling 123scada.com using the Mission Client ...")
-    
-    from pipeline.time_manager import TimeManager
 
     party_name = "Mission"
     service_name = f"pipeline-external-api-{party_name}"
@@ -382,12 +584,13 @@ def demo_retrieve_analog_data_and_save_csv()->bytes:
         
         
         # Get the last 24 hours of analog table data
-        end = datetime.now()
+        #end = datetime.now()
+        end = TimeManager(TimeManager.now_rounded_to_hour()).as_datetime()
         start = end - timedelta(days=1)
         start_filename_str = TimeManager(start).as_yyyymmdd()
 
         # Or download CSV for 6–11 Oct 2025
-        csv_bytes = client.download_analog_csv(
+        csv_bytes = client.get_analog_csv_bytes(
             device_id=device_id,
             device_name=device_name,
             #start_date="20251006", # start at 00:00 for date provided in format YYYYMMDD
@@ -396,12 +599,55 @@ def demo_retrieve_analog_data_and_save_csv()->bytes:
             end_date=start_filename_str # end at 23:58 for date provided in format YYYYMMDD
         )
         typer.echo("\nRunning: Generating sample file... ")
-        with open(Path("exports") / (f"Gayoso_Analog_{start_filename_str}.csv"), "wb") as f:
+        path = Path("exports") / (f"Gayoso_Analog_{start_filename_str}.csv")
+        with open(path, "wb") as f:
             f.write(csv_bytes)
+
+        typer.echo(f"\nFile generated: {str(path)}")
+
         typer.echo("\nJob Complete.")
 
     return csv_bytes
 
+def demo_retrieve_analog_data_table():
+    """
+    The endpoint for get_analog_table does not table arguments that allow fo much control.
+    It is better to use 
+    """
+    typer.echo("Running: pipeline.api.mission.demo_retrieve_analog_data_table()...")
+    typer.echo("Running: Calling 123scada.com using the Mission Client ...")
+    party_name = "Mission"
+    device_id = 22158
+    service_name = f"pipeline-external-api-{party_name}"
+    overwrite=False
+
+    username = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = "username", prompt_message = f"Enter the username for the {party_name} API",hide=False, overwrite=overwrite)
+    password = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = "password", prompt_message = f"Enter the password for the {party_name} API", overwrite=overwrite)
+
+    with MissionClient.login_to_session(username, password) as client: # works
+        client.customer_id = client.get_customer_id_from_known_client()
+        # Get the last 24 hours of analog table data
+        #end = datetime.now()
+        end = TimeManager(TimeManager.now_rounded_to_hour()).as_datetime()
+        print(end)
+        start = end - timedelta(days=1)
+        to_ms = lambda dt: int(dt.timestamp() * 1000)
+        table_data = client.get_analog_table(device_id=device_id, 
+                                             customer_id=client.customer_id,
+                                             start_ms=to_ms(start), 
+                                             end_ms=to_ms(end))
+        #print(f"table_data = {table_data}")
+        print(f"Fetched {len(table_data.get('analogMeasurements', []))} rows from analog table.") # separate process
+    return table_data
+
+
 if __name__ == "__main__":
-    #demo_retrieve_analog_data_and_save_csv()
-    demo_retrieve_analog_data_table()
+    if True:
+        demo_retrieve_analog_data_and_save_csv()
+    else:
+        table_data = demo_retrieve_analog_data_table()
+        analog_table = MissionTransformation.transform_analog_data(table_data)
+        #MissionTransformation.display_table_with_prettytable(analog_table)
+        MissionTransformation.display_table_with_rich(analog_table)
+
+
