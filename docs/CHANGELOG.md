@@ -8,15 +8,20 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 
 ## [0.3.61] - 2025-11-01
 
+
+### Breaking:
+- **MissionClient:** Renamed the data fetching method in mission.py from download_analog_csv() to get_analog_csv_bytes(). This change clarifies that the function retrieves raw bytes from the API and does not perform local disk I/O (file saving).
+
 ### Added:
-- Redundancy class.
+- **Redundancy Class:** Introduced a new class to manage and document variable clarity, particularly concerning function returns and side effects for the common issue when comparing setters vs return functions. 
 
 ### Changed:
 - Improve MissionClient for stability, rollout, and norms.
 - Start improving EdsClient to benefit from mimicking MissionClient in it's improved state.
+- **Analog Data Retrieval Migration:** Migrated the demonstration and ultimate use of analog data retrieval to the more capable /Download/AnalogDownload endpoint (via get_analog_csv_bytes()) instead of the limited /Analog/Table endpoint. The /Analog/Table endpoint was found to lack precise control over time-delta resolution, start/end times, and efficient pagination.
 
 ### Discourse:
-- Decorators and other mechanisms of hinting and documenting language intent, particularly function returns.
+- **Code Intent Documentation:** Ongoing work on using decorators and internal mechanisms for explicitly hinting and documenting language intent, especially related to function return values and expected state changes.
 
 ---
 
