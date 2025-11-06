@@ -181,13 +181,24 @@ class TimeManager:
 
         
     @staticmethod
-    def now_rounded_to_five():# -> "TimeManager":
+    def now_rounded_to_five() -> "TimeManager":
         """Return current UTC time rounded down to nearest 5 minutes."""
         now = datetime.now(timezone.utc)
         minute = (now.minute // 5) * 5
         rounded = now.replace(minute=minute, second=0, microsecond=0)
         return TimeManager(rounded).as_unix()
 
+    @staticmethod
+    def now_rounded_to_hour() -> "TimeManager":
+        """Return current UTC time rounded down to nearest hour."""
+        now = datetime.now(timezone.utc)
+        
+        # 💡 Set minute, second, and microsecond to zero to round down to the start of the hour
+        rounded = now.replace(minute=0, second=0, microsecond=0)
+        
+        # Assuming TimeManager().as_unix() converts the datetime object to milliseconds
+        return TimeManager(rounded).as_unix()
+    
     def __repr__(self):
         return f"TimeManager({self.as_isoz()})"
 

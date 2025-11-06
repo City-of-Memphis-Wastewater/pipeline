@@ -114,10 +114,18 @@ pydantic = [
     { version = "1.10.13", python = "<3.12" },    # Use V1 for Python 3.8 through 3.11
 ]
 suds = "^1.2.0"
+
+# prettytable: Version 3.x requires Python >=3.9, so we pin 2.x for 3.8.
+prettytable = [
+    { version = "^3.16.0", python = ">=3.9" },
+    { version = "^2.5.0", python = "3.8.*" }, # Pinning last 3.8-compatible version
+]
+
 [tool.poetry.dependencies."backports.zoneinfo"] # known poetry quirk necessary when freezing, a la "poetry export -f requirements.txt --without-hashes > requirements.txt"
 version = "^0.2.1"
 python = "<3.9"
 optional = false
+
 
 #[tool.poetry.dependencies."backports.tarfile"]
 ## backports.tarfile is required due to a transitive dependency (likely jaraco.context's
