@@ -26,6 +26,7 @@ from pipeline.security_and_config import get_eds_rest_api_credentials, get_exter
 from pipeline.termux_setup import setup_termux_integration, cleanup_termux_integration
 from pipeline.windows_setup import setup_windows_integration, cleanup_windows_integration
 from pipeline import helpers
+from pipeline.interface import gui_eds
 from pipeline.plotbuffer import PlotBuffer
 from pipeline.version_info import  PIP_PACKAGE_NAME, PIPELINE_VERSION, __version__, get_package_version, get_package_name
 #from pipeline.helpers import setup_logging
@@ -67,6 +68,9 @@ def main(
     """
 
     if ctx.invoked_subcommand is None:
+        launch_gui()
+        raise typer.Exit()
+    elif False:#ctx.invoked_subcommand is None:
         typer.echo(ctx.get_help())
         raise typer.Exit()
     
@@ -79,7 +83,17 @@ def main(
     # 3. Print the command
     typer.echo(f"command:\n{command_string}\n")
 
-
+@app.command(name="gui", help="Show the GUI and allow the user to see demo features.")
+def launch_gui(
+    demo: bool = typer.Option(False, "--demo", "-d", help="Explicit demo features."),
+    ):
+    """
+    Guides the user through a guided credential setup process. This is not necessary, as necessary credentials will be prompted for as needed, but this is a convenient way to set up multiple credentials at once. This command with the `--overwrite` flag is the designed way to edit existing credentials.
+    """
+    if demo:
+        typer.echo(F"demo: {demo}")
+    gui_eds.launch_fsg() 
+    
 @app.command()
 def list_sensors(
     db_path: str = None,
