@@ -33,6 +33,9 @@ def resolve_idcs_list(idcs: list[str] | None, default_idcs: bool, plant_name: st
             )
             raise BadParameter(error_message, param_hint="IDCS...")
 
+    # Strip commas if the list was provided comma separated
+    idcs = [s.rstrip(",") for s in idcs]
+
     # Convert all idcs values to uppercase
     idcs = [s.upper() for s in idcs]
     return idcs
