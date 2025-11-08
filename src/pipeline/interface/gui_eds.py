@@ -1,11 +1,12 @@
 # pipeline/interfaces/gui_eds.py
 
-import FreeSimpleGUI as sg
+
 from typer import BadParameter
 import json
 from pathlib import Path
 from pipeline.core import eds as eds_core
 import pyhabitat
+import FreeSimpleGUI as sg
 
 
 # Set theme for a slightly better look
@@ -59,9 +60,13 @@ def update_status(window, message, color='white'):
     window['STATUS_BAR'].update(message, text_color=color)
     window.refresh()
 
-def launch_fsg():
+def launch_fsg(web=False):
     """Launches the FreeSimpleGUI interface for EDS Trend."""
-    
+    if web:
+        import FreeSimpleGUIWeb as sg
+    else:
+        import FreeSimpleGUI as sg
+        
     # Load history for the dropdown list
     idcs_history = load_history()
 
@@ -114,7 +119,10 @@ def launch_fsg():
         [sg.Text("", size=(80, 1), key='STATUS_BAR', text_color='white', background_color='#333333')]
     ]
 
-    window = sg.Window("EDS Trend", layout, finalize=True)
+    if web:
+        window = sg.Window("EDS Trend (Web)", layout, web_port=8080, finalize=True)
+    else:
+        window = sg.Window("EDS Trend", layout, finalize=True)
     update_status(window, "Ready to fetch data.")
 
     while True:
@@ -373,10 +381,10 @@ if __name__ == "__main__":
     is_web_compatible = pyhabitat.web_browser_is_available() and \
                         (pyhabitat.on_termux() or pyhabitat.on_ish_alpine())
     if is_web_compatible:
-        #launch_fsg_web() # Use the web version
+        launch_fsg(web=True) # Use the web version
         launch_web()
     
     else:
-        launch_fsg() # Use the desktop version
+        launch_fsg(web=False) # Use the desktop version
 
    
