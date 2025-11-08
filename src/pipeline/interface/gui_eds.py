@@ -2,39 +2,88 @@
 
 import FreeSimpleGUI as sg
 from typer import BadParameter
+import json
+from pathlib import Path
 from pipeline.core import eds as eds_core
 
-def launch_fsg_():
-    layout = [[sg.Text("EDS Trend")],
-          [sg.Text("Which Ovation sensors do you want to see? Input IDCS values. Example: M100FI M310LI FI8001. Leave empty for the default.")],
-          [sg.InputText(key = "idcs_list")],
-          [sg.Text("Designate a start time, an end time, and/or a number of days.")],
-          [sg.Text("Days: "),sg.InputText(key = "days"), sg.Text("Start: "), sg.InputText(key = "starttime"), sg.Text("End: "), sg.InputText(key = "endtime")],
-          [sg.OK(), sg.Cancel()]]
-
-    window = sg.Window("EDS Trend", layout)
-
-    event, values = window.read()
-    window.close()
-
-    #your_color = values["days"]
-    sg.popup(f"Values: {values}")
-
-
 # Set theme for a slightly better look
-sg.theme('SystemDefault') 
+sg.theme('DarkGrey15') 
+
+
+# --- History Configuration ---
+# Define a path for the history file relative to the user's home directory 
+# or a configuration directory. Using a simple file in the current working directory
+# or a known config folder is typical. For simplicity here, we'll use a specific
+# configuration file location.
+HISTORY_FILE = Path.home() / '.pipeline_eds_history.json'
+MAX_HISTORY_ITEMS = 10
+
+def load_history():
+    """Loads the list of recent IDCS queries from a file."""
+    if HISTORY_FILE.exists():
+        try:
+            with open(HISTORY_FILE, 'r') as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError):
+            return []
+    return []
+
+def save_history(new_query: str):
+    """Adds a new query to the history list and saves it."""
+    history = load_history()
+    
+    # Clean up the new query (removes it if already present to move it to the top)
+    if new_query in history:
+        history.remove(new_query)
+    
+    # Insert at the beginning
+    history.insert(0, new_query)
+    
+    # Truncate to maximum size
+    history = history[:MAX_HISTORY_ITEMS]
+    
+    # Save the updated history
+    try:
+        with open(HISTORY_FILE, 'w') as f:
+            json.dump(history, f, indent=4)
+    except IOError as e:
+        print(f"Warning: Could not save history to {HISTORY_FILE}. Error: {e}")
+# --- End History Configuration ---
+
+# --- Status Bar Helper Function ---
+def update_status(window, message, color='white'):
+    """Updates the status bar text and color."""
+    # Use an alias to the element for cleaner code
+    window['STATUS_BAR'].update(message, text_color=color)
+    window.refresh()
 
 def launch_fsg():
     """Launches the FreeSimpleGUI interface for EDS Trend."""
     
+    # Load history for the dropdown list
+    idcs_history = load_history()
+
     # Define the layout
     layout = [
         [sg.Text("EDS Trend", font=("Helvetica", 16))],
         [sg.HorizontalSeparator()],
         
-        [sg.Text("Ovation Sensor IDCS (e.g., M100FI M310LI). Separate with spaces. Leave empty to use configured defaults.", size=(70, 2))],
-        [sg.InputText(key="idcs_list", size=(70, 1))],
+        #[sg.Text("Ovation Sensor IDCS (e.g., M100FI M310LI FI8001). Separate with spaces. Leave empty to use configured defaults.", size=(70, 2))],
+        #[sg.InputText(key="idcs_list", size=(70, 1))],
+        #[sg.Checkbox("Use Configured Default IDCS", key="default_idcs", default=False)],
+        
+        # *** MODIFIED SECTION: Changed sg.InputText to sg.Combo ***
+        [sg.Text("Ovation Sensor IDCS (e.g., M100FI M310LI FI8001). Separate with spaces. Type a new query or select from history.", size=(70, 2))],
+        [sg.Combo(
+            values=idcs_history,                 # The list of historical queries
+            default_value=idcs_history[0] if idcs_history else '', # Default to the last query
+            size=(70, 1),
+            key="idcs_list",
+            enable_events=False,                 # Do not trigger events when an item is selected
+            readonly=False                       # Allows typing new entries
+        )],
         [sg.Checkbox("Use Configured Default IDCS", key="default_idcs", default=False)],
+        # *** END MODIFIED SECTION ***
         
         [sg.HorizontalSeparator()],
         
@@ -48,10 +97,13 @@ def launch_fsg():
         [sg.Text("Plot Options", font=("Helvetica", 12))],
         [sg.Text("Time Step/Datapoints (Leave empty for automatic):", size=(40, 1))],
         [sg.Text("Seconds Between Points:", size=(20, 1)), sg.InputText(key="seconds_between_points", size=(10, 1)),
+         sg.Text(" OR "),
          sg.Text("Datapoint Count:", size=(15, 1)), sg.InputText(key="datapoint_count", size=(10, 1))],
         
-        [sg.Checkbox("Force Web-Based Plot (Plotly)", key="force_webplot", default=True, tooltip="Uses Plotly/browser. Recommended for most users."),
-         sg.Checkbox("Force Matplotlib Plot (Local)", key="force_matplotlib", default=False, tooltip="Uses Matplotlib. Requires a local display environment.")],
+        [sg.HorizontalSeparator()],
+        
+        [sg.Radio("Web-Based Plot (Plotly)", group_id= "plot_environment", key="force_webplot", default=True, tooltip="Uses Plotly/browser. Recommended for most users."),
+         sg.Radio("Matplotlib Plot (Local)", group_id= "plot_environment", key="force_matplotlib", default=False, tooltip="Uses Matplotlib. Requires a local display environment.")],
         
         [sg.HorizontalSeparator()],
         
@@ -70,6 +122,9 @@ def launch_fsg():
             # --- Input Processing ---
             # Typer Argument (idcs) is a list[str], so we need to convert the string.
             idcs_input = values["idcs_list"].strip()
+            # Save the successful input to history
+            if idcs_input and idcs_input != (idcs_history[0] if idcs_history else ''): # Only save if non-empty and new/different
+                save_history(idcs_input)
             idcs_list = idcs_input.split() if idcs_input else None
             
             # Convert optional inputs to their correct types or None
@@ -104,23 +159,25 @@ def launch_fsg():
                 )
                 
                 if data_buffer.is_empty():
-                    sg.popup_ok("Success, but no data points were returned for the selected time range and sensors.")
+                    #sg.popup_ok("Success, but no data points were returned for the selected time range and sensors.")
+                    update_status(window, "Success, but no data points were returned for the selected time range and sensors.", 'yellow')
                 else:
                     # --- Plotting ---
-                    sg.popup_ok("Data successfully fetched. Launching plot...")
+                    update_status(window, "Data successfully fetched. Launching plot...", 'lime')
                     eds_core.plot_trend_data(data_buffer, force_webplot, force_matplotlib)
+                    update_status(window, "Plot launched. Ready for new query.", 'white')
                     
             except BadParameter as e:
                 # Catch the specific error raised by the core logic
-                sg.popup_error("Configuration/Input Error:", str(e).strip())
+                #sg.popup_error("Configuration/Input Error:", str(e).strip())
+                update_status(window, f"Configuration/Input Error: {str(e).strip()}", 'red')
             except Exception as e:
                 # Catch all other unexpected errors
-                sg.popup_error("An unexpected error occurred during data fetching:", str(e))
+                #sg.popup_error("An unexpected error occurred during data fetching:", str(e))
+                update_status(window, f"An unexpected error occurred: {str(e)}", 'red')
 
     window.close()
 
 if __name__ == "__main__":
     launch_fsg()
 
-if __name__ == "__main__":
-    launch_fsg()
