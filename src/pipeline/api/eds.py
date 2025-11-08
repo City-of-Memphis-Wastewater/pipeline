@@ -607,6 +607,50 @@ class EdsClient:
         logger.info(f"Successfully retrieved data for {len(point)} point(s)")
         return results
     
+    @log_function_call(level=logging.DEBUG)    
+    @staticmethod
+    def load_historic_data(session, filter_iess, starttime, endtime, step_seconds):    
+        """
+        Retrieves historic time series data for a list of points (IESS)
+        within a specified time range and step interval using the EDS API.
+
+        This function converts the start and end times to Unix timestamps,
+        creates a tabular trend request, waits for its execution, and
+        then retrieves the results.
+
+        Args:
+            session (EdsSession): The authenticated EDS API session object.
+            filter_iess (list[str]): A list of point IDs (IESS) for which
+                                    to retrieve data.
+            starttime (str or int): The start time for the data request.
+                                    Can be a datetime string or a Unix timestamp.
+            endtime (str or int): The end time for the data request.
+                                Can be a datetime string or a Unix timestamp.
+            step_seconds (int): The aggregation interval (step size) in seconds.
+
+        Returns:
+            list[dict] or list: A list of dictionaries containing the historic
+                                data results (tabular trend), or an empty list
+                                if the request creation failed.
+        """
+
+        starttime = TimeManager(starttime).as_unix()
+        endtime = TimeManager(endtime).as_unix() 
+        logger.info(f"starttime = {starttime}")
+        logger.info(f"endtime = {endtime}")
+
+
+        point_list = filter_iess
+        api_url = str(session.base_url) 
+        request_id = EdsClient.create_tabular_request(session, api_url, starttime, endtime, points=point_list, step_seconds=step_seconds)
+        if not request_id:
+            logger.warning(f"Could not create tabular request for points: {point_list}")
+            return []  # or None, depending on how you want the CLI to behave
+        EdsClient.wait_for_request_execution_session(session, api_url, request_id)
+        results = EdsClient.get_tabular_trend(session, request_id, point_list)
+        logger.debug(f"len(results) = {len(results)}")
+        return results
+
     @staticmethod
     def get_service_name(plant_name: str|None = None) -> str | None:
         """
@@ -1391,7 +1435,7 @@ def demo_eds_webplot_point_live():
                     logger.info(f"Live: {label} {round(av,2)} {un}")
             time.sleep(1)
     if False:
-        load_historic_data()
+        EdsClient.load_historic_data()
     collector_thread = Thread(target=collect_loop, daemon=True)
     collector_thread.start()
 
@@ -1399,48 +1443,7 @@ def demo_eds_webplot_point_live():
     #gui_flaskplotly_live.run_gui(data_buffer)
     gui_fastapi_plotly_live.run_gui(data_buffer)
 
-@log_function_call(level=logging.DEBUG)    
-def load_historic_data(session, filter_iess, starttime, endtime, step_seconds):    
-    """
-    Retrieves historic time series data for a list of points (IESS)
-    within a specified time range and step interval using the EDS API.
 
-    This function converts the start and end times to Unix timestamps,
-    creates a tabular trend request, waits for its execution, and
-    then retrieves the results.
-
-    Args:
-        session (EdsSession): The authenticated EDS API session object.
-        filter_iess (list[str]): A list of point IDs (IESS) for which
-                                 to retrieve data.
-        starttime (str or int): The start time for the data request.
-                                Can be a datetime string or a Unix timestamp.
-        endtime (str or int): The end time for the data request.
-                              Can be a datetime string or a Unix timestamp.
-        step_seconds (int): The aggregation interval (step size) in seconds.
-
-    Returns:
-        list[dict] or list: A list of dictionaries containing the historic
-                            data results (tabular trend), or an empty list
-                            if the request creation failed.
-    """
-
-    starttime = TimeManager(starttime).as_unix()
-    endtime = TimeManager(endtime).as_unix() 
-    logger.info(f"starttime = {starttime}")
-    logger.info(f"endtime = {endtime}")
-
-
-    point_list = filter_iess
-    api_url = str(session.base_url) 
-    request_id = EdsClient.create_tabular_request(session, api_url, starttime, endtime, points=point_list, step_seconds=step_seconds)
-    if not request_id:
-        logger.warning(f"Could not create tabular request for points: {point_list}")
-        return []  # or None, depending on how you want the CLI to behave
-    EdsClient.wait_for_request_execution_session(session, api_url, request_id)
-    results = EdsClient.get_tabular_trend(session, request_id, point_list)
-    logger.debug(f"len(results) = {len(results)}")
-    return results
     
                 
 

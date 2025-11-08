@@ -21,7 +21,7 @@ except ImportError:
 
 from pipeline.time_manager import TimeManager
 from pipeline.create_sensors_db import get_db_connection, create_packaged_db, reset_user_db # get_user_db_path, ensure_user_db, 
-from pipeline.api.eds import demo_eds_webplot_point_live, EdsClient, load_historic_data, EdsLoginException, demo_eds_save_point_export
+from pipeline.api.eds import demo_eds_webplot_point_live, EdsClient, EdsLoginException, demo_eds_save_point_export
 from pipeline.security_and_config import get_eds_rest_api_credentials, get_external_api_credentials, get_eds_local_db_credentials, get_all_configured_urls, get_configurable_default_plant_name, init_security, CONFIG_PATH
 from pipeline.termux_setup import setup_termux_integration, cleanup_termux_integration
 from pipeline.windows_setup import setup_windows_integration, cleanup_windows_integration
@@ -68,7 +68,7 @@ def main(
     """
 
     if ctx.invoked_subcommand is None:
-        launch_gui()
+        gui_eds.launch_fsg()
         raise typer.Exit()
     elif False:#ctx.invoked_subcommand is None:
         typer.echo(ctx.get_help())
@@ -250,7 +250,7 @@ def trend(
         step_seconds = helpers.nice_step(TimeManager(dt_finish).as_unix()-TimeManager(dt_start).as_unix()) # TimeManager(starttime).as_unix()
     elif seconds_between_points is not None and datapoint_count is None:
         step_seconds = seconds_between_points
-    results = load_historic_data(session, iess_list, dt_start, dt_finish, step_seconds) 
+    results = EdsClient.load_historic_data(session, iess_list, dt_start, dt_finish, step_seconds) 
     # results is a list of lists. Each inner list is a separate curve.
     if not results:
         return 
