@@ -8,7 +8,6 @@ from pipeline.core import eds as eds_core
 import os
 import sys
 import pyhabitat
-import streamlit as st 
 
 from pipeline.web_utils import launch_browser
 
@@ -278,7 +277,8 @@ def launch_fsg(web:bool=False)->None:
 
 def launch_streamlit():
     """Launches the Streamlit web interface for EDS Trend."""
-    
+    import streamlit as st 
+
     st.set_page_config(layout="centered", page_title="EDS Trend")
     st.title("EDS Trend")
     st.markdown("---")
