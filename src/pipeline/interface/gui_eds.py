@@ -64,6 +64,10 @@ def update_status(window, message, color='white'):
     window['STATUS_BAR'].update(message, text_color=color)
     window.refresh()
 
+def create_separator(sg_lib):
+    """Returns a fresh list containing a new sg.Text separator element."""
+    return [sg_lib.Text('_' * 80, justification='center')]
+
 def launch_fsg(web:bool=False)->None:
     """
     Launches the FreeSimpleGUI interface for EDS Trend.
@@ -79,15 +83,30 @@ def launch_fsg(web:bool=False)->None:
         import FreeSimpleGUIWeb as sg
     else:
         import FreeSimpleGUI as sg
+
+    horizontal_seperator = [sg.Text('_' * 80, justification='center')]
+    #horizontal_seperator = [sg.HorizontalSeparator()],
+    if web:
+        horizontal_seperator_not_web = []
+    else:
+        horizontal_seperator_not_web = horizontal_seperator
+
+    if web:
+        plot_web_or_local_radio_buttons = [sg.Text("Web-based plotting will be used.", size=(40, 1))]
+    else:
+        plot_web_or_local_radio_buttons = [sg.Radio("Web-Based Plot (Plotly)", group_id= "plot_environment", key="force_webplot", default=True, tooltip="Uses Plotly/browser. Recommended for most users."),
+         sg.Radio("Matplotlib Plot (Local)", group_id= "plot_environment", key="force_matplotlib", default=False, tooltip="Uses Matplotlib. Requires a local display environment.")]
+        
+
+
     # Load history for the dropdown list
     idcs_history = load_history()
 
     # Define the layout
     layout = [
         [sg.Text("EDS Trend", font=("Helvetica", 16))],
-        #[sg.HorizontalSeparator()],
-        [sg.Text('_' * 80, justification='center')],
-        
+        create_separator(sg),
+
         #[sg.Text("Ovation Sensor IDCS (e.g., M100FI M310LI FI8001). Separate with spaces. Leave empty to use configured defaults.", size=(70, 2))],
         #[sg.InputText(key="idcs_list", size=(70, 1))],
         #[sg.Checkbox("Use Configured Default IDCS", key="default_idcs", default=False)],
@@ -105,16 +124,15 @@ def launch_fsg(web:bool=False)->None:
         [sg.Checkbox("Use Configured Default IDCS", key="default_idcs", default=False)],
         # *** END MODIFIED SECTION ***
         
-        #[sg.HorizontalSeparator()],
-        [sg.Text('_' * 80, justification='center')],
+        
+        create_separator(sg),
 
         [sg.Text("Time Range (Start/End/Days)", font=("Helvetica", 12))],
         [sg.Text("Days:", size=(10, 1)), sg.InputText(key="days", size=(15, 1)), 
          sg.Text("Start Time:", size=(10, 1)), sg.InputText(key="starttime", size=(25, 1)), 
          sg.Text("End Time:", size=(10, 1)), sg.InputText(key="endtime", size=(25, 1))],
         
-        #[sg.HorizontalSeparator()],
-        [sg.Text('_' * 80, justification='center')],
+        create_separator(sg),
 
         [sg.Text("Plot Options", font=("Helvetica", 12))],
         [sg.Text("Time Step/Datapoints (Leave empty for automatic):", size=(40, 1))],
@@ -122,19 +140,15 @@ def launch_fsg(web:bool=False)->None:
          sg.Text(" OR "),
          sg.Text("Datapoint Count:", size=(15, 1)), sg.InputText(key="datapoint_count", size=(10, 1))],
         
-        #[sg.HorizontalSeparator()],
-        [sg.Text('_' * 80, justification='center')],
+        horizontal_seperator_not_web,
+        plot_web_or_local_radio_buttons,
         
-        [sg.Radio("Web-Based Plot (Plotly)", group_id= "plot_environment", key="force_webplot", default=True, tooltip="Uses Plotly/browser. Recommended for most users."),
-         sg.Radio("Matplotlib Plot (Local)", group_id= "plot_environment", key="force_matplotlib", default=False, tooltip="Uses Matplotlib. Requires a local display environment.")],
-        
-        #[sg.HorizontalSeparator()],
-        [sg.Text('_' * 80, justification='center')],
+        create_separator(sg),
         [sg.Button("Fetch & Plot Trend", key="OK"), sg.Button("Close")],
 
         [sg.Text("", size=(80, 1), key='STATUS_BAR', text_color='white', background_color='#333333')]
     ]
-
+    
     if web:
         window = sg.Window("EDS Trend (Web)", layout, web_port=8080, finalize=True)
     else:
@@ -174,9 +188,14 @@ def launch_fsg(web:bool=False)->None:
             
             # Typer boolean options
             default_idcs = values["default_idcs"]
-            force_webplot = values["force_webplot"]
-            force_matplotlib = values["force_matplotlib"]
             
+            force_webplot = True    
+            force_matplotlib = False
+            try:
+                force_webplot = values["force_webplot"]
+                force_matplotlib = values["force_matplotlib"]       
+            except:
+                pass
             # --- Core Logic Execution ---
             try:
                 # The core function handles all the logic and error checking
