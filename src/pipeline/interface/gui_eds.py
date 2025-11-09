@@ -141,7 +141,8 @@ def launch_fsg(web:bool=False)->None:
         if event == "OK":
             # --- Input Processing ---
             # Typer Argument (idcs) is a list[str], so we need to convert the string.
-            idcs_input = values["idcs_list"].strip()
+            if values["idcs_list"] is not None:
+                idcs_input = values["idcs_list"].strip()
             # Save the successful input to history
             if idcs_input and idcs_input != (idcs_history[0] if idcs_history else ''): # Only save if non-empty and new/different
                 save_history(idcs_input)
