@@ -126,13 +126,13 @@ pydantic = [
     { version = "^2.0.0", python = ">=3.12" },    # Use V2 for Python 3.12 and newer
     { version = "1.10.13", python = "<3.12" },    # Use V1 for Python 3.8 through 3.11
 ]
-suds = "^1.2.0"
 
 # prettytable: Version 3.x requires Python >=3.9, so we pin 2.x for 3.8.
 freesimplegui = "^5.2.0.post1"
 legacy-cgi = "^2.6.4"
 freesimpleguiweb = "^1.1.0"
 remi = {git = "https://github.com/rawpython/remi.git"}
+suds-py3 = "^1.4.5.0"
 
 [tool.poetry.dependencies."backports.zoneinfo"] # known poetry quirk necessary when freezing, a la "poetry export -f requirements.txt --without-hashes > requirements.txt"
 version = "^0.2.1"

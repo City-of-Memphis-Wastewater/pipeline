@@ -157,8 +157,15 @@ class SecurityAndConfig:
             try:
                 with open(CONFIG_PATH, "r") as f:
                     config = json.load(f)
-            except json.JSONDecodeError:
-                typer.echo(f"⚠️  Warning: Existing config file '{CONFIG_PATH.name}' is corrupted.")
+            except json.JSONDecodeError as e:
+                print(f"⚠️ Warning: Config file '{CONFIG_PATH.name}' is corrupted or improperly formatted. Attempting self-healing...")
+                if not json_heal(CONFIG_PATH):
+                    typer.echo(f"⚠️  Warning: Existing config file '{CONFIG_PATH.name}' is corrupted. Self-healing failed.")
+                    return None
+                with open(CONFIG_PATH, "r") as f:
+                    config = json.load(f)
+            except json.JSONDecodeError as repair_e:
+                typer.echo(f"⚠️  Warning: Existing config file '{CONFIG_PATH.name}' is corrupted. Self-healing failed.")
                 if not typer.confirm("Do you want to reset the corrupted file to an empty file?", default=False):
                     typer.echo("-> Keeping existing corrupted file. Returning None for the requested value.")
                     return None
@@ -323,6 +330,28 @@ class SecurityAndConfig:
         # Return existing credential if no overwrite
         return credential
 
+def json_heal(config_path = CONFIG_PATH):
+    raw_text = config_path.read_text()
+    # --- SELF-HEALING STEP: Clean the raw text ---
+    # Remove all unneeded newlines that aren't inside the JSON structure
+    # This turns your corrupt data back into a single valid JSON line
+    cleaned_text = re.sub(r'[\r\n\t]+', ' ', raw_text)
+    # Remove repeated spaces
+    cleaned_text = re.sub(r' +', ' ', cleaned_text).strip()
+    # 3. Attempt lax load with cleaned text
+    try:
+        config = json.loads(cleaned_text)
+        print("Self-healing successful. File structure repaired.")
+        
+        # 4. Reformat and save the corrected file
+        # This prevents the corruption from recurring on next load
+        CONFIG_PATH.write_text(json.dumps(config, indent=4))
+        print(f"File automatically reformatted to a clean structure at '{CONFIG_PATH.name}'.")
+        return True
+    except Exception:
+        # Catch all errors during the healing attempt
+        return False # Healing failed
+    
 def init_security():
     if on_termux() or on_ish_alpine():
         try: # mid refactor, try the new function first
