@@ -80,7 +80,7 @@ def launch_fsg(web:bool=False)->None:
     
     """
     if web: 
-        url = "http://127.0.0.1:8080"
+        url = "http://127.0.0.1:8082"
         launch_browser(url)
 
     if web:
@@ -147,7 +147,7 @@ def launch_fsg(web:bool=False)->None:
     ]
 
     if web:
-        window = sg.Window("EDS Trend (Web)", layout, web_port=8080, finalize=True)
+        window = sg.Window("EDS Trend (Web)", layout, web_port=8082, finalize=True)
     else:
         window = sg.Window("EDS Trend", layout, finalize=True)
     update_status(window, "Ready to fetch data.")
