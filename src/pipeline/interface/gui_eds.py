@@ -6,11 +6,15 @@ import json
 from pathlib import Path
 from pipeline.core import eds as eds_core
 import pyhabitat
-import FreeSimpleGUI as sg
 import streamlit as st 
 
+if not pyhabitat.on_termux() and not pyhabitat.on_ish_alpine(): 
+    import FreeSimpleGUI as sg
+    sg.theme('DarkGrey15') 
+
+
 # Set theme for a slightly better look
-sg.theme('DarkGrey15') 
+
 
 
 # --- History Configuration ---
