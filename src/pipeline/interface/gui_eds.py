@@ -178,7 +178,7 @@ def launch_fsg(web:bool=False)->None:
         window = sg.Window("EDS Trend (Web)", layout, web_port=8082, finalize=True, web_start_browser=False)
     else:
         window = sg.Window("EDS Trend", layout, finalize=True)
-    update_status(window, "Ready to fetch data.", web=web)
+        update_status(window, "Ready to fetch data.", web=web)
 
     while True: 
         event, values = window.read(timeout=100)
