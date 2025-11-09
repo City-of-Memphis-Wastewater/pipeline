@@ -159,7 +159,7 @@ def launch_fsg(web:bool=False)->None:
             break
 
         if event == "OK":
-            ######update_status(window, "Processing request...")
+            update_status(window, "Processing request...")
             # --- Input Processing ---
             # Typer Argument (idcs) is a list[str], so we need to convert the string.
             if values["idcs_list"] is not None:
