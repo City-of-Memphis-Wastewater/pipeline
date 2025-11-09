@@ -68,9 +68,10 @@ def launch_fsg(web:bool=False)->None:
     """
     Launches the FreeSimpleGUI interface for EDS Trend.
     Web usage is not recommended! But, currently, it does function as long as the proper libraries are available:
-        - legacy-csi
-        - freesimpleguiweb
-        - remi ()   
+        - freesimplegui = "^5.2.0.post1"
+        - legacy-cgi = "^2.6.4"
+        - freesimpleguiweb = "^1.1.0"
+        - remi = {git = "https://github.com/rawpython/remi.git
     
     """
 
