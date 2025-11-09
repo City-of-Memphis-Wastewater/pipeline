@@ -10,11 +10,11 @@ import pyhabitat
 
 if not pyhabitat.on_termux() and not pyhabitat.on_ish_alpine(): 
     import FreeSimpleGUI as sg
+    # Set theme for a slightly better look
     sg.theme('DarkGrey15') 
     import streamlit as st 
 
-# Set theme for a slightly better look
-
+from pipeline.web_utils import launch_browser
 
 
 # --- History Configuration ---
@@ -67,6 +67,7 @@ def update_status(window, message, color='white'):
 def create_separator(sg_lib):
     """Returns a fresh list containing a new sg.Text separator element."""
     return [sg_lib.Text('_' * 80, justification='center')]
+    # return [sg.HorizontalSeparator()]
 
 def launch_fsg(web:bool=False)->None:
     """
@@ -78,18 +79,14 @@ def launch_fsg(web:bool=False)->None:
         - remi = {git = "https://github.com/rawpython/remi.git
     
     """
+    if web: 
+        url = "http://127.0.0.1:8080"
+        launch_browser(url)
 
     if web:
         import FreeSimpleGUIWeb as sg
     else:
         import FreeSimpleGUI as sg
-
-    horizontal_seperator = [sg.Text('_' * 80, justification='center')]
-    #horizontal_seperator = [sg.HorizontalSeparator()],
-    if web:
-        horizontal_seperator_not_web = []
-    else:
-        horizontal_seperator_not_web = horizontal_seperator
 
     if web:
         plot_web_or_local_radio_buttons = [sg.Text("Web-based plotting will be used.", size=(40, 1))]
@@ -140,7 +137,7 @@ def launch_fsg(web:bool=False)->None:
          sg.Text(" OR "),
          sg.Text("Datapoint Count:", size=(15, 1)), sg.InputText(key="datapoint_count", size=(10, 1))],
         
-        horizontal_seperator_not_web,
+        create_separator(sg),
         plot_web_or_local_radio_buttons,
         
         create_separator(sg),
@@ -148,7 +145,7 @@ def launch_fsg(web:bool=False)->None:
 
         [sg.Text("", size=(80, 1), key='STATUS_BAR', text_color='white', background_color='#333333')]
     ]
-    
+
     if web:
         window = sg.Window("EDS Trend (Web)", layout, web_port=8080, finalize=True)
     else:
@@ -445,6 +442,7 @@ if __name__ == "__main__":
         #launch_web()
         launch_fsg(web=True) # Gosh this looks terrible.
         #launch_streamlit()
+        print("")
 
     else:
         """
