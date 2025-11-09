@@ -342,11 +342,11 @@ def configure_credentials(
         typer.echo(f"Config file path: {CONFIG_PATH}", color=typer.colors.MAGENTA)   
 
     # Get a list of plant names from the user
-    num_plants = typer.prompt("How many EDS plants do you want to configure?", type=int, default=1)
-    
+    #num_plants = typer.prompt("How many EDS plants do you want to configure?", type=int, default=1)
+    num_plants = 1
     plant_names = []
     for i in range(num_plants):
-        plant_name = typer.prompt(f"Enter a unique name for Plant #{i+1} (e.g., 'Maxson' or 'Stiles')")
+        plant_name = typer.prompt(f"Enter a unique name for Plant (e.g., 'Maxson' or 'Stiles')")
         plant_names.append(plant_name)
 
     # Loop through each plant to configure its credentials

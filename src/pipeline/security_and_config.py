@@ -155,24 +155,40 @@ class SecurityAndConfig:
         # --- Load existing config file safely ---
         if CONFIG_PATH.exists():
             try:
+                # 1. Primary Load Attempt
                 with open(CONFIG_PATH, "r") as f:
                     config = json.load(f)
+
             except json.JSONDecodeError as e:
                 print(f"⚠️ Warning: Config file '{CONFIG_PATH.name}' is corrupted or improperly formatted. Attempting self-healing...")
-                if not json_heal(CONFIG_PATH):
-                    typer.echo(f"⚠️  Warning: Existing config file '{CONFIG_PATH.name}' is corrupted. Self-healing failed.")
-                    return None
-                with open(CONFIG_PATH, "r") as f:
-                    config = json.load(f)
-            except json.JSONDecodeError as repair_e:
-                typer.echo(f"⚠️  Warning: Existing config file '{CONFIG_PATH.name}' is corrupted. Self-healing failed.")
-                if not typer.confirm("Do you want to reset the corrupted file to an empty file?", default=False):
-                    typer.echo("-> Keeping existing corrupted file. Returning None for the requested value.")
-                    return None
-                typer.echo("-> Resetting config file...")
-                config = {}
+                
+                # 2. Attempt self-healing
+                if json_heal(CONFIG_PATH):
+                    try:
+                        # 3. SECOND LOAD ATTEMPT: Must be in its own try block
+                        with open(CONFIG_PATH, "r") as f:
+                            config = json.load(f)
+                    
+                    except json.JSONDecodeError as repair_e:
+                        # 4. Handle UNRECOVERABLE corruption after a failed heal attempt
+                        typer.echo(f"⚠️ Warning: Existing config file '{CONFIG_PATH.name}' is corrupted. Self-healing failed. Error: {repair_e}")
+                        if not typer.confirm("Do you want to reset the corrupted file to an empty file?", default=False):
+                            typer.echo("-> Keeping existing corrupted file. Returning None for the requested value.")
+                            return None
+                        typer.echo("-> Resetting config file...")
+                        config = {}
+                else:
+                    # 5. Handle failed self-healing (json_heal returned False)
+                    typer.echo(f"⚠️ Warning: Existing config file '{CONFIG_PATH.name}' is corrupted. Self-healing failed.")
+                    if not typer.confirm("Do you want to reset the corrupted file to an empty file?", default=False):
+                        typer.echo("-> Keeping existing corrupted file. Returning None for the requested value.")
+                        return None
+                    typer.echo("-> Resetting config file...")
+                    config = {}
+                    
             except Exception as e:
-                typer.echo(f"⚠️  Failed to read config file: {e}")
+                # Catch non-JSONDecode errors (e.g., File permission errors)
+                typer.echo(f"⚠️  Failed to read config file: {e}")
                 return None
             
         # Get the value from the config file, which will be None if not found
