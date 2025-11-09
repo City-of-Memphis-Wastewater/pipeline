@@ -79,6 +79,10 @@ def launch_fsg(web:bool=False)->None:
         - remi = {git = "https://github.com/rawpython/remi.git
     
     """
+    # Load history for the dropdown list
+    idcs_history = load_history()
+
+
     if web: 
         url = "http://127.0.0.1:8082"
         launch_browser(url)
@@ -88,16 +92,34 @@ def launch_fsg(web:bool=False)->None:
     else:
         import FreeSimpleGUI as sg
 
+        
+
+    if not web:
+        # Desktop (FreeSimpleGUI) - Combo allows typing and history selection
+        idcs_input = [sg.Combo(
+            values=idcs_history,                 # The list of historical queries
+            default_value=idcs_history[0] if idcs_history else '', # Default to the last query
+            size=(70, 1),
+            key="idcs_list",
+            enable_events=False,                 # Do not trigger events when an item is selected
+            readonly=False                       # Allows typing new entries
+        )]
+    else:
+        # Web (FreeSimpleGUIWeb) - Use a standard InputText element
+        # since Combo's typing feature (readonly=False) is broken or unsupported.
+        # The user must manually type the IDCS list here.
+        idcs_input = [sg.InputText(
+            default_text=idcs_history[0] if idcs_history else '', # Pre-fill with last history item
+            size=(70, 1),
+            key="idcs_list"
+        )] 
+
     if web:
         plot_web_or_local_radio_buttons = [sg.Text("Web-based plotting will be used.", size=(40, 1))]
     else:
         plot_web_or_local_radio_buttons = [sg.Radio("Web-Based Plot (Plotly)", group_id= "plot_environment", key="force_webplot", default=True, tooltip="Uses Plotly/browser. Recommended for most users."),
          sg.Radio("Matplotlib Plot (Local)", group_id= "plot_environment", key="force_matplotlib", default=False, tooltip="Uses Matplotlib. Requires a local display environment.")]
         
-
-
-    # Load history for the dropdown list
-    idcs_history = load_history()
 
     # Define the layout
     layout = [
@@ -110,14 +132,7 @@ def launch_fsg(web:bool=False)->None:
         
         # *** MODIFIED SECTION: Changed sg.InputText to sg.Combo ***
         [sg.Text("Ovation Sensor IDCS (e.g., M100FI M310LI FI8001). Separate with spaces. Type a new query or select from history.", size=(70, 2))],
-        [sg.Combo(
-            values=idcs_history,                 # The list of historical queries
-            default_value=idcs_history[0] if idcs_history else '', # Default to the last query
-            size=(70, 1),
-            key="idcs_list",
-            enable_events=False,                 # Do not trigger events when an item is selected
-            readonly=False                       # Allows typing new entries
-        )],
+        idcs_input,
         [sg.Checkbox("Use Configured Default IDCS", key="default_idcs", default=False)],
         # *** END MODIFIED SECTION ***
         
