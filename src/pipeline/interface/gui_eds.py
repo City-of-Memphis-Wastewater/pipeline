@@ -7,7 +7,7 @@ from pathlib import Path
 from pipeline.core import eds as eds_core
 import pyhabitat
 import FreeSimpleGUI as sg
-
+import streamlit as st 
 
 # Set theme for a slightly better look
 sg.theme('DarkGrey15') 
@@ -60,20 +60,21 @@ def update_status(window, message, color='white'):
     window['STATUS_BAR'].update(message, text_color=color)
     window.refresh()
 
-def launch_fsg(web=False):
+def launch_fsg(web:bool=False)->None:
     """Launches the FreeSimpleGUI interface for EDS Trend."""
+
     if web:
         import FreeSimpleGUIWeb as sg
     else:
         import FreeSimpleGUI as sg
-        
     # Load history for the dropdown list
     idcs_history = load_history()
 
     # Define the layout
     layout = [
         [sg.Text("EDS Trend", font=("Helvetica", 16))],
-        [sg.HorizontalSeparator()],
+        #[sg.HorizontalSeparator()],
+        [sg.Text('_' * 80, justification='center')],
         
         #[sg.Text("Ovation Sensor IDCS (e.g., M100FI M310LI FI8001). Separate with spaces. Leave empty to use configured defaults.", size=(70, 2))],
         #[sg.InputText(key="idcs_list", size=(70, 1))],
@@ -92,14 +93,16 @@ def launch_fsg(web=False):
         [sg.Checkbox("Use Configured Default IDCS", key="default_idcs", default=False)],
         # *** END MODIFIED SECTION ***
         
-        [sg.HorizontalSeparator()],
-        
+        #[sg.HorizontalSeparator()],
+        [sg.Text('_' * 80, justification='center')],
+
         [sg.Text("Time Range (Start/End/Days)", font=("Helvetica", 12))],
         [sg.Text("Days:", size=(10, 1)), sg.InputText(key="days", size=(15, 1)), 
          sg.Text("Start Time:", size=(10, 1)), sg.InputText(key="starttime", size=(25, 1)), 
          sg.Text("End Time:", size=(10, 1)), sg.InputText(key="endtime", size=(25, 1))],
         
-        [sg.HorizontalSeparator()],
+        #[sg.HorizontalSeparator()],
+        [sg.Text('_' * 80, justification='center')],
 
         [sg.Text("Plot Options", font=("Helvetica", 12))],
         [sg.Text("Time Step/Datapoints (Leave empty for automatic):", size=(40, 1))],
@@ -107,22 +110,21 @@ def launch_fsg(web=False):
          sg.Text(" OR "),
          sg.Text("Datapoint Count:", size=(15, 1)), sg.InputText(key="datapoint_count", size=(10, 1))],
         
-        [sg.HorizontalSeparator()],
+        #[sg.HorizontalSeparator()],
+        [sg.Text('_' * 80, justification='center')],
         
         [sg.Radio("Web-Based Plot (Plotly)", group_id= "plot_environment", key="force_webplot", default=True, tooltip="Uses Plotly/browser. Recommended for most users."),
          sg.Radio("Matplotlib Plot (Local)", group_id= "plot_environment", key="force_matplotlib", default=False, tooltip="Uses Matplotlib. Requires a local display environment.")],
         
-        [sg.HorizontalSeparator()],
+        #[sg.HorizontalSeparator()],
+        [sg.Text('_' * 80, justification='center')],
         
         [sg.Button("Fetch & Plot Trend", key="OK"), sg.Button("Close")],
 
         [sg.Text("", size=(80, 1), key='STATUS_BAR', text_color='white', background_color='#333333')]
     ]
 
-    if web:
-        window = sg.Window("EDS Trend (Web)", layout, web_port=8080, finalize=True)
-    else:
-        window = sg.Window("EDS Trend", layout, finalize=True)
+    window = sg.Window("EDS Trend", layout, finalize=True)
     update_status(window, "Ready to fetch data.")
 
     while True:
@@ -177,7 +179,7 @@ def launch_fsg(web=False):
                 else:
                     # --- Plotting ---
                     update_status(window, "Data successfully fetched. Launching plot...", 'lime')
-                    eds_core.plot_trend_data(data_buffer, force_webplot, force_matplotlib)
+                    fig = eds_core.plot_trend_data(data_buffer, force_webplot, force_matplotlib)
                     update_status(window, "Plot launched. Ready for new query.", 'white')
                     
             except BadParameter as e:
@@ -191,11 +193,99 @@ def launch_fsg(web=False):
 
     window.close()
 
-# pipeline/interfaces/gui_eds.py (Add this function)
+
+def launch_streamlit():
+    """Launches the Streamlit web interface for EDS Trend."""
+    
+    st.set_page_config(layout="centered", page_title="EDS Trend")
+    st.title("EDS Trend")
+    st.markdown("---")
+    
+    # --- HISTORY / IDCS INPUT ---
+    idcs_history = load_history()
+    
+    # Use st.form for grouping inputs and handling submission cleanly
+    with st.form("eds_form"):
+        st.subheader("Sensor and Time Selection")
+        
+        # IDCS Input (Mimics Combo/History)
+        idcs_input = st.text_input(
+            "Ovation Sensor IDCS (e.g., M100FI). Separate with spaces.", 
+            value=idcs_history[0] if idcs_history else '',
+            key="idcs_list_web"
+        )
+        
+        # Checkboxes and Time Range
+        col_def, col_days, col_start, col_end = st.columns([1, 1, 1, 1])
+        
+        default_idcs = col_def.checkbox("Use Default IDCS")
+        days_input = col_days.text_input("Days:", help="e.g., 7.0")
+        starttime = col_start.text_input("Start Time:", help="e.g., 2025-01-01 10:00:00")
+        endtime = col_end.text_input("End Time:")
+
+        st.subheader("Plot Parameters")
+        col_sec, col_dp = st.columns(2)
+        sec_between_input = col_sec.text_input("Seconds Between Points:")
+        dp_count_input = col_dp.text_input("Datapoint Count:")
+
+        # Action Button (Must be inside the form)
+        submitted = st.form_submit_button("Fetch & Plot Trend", type="primary")
+
+    # --- Core Logic Execution on Submit ---
+    if submitted:
+        # Save history immediately after submission
+        if idcs_input:
+            save_history(idcs_input)
+            
+        st.status("Processing request...", expanded=True) # Streamlit Status Bar
+        
+        # Input Validation and Conversion
+        try:
+            days = float(days_input) if days_input else None
+            sec_between = int(sec_between_input) if sec_between_input else None
+            dp_count = int(dp_count_input) if dp_count_input else None
+        except ValueError:
+            st.error("Invalid number entered for Days, Seconds, or Datapoint Count.")
+            return
+
+        idcs_list = idcs_input.strip().split() if idcs_input.strip() else None
+
+        # Fetch Data
+        try:
+            data_buffer, _ = eds_core.fetch_trend_data(
+                idcs=idcs_list, 
+                starttime=starttime, 
+                endtime=endtime, 
+                days=days, 
+                seconds_between_points=sec_between, 
+                datapoint_count=dp_count,
+                default_idcs=default_idcs
+            )
+            
+            if data_buffer.is_empty():
+                st.warning("Success, but no data points were returned.")
+            else:
+                st.success("Data successfully fetched. Launching plot...")
+                
+                # --- Plotting ---
+                # This still relies on eds_core.plot_trend_data opening a new tab,
+                # which is exactly what you requested.
+                eds_core.plot_trend_data(
+                    data_buffer, 
+                    force_webplot=True, 
+                    force_matplotlib=False
+                )
+                st.info("Plot opened in a new browser tab.")
+                
+        except BadParameter as e:
+            st.error(f"Configuration/Input Error: {str(e).strip()}")
+        except Exception as e:
+            st.error(f"An unexpected error occurred: {e}")
+
+# --- End Streamlit Function ---
 
 def launch_web():
     """Launches the Streamlit web interface for EDS Trend."""
-    import streamlit as st
 
     st.set_page_config(layout="centered", page_title="EDS Trend")
     st.title("EDS Trend")
@@ -310,81 +400,14 @@ def launch_web():
         except Exception as e:
             st.error(f"An unexpected error occurred during data fetching: {e}")
 
-
-
-def launch_fsg_web():
-    """Launches the PySimpleGUIWeb interface for EDS Trend."""
-    try:
-        # Check for PySimpleGUIWeb/PySimpleGUIWeb to avoid dependency issues
-        import PySimpleGUIWeb as sg_web
-    except ImportError:
-        print("Error: PySimpleGUIWeb not installed or available.")
-        return
-
-    # --- History Configuration (Remains the same) ---
-    idcs_history = load_history()
-    
-    # --- Status Bar Helper (Requires update for web environment) ---
-    # Web GUIs often handle status via a simple element update
-    def update_status(window, message, color='white'):
-        window['STATUS_BAR'].update(message, text_color=color)
-        window.refresh()
-        
-    # --- Web Layout (Nearly identical to desktop) ---
-    layout = [
-        # ... (Define layout using sg_web.Text, sg_web.Combo, etc.) ...
-        [sg_web.Text("EDS Trend", font=("Helvetica", 16))],
-        [sg_web.HorizontalSeparator()],
-        # ... (The rest of your layout goes here, replacing 'sg.' with 'sg_web.')
-        # ...
-        [sg_web.Button("Fetch & Plot Trend", key="OK"), sg_web.Button("Cancel")],
-        [sg_web.Text("", size=(80, 1), key='STATUS_BAR', text_color='white', background_color='#333333')]
-    ]
-
-    # --- Web Window Initialization ---
-    window = sg_web.Window("EDS Trend (Web)", layout, web_port=8080, finalize=True)
-    update_status(window, "Ready to fetch data.")
-
-    while True:
-        event, values = window.read()
-        
-        if event == sg_web.WIN_CLOSED or event == "Cancel":
-            break
-            
-        if event == "OK":
-            update_status(window, "Processing request... Please wait.", 'yellow')
-            
-            # --- Input Processing and Core Logic Call (Remains the same) ---
-            # ... (Call fetch_trend_data) ...
-            
-            if data_buffer.is_empty():
-                 update_status(window, "Success, but no data points were returned...", 'yellow')
-            else:
-                # --- The CRITICAL Change: Handling Plotting ---
-                # You CANNOT call eds_core.plot_trend_data directly.
-                
-                update_status(window, "Data fetched. Generating Plotly chart...", 'lime')
-                
-                # OPTION A: Extract Plotly Figure (Best approach for web)
-                # You MUST refactor eds_core to return a Plotly Figure object.
-                # Then, you would use PySimpleGUIWeb's `sg_web.Plotly` element (if available)
-                # or a custom mechanism to inject the HTML/JS for the plot into the page.
-                
-                # OPTION B: Simple Image Fallback (Least desirable)
-                # fig = eds_core.generate_matplotlib_image(data_buffer) 
-                # sg_web.Image(data=fig_bytes)
-                
-                update_status(window, "Plot displayed in web interface. Ready for new query.", 'white')
-
-
 if __name__ == "__main__":
     is_web_compatible = pyhabitat.web_browser_is_available() and \
                         (pyhabitat.on_termux() or pyhabitat.on_ish_alpine())
-    if is_web_compatible:
-        launch_fsg(web=True) # Use the web version
-        launch_web()
+    if False:# is_web_compatible:
+        #launch_web()
+        launch_streamlit()
     
     else:
-        launch_fsg(web=False) # Use the desktop version
+        launch_fsg(web=True) # Use the desktop version
 
    

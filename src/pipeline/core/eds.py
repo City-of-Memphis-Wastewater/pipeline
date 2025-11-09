@@ -1,11 +1,17 @@
 # pipeline/core/eds.py
+import plotly.offline as pyo # You'll need this for the desktop display
+import webbrowser
+from pathlib import Path
+import os
+import tempfile
+from typer import BadParameter
+
 
 from pipeline.security_and_config import get_configurable_default_plant_name, get_eds_rest_api_credentials, get_configurable_idcs_list
 from pipeline import helpers
 from pipeline.time_manager import TimeManager
 from pipeline.plotbuffer import PlotBuffer
 from pipeline.api.eds import EdsClient
-from typer import BadParameter
 
 def resolve_idcs_list(idcs: list[str] | None, default_idcs: bool, plant_name: str) -> list[str]:
     """
@@ -121,18 +127,36 @@ def plot_trend_data(data_buffer: PlotBuffer, force_webplot: bool, force_matplotl
     Handles the common logic for plotting the data based on flags.
     """
     import pyhabitat as ph # Assuming ph is a local import in the original CLI
+    fig = None
+    # Determine the plotting method
+    use_plotly = force_webplot or not force_matplotlib or not ph.matplotlib_is_available_for_gui_plotting()
 
     if force_matplotlib and not ph.matplotlib_is_available_for_gui_plotting():
         # Using typer.echo here for CLI compatibility, but could be print/sg.Print
         print(f"force_matplotlib = {force_matplotlib}, but matplotlib is not available. Plotly, web-based plotting will be used.\n")
     
     # Check if we should use Plotly (webplot, or default when matplotlib isn't forced/available)
-    if force_webplot or not force_matplotlib or not ph.matplotlib_is_available_for_gui_plotting():
+    if use_plotly:
         from pipeline import gui_plotly_static
-        gui_plotly_static.show_static(data_buffer)
+        fig = gui_plotly_static.show_static(data_buffer)
     elif ph.matplotlib_is_available_for_gui_plotting():
         from pipeline import gui_mpl_live
-        gui_mpl_live.show_static(data_buffer)
+        fig = gui_mpl_live.show_static(data_buffer)
+    else: 
+        print("No suitable plotting environment found.")
+        return None
+    # CUT OFF AFTER THIS TO REVERT
+    return fig
+    if fig and use_plotly and not ph.on_termux() and not ph.on_ish_alpine():
+        # This section replaces the file/server launch logic removed from show_static
+        tmp_file = Path(tempfile.gettempdir()) / f"eds_plot_{os.getpid()}.html"
+        
+        # Plotly method to save the figure to a local HTML file and open it
+        pyo.plot(fig, filename=str(tmp_file), auto_open=False, include_plotlyjs='full')
+        webbrowser.open(f"file://{tmp_file.resolve()}")
+        
+        
+    return fig
 
 # Assuming EdsClient and PlotBuffer are available via imports
 # from pipeline.eds_client import EdsClient, PlotBuffer
