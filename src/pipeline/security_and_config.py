@@ -52,7 +52,7 @@ class SecurityAndConfig:
             if value is not None:
                 return value
         
-        elif interactive_terminal_is_available and not force_webbrowser():
+        elif interactive_terminal_is_available and not force_webbrowser:
             try:
                 # 1. CLI Mode (Interactive)
                 typer.echo(f"\n --- Use CLI input --- ")
