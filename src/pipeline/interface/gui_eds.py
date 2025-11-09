@@ -5,6 +5,7 @@ from typer import BadParameter
 import json
 from pathlib import Path
 from pipeline.core import eds as eds_core
+import os
 import pyhabitat
 
 if not pyhabitat.on_termux() and not pyhabitat.on_ish_alpine(): 
@@ -64,7 +65,14 @@ def update_status(window, message, color='white'):
     window.refresh()
 
 def launch_fsg(web:bool=False)->None:
-    """Launches the FreeSimpleGUI interface for EDS Trend."""
+    """
+    Launches the FreeSimpleGUI interface for EDS Trend.
+    Web usage is not recommended! But, currently, it does function as long as the proper libraries are available:
+        - legacy-csi
+        - freesimpleguiweb
+        - remi ()   
+    
+    """
 
     if web:
         import FreeSimpleGUIWeb as sg
@@ -132,13 +140,14 @@ def launch_fsg(web:bool=False)->None:
         window = sg.Window("EDS Trend", layout, finalize=True)
     update_status(window, "Ready to fetch data.")
 
-    while True:
-        event, values = window.read()
+    while True: 
+        event, values = window.read(timeout=100)
         
-        if event == sg.WIN_CLOSED or event == "Close":
+        if event == sg.WIN_CLOSED or event == "Close" or event == "Exit":
             break
 
         if event == "OK":
+            ######update_status(window, "Processing request...")
             # --- Input Processing ---
             # Typer Argument (idcs) is a list[str], so we need to convert the string.
             if values["idcs_list"] is not None:
@@ -409,13 +418,18 @@ def launch_web():
             st.error(f"An unexpected error occurred during data fetching: {e}")
 
 if __name__ == "__main__":
-    is_web_compatible = pyhabitat.web_browser_is_available() and \
-                        (pyhabitat.on_termux() or pyhabitat.on_ish_alpine())
-    if False:# is_web_compatible:
+    force_web = os.getenv('PIPELINE_FORCE_WEB_GUI', '').lower() in ('1', 'true', 'yes')
+    crossplatform_web_approach_required_and_available = pyhabitat.web_browser_is_available() and \
+                        ((pyhabitat.on_termux() or pyhabitat.on_ish_alpine()) or (not pyhabitat.tkinter_is_available) or (force_web))
+    if crossplatform_web_approach_required_and_available:
         #launch_web()
-        launch_streamlit()
-    
+        launch_fsg(web=True) # Gosh this looks terrible.
+        #launch_streamlit()
+
     else:
-        launch_fsg(web=True) # Use the desktop version
+        """
+        Use local GUI interface.
+        """
+        launch_fsg() # Use the desktop version
 
    
