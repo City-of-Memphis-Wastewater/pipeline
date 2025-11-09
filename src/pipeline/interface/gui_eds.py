@@ -61,11 +61,12 @@ def save_history(new_query: str):
 # --- End History Configuration ---
 
 # --- Status Bar Helper Function ---
-def update_status(window, message, color='white'):
+def update_status(window, message, color='white', web:bool=False):
     """Updates the status bar text and color."""
     # Use an alias to the element for cleaner code
     window['STATUS_BAR'].update(message, text_color=color)
-    window.refresh()
+    if not web:
+        window.refresh()
 
 def create_separator(sg_lib):
     """Returns a fresh list containing a new sg.Text separator element."""
@@ -168,14 +169,14 @@ def launch_fsg(web:bool=False)->None:
         create_separator(sg),
         [sg.Button("Fetch & Plot Trend", key="OK"), sg.Button("Close")],
 
-        [sg.Text("", size=(80, 1), key='STATUS_BAR', text_color='white', background_color='#333333')]
+        [sg.Text(" ", size=(80, 1), key='STATUS_BAR', text_color='white', background_color='#333333')]
     ]
 
     if web:
         window = sg.Window("EDS Trend (Web)", layout, web_port=8082, finalize=True, web_start_browser=False)
     else:
         window = sg.Window("EDS Trend", layout, finalize=True)
-    update_status(window, "Ready to fetch data.")
+    update_status(window, "Ready to fetch data.", web=web)
 
     while True: 
         event, values = window.read(timeout=100)
@@ -226,7 +227,6 @@ def launch_fsg(web:bool=False)->None:
 
             starttime = values["starttime"] if values["starttime"] else None
             endtime = values["endtime"] if values["endtime"] else None
-            
             
             
             force_webplot = True    
