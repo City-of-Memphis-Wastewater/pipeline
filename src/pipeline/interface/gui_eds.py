@@ -169,7 +169,8 @@ def launch_fsg(web:bool=False)->None:
         create_separator(sg),
         [sg.Button("Fetch & Plot Trend", key="OK"), sg.Button("Close")],
 
-        [sg.Text(" ", size=(80, 1), key='STATUS_BAR', text_color='white', background_color='#333333')]
+        #[sg.Text(" ", size=(80, 1), key='STATUS_BAR', text_color='white', background_color='#333333')]
+        [sg.Text(" ", size=(80, 1), key='STATUS_BAR')]
     ]
 
     if web:
