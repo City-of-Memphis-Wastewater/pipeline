@@ -64,7 +64,8 @@ def save_history(new_query: str):
 def update_status(window, message, color='white', web:bool=False):
     """Updates the status bar text and color."""
     # Use an alias to the element for cleaner code
-    window['STATUS_BAR'].update(message, text_color=color)
+    #window['STATUS_BAR'].update(message, text_color=color)
+    window['STATUS_BAR'].update(message)
     if not web:
         window.refresh()
 
