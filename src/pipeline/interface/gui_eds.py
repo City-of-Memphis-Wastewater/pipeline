@@ -12,8 +12,6 @@ if not pyhabitat.on_termux() and not pyhabitat.on_ish_alpine():
     sg.theme('DarkGrey15') 
     import streamlit as st 
 
-
-
 # Set theme for a slightly better look
 
 
@@ -123,13 +121,15 @@ def launch_fsg(web:bool=False)->None:
         
         #[sg.HorizontalSeparator()],
         [sg.Text('_' * 80, justification='center')],
-        
         [sg.Button("Fetch & Plot Trend", key="OK"), sg.Button("Close")],
 
         [sg.Text("", size=(80, 1), key='STATUS_BAR', text_color='white', background_color='#333333')]
     ]
 
-    window = sg.Window("EDS Trend", layout, finalize=True)
+    if web:
+        window = sg.Window("EDS Trend (Web)", layout, web_port=8080, finalize=True)
+    else:
+        window = sg.Window("EDS Trend", layout, finalize=True)
     update_status(window, "Ready to fetch data.")
 
     while True:
