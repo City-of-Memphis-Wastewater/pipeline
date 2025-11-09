@@ -6,15 +6,19 @@ import json
 from pathlib import Path
 from pipeline.core import eds as eds_core
 import os
+import sys
 import pyhabitat
-
-if not pyhabitat.on_termux() and not pyhabitat.on_ish_alpine(): 
-    import FreeSimpleGUI as sg
-    # Set theme for a slightly better look
-    sg.theme('DarkGrey15') 
-    import streamlit as st 
+import streamlit as st 
 
 from pipeline.web_utils import launch_browser
+
+"""
+To force webmode in PowerShell:
+$env:PIPELINE_FORCE_WEB_GUI = 1
+
+To force webmode in Bash:
+$PIPELINE_FORCE_WEB_GUI = 1
+"""
 
 
 # --- History Configuration ---
@@ -66,7 +70,7 @@ def update_status(window, message, color='white'):
 
 def create_separator(sg_lib):
     """Returns a fresh list containing a new sg.Text separator element."""
-    return [sg_lib.Text('_' * 80, justification='center')]
+    return [sg_lib.Text('_' * 50, justification='center')]
     # return [sg.HorizontalSeparator()]
 
 def launch_fsg(web:bool=False)->None:
@@ -89,8 +93,15 @@ def launch_fsg(web:bool=False)->None:
 
     if web:
         import FreeSimpleGUIWeb as sg
+        sg.theme('DarkGreen4') 
     else:
         import FreeSimpleGUI as sg
+        sg.theme('DarkGrey15')
+
+    # Set theme for a slightly better look
+    #sg.theme('DarkGrey15') # not available in web
+    #sg.theme('DarkGreen3')
+    #sg.theme('DarkGreen4') 
 
         
 
@@ -99,7 +110,7 @@ def launch_fsg(web:bool=False)->None:
         idcs_input = [sg.Combo(
             values=idcs_history,                 # The list of historical queries
             default_value=idcs_history[0] if idcs_history else '', # Default to the last query
-            size=(70, 1),
+            size=(50, 1),
             key="idcs_list",
             enable_events=False,                 # Do not trigger events when an item is selected
             readonly=False                       # Allows typing new entries
@@ -110,7 +121,7 @@ def launch_fsg(web:bool=False)->None:
         # The user must manually type the IDCS list here.
         idcs_input = [sg.InputText(
             default_text=idcs_history[0] if idcs_history else '', # Pre-fill with last history item
-            size=(70, 1),
+            size=(40, 1),
             key="idcs_list"
         )] 
 
@@ -131,7 +142,8 @@ def launch_fsg(web:bool=False)->None:
         #[sg.Checkbox("Use Configured Default IDCS", key="default_idcs", default=False)],
         
         # *** MODIFIED SECTION: Changed sg.InputText to sg.Combo ***
-        [sg.Text("Ovation Sensor IDCS (e.g., M100FI M310LI FI8001). Separate with spaces. Type a new query or select from history.", size=(70, 2))],
+        [sg.Text("Ovation Sensor IDCS (e.g., M100FI M310LI FI8001).", size=(40, 1))],
+        [sg.Text("Separate with spaces or commas. ", size=(40, 1))],
         idcs_input,
         [sg.Checkbox("Use Configured Default IDCS", key="default_idcs", default=False)],
         # *** END MODIFIED SECTION ***
@@ -140,17 +152,16 @@ def launch_fsg(web:bool=False)->None:
         create_separator(sg),
 
         [sg.Text("Time Range (Start/End/Days)", font=("Helvetica", 12))],
-        [sg.Text("Days:", size=(10, 1)), sg.InputText(key="days", size=(15, 1)), 
-         sg.Text("Start Time:", size=(10, 1)), sg.InputText(key="starttime", size=(25, 1)), 
-         sg.Text("End Time:", size=(10, 1)), sg.InputText(key="endtime", size=(25, 1))],
+        [sg.Text("Days:", size=(10, 1)), sg.InputText(key="days", size=(15, 1))],
+        [sg.Text("Start Time:", size=(10, 1)), sg.InputText(key="starttime", size=(25, 1))], 
+        [sg.Text("End Time:", size=(10, 1)), sg.InputText(key="endtime", size=(25, 1))],
         
         create_separator(sg),
 
-        [sg.Text("Plot Options", font=("Helvetica", 12))],
-        [sg.Text("Time Step/Datapoints (Leave empty for automatic):", size=(40, 1))],
-        [sg.Text("Seconds Between Points:", size=(20, 1)), sg.InputText(key="seconds_between_points", size=(10, 1)),
-         sg.Text(" OR "),
-         sg.Text("Datapoint Count:", size=(15, 1)), sg.InputText(key="datapoint_count", size=(10, 1))],
+        [sg.Text("Plot Options (Leave empty for automatic)", font=("Helvetica", 12))],
+        [sg.Text("Seconds Between Points:", size=(20, 1)), sg.InputText(key="seconds_between_points", size=(10, 1))],
+        [sg.Text(" OR ")],
+        [sg.Text("Datapoint Count:", size=(15, 1)), sg.InputText(key="datapoint_count", size=(10, 1))],
         
         create_separator(sg),
         plot_web_or_local_radio_buttons,
@@ -162,7 +173,7 @@ def launch_fsg(web:bool=False)->None:
     ]
 
     if web:
-        window = sg.Window("EDS Trend (Web)", layout, web_port=8082, finalize=True)
+        window = sg.Window("EDS Trend (Web)", layout, web_port=8082, finalize=True, web_start_browser=False)
     else:
         window = sg.Window("EDS Trend", layout, finalize=True)
     update_status(window, "Ready to fetch data.")
@@ -171,6 +182,13 @@ def launch_fsg(web:bool=False)->None:
         event, values = window.read(timeout=100)
         
         if event == sg.WIN_CLOSED or event == "Close" or event == "Exit":
+            # 1. Update status for the user before server shutdown
+            update_status(window, "Application closed. You can now close this browser tab.", 'yellow')
+            
+            # 2. Wait a moment to ensure the message is displayed in the browser
+            # Note: This is a hacky attempt to ensure the browser receives the update.
+            window.refresh()
+                
             break
 
         if event == "OK":
@@ -181,10 +199,22 @@ def launch_fsg(web:bool=False)->None:
                 idcs_input = values["idcs_list"].strip()
             else:
                 idcs_input=None
+
+            # Typer boolean options
+            default_idcs = values["default_idcs"]
+
+            # Check if input is empty, default_idcs is False, and history exists.
+            if not idcs_input and not default_idcs and idcs_history:
+                idcs_input = idcs_history[0] 
+                update_status(window, f"IDCS input empty. Using history: {idcs_input}", 'yellow')
+
             # Save the successful input to history
             if idcs_input and idcs_input != (idcs_history[0] if idcs_history else ''): # Only save if non-empty and new/different
                 save_history(idcs_input)
             idcs_list = idcs_input.split() if idcs_input else None
+
+            if idcs_list == [] or idcs_input is None:
+                idcs_input = idcs_history[0] # default to most recent request
             
             # Convert optional inputs to their correct types or None
             try:
@@ -198,8 +228,7 @@ def launch_fsg(web:bool=False)->None:
             starttime = values["starttime"] if values["starttime"] else None
             endtime = values["endtime"] if values["endtime"] else None
             
-            # Typer boolean options
-            default_idcs = values["default_idcs"]
+            
             
             force_webplot = True    
             force_matplotlib = False
@@ -224,7 +253,7 @@ def launch_fsg(web:bool=False)->None:
                 
                 if data_buffer.is_empty():
                     #sg.popup_ok("Success, but no data points were returned for the selected time range and sensors.")
-                    update_status(window, "Success, but no data points were returned for the selected time range and sensors.", 'yellow')
+                    update_status(window, "Success, but no data points were returned for the selected time range and sensors. Check that all IDCS values are valid.", 'yellow')
                 else:
                     # --- Plotting ---
                     update_status(window, "Data successfully fetched. Launching plot...", 'lime')
@@ -238,9 +267,13 @@ def launch_fsg(web:bool=False)->None:
             except Exception as e:
                 # Catch all other unexpected errors
                 #sg.popup_error("An unexpected error occurred during data fetching:", str(e))
-                update_status(window, f"An unexpected error occurred: {str(e)}", 'red')
+                update_status(window, f"Check your VPN. An unexpected error occurred: {str(e)}", 'red')
 
     window.close()
+    if web:
+        # This stops the entire Python process, which is necessary to shut down the FSG-Web server.
+        # This will immediately close the associated browser tab/window if running locally.
+        sys.exit(0) # <--- Force the main Python process to terminate
 
 
 def launch_streamlit():
