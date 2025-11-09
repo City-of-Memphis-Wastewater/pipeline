@@ -92,7 +92,20 @@ pyhabitat = "^1.0.35"
 pyodbc = { version = "^5.1.0", optional = true }
 pyyaml = ">=6.0.2,<7.0.0"
 requests = ">=2.32.3,<3.0.0"
-rich = "^14.1.0"
+
+#rich = "^14.1.0"
+# rich: Pin to an older version for Python <3.10, where Streamlit 1.25.x is used (which requires rich <14)
+rich = [
+    { version = "^14.1.0", python = ">=3.10" }, # Use the latest rich for modern Python
+    { version = "^10.14.0", python = "<3.10" },  # Use rich <14 for Python 3.8-3.9
+]
+# streamlit: Version 1.26.0+ requires Python >=3.10. We pin 1.25.x for 3.8-3.9. Exclude Python 3.9.7 explicitly, and pin older versions for Python <3.10.
+# streamlit: Exclude Python 3.9.7 explicitly, and pin older versions for Python <3.10.
+# NOTE: Version 1.25.0 (pinned for <3.10) requires rich < 14, causing the next error.
+streamlit = [
+    { version = "^1.51.0", python = ">=3.10" },
+    { version = "^1.25.0", python = ">=3.8, <3.10.0, !=3.9.7" },
+]
 toml = ">=0.10.2,<0.11.0"
 typer = "^0.17.4"
 tzdata = "^2025.2"
@@ -117,6 +130,9 @@ suds = "^1.2.0"
 
 # prettytable: Version 3.x requires Python >=3.9, so we pin 2.x for 3.8.
 freesimplegui = "^5.2.0.post1"
+legacy-cgi = "^2.6.4"
+freesimpleguiweb = "^1.1.0"
+remi = {git = "https://github.com/rawpython/remi.git"}
 
 [tool.poetry.dependencies."backports.zoneinfo"] # known poetry quirk necessary when freezing, a la "poetry export -f requirements.txt --without-hashes > requirements.txt"
 version = "^0.2.1"

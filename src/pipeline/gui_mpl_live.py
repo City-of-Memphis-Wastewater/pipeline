@@ -130,3 +130,4 @@ def show_static(buffer: PlotBuffer):
     ax.legend()
     plt.tight_layout()
     plt.show()
+    return fig
