@@ -355,10 +355,17 @@ if __name__ == "__main__":
         #launch_fsg(web=True) # Gosh this looks terrible.
         print("\nStreamlit and freesimpleguiweb have been rejected by the pipeline project.")
         print("Why? Because these do not achieve cross-platform graphics.")
-        print("We are going all the way through, to touch the back of the belly button.")
-        print("Pure web (vanilla HTML, Tailwind CSS, alpine.js in leiu of svelte, lowDB).")
+        print("Remi is dead = freesimpleguiweb is dead.")
+        print("\nWe are going all the way through, to touch the back of the belly button.")
+        print("Pure web (vanilla HTML, Tailwind CSS, alpine.js, lowDB, Fast API, Flask).")
         print("\nUltimately, for native, we will leave freesimplegui for Tauri.")
+        # Inside gui_eds.py main block, replace the old web logic:
+        print("\nSwitching to Pure Web (FastAPI/Alpine/Tailwind)...")
+        # Ensure you import launch_server at the top of gui_eds.py
+        from pipeline.server.trend_server_eds import launch_server 
+        launch_server() 
     else:
+        launch_fsg()
         """
         Use local GUI interface.
         """
