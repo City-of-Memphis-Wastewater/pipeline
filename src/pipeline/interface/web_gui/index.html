@@ -4,42 +4,110 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EDS Trend (Pure Web)</title>
+
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <!-- Alpine.js (defer = important!) -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
     <style>
-        /* Dark mode theme resembling DarkGrey15 */
+        /* === DARK THEME VARIABLES === */
+        :root {
+            --color-bg: #121212;
+            --color-card: #1E1E1E;
+            --color-text-primary: #E0E0E0;
+            --color-text-secondary: #A0A0A0;
+
+            --color-accent: #FF9800; /* Orange */
+            --color-accent-hover: #FFB74D;
+            --color-error: #F44336; /* Red */
+            --color-details-title: #9C27B0; /* Purple */
+            --color-input-border: #03A9F4; /* Blue */
+        }
+
         body {
-            background-color: #1a1a1a;
-            color: #ffffff;
+            background-color: var(--color-bg);
+            color: var(--color-text-primary);
+            font-family: 'Inter', sans-serif;
         }
-        input, select {
-            background-color: #333333;
-            border-color: #555555;
-            color: #ffffff;
+
+        .card-bg {
+            background-color: var(--color-card);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
-        /* Custom status bar look */
-        #STATUS_BAR_WEB {
-            background-color: #333333;
-            color: white; /* Base color, overridden by status logic */
+
+        .input-border-visible {
+            border: 1px solid var(--color-input-border);
+        }
+
+        input:focus, input:focus-visible {
+            outline: 2px solid var(--color-accent);
+            border-color: var(--color-accent) !important;
+            box-shadow: none;
+        }
+
+        .text-accent {
+            color: var(--color-accent);
+        }
+
+        .btn-primary {
+            background-color: var(--color-accent);
+            color: var(--color-text-primary);
+            font-weight: 700;
+            transition: background-color 0.2s, transform 0.2s;
+        }
+        .btn-primary:hover:not(:disabled) {
+            background-color: var(--color-accent-hover);
+        }
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        summary {
+            cursor: pointer;
+            padding: 0.5rem 0;
+            font-weight: 600;
+        }
+
+        summary::-webkit-details-marker {
+            display: none;
         }
     </style>
 </head>
-<body class="p-6 font-sans">
 
-    <div x-data="edsTrendApp()" class="max-w-4xl mx-auto space-y-6">
+<body class="p-4 sm:p-6" x-data="edsTrendApp()">
 
-        <h1 class="text-3xl font-bold text-gray-100">EDS Trend</h1>
-        <hr class="border-gray-600">
+    <!-- MAIN CONTAINER -->
+    <div class="w-full max-w-4xl mx-auto space-y-6">
+        <h1 class="text-4xl font-extrabold text-accent mb-2">EDS Trend</h1>
+        <p class="text-sm text-gray-400">Fetch and plot trend data from the EDS server.</p>
+        <hr class="border-gray-700">
 
-        <div class="bg-gray-800 p-4 rounded-lg shadow space-y-4">
-            <h2 class="text-xl font-semibold">Ovation Sensor IDCS</h2>
-            <p class="text-sm text-gray-400">Separate with spaces or commas (e.g., M100FI M310LI FI8001).</p>
+        <!-- MESSAGES -->
+        <div x-show="message.text" 
+             :class="{
+                 'bg-yellow-900 border-yellow-600 text-yellow-100': message.type === 'info',
+                 'bg-red-900 border-red-600 text-red-100': message.type === 'error',
+                 'bg-green-900 border-green-600 text-green-100': message.type === 'success'
+             }"
+             class="p-3 text-sm border-l-4 rounded-lg shadow transition-all duration-300"
+             x-text="message.text"
+             x-cloak>
+        </div>
+
+        <!-- 1. SENSOR SELECTION -->
+        <div class="card-bg p-6 rounded-xl shadow-lg space-y-4 border-t-4 border-accent">
+            <h2 class="text-2xl font-semibold">1. Sensor Selection (IDCS)</h2>
+            <p class="text-sm text-gray-400">Separate IDCS with spaces or commas (e.g., M100FI M310LI FI8001).</p>
             
             <input 
                 type="text" 
                 x-model="idcsInput"
-                x-init="loadHistory()"  list="idcs-history-list"
-                class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                x-init="loadHistory()"
+                list="idcs-history-list"
+                class="w-full p-3 card-bg input-border-visible rounded-lg focus:outline-none transition duration-150"
                 placeholder="Enter IDCS list here or select from history..."
             >
             <datalist id="idcs-history-list">
@@ -48,216 +116,204 @@
                 </template>
             </datalist>
             
-            <div class="flex items-center">
-                <input type="checkbox" id="default_idcs_web" x-model="defaultIdcs" class="form-checkbox h-4 w-4 text-green-500">
-                <label for="default_idcs_web" class="ml-2 text-sm text-gray-300">Use Configured Default IDCS</label>
+            <div class="flex items-center pt-2">
+                <input type="checkbox" id="default_idcs_web" x-model="defaultIdcs"
+                       class="form-checkbox h-5 w-5 rounded border-gray-400 focus:ring-accent card-bg"
+                       style="color: var(--color-accent);">
+                <label for="default_idcs_web" class="ml-3 text-base">Use Configured Default IDCS</label>
             </div>
         </div>
 
-        <hr class="border-gray-600">
+        <!-- 2. TIME RANGE -->
+        <div class="card-bg p-6 rounded-xl shadow-lg space-y-4">
+            <details open>
+                <summary class="text-2xl font-semibold" style="color: var(--color-details-title)">2. Time Range (Optional)</summary>
+                <p class="text-sm text-gray-400 pt-4">You can define start/end or days. If empty, defaults to last 24h.</p>
 
-        <div class="bg-gray-800 p-4 rounded-lg shadow space-y-4">
-            <h2 class="text-xl font-semibold">Time Range (Start/End/Days)</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                    <label class="block text-sm font-medium mb-1">Days:</label>
-                    <input type="number" x-model="days" class="w-full p-2 border rounded focus:ring-2 focus:ring-green-500">
+                <div class="grid grid-cols-1 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-1">Start Time</label>
+                        <input type="text" x-model="startTimeInput"
+                               class="w-full p-3 card-bg input-border-visible rounded-lg"
+                               placeholder="e.g., 2024-10-25 00:00">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-1">End Time</label>
+                        <input type="text" x-model="endTimeInput"
+                               class="w-full p-3 card-bg input-border-visible rounded-lg"
+                               placeholder="e.g., 2024-10-25 12:00">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-1">Days to Plot</label>
+                        <input type="number" x-model="daysInput"
+                               class="w-full p-3 card-bg input-border-visible rounded-lg"
+                               placeholder="e.g., 7">
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium mb-1">Start Time:</label>
-                    <input type="text" x-model="startTime" class="w-full p-2 border rounded focus:ring-2 focus:ring-green-500" placeholder="e.g., 2025-10-01 10:00:00">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-1">End Time:</label>
-                    <input type="text" x-model="endTime" class="w-full p-2 border rounded focus:ring-2 focus:ring-green-500" placeholder="e.g., 2025-10-02 10:00:00">
-                </div>
-            </div>
+            </details>
         </div>
 
-        <hr class="border-gray-600">
-
-        <div class="bg-gray-800 p-4 rounded-lg shadow space-y-4">
-            <h2 class="text-xl font-semibold">Frequency</h2>
-            <p class="text-sm text-gray-400">Leave both empty for automatic frequency selection.</p>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium mb-1">Seconds Between Points:</label>
-                    <input type="number" x-model="secBetweenPoints" class="w-full p-2 border rounded focus:ring-2 focus:ring-green-500">
+        <!-- 3. ADVANCED OPTIONS -->
+        <div class="card-bg p-6 rounded-xl shadow-lg">
+            <details>
+                <summary class="text-2xl font-semibold" style="color: var(--color-details-title)">3. Advanced Data Options</summary>
+                <div class="pt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-1">Seconds Between Points</label>
+                        <input type="number" x-model="secondsBetweenPointsInput"
+                               class="w-full p-3 card-bg input-border-visible rounded-lg"
+                               placeholder="e.g., 60">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-1">Maximum Datapoint Count</label>
+                        <input type="number" x-model="datapointCountInput"
+                               class="w-full p-3 card-bg input-border-visible rounded-lg"
+                               placeholder="e.g., 1000">
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium mb-1">Datapoint Count:</label>
-                    <input type="number" x-model="datapointCount" class="w-full p-2 border rounded focus:ring-2 focus:ring-green-500">
-                </div>
-            </div>
+            </details>
         </div>
-        
-        <hr class="border-gray-600">
 
-        <div class="bg-gray-800 p-4 rounded-lg shadow space-y-4">
-            <h2 class="text-xl font-semibold">Plot Environment</h2>
-            <div class="flex space-x-4">
-                <label class="inline-flex items-center">
-                    <input type="radio" name="plotType" value="web" x-model="plotType" class="form-radio text-green-500">
-                    <span class="ml-2">Web-Based Plot (Plotly)</span>
-                </label>
-                <label class="inline-flex items-center">
-                    <input type="radio" name="plotType" value="local" x-model="plotType" class="form-radio text-green-500">
-                    <span class="ml-2">Matplotlib Plot (Local)</span>
-                </label>
-            </div>
-            
-            <div class="flex justify-between pt-4">
-                <button 
-                    @click="fetchAndPlot" 
-                    :disabled="loading"
-                    class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded disabled:bg-gray-500"
-                >
-                    <span x-show="!loading">Fetch & Plot Trend</span>
-                    <span x-show="loading">Processing...</span>
-                </button>
-                <button 
-                    @click="closeApp" 
-                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-                >
-                    Close
-                </button>
-            </div>
+        <!-- 4. PLOTTING METHOD -->
+        <div class="card-bg p-6 rounded-xl shadow-lg space-y-6">
+            <details open>
+                <summary class="text-2xl font-semibold" style="color: var(--color-details-title)">4. Plotting Method</summary>
+                <div class="pt-4 flex flex-wrap gap-6">
+                    <label class="flex items-center space-x-2">
+                        <input type="radio" x-model="plotMethod" value="webplot"
+                               class="form-radio h-5 w-5 border-gray-400 focus:ring-accent card-bg"
+                               style="color: var(--color-accent);">
+                        <span>Plotly Web Plot (Recommended)</span>
+                    </label>
+                    <label class="flex items-center space-x-2">
+                        <input type="radio" x-model="plotMethod" value="matplotlib"
+                               class="form-radio h-5 w-5 border-gray-400 focus:ring-accent card-bg"
+                               style="color: var(--color-accent);">
+                        <span>Matplotlib (Legacy)</span>
+                    </label>
+                </div>
+            </details>
         </div>
-        
-        <div 
-            id="STATUS_BAR_WEB"
-            class="w-full p-2 text-sm rounded transition duration-200" 
-            :class="statusColorClasses"
-            x-text="statusMessage"
-        >
-            Ready to fetch data.
+
+        <!-- ACTION BUTTONS -->
+        <div class="card-bg p-4 rounded-xl shadow-lg flex justify-between items-center space-x-4">
+            <button 
+                @click="fetchAndPlot" 
+                :disabled="isLoading"
+                class="btn-primary font-bold py-2 px-4 rounded w-full sm:w-auto"
+            >
+                <span x-show="!isLoading">Fetch & Plot Trend</span>
+                <span x-show="isLoading">Processing...</span>
+            </button>
+
+            <button 
+                @click="closeApp"
+                class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded w-full sm:w-auto"
+            >
+                Close
+            </button>
         </div>
-        
-        <div id="plot-output">
-            </div>
+
+        <!-- STATUS BAR -->
+        <div id="STATUS_BAR_WEB"
+             class="w-full p-2 mt-2 text-sm rounded text-center transition duration-200"
+             :class="statusColorClasses"
+             x-text="statusMessage">
+        </div>
     </div>
 
+    <!-- === ALPINE LOGIC === -->
     <script>
-        function edsTrendApp() {
-            return {
-                // State variables matching the inputs
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('edsTrendApp', () => ({
+                // State
                 idcsInput: '',
                 defaultIdcs: false,
-                days: '',
-                startTime: '',
-                endTime: '',
-                secBetweenPoints: '',
-                datapointCount: '',
-                plotType: 'web', // Default to web
-                
-                // UI State
-                loading: false,
-                statusMessage: 'Ready to fetch data.',
-                statusColor: 'white',
+                startTimeInput: '',
+                endTimeInput: '',
+                daysInput: '',
+                secondsBetweenPointsInput: '',
+                datapointCountInput: '',
+                plotMethod: 'webplot',
+                isLoading: false,
+                idcsHistory: [],
+                message: { text: '', type: '' },
+                statusMessage: '',
+                statusColorClasses: '',
 
-                // Computed status bar classes (Tailwind utility)
-                get statusColorClasses() {
-                    let base = 'text-white bg-gray-700';
-                    if (this.statusColor === 'yellow') return 'text-yellow-300 bg-yellow-900';
-                    if (this.statusColor === 'red') return 'text-red-300 bg-red-900';
-                    if (this.statusColor === 'lime') return 'text-green-300 bg-green-900';
-                    return base;
+                // --- Methods ---
+                setMessage(text, type = 'info', duration = 4000) {
+                    this.message = { text, type };
+                    if (duration > 0) {
+                        setTimeout(() => this.message = { text: '', type: '' }, duration);
+                    }
                 },
 
-                updateStatus(message, color='white') {
-                    this.statusMessage = message;
-                    this.statusColor = color;
-                },
-
-                // Load history from the backend
                 async loadHistory() {
                     try {
-                        // Assuming you create a simple GET endpoint in FastAPI: /api/history
                         const response = await fetch('/api/history');
                         if (response.ok) {
                             const history = await response.json();
                             this.idcsHistory = history;
-                            
-                            // Set default value to the most recent history item, matching FSG logic
-                            if (history.length > 0) {
-                                this.idcsInput = history[0];
-                            }
+                            if (history.length > 0) this.idcsInput = history[0];
                         }
                     } catch (e) {
-                        console.error("Failed to load history:", e);
-                        // Fail silently, as history isn't critical
+                        console.warn('History load failed:', e);
                     }
                 },
 
-                // --- Core Action ---
                 async fetchAndPlot() {
-                    this.loading = true;
-                    this.updateStatus('Processing request...', 'white');
-                    
+                    if (!this.idcsInput.trim() && !this.defaultIdcs) {
+                        this.setMessage("Please enter at least one IDCS or enable default IDCS.", 'error', 6000);
+                        return;
+                    }
+
+                    this.isLoading = true;
+                    this.setMessage("Fetching data... please wait.", 'info', 0);
+
                     const payload = {
-                        idcs: this.idcsInput.trim().split(/\s+|,\s*/).filter(i => i), // Split by space or comma, filter empty
+                        idcs: this.idcsInput.trim().split(/[\s,]+/).filter(Boolean),
                         default_idcs: this.defaultIdcs,
-                        days: this.days ? parseFloat(this.days) : null,
-                        starttime: this.startTime || null,
-                        endtime: this.endTime || null,
-                        seconds_between_points: this.secBetweenPoints ? parseInt(this.secBetweenPoints) : null,
-                        datapoint_count: this.datapointCount ? parseInt(this.datapointCount) : null,
-                        force_webplot: this.plotType === 'web',
-                        force_matplotlib: this.plotType === 'local',
+                        days: this.daysInput ? parseFloat(this.daysInput) : null,
+                        starttime: this.startTimeInput.trim() || null,
+                        endtime: this.endTimeInput.trim() || null,
+                        seconds_between_points: this.secondsBetweenPointsInput ? parseInt(this.secondsBetweenPointsInput) : null,
+                        datapoint_count: this.datapointCountInput ? parseInt(this.datapointCountInput) : null,
+                        force_webplot: this.plotMethod === 'webplot',
+                        force_matplotlib: this.plotMethod === 'matplotlib',
                     };
 
                     try {
-                        // 1. Fetch Data (API Endpoint needed here)
-                        // This assumes your FastAPI/Flask server will expose an endpoint like /api/fetch_trend
                         const response = await fetch('/api/fetch_trend', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(payload),
                         });
-
                         const result = await response.json();
 
-                        if (!response.ok) {
-                            this.updateStatus(`API Error: ${result.detail || 'Unknown server error'}`, 'red');
-                            return;
-                        }
-                        
-                        // 2. Handle API Response (Plotting)
-                        if (result.error) {
-                            // If the backend returns an error (like BadParameter)
-                            this.updateStatus(`Configuration/Input Error: ${result.error}`, 'red');
-                        } else if (result.no_data) {
-                            this.updateStatus("Success, but no data points were returned...", 'yellow');
+                        if (response.ok) {
+                            this.setMessage(result.message || "Success! Plot should open.", 'success', 6000);
+                            this.loadHistory();
                         } else {
-                            // Assuming backend handles plotting and returns a message/link/HTML snippet
-                            this.updateStatus("Data successfully fetched. Plot launched in a new tab.", 'lime');
-                            
-                            // Since the plot is typically launched in a new tab by the Python core,
-                            // we just trust the backend handles it and then reset the status.
-                            // If the backend returns HTML, you would inject it:
-                            // document.getElementById('plot-output').innerHTML = result.plot_html;
-                            
-                            this.updateStatus("Plot launched. Ready for new query.", 'white');
+                            this.setMessage(`Error: ${result.detail || 'Unknown error.'}`, 'error', 6000);
                         }
-
-                    } catch (e) {
-                        this.updateStatus(`Check your VPN/Server. Network Error: ${e.message}`, 'red');
+                    } catch (err) {
+                        this.setMessage(`Network error: ${err.message}`, 'error', 6000);
                     } finally {
-                        this.loading = false;
-                        // In a real implementation, you'd fetch history after a successful save
-                        // this.loadHistory(); 
+                        this.isLoading = false;
                     }
                 },
-                
-                // --- Application Exit ---
-                closeApp() {
-                    // This action should be handled by the client application (Tauri or OS)
-                    // If running via a web server, this just closes the tab/updates status.
-                    this.updateStatus("Application closed. You can now close this browser tab.", 'white');
-                }
-            }
-        }
-    </script>
 
+                closeApp() {
+                    // Works if app runs in PyWebView or Electron; fallback otherwise
+                    try {
+                        window.close();
+                    } catch {
+                        alert('Close pressed. (Browser tabs cannot be closed programmatically)');
+                    }
+                },
+            }))
+        });
+    </script>
 </body>
 </html>
