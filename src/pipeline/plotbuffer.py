@@ -22,3 +22,6 @@ class PlotBuffer:
 
     def get_all(self):
         return self.data
+
+    def is_empty(self):
+        return len(self.data)==0

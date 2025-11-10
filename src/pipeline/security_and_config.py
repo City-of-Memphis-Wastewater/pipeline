@@ -39,10 +39,11 @@ class SecurityAndConfig:
         On  Windows, however, just {Ctrl}+C is expected to successfully perform a keyboard interrupt..
         """
         # Block these off for testing the browser_get_input, which is not expeceted in this iteration but is good practice for future proofing a hypothetical console-less GUI 
-        
+        force_webbrowser=True
+
         value = None # ensure safe defeault so that the except block handles properly, namely if the user cancels the typer.prompt() input with control+ c
         
-        if tkinter_is_available():
+        if tkinter_is_available() and not force_webbrowser:
             # 2. GUI Mode (Non-interactive fallback)
             from pipeline.guiconfig import gui_get_input
             typer.echo(f"\n --- Non-interactive process detected. Opening GUI prompt. --- ")
@@ -51,7 +52,7 @@ class SecurityAndConfig:
             if value is not None:
                 return value
         
-        elif interactive_terminal_is_available():
+        elif interactive_terminal_is_available and not force_webbrowser:
             try:
                 # 1. CLI Mode (Interactive)
                 typer.echo(f"\n --- Use CLI input --- ")
@@ -73,7 +74,7 @@ class SecurityAndConfig:
             return value
             
 
-        elif web_browser_is_available(): # 3. Check for browser availability
+        elif web_browser_is_available() and force_webbrowser: # 3. Check for browser availability
             # 3. Browser Mode (Web Browser as a fallback)
             from pipeline.webconfig import WebConfigurationManager, browser_get_input
             typer.echo(f"\n --- TKinter nor console is not available to handle the configuration prompt. Opening browser-based configuration prompt --- ")
@@ -154,17 +155,40 @@ class SecurityAndConfig:
         # --- Load existing config file safely ---
         if CONFIG_PATH.exists():
             try:
+                # 1. Primary Load Attempt
                 with open(CONFIG_PATH, "r") as f:
                     config = json.load(f)
-            except json.JSONDecodeError:
-                typer.echo(f"⚠️  Warning: Existing config file '{CONFIG_PATH.name}' is corrupted.")
-                if not typer.confirm("Do you want to reset the corrupted file to an empty file?", default=False):
-                    typer.echo("-> Keeping existing corrupted file. Returning None for the requested value.")
-                    return None
-                typer.echo("-> Resetting config file...")
-                config = {}
+
+            except json.JSONDecodeError as e:
+                print(f"⚠️ Warning: Config file '{CONFIG_PATH.name}' is corrupted or improperly formatted. Attempting self-healing...")
+                
+                # 2. Attempt self-healing
+                if json_heal(CONFIG_PATH):
+                    try:
+                        # 3. SECOND LOAD ATTEMPT: Must be in its own try block
+                        with open(CONFIG_PATH, "r") as f:
+                            config = json.load(f)
+                    
+                    except json.JSONDecodeError as repair_e:
+                        # 4. Handle UNRECOVERABLE corruption after a failed heal attempt
+                        typer.echo(f"⚠️ Warning: Existing config file '{CONFIG_PATH.name}' is corrupted. Self-healing failed. Error: {repair_e}")
+                        if not typer.confirm("Do you want to reset the corrupted file to an empty file?", default=False):
+                            typer.echo("-> Keeping existing corrupted file. Returning None for the requested value.")
+                            return None
+                        typer.echo("-> Resetting config file...")
+                        config = {}
+                else:
+                    # 5. Handle failed self-healing (json_heal returned False)
+                    typer.echo(f"⚠️ Warning: Existing config file '{CONFIG_PATH.name}' is corrupted. Self-healing failed.")
+                    if not typer.confirm("Do you want to reset the corrupted file to an empty file?", default=False):
+                        typer.echo("-> Keeping existing corrupted file. Returning None for the requested value.")
+                        return None
+                    typer.echo("-> Resetting config file...")
+                    config = {}
+                    
             except Exception as e:
-                typer.echo(f"⚠️  Failed to read config file: {e}")
+                # Catch non-JSONDecode errors (e.g., File permission errors)
+                typer.echo(f"⚠️  Failed to read config file: {e}")
                 return None
             
         # Get the value from the config file, which will be None if not found
@@ -322,6 +346,28 @@ class SecurityAndConfig:
         # Return existing credential if no overwrite
         return credential
 
+def json_heal(config_path = CONFIG_PATH):
+    raw_text = config_path.read_text()
+    # --- SELF-HEALING STEP: Clean the raw text ---
+    # Remove all unneeded newlines that aren't inside the JSON structure
+    # This turns your corrupt data back into a single valid JSON line
+    cleaned_text = re.sub(r'[\r\n\t]+', ' ', raw_text)
+    # Remove repeated spaces
+    cleaned_text = re.sub(r' +', ' ', cleaned_text).strip()
+    # 3. Attempt lax load with cleaned text
+    try:
+        config = json.loads(cleaned_text)
+        print("Self-healing successful. File structure repaired.")
+        
+        # 4. Reformat and save the corrected file
+        # This prevents the corruption from recurring on next load
+        CONFIG_PATH.write_text(json.dumps(config, indent=4))
+        print(f"File automatically reformatted to a clean structure at '{CONFIG_PATH.name}'.")
+        return True
+    except Exception:
+        # Catch all errors during the healing attempt
+        return False # Healing failed
+    
 def init_security():
     if on_termux() or on_ish_alpine():
         try: # mid refactor, try the new function first
@@ -443,7 +489,7 @@ def get_eds_rest_api_credentials(plant_name: str, overwrite: bool = False, forge
     overwrite = False
     #url = SecurityAndConfig.get_config_with_prompt(config_key =f"{plant_name}_eds_api_url", prompt_message = f"Enter {plant_name} API URL (e.g., http://000.00.0.000:43084/api/v1)", overwrite=overwrite)
     #url = _get_eds_url_config_with_prompt(config_key = f"{plant_name}_eds_api_url", prompt_message = f"Enter {plant_name} EDS API URL (e.g., http://000.00.0.000:43084/api/v1, or just 000.00.0.000)", overwrite=overwrite)
-    eds_base_url = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = f"{plant_name}_eds_base_url", prompt_message =  f"Enter {plant_name} EDS base url (e.g., http://000.00.0.000, or just 000.00.0.000)", overwrite=overwrite)
+    #eds_base_url = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = f"{plant_name}_eds_base_url", prompt_message =  f"Enter {plant_name} EDS base url (e.g., http://000.00.0.000, or just 000.00.0.000)", overwrite=overwrite)
     eds_base_url = get_base_url_config_with_prompt(service_name = f"{plant_name}_eds_base_url", prompt_message = f"Enter {plant_name} EDS base url (e.g., http://000.00.0.000, or just 000.00.0.000)")
     eds_rest_api_port = SecurityAndConfig.get_config_with_prompt(config_key = f"{plant_name}_eds_rest_api_port", prompt_message = f"Enter {plant_name} EDS REST API port (e.g., 43084)", overwrite=overwrite)
     eds_rest_api_sub_path = SecurityAndConfig.get_config_with_prompt(config_key = f"{plant_name}_eds_rest_api_sub_path", prompt_message = f"Enter {plant_name} EDS REST API sub path (e.g., 'api/v1')", overwrite=overwrite)
@@ -488,7 +534,7 @@ def get_eds_soap_api_credentials(plant_name: str, overwrite: bool = False, forge
     overwrite = False
     #url = SecurityAndConfig.get_config_with_prompt(config_key =f"{plant_name}_eds_api_url", prompt_message = f"Enter {plant_name} API URL (e.g., http://000.00.0.000:43084/api/v1)", overwrite=overwrite)
     #url = _get_eds_url_config_with_prompt(config_key = f"{plant_name}_eds_api_url", prompt_message = f"Enter {plant_name} EDS API URL (e.g., http://000.00.0.000:43084/api/v1, or just 000.00.0.000)", overwrite=overwrite)
-    eds_base_url = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = f"{plant_name}_eds_base_url", prompt_message =  f"Enter {plant_name} EDS base url (e.g., http://000.00.0.000, or just 000.00.0.000)", overwrite=overwrite)
+    #eds_base_url = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = f"{plant_name}_eds_base_url", prompt_message =  f"Enter {plant_name} EDS base url (e.g., http://000.00.0.000, or just 000.00.0.000)", overwrite=overwrite)
     eds_base_url = get_base_url_config_with_prompt(service_name = f"{plant_name}_eds_base_url", prompt_message = f"Enter {plant_name} EDS base url (e.g., http://000.00.0.000, or just 000.00.0.000)")
     eds_soap_api_port = SecurityAndConfig.get_config_with_prompt(config_key = f"{plant_name}_eds_soap_api_port", prompt_message = f"Enter {plant_name} EDS SOAP API port (e.g., 43080)", overwrite=overwrite)
     eds_soap_api_sub_path = SecurityAndConfig.get_config_with_prompt(config_key = f"{plant_name}_eds_soap_api_sub_path", prompt_message = f"Enter {plant_name} EDS SOAP API WSDL path (e.g., 'eds.wsdl')", overwrite=overwrite)

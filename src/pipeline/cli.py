@@ -21,11 +21,12 @@ except ImportError:
 
 from pipeline.time_manager import TimeManager
 from pipeline.create_sensors_db import get_db_connection, create_packaged_db, reset_user_db # get_user_db_path, ensure_user_db, 
-from pipeline.api.eds import demo_eds_webplot_point_live, EdsClient, load_historic_data, EdsLoginException, demo_eds_save_point_export
+from pipeline.api.eds import demo_eds_webplot_point_live, EdsClient, EdsLoginException, demo_eds_save_point_export
 from pipeline.security_and_config import get_eds_rest_api_credentials, get_external_api_credentials, get_eds_local_db_credentials, get_all_configured_urls, get_configurable_default_plant_name, init_security, CONFIG_PATH
 from pipeline.termux_setup import setup_termux_integration, cleanup_termux_integration
 from pipeline.windows_setup import setup_windows_integration, cleanup_windows_integration
 from pipeline import helpers
+from pipeline.interface import gui_eds
 from pipeline.plotbuffer import PlotBuffer
 from pipeline.version_info import  PIP_PACKAGE_NAME, PIPELINE_VERSION, __version__, get_package_version, get_package_name
 #from pipeline.helpers import setup_logging
@@ -67,6 +68,9 @@ def main(
     """
 
     if ctx.invoked_subcommand is None:
+        gui_eds.launch_fsg()
+        raise typer.Exit()
+    elif False:#ctx.invoked_subcommand is None:
         typer.echo(ctx.get_help())
         raise typer.Exit()
     
@@ -79,7 +83,17 @@ def main(
     # 3. Print the command
     typer.echo(f"command:\n{command_string}\n")
 
-
+@app.command(name="gui", help="Show the GUI and allow the user to see demo features.")
+def launch_gui(
+    demo: bool = typer.Option(False, "--demo", "-d", help="Explicit demo features."),
+    ):
+    """
+    Guides the user through a guided credential setup process. This is not necessary, as necessary credentials will be prompted for as needed, but this is a convenient way to set up multiple credentials at once. This command with the `--overwrite` flag is the designed way to edit existing credentials.
+    """
+    if demo:
+        typer.echo(F"demo: {demo}")
+    gui_eds.launch_fsg() 
+    
 @app.command()
 def list_sensors(
     db_path: str = None,
@@ -236,7 +250,7 @@ def trend(
         step_seconds = helpers.nice_step(TimeManager(dt_finish).as_unix()-TimeManager(dt_start).as_unix()) # TimeManager(starttime).as_unix()
     elif seconds_between_points is not None and datapoint_count is None:
         step_seconds = seconds_between_points
-    results = load_historic_data(session, iess_list, dt_start, dt_finish, step_seconds) 
+    results = EdsClient.load_historic_data(session, iess_list, dt_start, dt_finish, step_seconds) 
     # results is a list of lists. Each inner list is a separate curve.
     if not results:
         return 
@@ -328,11 +342,11 @@ def configure_credentials(
         typer.echo(f"Config file path: {CONFIG_PATH}", color=typer.colors.MAGENTA)   
 
     # Get a list of plant names from the user
-    num_plants = typer.prompt("How many EDS plants do you want to configure?", type=int, default=1)
-    
+    #num_plants = typer.prompt("How many EDS plants do you want to configure?", type=int, default=1)
+    num_plants = 1
     plant_names = []
     for i in range(num_plants):
-        plant_name = typer.prompt(f"Enter a unique name for Plant #{i+1} (e.g., 'Maxson' or 'Stiles')")
+        plant_name = typer.prompt(f"Enter a unique name for Plant (e.g., 'Maxson' or 'Stiles')")
         plant_names.append(plant_name)
 
     # Loop through each plant to configure its credentials

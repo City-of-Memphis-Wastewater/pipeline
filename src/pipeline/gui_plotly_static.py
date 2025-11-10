@@ -188,7 +188,7 @@ def build_y_axis(y_min, y_max,axis_index,axis_label,tick_count = 10):
     return yaxis_dict
 # --- Modified show_static Function ---
 
-def show_static(plot_buffer):
+def show_static(plot_buffer)->"go.Plotly":
     """
     Renders the current contents of plot_buffer as a static HTML plot.
     - Data is visually normalized, but hover-text shows original values.
@@ -270,6 +270,9 @@ def show_static(plot_buffer):
     final_layout.update(layout_updates)
     fig = go.Figure(data=traces, layout=go.Layout(final_layout))
     
+    #return fig # for making free simpleguiweb consume
+    # REMOVE THIS LINE TO REVERT
+
     # Write to a temporary HTML file
     tmp_file = tempfile.NamedTemporaryFile(suffix=".html", delete=False, mode='w', encoding='utf-8')
     pyo.plot(fig, filename=tmp_file.name, auto_open=False, include_plotlyjs='full')
@@ -364,6 +367,13 @@ def show_static(plot_buffer):
             os.chdir(original_cwd) 
             if tmp_path.exists():
                 tmp_path.unlink()
+
+    # NOTE: You might need a cleanup mechanism for this temporary file.
+
+    
+    return fig
+
+    
 
 def inject_buttons(tmp_path: Path, is_server_mode: bool) -> Path:
     """
