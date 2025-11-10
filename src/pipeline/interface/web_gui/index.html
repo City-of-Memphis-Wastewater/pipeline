@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDS Trend (Pure Web)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        /* Dark mode theme resembling DarkGrey15 */
+        body {
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+        input, select {
+            background-color: #333333;
+            border-color: #555555;
+            color: #ffffff;
+        }
+        /* Custom status bar look */
+        #STATUS_BAR_WEB {
+            background-color: #333333;
+            color: white; /* Base color, overridden by status logic */
+        }
+    </style>
+</head>
+<body class="p-6 font-sans">
+
+    <div x-data="edsTrendApp()" class="max-w-4xl mx-auto space-y-6">
+
+        <h1 class="text-3xl font-bold text-gray-100">EDS Trend</h1>
+        <hr class="border-gray-600">
+
+        <div class="bg-gray-800 p-4 rounded-lg shadow space-y-4">
+            <h2 class="text-xl font-semibold">Ovation Sensor IDCS</h2>
+            <p class="text-sm text-gray-400">Separate with spaces or commas (e.g., M100FI M310LI FI8001).</p>
+            
+            <input 
+                type="text" 
+                x-model="idcsInput"
+                x-init="loadHistory()"  list="idcs-history-list"
+                class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                placeholder="Enter IDCS list here or select from history..."
+            >
+            <datalist id="idcs-history-list">
+                <template x-for="item in idcsHistory" :key="item">
+                    <option :value="item"></option>
+                </template>
+            </datalist>
+            
+            <div class="flex items-center">
+                <input type="checkbox" id="default_idcs_web" x-model="defaultIdcs" class="form-checkbox h-4 w-4 text-green-500">
+                <label for="default_idcs_web" class="ml-2 text-sm text-gray-300">Use Configured Default IDCS</label>
+            </div>
+        </div>
+
+        <hr class="border-gray-600">
+
+        <div class="bg-gray-800 p-4 rounded-lg shadow space-y-4">
+            <h2 class="text-xl font-semibold">Time Range (Start/End/Days)</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Days:</label>
+                    <input type="number" x-model="days" class="w-full p-2 border rounded focus:ring-2 focus:ring-green-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Start Time:</label>
+                    <input type="text" x-model="startTime" class="w-full p-2 border rounded focus:ring-2 focus:ring-green-500" placeholder="e.g., 2025-10-01 10:00:00">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">End Time:</label>
+                    <input type="text" x-model="endTime" class="w-full p-2 border rounded focus:ring-2 focus:ring-green-500" placeholder="e.g., 2025-10-02 10:00:00">
+                </div>
+            </div>
+        </div>
+
+        <hr class="border-gray-600">
+
+        <div class="bg-gray-800 p-4 rounded-lg shadow space-y-4">
+            <h2 class="text-xl font-semibold">Frequency</h2>
+            <p class="text-sm text-gray-400">Leave both empty for automatic frequency selection.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Seconds Between Points:</label>
+                    <input type="number" x-model="secBetweenPoints" class="w-full p-2 border rounded focus:ring-2 focus:ring-green-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Datapoint Count:</label>
+                    <input type="number" x-model="datapointCount" class="w-full p-2 border rounded focus:ring-2 focus:ring-green-500">
+                </div>
+            </div>
+        </div>
+        
+        <hr class="border-gray-600">
+
+        <div class="bg-gray-800 p-4 rounded-lg shadow space-y-4">
+            <h2 class="text-xl font-semibold">Plot Environment</h2>
+            <div class="flex space-x-4">
+                <label class="inline-flex items-center">
+                    <input type="radio" name="plotType" value="web" x-model="plotType" class="form-radio text-green-500">
+                    <span class="ml-2">Web-Based Plot (Plotly)</span>
+                </label>
+                <label class="inline-flex items-center">
+                    <input type="radio" name="plotType" value="local" x-model="plotType" class="form-radio text-green-500">
+                    <span class="ml-2">Matplotlib Plot (Local)</span>
+                </label>
+            </div>
+            
+            <div class="flex justify-between pt-4">
+                <button 
+                    @click="fetchAndPlot" 
+                    :disabled="loading"
+                    class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded disabled:bg-gray-500"
+                >
+                    <span x-show="!loading">Fetch & Plot Trend</span>
+                    <span x-show="loading">Processing...</span>
+                </button>
+                <button 
+                    @click="closeApp" 
+                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                >
+                    Close
+                </button>
+            </div>
+        </div>
+        
+        <div 
+            id="STATUS_BAR_WEB"
+            class="w-full p-2 text-sm rounded transition duration-200" 
+            :class="statusColorClasses"
+            x-text="statusMessage"
+        >
+            Ready to fetch data.
+        </div>
+        
+        <div id="plot-output">
+            </div>
+    </div>
+
+    <script>
+        function edsTrendApp() {
+            return {
+                // State variables matching the inputs
+                idcsInput: '',
+                defaultIdcs: false,
+                days: '',
+                startTime: '',
+                endTime: '',
+                secBetweenPoints: '',
+                datapointCount: '',
+                plotType: 'web', // Default to web
+                
+                // UI State
+                loading: false,
+                statusMessage: 'Ready to fetch data.',
+                statusColor: 'white',
+
+                // Computed status bar classes (Tailwind utility)
+                get statusColorClasses() {
+                    let base = 'text-white bg-gray-700';
+                    if (this.statusColor === 'yellow') return 'text-yellow-300 bg-yellow-900';
+                    if (this.statusColor === 'red') return 'text-red-300 bg-red-900';
+                    if (this.statusColor === 'lime') return 'text-green-300 bg-green-900';
+                    return base;
+                },
+
+                updateStatus(message, color='white') {
+                    this.statusMessage = message;
+                    this.statusColor = color;
+                },
+
+                // Load history from the backend
+                async loadHistory() {
+                    try {
+                        // Assuming you create a simple GET endpoint in FastAPI: /api/history
+                        const response = await fetch('/api/history');
+                        if (response.ok) {
+                            const history = await response.json();
+                            this.idcsHistory = history;
+                            
+                            // Set default value to the most recent history item, matching FSG logic
+                            if (history.length > 0) {
+                                this.idcsInput = history[0];
+                            }
+                        }
+                    } catch (e) {
+                        console.error("Failed to load history:", e);
+                        // Fail silently, as history isn't critical
+                    }
+                },
+
+                // --- Core Action ---
+                async fetchAndPlot() {
+                    this.loading = true;
+                    this.updateStatus('Processing request...', 'white');
+                    
+                    const payload = {
+                        idcs: this.idcsInput.trim().split(/\s+|,\s*/).filter(i => i), // Split by space or comma, filter empty
+                        default_idcs: this.defaultIdcs,
+                        days: this.days ? parseFloat(this.days) : null,
+                        starttime: this.startTime || null,
+                        endtime: this.endTime || null,
+                        seconds_between_points: this.secBetweenPoints ? parseInt(this.secBetweenPoints) : null,
+                        datapoint_count: this.datapointCount ? parseInt(this.datapointCount) : null,
+                        force_webplot: this.plotType === 'web',
+                        force_matplotlib: this.plotType === 'local',
+                    };
+
+                    try {
+                        // 1. Fetch Data (API Endpoint needed here)
+                        // This assumes your FastAPI/Flask server will expose an endpoint like /api/fetch_trend
+                        const response = await fetch('/api/fetch_trend', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload),
+                        });
+
+                        const result = await response.json();
+
+                        if (!response.ok) {
+                            this.updateStatus(`API Error: ${result.detail || 'Unknown server error'}`, 'red');
+                            return;
+                        }
+                        
+                        // 2. Handle API Response (Plotting)
+                        if (result.error) {
+                            // If the backend returns an error (like BadParameter)
+                            this.updateStatus(`Configuration/Input Error: ${result.error}`, 'red');
+                        } else if (result.no_data) {
+                            this.updateStatus("Success, but no data points were returned...", 'yellow');
+                        } else {
+                            // Assuming backend handles plotting and returns a message/link/HTML snippet
+                            this.updateStatus("Data successfully fetched. Plot launched in a new tab.", 'lime');
+                            
+                            // Since the plot is typically launched in a new tab by the Python core,
+                            // we just trust the backend handles it and then reset the status.
+                            // If the backend returns HTML, you would inject it:
+                            // document.getElementById('plot-output').innerHTML = result.plot_html;
+                            
+                            this.updateStatus("Plot launched. Ready for new query.", 'white');
+                        }
+
+                    } catch (e) {
+                        this.updateStatus(`Check your VPN/Server. Network Error: ${e.message}`, 'red');
+                    } finally {
+                        this.loading = false;
+                        // In a real implementation, you'd fetch history after a successful save
+                        // this.loadHistory(); 
+                    }
+                },
+                
+                // --- Application Exit ---
+                closeApp() {
+                    // This action should be handled by the client application (Tauri or OS)
+                    // If running via a web server, this just closes the tab/updates status.
+                    this.updateStatus("Application closed. You can now close this browser tab.", 'white');
+                }
+            }
+        }
+    </script>
+
+</body>
+</html>
