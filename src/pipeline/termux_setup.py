@@ -37,11 +37,11 @@ def setup_termux_integration(force=False):
     exec_path = Path(sys.argv[0]).resolve()
     # Check the type of file being run, whether a pipx binary in PIPX_BIN_DIR or an ELF file or a PYZ, etc
     if is_elf():
-        setup_termux_widget_executable_shortcut(force, shortcut_name = SHORTCUT_NAME_ELF)
+        setup_termux_widget_executable_shortcut_eds_trend(force, shortcut_name = SHORTCUT_NAME_ELF)
         register_shell_alias_executable_to_basrc(force, package_alias = PACKAGE_ALIAS_ELF)
         setup_linux_app_data_directory(force)
     elif is_pyz(exec_path=exec_path):
-        setup_termux_widget_executable_shortcut(force, shortcut_name = SHORTCUT_NAME_PYZ)
+        setup_termux_widget_executable_shortcut_eds_trend(force, shortcut_name = SHORTCUT_NAME_PYZ)
         register_shell_alias_executable_to_basrc(force, package_alias = PACKAGE_ALIAS_PYZ)
         setup_linux_app_data_directory(force)
     elif is_pipx():
@@ -85,7 +85,7 @@ def setup_termux_widget_pipx_shortcut(force=False):
     # 2Define the content of the script
     # We use the pipx executable name directly as it is on the PATH.
     script_content = f"""#!/usr/bin/env bash
-# With this line, shortcuts will be treated the same as runnig from shell.
+# With this line, shortcuts will be treated the same as running from shell.
 source $HOME/.bashrc 2>/dev/null || true
 
 # Termux Widget/Shortcut Script
@@ -123,7 +123,7 @@ def setup_termux_widget_pipx_upgrade_shortcut(force):
         return
         
     upgrade_script_content = f"""#!/usr/bin/env bash
-# With this line, shortcuts will be treated the same as runnig from shell.
+# With this line, shortcuts will be treated the same as running from shell.
 source $HOME/.bashrc 2>/dev/null || true
 
 # Termux Widget/Shortcut Script for {APP_NAME} (Upgrade and Run)
@@ -165,7 +165,7 @@ fi
         print(f"Warning: Failed to set up Termux pipx upgrade shortcut: {e}")
     
 
-def setup_termux_widget_executable_shortcut(force=False, shortcut_name=None):
+def setup_termux_widget_executable_shortcut_eds_trend(force=False, shortcut_name=None):
     """
     Creates the Termux widget shortcut script if running in Termux and the 
     shortcut does not already exist. It uses the filename of the currently 
@@ -205,7 +205,7 @@ def setup_termux_widget_executable_shortcut(force=False, shortcut_name=None):
 
     # 3. Define the content of the script
     script_content = f"""#!/usr/bin/env bash
-# With this line, shortcuts will be treated the same as runnig from shell.
+# With this line, shortcuts will be treated the same as running from shell.
 source $HOME/.bashrc 2>/dev/null || true
 
 # Termux Widget/Shortcut Script
@@ -216,7 +216,6 @@ source $HOME/.bashrc 2>/dev/null || true
 # Allows shortcut to be built for wherever the executable is running from, rather than assuming it is in $HOME
 {running_exec_path} --version 
 {running_exec_path} trend --default-idcs
-
 
 """
 
