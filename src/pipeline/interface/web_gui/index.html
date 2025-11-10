@@ -21,6 +21,7 @@
 
             --color-accent: #FF9800; /* Orange */
             --color-accent-hover: #FFB74D;
+            --color-affirm: #22c55e;   /* nice Tailwind green-500 */
             --color-error: #F44336; /* Red */
             --color-details-title: #9C27B0; /* Purple */
             --color-input-border: #03A9F4; /* Blue */
@@ -52,7 +53,7 @@
         }
 
         .btn-primary {
-            background-color: var(--color-accent);
+            background-color: var(--color-affirm);
             color: var(--color-text-primary);
             font-weight: 700;
             transition: background-color 0.2s, transform 0.2s;
@@ -126,28 +127,28 @@
 
         <!-- 2. TIME RANGE -->
         <div class="card-bg p-6 rounded-xl shadow-lg space-y-4">
-            <details open>
-                <summary class="text-2xl font-semibold" style="color: var(--color-details-title)">2. Time Range (Optional)</summary>
-                <p class="text-sm text-gray-400 pt-4">You can define start/end or days. If empty, defaults to last 24h.</p>
+            <details closed>
+                <summary class="text-2xl font-semibold" style="color: var(--color-details-title)">2. Time Range</summary>
+                <p class="text-sm text-gray-400 pt-4">You can define start/end or days. Defaults to last 48h.</p>
 
                 <div class="grid grid-cols-1 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-400 mb-1">Start Time</label>
                         <input type="text" x-model="startTimeInput"
                                class="w-full p-3 card-bg input-border-visible rounded-lg"
-                               placeholder="e.g., 2024-10-25 00:00">
+                               placeholder="e.g., 18 February 2025 (optional)">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-400 mb-1">End Time</label>
                         <input type="text" x-model="endTimeInput"
                                class="w-full p-3 card-bg input-border-visible rounded-lg"
-                               placeholder="e.g., 2024-10-25 12:00">
+                               placeholder="e.g., 2024-10-25 12:00 (optional)">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-400 mb-1">Days to Plot</label>
                         <input type="number" x-model="daysInput"
                                class="w-full p-3 card-bg input-border-visible rounded-lg"
-                               placeholder="e.g., 7">
+                               placeholder="e.g., 7 (optional)">
                     </div>
                 </div>
             </details>
@@ -157,6 +158,8 @@
         <div class="card-bg p-6 rounded-xl shadow-lg">
             <details>
                 <summary class="text-2xl font-semibold" style="color: var(--color-details-title)">3. Advanced Data Options</summary>
+                <p class="text-sm text-gray-400 pt-4">Defaults to ~400 data points. You can specify the time delta between points, or choose the number of points.</p>
+
                 <div class="pt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-400 mb-1">Seconds Between Points</label>
@@ -165,7 +168,7 @@
                                placeholder="e.g., 60">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-400 mb-1">Maximum Datapoint Count</label>
+                        <label class="block text-sm font-medium text-gray-400 mb-1">Datapoint Count</label>
                         <input type="number" x-model="datapointCountInput"
                                class="w-full p-3 card-bg input-border-visible rounded-lg"
                                placeholder="e.g., 1000">
@@ -176,8 +179,10 @@
 
         <!-- 4. PLOTTING METHOD -->
         <div class="card-bg p-6 rounded-xl shadow-lg space-y-6">
-            <details open>
+            <details closed>
                 <summary class="text-2xl font-semibold" style="color: var(--color-details-title)">4. Plotting Method</summary>
+                <p class="text-sm text-gray-400 pt-4">Choose how the plot will show. Plotly is best for cross-platform.</p>
+
                 <div class="pt-4 flex flex-wrap gap-6">
                     <label class="flex items-center space-x-2">
                         <input type="radio" x-model="plotMethod" value="webplot"
