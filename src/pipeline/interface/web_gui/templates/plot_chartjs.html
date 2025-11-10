@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Chart.js Plot with Zoom</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Chart.js Core -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.js"></script>
+    <!-- Load the Zoom/Pan Plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+    
+    <style>
+        /* Set up the Inter font */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            background-color: #111827; /* Tailwind gray-900 */
+            color: #f3f4f6; /* Tailwind gray-100 */
+            overflow: hidden; /* Prevent body scroll */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* The main container uses Flexbox Column to stack the content */
+        #app-container {
+            display: flex;
+            flex-direction: column;
+            width: 95%;
+            max-width: 1200px;
+            height: 95vh;
+            background-color: #1f2937; /* Tailwind gray-800 */
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            padding: 20px;
+        }
+
+        /* Chart container takes up most of the vertical space (flex-grow) */
+        #chart-container {
+            flex-grow: 1; 
+            min-height: 200px; 
+            position: relative;
+            padding-bottom: 20px;
+        }
+        
+        #main-chart {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Legend/Control area - its height is determined by its content ('auto') */
+        #controls-container {
+            flex-shrink: 0;
+            padding-top: 10px;
+            border-top: 1px solid #374151; /* Tailwind gray-700 */
+            display: flex;
+            justify-content: space-between; 
+            align-items: flex-end; 
+        }
+
+        /* Container for the control buttons (right side) */
+        #button-group {
+            display: flex;
+            flex-direction: column-reverse; 
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            font-weight: 600;
+            color: white;
+            background-color: #3b82f6;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.2s;
+        }
+        .btn:hover {
+            background-color: #2563eb;
+        }
+
+        /* Custom Legend Styling for Chart.js */
+        #custom-legend-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px 25px;
+            margin-bottom: 5px;
+            padding: 5px;
+            /* Ensure the content is hidden when the class is applied */
+            transition: all 0.3s ease-in-out;
+            max-height: 1000px; /* Large max-height for smooth transition */
+            overflow: hidden;
+            opacity: 1;
+        }
+        #custom-legend-container.is-hidden {
+            max-height: 0;
+            opacity: 0;
+            visibility: hidden;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            font-size: 14px;
+        }
+        .legend-marker {
+            width: 18px;
+            height: 3px;
+            margin-right: 8px;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <div id="chart-container">
+            <!-- Double-click to reset zoom -->
+            <canvas id="main-chart"></canvas>
+        </div>
+
+        <div id="controls-container">
+            <div id="custom-legend-container">
+                <!-- Legend items will be inserted by JavaScript -->
+            </div>
+            
+            <div id="button-group">
+                <button class="btn" onclick="closePlot()">Close Plot</button>
+                <button class="btn" id="toggleLegendBtn" onclick="toggleLegend()">Hide Legend</button>
+                <button class="btn" onclick="resetZoom()">Reset Zoom</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // Mock Data mimicking the Python structure
+    const mockData = {
+        "Flow Rate (Series Alpha)": { x: [1, 2, 3, 4, 5, 6, 7], y: [7, 13, 7, 9, 15, 10, 12], unit: "MGD", color: 'rgba(59, 130, 246, 1)' },
+        "Flow Rate (Series Gamma)": { x: [1, 2, 3, 4, 5, 6, 7], y: [5, 12, 11, 10, 8, 14, 11], unit: "MGD", color: 'rgba(16, 185, 129, 1)' },
+        "Concentration (Series Beta)": { x: [1, 2, 3, 4, 5, 6, 7], y: [10, 20, 15, 25, 22, 18, 28], unit: "MG/L", color: 'rgba(239, 68, 68, 1)' },
+        "Concentration (Series Delta)": { x: [1, 2, 3, 4, 5, 6, 7], y: [12, 17, 14, 20, 19, 21, 24], unit: "MG/L", color: 'rgba(251, 191, 36, 1)' },
+        "Power (Series Epison)": { x: [1, 2, 3, 4, 5, 6, 7], y: [4500, 3000, 13000, 8000, 9500, 11000, 7000], unit: "KW", color: 'rgba(139, 92, 246, 1)' },
+    };
+
+    let chartInstance;
+    let unitStats = {}; 
+    let datasets = []; 
+    let yAxes = {}; 
+
+    // --- Utility Functions for Normalization ---
+
+    function assessUnitStats(data) {
+        const stats = {};
+        for (const label in data) {
+            const series = data[label];
+            const unit = series.unit;
+            const yData = series.y.map(Number);
+            
+            const currentMin = Math.min(...yData);
+            const currentMax = Math.max(...yData);
+            
+            if (!(unit in stats)) {
+                stats[unit] = { min: currentMin, max: currentMax };
+            } else {
+                stats[unit].min = Math.min(stats[unit].min, currentMin);
+                stats[unit].max = Math.max(stats[unit].max, currentMax);
+            }
+        }
+        return stats;
+    }
+
+    function normalize(yOriginal, unit) {
+        const { min: globalMin, max: globalMax } = unitStats[unit];
+        
+        if (globalMax === globalMin) {
+            return yOriginal.map(() => 0.5); 
+        }
+        const range = globalMax - globalMin;
+        return yOriginal.map(y => (y - globalMin) / range);
+    }
+    
+    function createTicks(unit, side, index) {
+        const { min: globalMin, max: globalMax } = unitStats[unit];
+        const numTicks = 5;
+        const step = (globalMax - globalMin) / (numTicks - 1);
+        
+        return {
+            id: `y-axis-${unit}`,
+            type: 'linear',
+            position: side,
+            display: true,
+            title: {
+                display: true,
+                text: unit,
+                color: yAxes[unit].color,
+                font: { size: 16 }
+            },
+            grid: {
+                color: index === 0 ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                drawOnChartArea: true,
+            },
+            min: -0.05, 
+            max: 1.05, 
+            ticks: {
+                color: yAxes[unit].color,
+                callback: function(value, chartIndex, ticks) {
+                    const originalValue = globalMin + value * (globalMax - globalMin);
+                    return originalValue.toFixed(originalValue % 1 === 0 ? 0 : 2);
+                }
+            },
+            zIndex: 1
+        };
+    }
+
+    // --- Setup and Rendering ---
+
+    function prepareChartData(data) {
+        unitStats = assessUnitStats(data);
+        datasets = [];
+        yAxes = {};
+
+        let sideToggle = 0;
+        const colorPalette = ['#f87171', '#34d399', '#60a5fa', '#facc15', '#a78bfa', '#fb923c']; 
+        let colorIndex = 0;
+
+        for (const unit in unitStats) {
+            yAxes[unit] = {
+                side: sideToggle % 2 === 0 ? 'left' : 'right',
+                index: sideToggle,
+                color: colorPalette[colorIndex % colorPalette.length]
+            };
+            sideToggle++;
+            colorIndex++;
+        }
+
+        for (const label in data) {
+            const series = data[label];
+            const unit = series.unit;
+            
+            datasets.push({
+                label: label,
+                data: normalize(series.y.map(Number), unit).map((y, i) => ({ x: series.x[i], y: y })),
+                borderColor: series.color,
+                backgroundColor: series.color,
+                borderWidth: 2,
+                pointRadius: 4,
+                yAxisID: `y-axis-${unit}`,
+                originalYData: series.y.map(Number), 
+            });
+        }
+    }
+
+    function createChart(data) {
+        prepareChartData(data);
+
+        const scales = {};
+        for (const unit in yAxes) {
+            const axisConfig = createTicks(unit, yAxes[unit].side, yAxes[unit].index);
+            scales[axisConfig.id] = axisConfig;
+        }
+
+        scales['x'] = {
+            type: 'linear',
+            position: 'bottom',
+            title: { display: false, text: "Time" }, 
+            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+            ticks: { color: '#e5e7eb', stepSize: 1 },
+        };
+        
+        const ctx = document.getElementById('main-chart').getContext('2d');
+        
+        chartInstance = new Chart(ctx, {
+            type: 'line',
+            data: { datasets: datasets },
+            options: {
+                maintainAspectRatio: false, 
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false, 
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.dataset.label || '';
+                                const originalY = context.dataset.originalYData[context.dataIndex];
+                                const unit = context.dataset.yAxisID.replace('y-axis-', '');
+                                return `${label}: ${originalY.toFixed(2)} ${unit}`;
+                            }
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Interactive Multi-Unit Dynamic Plot (Chart.js)',
+                        color: '#f3f4f6',
+                        font: { size: 20 }
+                    },
+                    // --- ZOOM PLUGIN CONFIGURATION ---
+                    zoom: {
+                        zoom: {
+                            wheel: { enabled: true },
+                            pinch: { enabled: true },
+                            mode: 'x', // Only allow zooming on the X-axis
+                            drag: { 
+                                enabled: true, // Enable drag to zoom
+                                backgroundColor: 'rgba(255,255,255, 0.2)'
+                            }
+                        },
+                        pan: {
+                            enabled: true,
+                            mode: 'x', // Only allow panning on the X-axis
+                        }
+                    }
+                    // --- END ZOOM CONFIGURATION ---
+                },
+                scales: scales
+            }
+        });
+        
+        createCustomLegend(chartInstance);
+    }
+    
+    // --- Custom Legend Generation (Content-Aware Layout) ---
+    
+    function createCustomLegend(chart) {
+        const legendContainer = document.getElementById('custom-legend-container');
+        legendContainer.innerHTML = ''; 
+
+        chart.data.datasets.forEach((dataset, index) => {
+            const item = document.createElement('div');
+            item.className = 'legend-item';
+            // Set initial state based on chart
+            const meta = chart.getDatasetMeta(index);
+            if (meta.hidden) {
+                item.style.opacity = 0.5;
+            }
+
+            item.onclick = () => {
+                const meta = chart.getDatasetMeta(index);
+                // Toggle dataset visibility
+                meta.hidden = !meta.hidden;
+                chart.update();
+                // Update opacity on the legend item itself
+                item.style.opacity = meta.hidden ? 0.5 : 1;
+            };
+
+            const marker = document.createElement('span');
+            marker.className = 'legend-marker';
+            marker.style.backgroundColor = dataset.borderColor;
+
+            const unitId = dataset.yAxisID.replace('y-axis-', '');
+            const text = document.createElement('span');
+            text.textContent = dataset.label;
+            text.style.color = yAxes[unitId].color; 
+
+            item.appendChild(marker);
+            item.appendChild(text);
+            legendContainer.appendChild(item);
+        });
+    }
+
+    // --- Control Functions ---
+
+    // Fixed function to hide/show the legend container
+    function toggleLegend() {
+        const container = document.getElementById('custom-legend-container');
+        const button = document.getElementById('toggleLegendBtn');
+        
+        const isHidden = container.classList.toggle('is-hidden');
+        button.textContent = isHidden ? 'Show Legend' : 'Hide Legend';
+    }
+
+    // Function to reset the zoom
+    function resetZoom() {
+        if (chartInstance) {
+            chartInstance.resetZoom();
+        }
+    }
+
+    function closePlot() {
+        // Simple window close for a static HTML file
+        window.close();
+    }
+    
+    // Initialize the chart on window load
+    window.onload = () => {
+        // Register the zoom plugin globally
+        Chart.register(ChartZoom);
+        createChart(mockData);
+    };
+
+</script>
+</body>
+</html>

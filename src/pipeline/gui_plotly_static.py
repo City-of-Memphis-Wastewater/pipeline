@@ -1,5 +1,3 @@
-# src/pipeline/gui_plotly_static.py
-
 from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
 import plotly.graph_objs as go
 import plotly.offline as pyo
@@ -23,14 +21,14 @@ PLOTLY_THEME = 'seaborn'
 COLORS = [
     'rgba(31, 119, 180, 0.7)',  # #1f77b4
     'rgba(255, 127, 14, 0.7)',  # #ff7f0e
-    'rgba(44, 160, 44, 0.7)',   # #2ca02c
-    'rgba(214, 39, 40, 0.7)',   # #d62728
+    'rgba(44, 160, 44, 0.7)',  # #2ca02c
+    'rgba(214, 39, 40, 0.7)',  # #d62728
     'rgba(148, 103, 189, 0.7)', # #9467bd
-    'rgba(140, 86, 75, 0.7)',   # #8c564b
+    'rgba(140, 86, 75, 0.7)',  # #8c564b
     'rgba(227, 119, 194, 0.7)', # #e377c2
     'rgba(127, 127, 127, 0.7)', # #7f7f7f
     'rgba(188, 189, 34, 0.7)',  # #bcbd22
-    'rgba(23, 190, 207, 0.7)'   # #17becf
+    'rgba(23, 190, 207, 0.7)'  # #17becf
 ] """  
 COLORS = []
 font_size = 20 if on_termux() else 14
@@ -242,7 +240,7 @@ def show_static(plot_buffer)->"go.Plotly":
                 "Y: %{customdata:.4f}<extra></extra>" # Display original Y from customdata
             ),
             opacity=1.0
-        )        
+        )       
         traces.append(scatter_trace)
 
     # --- Figure Creation and Layout Updates ---
@@ -263,7 +261,7 @@ def show_static(plot_buffer)->"go.Plotly":
             borderwidth=1,
             #title="Curves"
         ),
-        'margin': dict(l=20, r=20, t=50, b=40) # Add on;y a little padding around the whole figure - this increases the size compared to the default
+        'margin': dict(l=5, r=5, t=5, b=5) # Add on;y a little padding around the whole figure - this increases the size compared to the default
     }
 
     # --- File Generation and Display ---
@@ -332,7 +330,7 @@ def show_static(plot_buffer)->"go.Plotly":
             # Port is busy, try the next one
             PORT += 1
     # --- START HERE IF SERVER FAILED ENTIRELY ---
-     # Check if the server ever started successfully
+      # Check if the server ever started successfully
     if not server_started:
         # If we reached here without starting the server, just return
         return
@@ -401,7 +399,7 @@ def inject_buttons(tmp_path: Path, is_server_mode: bool) -> Path:
                 });
         }
         """
-        button_text_close = "Close Plot "# (Stop Server)
+        button_text_close = "Close Plot "
     else:
         # STATIC FILE MODE: Just closes the browser tab/window
         js_close_logic = """
@@ -411,7 +409,7 @@ def inject_buttons(tmp_path: Path, is_server_mode: bool) -> Path:
             window.close();
         }
         """
-        button_text_close = "Close Plot"# (Close Tab)"
+        button_text_close = "Close Plot"
     # ----------------------------------------------------
     # JavaScript for Plotly-specific controls
     # ----------------------------------------------------
@@ -441,47 +439,38 @@ def inject_buttons(tmp_path: Path, is_server_mode: bool) -> Path:
     }}
 
 
-    function toggleThemeOther() {{
-        const plotDiv = getPlotlyDiv();
-        if (!plotDiv) return;
-
-        const button = document.getElementById('toggleThemeButton');
-        const body = document.body;
-
-        /** Toggle a CSS class on the body **/
-        body.classList.toggle('light-mode');
-        
-        /** Update the button text **/
-        if (body.classList.contains('light-mode')) {{
-            button.textContent = 'Light Mode';
-        }} else {{
-            button.textContent = 'Dark Mode';
-        }}
-    }}
     function toggleTheme() {{
         const body = document.body;
         const button = document.getElementById('toggleThemeButton');
-        body.classList.toggle('light-mode');
-        body.classList.toggle('dark-mode');
-        button.textContent = body.classList.contains('light-mode') ? 'Light Mode' : 'Dark Mode';
+
+        // Toggle classes between theme-dark (inverted) and theme-light (native)
+        if (body.classList.contains('theme-light')) {{
+            body.classList.remove('theme-light');
+            body.classList.add('theme-dark');
+        }} else {{
+            body.classList.remove('theme-dark');
+            body.classList.add('theme-light');
+        }}
+
+        // Update button text to reflect the NEW mode it will switch TO
+        button.textContent = body.classList.contains('theme-light') ? 'Dark Mode' : 'Light Mode';
     }}
 
-    // Immediately set dark mode on load
-    window.addEventListener('load', () => {{
-        // Ensure dark mode on load
-        body.classList.remove('light-mode');
-        // If currently light-mode, button should say "Dark Mode" (click to switch)
-        button.textContent = body.classList.contains('light-mode') ? 'Dark Mode' : 'Light Mode';
-    }});
-
-
+    // --- Initialization: Set button text based on initial class ---
+    (function() {{
+        const button = document.getElementById('toggleThemeButton');
+        if (button) {{
+            // We start with <body class="theme-dark">, so the button should offer to switch to 'Light Mode'.
+            button.textContent = 'Light Mode';
+        }}
+    }})();
+    // -------------------------------------------------------------
     """
     # ----------------------------------------------------
     # Inject Buttons into the HTML
     # ----------------------------------------------------
     
     # Define the HTML/CSS for all control buttons
-    # The #button-container with flex-direction: row-reverse ensures proper right-to-left stacking
     buttons_html = f"""
     <style>
         .control-button {{
@@ -510,48 +499,41 @@ def inject_buttons(tmp_path: Path, is_server_mode: bool) -> Path:
             align-items: center;
         }}
 
-        /* Base style assumes dark mode */
-        body {{
-            background-color: #111;
+        /* --- THEME STYLES --- */
+        
+        /* Transition for smooth visual changes */
+        body, .js-plotly-plot {{
+            transition: background-color 0.0s ease, color 0.0s ease, filter 0.0s ease;
+        }}
+        
+        /* THEME DARK (Initial State) - Apply filter to invert the light Plotly output */
+        body.theme-dark {{
+            background-color: #111; /* Dark background for the page */
             color: #eee;
-            transition: background-color 0.6s ease, color 0.6s ease;
+        }}
+        body.theme-dark .js-plotly-plot {{
+            /* Invert the colors of the light Plotly chart to make it dark */
+            filter: invert(1) hue-rotate(180deg); 
+            background-color: #111;
         }}
 
-        /* Light mode overrides */
-        body.light-mode {{
-            background-color: #fafafa;
+        /* THEME LIGHT (Toggled State) - Native Plotly look (seaborn is light) */
+        body.theme-light {{
+            background-color: #fafafa; /* Light background for the page */
             color: #222;
         }}
-        body.dark-mode {{
-            background-color: #111;
-            color: #eee;
-        }}
-
-        body.dark-mode .js-plotly-plot {{
+        body.theme-light .js-plotly-plot {{
+            /* Remove filter to show native light Plotly colors */
             filter: none;
-        }}
-
-        body.light-mode .js-plotly-plot {{
-            filter: invert(1) hue-rotate(180deg);
-        }}
-
-
-        /* Affect Plotly's wrapper div directly */
-        .js-plotly-plot {{
-            transition: filter 0.6s ease, background-color 0.6s ease;
-        }}
-
-        /* Dark-to-light simulation using invert */
-        body.light-mode .js-plotly-plot {{
-            filter: invert(1) hue-rotate(180deg);
             background-color: #fafafa;
         }}
+
 
     </style>
 
     <div id="button-container">
         <button class="control-button" onclick="closePlot()">{button_text_close}</button>
-        <button id="toggleThemeButton" class="control-button" onclick="toggleTheme()">Dark Mode</button>
+        <button id="toggleThemeButton" class="control-button" onclick="toggleTheme()">Loading Theme...</button>
         <button id="toggleLegendButton" class="control-button" onclick="toggleLegend()">Hide Legend</button>
     </div>
 
@@ -565,12 +547,12 @@ def inject_buttons(tmp_path: Path, is_server_mode: bool) -> Path:
     html_content = tmp_path.read_text(encoding='utf-8')
     
 
-    # Replace <body> with <body class="dark-mode">
-    html_content = html_content.replace('<body>', '<body class="dark-mode">')
-
+    # FIX: Replace <body> with <body class="theme-dark"> to trigger the dark (inverted) styles immediately
+    html_content = html_content.replace('<body>', '<body class="theme-dark">')
+    
     # Inject the button and script right before the closing </body> tag
     html_content = html_content.replace('</body>', buttons_html + '</body>')
-
+    
     # Rewrite the file with the new content
     tmp_path.write_text(html_content, encoding='utf-8')
     return tmp_path
