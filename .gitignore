@@ -42,6 +42,20 @@ build/
 version.rc
 *.pyz
 
+# Tauri
+# Rust / Cargo
+**/target/
+**/Cargo.lock  # optional: usually you do commit Cargo.lock for apps, not libs
+
+# Node / frontend
+**/node_modules/
+**/dist/
+
+# Tauri logs / temp files
+**/src-tauri/target/
+# Allow this specific Tauri example folder
+!src/example/tauri_multimodal_app/
+
 # Other
 !workspaces/
 !src/
