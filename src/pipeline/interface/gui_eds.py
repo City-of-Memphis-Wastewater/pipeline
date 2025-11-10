@@ -353,8 +353,10 @@ if __name__ == "__main__":
     if crossplatform_web_approach_required_and_available:
         #launch_web_streamlit()
         #launch_fsg(web=True) # Gosh this looks terrible.
-        print("streamlit and freesimpleguiweb have been rejected by the pipeline project for cross-platform, web-based graphics.")
-        print("We are going all the through. Pure web (vanilla HTML, Tailwind CSS, alpine.js in leiu of svelte, lowDB);")
+        print("Streamlit and freesimpleguiweb have been rejected by the pipeline project.")
+        print("Why? Because these do not achieve cross-platform graphics.")
+        print("We are going all the way through, to touch the back of the belly button.")
+        print("Pure web (vanilla HTML, Tailwind CSS, alpine.js in leiu of svelte, lowDB)")
         print("and then rather than freesimplegui, Tauri.")
     else:
         """
