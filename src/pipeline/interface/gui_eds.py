@@ -8,6 +8,7 @@ from pipeline.core import eds as eds_core
 import os
 import sys
 import pyhabitat
+import time
 
 from pipeline.web_utils import launch_browser
 
@@ -16,7 +17,7 @@ To force webmode in PowerShell:
 $env:PIPELINE_FORCE_WEB_GUI = 1
 
 To force webmode in Bash:
-$PIPELINE_FORCE_WEB_GUI = 1
+export PIPELINE_FORCE_WEB_GUI=1
 """
 
 
@@ -88,48 +89,31 @@ def launch_fsg(web:bool=False)->None:
     idcs_history = load_history()
 
 
-    if web: 
-        url = "http://127.0.0.1:8082"
-        launch_browser(url)
-
-    if web:
-        import FreeSimpleGUIWeb as sg
-        sg.theme('DarkGreen4') 
-    else:
-        import FreeSimpleGUI as sg
-        sg.theme('DarkGrey15')
-
+    import FreeSimpleGUI as sg
     # Set theme for a slightly better look
+    sg.theme('DarkGrey15')
+
     #sg.theme('DarkGrey15') # not available in web
     #sg.theme('DarkGreen3')
     #sg.theme('DarkGreen4') 
 
         
 
-    if not web:
-        # Desktop (FreeSimpleGUI) - Combo allows typing and history selection
-        idcs_input = [sg.Combo(
-            values=idcs_history,                 # The list of historical queries
-            default_value=idcs_history[0] if idcs_history else '', # Default to the last query
-            size=(50, 1),
-            key="idcs_list",
-            enable_events=False,                 # Do not trigger events when an item is selected
-            readonly=False                       # Allows typing new entries
-        )]
-    else:
-        # Web (FreeSimpleGUIWeb) - Use a standard InputText element
-        # since Combo's typing feature (readonly=False) is broken or unsupported.
-        # The user must manually type the IDCS list here.
-        idcs_input = [sg.InputText(
-            default_text=idcs_history[0] if idcs_history else '', # Pre-fill with last history item
-            size=(40, 1),
-            key="idcs_list"
-        )] 
+    
+    # Desktop (FreeSimpleGUI) - Combo allows typing and history selection
+    idcs_input = [sg.Combo(
+        values=idcs_history,                 # The list of historical queries
+        default_value=idcs_history[0] if idcs_history else '', # Default to the last query
+        size=(50, 1),
+        key="idcs_list",
+        enable_events=False,                 # Do not trigger events when an item is selected
+        readonly=False                       # Allows typing new entries
+    )]
 
-    if web:
-        plot_web_or_local_radio_buttons = [sg.Text("Web-based plotting will be used.", size=(40, 1))]
-    else:
-        plot_web_or_local_radio_buttons = [sg.Radio("Web-Based Plot (Plotly)", group_id= "plot_environment", key="force_webplot", default=True, tooltip="Uses Plotly/browser. Recommended for most users."),
+
+
+    
+    plot_web_or_local_radio_buttons = [sg.Radio("Web-Based Plot (Plotly)", group_id= "plot_environment", key="force_webplot", default=True, tooltip="Uses Plotly/browser. Recommended for most users."),
          sg.Radio("Matplotlib Plot (Local)", group_id= "plot_environment", key="force_matplotlib", default=False, tooltip="Uses Matplotlib. Requires a local display environment.")]
         
 
@@ -137,18 +121,10 @@ def launch_fsg(web:bool=False)->None:
     layout = [
         [sg.Text("EDS Trend", font=("Helvetica", 16))],
         create_separator(sg),
-
-        #[sg.Text("Ovation Sensor IDCS (e.g., M100FI M310LI FI8001). Separate with spaces. Leave empty to use configured defaults.", size=(70, 2))],
-        #[sg.InputText(key="idcs_list", size=(70, 1))],
-        #[sg.Checkbox("Use Configured Default IDCS", key="default_idcs", default=False)],
-        
-        # *** MODIFIED SECTION: Changed sg.InputText to sg.Combo ***
         [sg.Text("Ovation Sensor IDCS (e.g., M100FI M310LI FI8001).", size=(40, 1))],
         [sg.Text("Separate with spaces or commas. ", size=(40, 1))],
         idcs_input,
         [sg.Checkbox("Use Configured Default IDCS", key="default_idcs", default=False)],
-        # *** END MODIFIED SECTION ***
-        
         
         create_separator(sg),
 
@@ -159,7 +135,7 @@ def launch_fsg(web:bool=False)->None:
         
         create_separator(sg),
 
-        [sg.Text("Plot Options (Leave empty for automatic)", font=("Helvetica", 12))],
+        [sg.Text("Frequency (Leave empty for automatic)", font=("Helvetica", 12))],
         [sg.Text("Seconds Between Points:", size=(20, 1)), sg.InputText(key="seconds_between_points", size=(10, 1))],
         [sg.Text(" OR ")],
         [sg.Text("Datapoint Count:", size=(15, 1)), sg.InputText(key="datapoint_count", size=(10, 1))],
@@ -170,27 +146,20 @@ def launch_fsg(web:bool=False)->None:
         create_separator(sg),
         [sg.Button("Fetch & Plot Trend", key="OK"), sg.Button("Close")],
 
-        #[sg.Text(" ", size=(80, 1), key='STATUS_BAR', text_color='white', background_color='#333333')]
-        [sg.Text(" ", size=(80, 1), key='STATUS_BAR')]
+        [sg.Text(" ", size=(50, 1), key='STATUS_BAR', text_color='white', background_color='#333333')]
     ]
 
-    if web:
-        window = sg.Window("EDS Trend (Web)", layout, web_port=8082, finalize=True, web_start_browser=False)
-    else:
-        window = sg.Window("EDS Trend", layout, finalize=True)
-        update_status(window, "Ready to fetch data.", web=web)
+
+
+    window = sg.Window("EDS Trend", layout, finalize=True)
+    update_status(window, "Ready to fetch data.", web=web)
 
     while True: 
         event, values = window.read(timeout=100)
         
         if event == sg.WIN_CLOSED or event == "Close" or event == "Exit":
             # 1. Update status for the user before server shutdown
-            update_status(window, "Application closed. You can now close this browser tab.", 'yellow')
-            
-            # 2. Wait a moment to ensure the message is displayed in the browser
-            # Note: This is a hacky attempt to ensure the browser receives the update.
-            window.refresh()
-                
+        
             break
 
         if event == "OK":
@@ -271,106 +240,13 @@ def launch_fsg(web:bool=False)->None:
                 update_status(window, f"Check your VPN. An unexpected error occurred: {str(e)}", 'red')
 
     window.close()
-    if web:
-        # This stops the entire Python process, which is necessary to shut down the FSG-Web server.
-        # This will immediately close the associated browser tab/window if running locally.
-        sys.exit(0) # <--- Force the main Python process to terminate
 
-
-def launch_streamlit():
-    """Launches the Streamlit web interface for EDS Trend."""
+def launch_web_streamlit():
+    """
+    Launches the Streamlit web interface for EDS Trend.
+    Use command: poetry run streamlit run src/pipeline/interface/gui_eds.py
+    """
     import streamlit as st 
-
-    st.set_page_config(layout="centered", page_title="EDS Trend")
-    st.title("EDS Trend")
-    st.markdown("---")
-    
-    # --- HISTORY / IDCS INPUT ---
-    idcs_history = load_history()
-    
-    # Use st.form for grouping inputs and handling submission cleanly
-    with st.form("eds_form"):
-        st.subheader("Sensor and Time Selection")
-        
-        # IDCS Input (Mimics Combo/History)
-        idcs_input = st.text_input(
-            "Ovation Sensor IDCS (e.g., M100FI). Separate with spaces.", 
-            value=idcs_history[0] if idcs_history else '',
-            key="idcs_list_web"
-        )
-        
-        # Checkboxes and Time Range
-        col_def, col_days, col_start, col_end = st.columns([1, 1, 1, 1])
-        
-        default_idcs = col_def.checkbox("Use Default IDCS")
-        days_input = col_days.text_input("Days:", help="e.g., 7.0")
-        starttime = col_start.text_input("Start Time:", help="e.g., 2025-01-01 10:00:00")
-        endtime = col_end.text_input("End Time:")
-
-        st.subheader("Plot Parameters")
-        col_sec, col_dp = st.columns(2)
-        sec_between_input = col_sec.text_input("Seconds Between Points:")
-        dp_count_input = col_dp.text_input("Datapoint Count:")
-
-        # Action Button (Must be inside the form)
-        submitted = st.form_submit_button("Fetch & Plot Trend", type="primary")
-
-    # --- Core Logic Execution on Submit ---
-    if submitted:
-        # Save history immediately after submission
-        if idcs_input:
-            save_history(idcs_input)
-            
-        st.status("Processing request...", expanded=True) # Streamlit Status Bar
-        
-        # Input Validation and Conversion
-        try:
-            days = float(days_input) if days_input else None
-            sec_between = int(sec_between_input) if sec_between_input else None
-            dp_count = int(dp_count_input) if dp_count_input else None
-        except ValueError:
-            st.error("Invalid number entered for Days, Seconds, or Datapoint Count.")
-            return
-
-        idcs_list = idcs_input.strip().split() if idcs_input.strip() else None
-
-        # Fetch Data
-        try:
-            data_buffer, _ = eds_core.fetch_trend_data(
-                idcs=idcs_list, 
-                starttime=starttime, 
-                endtime=endtime, 
-                days=days, 
-                seconds_between_points=sec_between, 
-                datapoint_count=dp_count,
-                default_idcs=default_idcs
-            )
-            
-            if data_buffer.is_empty():
-                st.warning("Success, but no data points were returned.")
-            else:
-                st.success("Data successfully fetched. Launching plot...")
-                
-                # --- Plotting ---
-                # This still relies on eds_core.plot_trend_data opening a new tab,
-                # which is exactly what you requested.
-                eds_core.plot_trend_data(
-                    data_buffer, 
-                    force_webplot=True, 
-                    force_matplotlib=False
-                )
-                st.info("Plot opened in a new browser tab.")
-                
-        except BadParameter as e:
-            st.error(f"Configuration/Input Error: {str(e).strip()}")
-        except Exception as e:
-            st.error(f"An unexpected error occurred: {e}")
-
-# --- End Streamlit Function ---
-
-def launch_web():
-    """Launches the Streamlit web interface for EDS Trend."""
-
     st.set_page_config(layout="centered", page_title="EDS Trend")
     st.title("EDS Trend")
     st.markdown("---")
@@ -460,40 +336,26 @@ def launch_web():
                 st.warning("Success, but no data points were returned for the selected time range and sensors.")
             else:
                 st.success("Data successfully fetched. Launching plot...")
-                
-                # IMPORTANT: Streamlit's plotting needs to be handled *inside* the web app.
-                # Your existing plot_trend_data likely launches a separate process/window.
-                # For Streamlit, you must pass the data to a Streamlit-compatible plotter.
-                
-                # Placeholder for the actual Streamlit Plotting logic:
-                # Assuming PlotBuffer can easily convert to a Pandas DataFrame:
-                # df = data_buffer.to_pandas()
-                # st.line_chart(df) 
-                
-                # If your eds_core.plot_trend_data uses Plotly (the webplot option), 
-                # you might need to extract the Plotly figure and pass it to Streamlit:
-                
-                # fig = eds_core.generate_plotly_figure(data_buffer) # New helper function needed
-                # st.plotly_chart(fig, use_container_width=True)
-                
-                # For now, we'll assume a new plotting function is needed for Streamlit integration:
-                st.write("Plotting integration placeholder: The core data is ready.")
+        
+                # --- Plotting ---
+                fig = eds_core.plot_trend_data(data_buffer, force_webplot, force_matplotlib)
+                st.success("Plot launched. Ready for new query.", 'white')
                 
         except BadParameter as e:
             st.error(f"Configuration/Input Error: {str(e).strip()}")
         except Exception as e:
-            st.error(f"An unexpected error occurred during data fetching: {e}")
+            st.error(f"Check the VPN. An unexpected error occurred during data fetching: {e}")
 
 if __name__ == "__main__":
     force_web = os.getenv('PIPELINE_FORCE_WEB_GUI', '').lower() in ('1', 'true', 'yes')
     crossplatform_web_approach_required_and_available = pyhabitat.web_browser_is_available() and \
                         ((pyhabitat.on_termux() or pyhabitat.on_ish_alpine()) or (not pyhabitat.tkinter_is_available) or (force_web))
     if crossplatform_web_approach_required_and_available:
-        #launch_web()
-        launch_fsg(web=True) # Gosh this looks terrible.
-        #launch_streamlit()
-        print("")
-
+        #launch_web_streamlit()
+        #launch_fsg(web=True) # Gosh this looks terrible.
+        print("streamlit and freesimpleguiweb have been rejected by the pipeline project for cross-platform, web-based graphics.")
+        print("We are going all the through. Pure web (vanilla HTML, Tailwind CSS, alpine.js in leiu of svelte, lowDB);")
+        print("and then rather than freesimplegui, Tauri.")
     else:
         """
         Use local GUI interface.
