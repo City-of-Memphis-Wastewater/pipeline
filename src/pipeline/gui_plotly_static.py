@@ -460,16 +460,18 @@ def inject_buttons(tmp_path: Path, is_server_mode: bool) -> Path:
     }}
     function toggleTheme() {{
         const body = document.body;
-        body.classList.toggle('light-mode');
-
         const button = document.getElementById('toggleThemeButton');
+        body.classList.toggle('light-mode');
+        body.classList.toggle('dark-mode');
         button.textContent = body.classList.contains('light-mode') ? 'Light Mode' : 'Dark Mode';
     }}
+
     // Immediately set dark mode on load
     window.addEventListener('load', () => {{
-        document.body.classList.remove('light-mode'); // ensure dark
-        const themeButton = document.getElementById('toggleThemeButton');
-        if (themeButton) themeButton.textContent = 'Dark Mode'; // button shows opposite
+        // Ensure dark mode on load
+        body.classList.remove('light-mode');
+        // If currently light-mode, button should say "Dark Mode" (click to switch)
+        button.textContent = body.classList.contains('light-mode') ? 'Dark Mode' : 'Light Mode';
     }});
 
 
@@ -520,6 +522,19 @@ def inject_buttons(tmp_path: Path, is_server_mode: bool) -> Path:
             background-color: #fafafa;
             color: #222;
         }}
+        body.dark-mode {{
+            background-color: #111;
+            color: #eee;
+        }}
+
+        body.dark-mode .js-plotly-plot {{
+            filter: none;
+        }}
+
+        body.light-mode .js-plotly-plot {{
+            filter: invert(1) hue-rotate(180deg);
+        }}
+
 
         /* Affect Plotly's wrapper div directly */
         .js-plotly-plot {{
@@ -549,10 +564,13 @@ def inject_buttons(tmp_path: Path, is_server_mode: bool) -> Path:
     # Read the existing Plotly HTML
     html_content = tmp_path.read_text(encoding='utf-8')
     
+
+    # Replace <body> with <body class="dark-mode">
+    html_content = html_content.replace('<body>', '<body class="dark-mode">')
+
     # Inject the button and script right before the closing </body> tag
-    #html_content = html_content.replace('</body>', shutdown_button_html_close + '</body>')
     html_content = html_content.replace('</body>', buttons_html + '</body>')
-    
+
     # Rewrite the file with the new content
     tmp_path.write_text(html_content, encoding='utf-8')
     return tmp_path

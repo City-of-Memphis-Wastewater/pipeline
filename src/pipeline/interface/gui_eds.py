@@ -62,23 +62,21 @@ def save_history(new_query: str):
 # --- End History Configuration ---
 
 # --- Status Bar Helper Function ---
-def update_status(window, message, color='white', web:bool=False):
+def update_status(window, message, color='white'):
     """Updates the status bar text and color."""
     # Use an alias to the element for cleaner code
     #window['STATUS_BAR'].update(message, text_color=color)
     window['STATUS_BAR'].update(message)
-    if not web:
-        window.refresh()
 
 def create_separator(sg_lib):
     """Returns a fresh list containing a new sg.Text separator element."""
     return [sg_lib.Text('_' * 50, justification='center')]
     # return [sg.HorizontalSeparator()]
 
-def launch_fsg(web:bool=False)->None:
+def launch_fsg()->None:
     """
     Launches the FreeSimpleGUI interface for EDS Trend.
-    Web usage is not recommended! But, currently, it does function as long as the proper libraries are available:
+    Web usage is deprecated. For posterity, the brittle but functional approach was
         - freesimplegui = "^5.2.0.post1"
         - legacy-cgi = "^2.6.4"
         - freesimpleguiweb = "^1.1.0"
@@ -152,7 +150,7 @@ def launch_fsg(web:bool=False)->None:
 
 
     window = sg.Window("EDS Trend", layout, finalize=True)
-    update_status(window, "Ready to fetch data.", web=web)
+    update_status(window, "Ready to fetch data.")
 
     while True: 
         event, values = window.read(timeout=100)
@@ -241,118 +239,12 @@ def launch_fsg(web:bool=False)->None:
 
     window.close()
 
-def launch_web_streamlit():
-    """
-    Launches the Streamlit web interface for EDS Trend.
-    Use command: poetry run streamlit run src/pipeline/interface/gui_eds.py
-    """
-    import streamlit as st 
-    st.set_page_config(layout="centered", page_title="EDS Trend")
-    st.title("EDS Trend")
-    st.markdown("---")
-    
-    # 1. IDCS Input (Mimics Combo/History - Streamlit handles state automatically)
-    with st.container(border=True):
-        st.header("Sensor Selection")
-        
-        # Streamlit doesn't have a direct 'Combo' that saves history like FreeSimpleGUI.
-        # For simplicity, we'll use a text input and a checkbox.
-        idcs_input = st.text_input(
-            "Ovation Sensor IDCS (e.g., M100FI M310LI). Separate with spaces.", 
-            key="idcs_list_web"
-        )
-        default_idcs = st.checkbox(
-            "Use Configured Default IDCS", 
-            key="default_idcs_web"
-        )
-        
-    st.markdown("---")
-    
-    # 2. Time Range
-    with st.container(border=True):
-        st.header("Time Range")
-        col1, col2, col3 = st.columns(3)
-        
-        days_input = col1.text_input("Days:", key="days_web")
-        starttime = col2.text_input("Start Time:", key="starttime_web")
-        endtime = col3.text_input("End Time:", key="endtime_web")
-
-    st.markdown("---")
-
-    # 3. Plot Options
-    with st.container(border=True):
-        st.header("Plot Options")
-        col_sec, col_dp = st.columns(2)
-        
-        sec_between_input = col_sec.text_input("Seconds Between Points:", key="seconds_between_points_web")
-        dp_count_input = col_dp.text_input("Datapoint Count:", key="datapoint_count_web")
-
-        plot_type = st.radio(
-            "Select Plot Environment:",
-            ("Web-Based Plot (Plotly)", "Matplotlib Plot (Local)"),
-            index=0, # Default to Web-Based
-            horizontal=True
-        )
-        
-    st.markdown("---")
-    
-    # 4. Action Button
-    if st.button("Fetch & Plot Trend", key="fetch_button", type="primary"):
-        
-        # --- Input Validation and Conversion (Similar to GUI) ---
-        idcs_list = idcs_input.strip().split() if idcs_input.strip() else None
-        
-        try:
-            days = float(days_input) if days_input else None
-            sec_between = int(sec_between_input) if sec_between_input else None
-            dp_count = int(dp_count_input) if dp_count_input else None
-            
-            starttime = starttime if starttime else None
-            endtime = endtime if endtime else None
-            
-            force_webplot = (plot_type == "Web-Based Plot (Plotly)")
-            force_matplotlib = (plot_type == "Matplotlib Plot (Local)")
-
-        except ValueError:
-            st.error("Invalid number entered for Days, Seconds, or Datapoint Count.")
-            return
-
-        # --- Core Logic Execution ---
-        try:
-            with st.spinner('Fetching data from EDS API...'):
-                data_buffer, _ = eds_core.fetch_trend_data(
-                    idcs=idcs_list, 
-                    starttime=starttime, 
-                    endtime=endtime, 
-                    days=days, 
-                    plant_name=None,
-                    seconds_between_points=sec_between, 
-                    datapoint_count=dp_count,
-                    default_idcs=default_idcs
-                )
-            
-            # --- Status and Plotting ---
-            if data_buffer.is_empty():
-                st.warning("Success, but no data points were returned for the selected time range and sensors.")
-            else:
-                st.success("Data successfully fetched. Launching plot...")
-        
-                # --- Plotting ---
-                fig = eds_core.plot_trend_data(data_buffer, force_webplot, force_matplotlib)
-                st.success("Plot launched. Ready for new query.", 'white')
-                
-        except BadParameter as e:
-            st.error(f"Configuration/Input Error: {str(e).strip()}")
-        except Exception as e:
-            st.error(f"Check the VPN. An unexpected error occurred during data fetching: {e}")
-
 if __name__ == "__main__":
     force_web = os.getenv('PIPELINE_FORCE_WEB_GUI', '').lower() in ('1', 'true', 'yes')
     crossplatform_web_approach_required_and_available = pyhabitat.web_browser_is_available() and \
                         ((pyhabitat.on_termux() or pyhabitat.on_ish_alpine()) or (not pyhabitat.tkinter_is_available) or (force_web))
     if crossplatform_web_approach_required_and_available:
-        #launch_web_streamlit()
-        #launch_fsg(web=True) # Gosh this looks terrible.
+
         print("\nStreamlit and freesimpleguiweb have been rejected by the pipeline project.")
         print("Why? Because these do not achieve cross-platform graphics.")
         print("Remi is dead = freesimpleguiweb is dead.")
