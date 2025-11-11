@@ -16,7 +16,7 @@ class Redundancy:
     and an irresponsible but occasionally practival way to build spaghetti code and then 
     occasionally eat it with a spoon.
 
-    from pipeline_tests.variable_clarity import Redundancy
+    from pipeline.variable_clarity import Redundancy
     #if 'services_api_url' in locals() and hasattr(client,'services_api_url'): 
     #    Redundancy.compare(client.services_api_url == services_api_url) # already known
     
@@ -151,7 +151,7 @@ class MaintainUsageStatus:
         
         self.status = ""
         
-        from pipeline_tests.variable_clarity import compare_routes
+        from pipeline.variable_clarity import compare_routes
         
         if FindThatFunctionInTheCodeBase(function=compare_routes).status() != (compare_routes.__dict__.status):
             logging.info("Your function {compare_routes.__name__} is registered as being used but is not being used. ")

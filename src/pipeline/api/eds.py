@@ -22,8 +22,8 @@ from pipeline import helpers
 from pipeline.decorators import log_function_call
 from pipeline.time_manager import TimeManager
 from pipeline.security_and_config import SecurityAndConfig, get_base_url_config_with_prompt
-#from pipeline_tests.variable_clarity_grok import Redundancy
-from pipeline_tests.variable_clarity import Redundancy
+#from pipeline.variable_clarity_grok import Redundancy
+from pipeline.variable_clarity import Redundancy
 
 #get_configurable_default_plant_name, 
 #_get_credential_with_prompt, 
