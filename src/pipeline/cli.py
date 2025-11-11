@@ -68,7 +68,7 @@ def main(
     """
 
     if ctx.invoked_subcommand is None:
-        gui_eds.launch_fsg()
+        gui_eds.main()
         raise typer.Exit()
     elif False:#ctx.invoked_subcommand is None:
         typer.echo(ctx.get_help())
@@ -83,7 +83,7 @@ def main(
     # 3. Print the command
     typer.echo(f"command:\n{command_string}\n")
 
-@app.command(name="gui", help="Show the GUI and allow the user to see demo features.")
+@app.command(name="gui", help="Show the GUI. Use the --web flag for a browser-based interface.")
 def launch_gui_eds_trend(
     force_web: bool = typer.Option(False, "--web", "-w", help="Force web-based GUI for data input, even when the FreeSimpleGUI local window would be available."),
     ):
