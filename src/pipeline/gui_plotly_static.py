@@ -11,6 +11,7 @@ from pathlib import Path
 import os
 import subprocess
 from urllib.parse import urlparse
+import signal
 
 from pipeline.web_utils import launch_browser
 from pipeline.plottools import normalize, normalize_ticks, get_ticks_array_n
@@ -35,6 +36,7 @@ font_size = 20 if on_termux() else 14
 
 
 buffer_lock = threading.Lock()  # Optional, if you want thread safety
+
 
 # A simple HTTP server that serves files from the current directory.
 # We suppress logging to keep the Termux console clean.
@@ -192,6 +194,13 @@ def show_static(plot_buffer)->"go.Plotly":
     - Data is visually normalized, but hover-text shows original values.
     - Each curve gets its own y-axis, evenly spaced horizontally.
     """
+    def handle_exit(signum, frame):
+        print("\nSignal received. Shutting down server...")
+        if httpd:
+            httpd.shutdown()
+    signal.signal(signal.SIGINT, handle_exit)
+    signal.signal(signal.SIGTERM, handle_exit)
+
     if plot_buffer is None:
         print("plot_buffer is None")
         return
@@ -363,9 +372,11 @@ def show_static(plot_buffer)->"go.Plotly":
             # Clean up the temporary file on exit
             # Restore CWD before exiting
             os.chdir(original_cwd) 
-            if tmp_path.exists():
-                tmp_path.unlink()
-
+            try:
+                if tmp_path.exists():
+                    tmp_path.unlink()
+            except Exception as e:
+                print(f"Failed to delete temp file: {e}")
     # NOTE: You might need a cleanup mechanism for this temporary file.
 
     
