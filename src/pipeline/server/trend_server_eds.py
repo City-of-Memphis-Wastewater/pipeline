@@ -12,8 +12,8 @@ import socket
 
 # Import core business logic and history functions
 # Assuming pipeline.core.eds is available
-from pipeline.core import eds as eds_core
-from pipeline.interface.gui_eds import load_history, save_history 
+from pipeline.core import eds as eds_core 
+from pipeline.interface.utils import save_history, load_history
 from pipeline.web_utils import launch_browser
 
 # --- Configuration ---
