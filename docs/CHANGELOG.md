@@ -6,7 +6,7 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 
 ---
 
-## [0.3.62] - 2025-11-10
+## [0.3.63] - 2025-11-10
 
 ### Added:
 - **gui CLI command:** Build web-based interface in raw html and alpine.js, along with local version in freesimplegui. Streamlit and freesimpleguiweb were tested. FSGW is dead because remi is dead. Streamlit is less scalable and maintainable than just writing the HTML directly.
