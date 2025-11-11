@@ -1,3 +1,8 @@
+import json
+from pathlib import Path
+"""
+History loading and saving for IDCS queries to the EDS Trend command.
+"""
 # --- History Configuration ---
 # Define a path for the history file relative to the user's home directory 
 # or a configuration directory. Using a simple file in the current working directory
