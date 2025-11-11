@@ -84,15 +84,13 @@ def main(
     typer.echo(f"command:\n{command_string}\n")
 
 @app.command(name="gui", help="Show the GUI and allow the user to see demo features.")
-def launch_gui(
-    demo: bool = typer.Option(False, "--demo", "-d", help="Explicit demo features."),
+def launch_gui_eds_trend(
+    force_web: bool = typer.Option(False, "--web", "-w", help="Force web-based GUI for data input, even when the FreeSimpleGUI local window would be available."),
     ):
     """
-    Guides the user through a guided credential setup process. This is not necessary, as necessary credentials will be prompted for as needed, but this is a convenient way to set up multiple credentials at once. This command with the `--overwrite` flag is the designed way to edit existing credentials.
+    Allows GUI interaction with EDS Trend
     """
-    if demo:
-        typer.echo(F"demo: {demo}")
-    gui_eds.launch_fsg() 
+    gui_eds.main(force_web=force_web) 
     
 @app.command()
 def list_sensors(
