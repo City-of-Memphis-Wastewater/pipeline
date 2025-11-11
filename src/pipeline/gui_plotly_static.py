@@ -194,13 +194,22 @@ def show_static(plot_buffer)->"go.Plotly":
     - Data is visually normalized, but hover-text shows original values.
     - Each curve gets its own y-axis, evenly spaced horizontally.
     """
-    def handle_exit(signum, frame):
-        print("\nSignal received. Shutting down server...")
-        if httpd:
-            httpd.shutdown()
-    signal.signal(signal.SIGINT, handle_exit)
-    signal.signal(signal.SIGTERM, handle_exit)
+    httpd = None
+    
+    #stop_event = threading.Event()
 
+    #def handle_exit(signum, frame):
+    #    print("\nSignal received. Shutting down server...")
+    #    stop_event.set()
+    #    if httpd:
+    #        httpd.shutdown()
+
+    #signal.signal(signal.SIGINT, handle_exit)
+    #signal.signal(signal.SIGTERM, handle_exit)
+
+    #while not stop_event.is_set():
+    #    time.sleep(0.5)  # smaller sleep, more responsive
+        
     if plot_buffer is None:
         print("plot_buffer is None")
         return
@@ -316,7 +325,6 @@ def show_static(plot_buffer)->"go.Plotly":
 
     # Start a temporary local server in a separate, non-blocking thread
     PORT = 8000
-    httpd = None
     server_address = ('', PORT)
     server_thread = None
     MAX_PORT_ATTEMPTS = 10

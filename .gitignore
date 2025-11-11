@@ -52,9 +52,9 @@ version.rc
 **/dist/
 
 # Ignore elements in src by default
-src/defunct/
-src/example/
-src/exploratory/
+src/defunct/*
+src/example/*
+src/exploratory/*
 
 # Allow the specific tauri_multimodal_app folder
 !src/example/tauri_multimodal_app/
