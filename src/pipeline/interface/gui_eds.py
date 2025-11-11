@@ -11,7 +11,7 @@ import pyhabitat
 import time
 
 from pipeline.web_utils import launch_browser
-
+from pipeline.server.trend_server_eds import launch_server_for_web_gui 
 """
 To force webmode in PowerShell:
 $env:PIPELINE_FORCE_WEB_GUI = 1
@@ -239,12 +239,12 @@ def launch_fsg()->None:
 
     window.close()
 
-if __name__ == "__main__":
-    force_web = os.getenv('PIPELINE_FORCE_WEB_GUI', '').lower() in ('1', 'true', 'yes')
+def main(force_web:bool=False):
+    force_web_env_var = os.getenv('PIPELINE_FORCE_WEB_GUI', '').lower() in ('1', 'true', 'yes')
     crossplatform_web_approach_required_and_available = pyhabitat.web_browser_is_available() and \
-                        ((pyhabitat.on_termux() or pyhabitat.on_ish_alpine()) or (not pyhabitat.tkinter_is_available) or (force_web))
+                        ((pyhabitat.on_termux() or pyhabitat.on_ish_alpine()) or (not pyhabitat.tkinter_is_available) or (force_web_env_var) or (force_web))
     if crossplatform_web_approach_required_and_available:
-
+        """
         print("\nStreamlit and freesimpleguiweb have been rejected by the pipeline project.")
         print("Why? Because these do not achieve cross-platform graphics.")
         print("Remi is dead = freesimpleguiweb is dead.")
@@ -253,13 +253,14 @@ if __name__ == "__main__":
         print("\nUltimately, for native, we will leave freesimplegui for Tauri.")
         # Inside gui_eds.py main block, replace the old web logic:
         print("\nSwitching to Pure Web (FastAPI/Alpine/Tailwind)...")
-        # Ensure you import launch_server at the top of gui_eds.py
-        from pipeline.server.trend_server_eds import launch_server 
-        launch_server() 
+        """
+        launch_server_for_web_gui() 
     else:
         """
         Use local GUI interface.
         """
         launch_fsg() # Use the desktop version
 
+if __name__ == "__main__":
+    main()    
    

@@ -12,6 +12,7 @@ import uvicorn # Used for launching the server
 # Assuming pipeline.core.eds is available
 from pipeline.core import eds as eds_core
 from pipeline.interface.gui_eds import load_history, save_history 
+from pipeline.web_utils import launch_browser
 
 # --- Configuration ---
 # Define the root directory for serving static files
@@ -123,12 +124,11 @@ async def get_history():
 
 # --- Launch Command ---
 
-def launch_server(host: str = "127.0.0.1", port: int = 8082):
+def launch_server_for_web_gui(host: str = "127.0.0.1", port: int = 8082):
     """Launches the FastAPI server using uvicorn."""
     print(f"Starting EDS Trend Web Server at http://{host}:{port}")
     # Launch browser automatically
     try:
-        from pipeline.web_utils import launch_browser
         launch_browser(f"http://{host}:{port}")
     except Exception:
         print("Could not launch browser automatically. Open the URL manually.")
@@ -138,4 +138,4 @@ def launch_server(host: str = "127.0.0.1", port: int = 8082):
 
 
 if __name__ == "__main__":
-    launch_server()
+    launch_server_for_web_gui()
