@@ -257,7 +257,6 @@ if __name__ == "__main__":
         from pipeline.server.trend_server_eds import launch_server 
         launch_server() 
     else:
-        launch_fsg()
         """
         Use local GUI interface.
         """
