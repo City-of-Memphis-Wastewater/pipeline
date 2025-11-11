@@ -12,6 +12,9 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 - **gui CLI command:** Build web-based interface in raw html and alpine.js, along with local version in freesimplegui. Streamlit and freesimpleguiweb were tested. FSGW is dead because remi is dead. Streamlit is less scalable and maintainable than just writing the HTML directly.
 - **Tauri Example:** Generate tauri example with three js embedded canvas, found in .\src\example\tauri_multimodal_app\; the build files are gitignore'd but `npm run tauri build` can be run from what is available, from inside the src-tauri directory. So begins a new stack - we will favor web-based graphics, and then these can be made native with Tauri. Should we mgrate entirely to Rust? See notes in my disparate Markdown Vaults.
 
+### Fixed:
+- pipeline.server.trend_server_eds.launch_server_for_web_gui() leverages find_open_port(s).
+
 ---
 
 ## [0.3.61] - 2025-11-01
