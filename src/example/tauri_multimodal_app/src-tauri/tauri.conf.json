@@ -1,0 +1,35 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/schema.json",
+  "identifier": "com.tauri.multimodalapp",
+  "productName": "multimodal-analysis-app",
+  "version": "0.0.0",
+
+  "build": {
+    "beforeDevCommand": "",                
+    "beforeBuildCommand": "npm run build",
+	"frontendDist": "../dist-build",
+    "devUrl": null
+  },
+
+  "app": {
+    "windows": [
+      {
+        "title": "Multimodal App",
+        "width": 800,
+        "height": 600,
+        "fullscreen": false,
+        "resizable": true
+      }
+    ]
+  },
+
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+		"icons/icon.ico"
+	]
+  },
+
+  "plugins": {}
+}
