@@ -7,6 +7,8 @@ from pydantic import BaseModel, validator
 from pathlib import Path
 from typer import BadParameter
 import uvicorn # Used for launching the server
+import socket
+
 
 # Import core business logic and history functions
 # Assuming pipeline.core.eds is available
@@ -21,6 +23,23 @@ STATIC_DIR = Path(__file__).parent.parent / "interface" / "web_gui"
 
 # Initialize FastAPI app
 app = FastAPI(title="EDS Trend Server", version="1.0.0")
+
+
+def find_open_port(start_port: int = 8082, max_port: int = 8100) -> int:
+    """
+    Finds an available TCP port starting from `start_port` up to `max_port`.
+    Returns the first available port.
+    """
+    for port in range(start_port, max_port + 1):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            try:
+                s.bind(("127.0.0.1", port))
+                s.close()
+                return port
+            except OSError:
+                continue
+    raise RuntimeError(f"No available port found between {start_port} and {max_port}.")
+
 
 # --- Pydantic Schema for Request Body ---
 class TrendRequest(BaseModel):
@@ -129,7 +148,16 @@ def launch_server_for_web_gui(host: str = "127.0.0.1", port: int = 8082):
     print(f"Starting EDS Trend Web Server at http://{host}:{port}")
     # Launch browser automatically
     try:
-        launch_browser(f"http://{host}:{port}")
+        port = find_open_port(port, port + 50)
+    except RuntimeError as e:
+        print(e)
+        return
+    
+    url = f"http://{host}:{port}"
+    print(f"Starting EDS Trend Web Server at {url}")
+    
+    try:
+        launch_browser(url)
     except Exception:
         print("Could not launch browser automatically. Open the URL manually.")
         

@@ -56,14 +56,14 @@ cherrypy = "^18.10.0"
 colorama = [
     { version = "^0.4.6", python = ">=3.8,<3.15" }
 ]
-
+distro = "^1.9.0"
 #fastapi = "^0.116.1" # version clarity introduced in v0.3.55
 # fastapi: align the FastAPI version split with the Pydantic v1/v2 transition (Python 3.12).
 fastapi = [
     { version = "^0.116.1", python = ">=3.12" },  # Use modern FastAPI for Python >=3.12 (where Pydantic V2 is mandatory)
     { version = "0.99.1", python = "<3.12" },     # Use last FastAPI that officially supported Pydantic V1 (for Python 3.8-3.11)
 ]
-
+freesimplegui = "^5.2.0.post1"
 # keyring: Version 25.x requires Python >=3.9, so we pin 24.x for 3.8.
 keyring = [
     { version = "^25.6.0", python = ">=3.9" },
@@ -88,6 +88,13 @@ pendulum = [
 ]
 
 plotly = "^6.2.0"
+
+#pydantic = "1.10.13" # version clarity introduced in v0.3.55
+pydantic = [
+    { version = "^2.0.0", python = ">=3.12" },    # Use V2 for Python 3.12 and newer
+    { version = "1.10.13", python = "<3.12" },    # Use V1 for Python 3.8 through 3.11
+]
+
 pyhabitat = "^1.0.35"	
 pyodbc = { version = "^5.1.0", optional = true }
 pyyaml = ">=6.0.2,<7.0.0"
@@ -99,7 +106,9 @@ rich = [
     { version = "^14.1.0", python = ">=3.10" }, # Use the latest rich for modern Python
     { version = "^10.14.0", python = "<3.10" },  # Use rich <14 for Python 3.8-3.9
 ]
-# NOTE: Version 1.25.0 (pinned for <3.10) requires rich < 14, causing the next error.
+# NOTE: Rich version 1.25.0 (pinned for <3.10) requires rich < 14, causing the next error.
+
+suds-py3 = "^1.4.5.0"
 toml = ">=0.10.2,<0.11.0"
 typer = "^0.17.4"
 tzdata = "^2025.2"
@@ -113,20 +122,6 @@ uvicorn = [
     { version = "^0.34.3", python = ">=3.9" },
     { version = "^0.33.0", python = "3.8.*" },
 ]
-distro = "^1.9.0"
-
-#pydantic = "1.10.13" # version clarity introduced in v0.3.55
-pydantic = [
-    { version = "^2.0.0", python = ">=3.12" },    # Use V2 for Python 3.12 and newer
-    { version = "1.10.13", python = "<3.12" },    # Use V1 for Python 3.8 through 3.11
-]
-
-# prettytable: Version 3.x requires Python >=3.9, so we pin 2.x for 3.8.
-freesimplegui = "^5.2.0.post1"
-#legacy-cgi = "^2.6.4"
-#freesimpleguiweb = "^1.1.0"
-#remi = {git = "https://github.com/rawpython/remi.git"}
-suds-py3 = "^1.4.5.0"
 
 [tool.poetry.dependencies."backports.zoneinfo"] # known poetry quirk necessary when freezing, a la "poetry export -f requirements.txt --without-hashes > requirements.txt"
 version = "^0.2.1"
