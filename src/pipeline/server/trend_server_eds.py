@@ -8,6 +8,7 @@ from pathlib import Path
 from typer import BadParameter
 import uvicorn # Used for launching the server
 import socket
+from importlib import resources
 
 
 # Import core business logic and history functions
@@ -70,14 +71,30 @@ if STATIC_DIR.is_dir():
 
 @app.get("/", response_class=HTMLResponse)
 async def serve_gui():
-    """Serves the main index.html file."""
-    index_path = STATIC_DIR / "index.html"
-    if not index_path.is_file():
-        return HTMLResponse("<html><body><h1>Error: index.html not found.</h1></body></html>", status_code=500)
+    """
+    Serves the main index.html file by loading it as a package resource.
+    The path must be the package path relative to the project root.
+    Assuming the file is in 'pipeline.interface.web_gui'.
+    """
+    try:
+        # Load the content of index.html as a resource
+        # Replace 'pipeline.interface.web_gui' with the actual Python package path 
+        # where the web_gui folder resides inside the installed/bundled package.
+        index_content = resources.read_text('pipeline.interface.web_gui', 'index.html')
+        return HTMLResponse(index_content)
     
-    with open(index_path, 'r') as f:
-        return f.read()
-
+    except FileNotFoundError:
+        # Handle the case where the resource wasn't bundled or the path is wrong
+        return HTMLResponse(
+            "<html><body><h1>Error 500: index.html resource not found.</h1>"
+            "<h2>Check resource bundling configuration.</h2></body></html>", 
+            status_code=500
+        )
+    except Exception as e:
+        # Catch unexpected errors during resource loading
+        return HTMLResponse(f"<html><body><h1>Resource Load Error: {e}</h1></body></html>", status_code=500)
+    
+    
 # --- 2. API Endpoint for Core Logic ---
 
 @app.post("/api/fetch_trend")
@@ -145,7 +162,6 @@ async def get_history():
 
 def launch_server_for_web_gui(host: str = "127.0.0.1", port: int = 8082):
     """Launches the FastAPI server using uvicorn."""
-    print(f"Starting EDS Trend Web Server at http://{host}:{port}")
     # Launch browser automatically
     try:
         port = find_open_port(port, port + 50)

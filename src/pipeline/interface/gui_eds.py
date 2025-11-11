@@ -88,14 +88,14 @@ def launch_fsg()->None:
         
         create_separator(sg),
 
-        [sg.Text("Time Range (Start/End/Days)", font=("Helvetica", 12))],
+        [sg.Text("Time Range (leave empty for last 48 hours)", font=("Helvetica", 12))],
         [sg.Text("Days:", size=(10, 1)), sg.InputText(key="days", size=(15, 1))],
         [sg.Text("Start Time:", size=(10, 1)), sg.InputText(key="starttime", size=(25, 1))], 
         [sg.Text("End Time:", size=(10, 1)), sg.InputText(key="endtime", size=(25, 1))],
         
         create_separator(sg),
 
-        [sg.Text("Frequency (Leave empty for automatic)", font=("Helvetica", 12))],
+        [sg.Text("Frequency (leave empty for 400 data points)", font=("Helvetica", 12))],
         [sg.Text("Seconds Between Points:", size=(20, 1)), sg.InputText(key="seconds_between_points", size=(10, 1))],
         [sg.Text(" OR ")],
         [sg.Text("Datapoint Count:", size=(15, 1)), sg.InputText(key="datapoint_count", size=(10, 1))],
