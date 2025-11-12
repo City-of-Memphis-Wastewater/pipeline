@@ -46,7 +46,7 @@ testpaths = ["tests"]
 pythonpath = ["src", "."]
 
 [tool.poetry.dependencies]
-python = ">=3.8.0,<3.15"
+python = ">=3.8,<3.15"
 
 # backports.tarfile is required due to a transitive dependency (likely jaraco.context's
 # use of tarball functionality) which unconditionally imports the backport, even
@@ -71,11 +71,14 @@ keyring = [
 ]
 
 keyrings-alt = "^5.0.2"
+
+# matplotlib: pinned per Python version; older versions for older interpreters
 matplotlib = [
-    { version = "^3.10.6", python = ">=3.10", optional = true },
-    { version = "^3.9.0", python = "3.9.*", optional = true },
-    { version = "^3.7", python = "3.8.*", optional = true },
+    { version = "^3.7", python = ">=3.8,<3.9", optional = true },
+    { version = "^3.9", python = ">=3.9,<3.10", optional = true },
+    { version = "^3.10", python = ">=3.10,<3.15", optional = true },
 ]
+
 # mysql-connector-python: Version 9.1.0+ requires Python >=3.9. We pin 8.3.x for 3.8.
 mysql-connector-python = [
     { version = "^9.3.0", python = ">=3.9" },

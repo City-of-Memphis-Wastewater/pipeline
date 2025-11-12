@@ -4,19 +4,34 @@ import json
 from pathlib import Path
 import re
 import keyring
-from typing import Dict, Set, List
+from typing import Dict, Set, List, Any
 import typer
 import click.exceptions
 import logging
 import sys
-from pyhabitat import on_termux, on_ish_alpine, interactive_terminal_is_available, tkinter_is_available, web_browser_is_available
 import pyhabitat as ph
+from fastapi import HTTPException
+from pipeline.state_manager import PromptManager # Import the manager class for type hinting
+
+    
 
 # Define a standard configuration path for your package
 CONFIG_PATH = Path.home() / ".pipeline-eds" / "config.json" ## configuration-example
 CONFIG_FILE = Path.home() / ".pipeline-eds" / "secure_config.json"
 KEY_FILE = Path.home() / ".pipeline-eds" / ".key"
 
+class CredentialsNotFoundError(Exception):
+    """
+    Custom exception raised when required credentials or configuration values 
+    cannot be found, are incomplete, or are cancelled by the user across 
+    CLI, GUI, or Web prompts.
+    
+    This allows the CLI to gracefully handle configuration failures without 
+    relying on web-specific exceptions like HTTPException.
+    """
+    def __init__(self, message="Configuration is missing, incomplete, or cancelled."):
+        self.message = message
+        super().__init__(self.message)
 
 class SecurityAndConfig:
     def __dict__(self):
@@ -24,7 +39,12 @@ class SecurityAndConfig:
     def __init__(self):
         pass
 
-    def _prompt_for_value(prompt_message: str, hide_input: bool) -> str:
+    def _prompt_for_value(prompt_message: str=None,
+                          hide_input: bool=False,
+                          force_webbrowser:bool=False,
+                          force_terminal:bool=False,
+                          manager: PromptManager | None = None # <-- MANAGER IS ONLY FOR WEB GUI
+                          ) -> str:
         """Handles prompting with a fallback from CLI to GUI.
         ### **Platform Quirk: Input Cancellation ({Ctrl}+C)**
         Due to the underlying POSIX terminal handling on Linux and Termux,
@@ -39,11 +59,14 @@ class SecurityAndConfig:
         On  Windows, however, just {Ctrl}+C is expected to successfully perform a keyboard interrupt..
         """
         # Block these off for testing the browser_get_input, which is not expeceted in this iteration but is good practice for future proofing a hypothetical console-less GUI 
-        force_webbrowser=True
+        #force_webbrowser=True
+        #force_terminal=True
+        if force_terminal and force_webbrowser:
+            force_webbrowser
 
         value = None # ensure safe defeault so that the except block handles properly, namely if the user cancels the typer.prompt() input with control+ c
         
-        if tkinter_is_available() and not force_webbrowser:
+        if ph.tkinter_is_available() or force_terminal:
             # 2. GUI Mode (Non-interactive fallback)
             from pipeline.guiconfig import gui_get_input
             typer.echo(f"\n --- Non-interactive process detected. Opening GUI prompt. --- ")
@@ -51,8 +74,24 @@ class SecurityAndConfig:
             
             if value is not None:
                 return value
-        
-        elif interactive_terminal_is_available and not force_webbrowser:
+
+        elif ph.web_browser_is_available() or force_webbrowser: # 3. Check for browser availability
+            # 3. Browser Mode (Web Browser as a fallback)
+            from pipeline.webconfig import browser_get_input
+            typer.echo(f"\n --- TKinter nor console is not available to handle the configuration prompt. Opening browser-based configuration prompt --- ")
+            # We use the prompt message as the identifier key for the web service
+            # because the true config_key is not available in this function's signature.
+            value = browser_get_input(
+                manager=manager,
+                key=prompt_message, 
+                prompt_message=prompt_message,
+                hide_input=hide_input # <-- Passes input visibility to web config
+            )
+
+            if value is not None:
+                return value
+            
+        elif ph.interactive_terminal_is_available() or force_terminal:
             try:
                 # 1. CLI Mode (Interactive)
                 typer.echo(f"\n --- Use CLI input --- ")
@@ -72,24 +111,7 @@ class SecurityAndConfig:
                 typer.echo("\nInput cancelled by user.")
                 return None
             return value
-            
-
-        elif web_browser_is_available() and force_webbrowser: # 3. Check for browser availability
-            # 3. Browser Mode (Web Browser as a fallback)
-            from pipeline.webconfig import WebConfigurationManager, browser_get_input
-            typer.echo(f"\n --- TKinter nor console is not available to handle the configuration prompt. Opening browser-based configuration prompt --- ")
-            with WebConfigurationManager():
-                # We use the prompt message as the identifier key for the web service
-                # because the true config_key is not available in this function's signature.
-                value = browser_get_input(
-                    key=prompt_message, 
-                    prompt_message=prompt_message,
-                    hide_input=hide_input # <-- Passes input visibility to web config
-                )
-
-            if value is not None:
-                return value
-
+        
         # If all other options fail
         raise CredentialsNotFoundError(
             f"Configuration for '{prompt_message}' is missing or cancelled. "
@@ -369,7 +391,7 @@ def json_heal(config_path = CONFIG_PATH):
         return False # Healing failed
     
 def init_security():
-    if on_termux() or on_ish_alpine():
+    if ph.on_termux() or ph.on_ish_alpine():
         try: # mid refactor, try the new function first
             configure_filebased_secure_config() # to be run on import
         except:
@@ -384,7 +406,7 @@ def configure_keyring():
     such as Termux on Android.
     Defunct, use configure_filebased_secure_config() instead.
     """
-    if on_termux or on_ish_alpine():
+    if ph.on_termux or ph.on_ish_alpine():
         #typer.echo("Termux environment detected. Configuring file-based keyring backend.")
         import keyrings.alt.file
         keyring.set_keyring(keyrings.alt.file.PlaintextKeyring())
@@ -399,7 +421,7 @@ def configure_filebased_secure_config():
     This is useful for environments where the default keyring is not available,
     such as Termux on Android or iSH on iPhone.
     """
-    if on_termux() or on_ish_alpine():
+    if ph.on_termux() or ph.on_ish_alpine():
         #typer.echo("Termux environment detected. Configuring file-based keyring backend.")
         from cryptography.fernet import Fernet
         cryptography.fernet-1 # error on purpose
@@ -487,9 +509,6 @@ def get_eds_rest_api_credentials(plant_name: str, overwrite: bool = False, forge
 
     service_name = f"pipeline-eds-api-{plant_name}"
     overwrite = False
-    #url = SecurityAndConfig.get_config_with_prompt(config_key =f"{plant_name}_eds_api_url", prompt_message = f"Enter {plant_name} API URL (e.g., http://000.00.0.000:43084/api/v1)", overwrite=overwrite)
-    #url = _get_eds_url_config_with_prompt(config_key = f"{plant_name}_eds_api_url", prompt_message = f"Enter {plant_name} EDS API URL (e.g., http://000.00.0.000:43084/api/v1, or just 000.00.0.000)", overwrite=overwrite)
-    #eds_base_url = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = f"{plant_name}_eds_base_url", prompt_message =  f"Enter {plant_name} EDS base url (e.g., http://000.00.0.000, or just 000.00.0.000)", overwrite=overwrite)
     eds_base_url = get_base_url_config_with_prompt(service_name = f"{plant_name}_eds_base_url", prompt_message = f"Enter {plant_name} EDS base url (e.g., http://000.00.0.000, or just 000.00.0.000)")
     eds_rest_api_port = SecurityAndConfig.get_config_with_prompt(config_key = f"{plant_name}_eds_rest_api_port", prompt_message = f"Enter {plant_name} EDS REST API port (e.g., 43084)", overwrite=overwrite)
     eds_rest_api_sub_path = SecurityAndConfig.get_config_with_prompt(config_key = f"{plant_name}_eds_rest_api_sub_path", prompt_message = f"Enter {plant_name} EDS REST API sub path (e.g., 'api/v1')", overwrite=overwrite)
@@ -510,9 +529,7 @@ def get_eds_rest_api_credentials(plant_name: str, overwrite: bool = False, forge
                                         ) 
     
     if eds_rest_api_url is None:
-        logging.info("Not enough information provided to build: eds_rest_api_url.")
-        logging.info("Please rerun your last command or try something else.")
-        sys.exit()
+        not_enough_info()
 
     return {
         'url': eds_rest_api_url,
@@ -532,9 +549,6 @@ def get_eds_soap_api_credentials(plant_name: str, overwrite: bool = False, forge
 
     service_name = f"pipeline-eds-api-{plant_name}"
     overwrite = False
-    #url = SecurityAndConfig.get_config_with_prompt(config_key =f"{plant_name}_eds_api_url", prompt_message = f"Enter {plant_name} API URL (e.g., http://000.00.0.000:43084/api/v1)", overwrite=overwrite)
-    #url = _get_eds_url_config_with_prompt(config_key = f"{plant_name}_eds_api_url", prompt_message = f"Enter {plant_name} EDS API URL (e.g., http://000.00.0.000:43084/api/v1, or just 000.00.0.000)", overwrite=overwrite)
-    #eds_base_url = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = f"{plant_name}_eds_base_url", prompt_message =  f"Enter {plant_name} EDS base url (e.g., http://000.00.0.000, or just 000.00.0.000)", overwrite=overwrite)
     eds_base_url = get_base_url_config_with_prompt(service_name = f"{plant_name}_eds_base_url", prompt_message = f"Enter {plant_name} EDS base url (e.g., http://000.00.0.000, or just 000.00.0.000)")
     eds_soap_api_port = SecurityAndConfig.get_config_with_prompt(config_key = f"{plant_name}_eds_soap_api_port", prompt_message = f"Enter {plant_name} EDS SOAP API port (e.g., 43080)", overwrite=overwrite)
     eds_soap_api_sub_path = SecurityAndConfig.get_config_with_prompt(config_key = f"{plant_name}_eds_soap_api_sub_path", prompt_message = f"Enter {plant_name} EDS SOAP API WSDL path (e.g., 'eds.wsdl')", overwrite=overwrite)
@@ -553,10 +567,7 @@ def get_eds_soap_api_credentials(plant_name: str, overwrite: bool = False, forge
                                                     eds_soap_api_port = str(eds_soap_api_port),
                                                     eds_soap_api_sub_path = eds_soap_api_sub_path)
     if eds_soap_api_url is None:
-        logging.info("Not enough information provided to build: eds_soap_api_url.")
-        logging.info("Please rerun your last command or try something else.")
-        sys.exit()
-    
+        not_enough_info()
     
     return {
         'url': eds_soap_api_url,
@@ -686,6 +697,12 @@ def frontload_build_all_credentials(forget : bool = False):
         # Optionally, guide the user to the next step
         print("Tip: Run `your_package_name.configure()` or the corresponding CLI command.")
 
+def not_enough_info():
+    
+    raise CredentialsNotFoundError(
+        "Not enough configuration information provided to build credentials. "
+        "The program requires user input or pre-configured values."
+    )
 
 if __name__ == "__main__":
     frontload_build_all_credentials()

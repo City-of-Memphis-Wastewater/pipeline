@@ -1,6 +1,6 @@
 # pipeline/webconfig.py
 from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
-import cherrypy
+#import cherrypy
 import atexit
 import html
 import json
@@ -9,17 +9,70 @@ import time
 import threading
 import urllib.parse 
 
+from typing import Any
+
 from pipeline.web_utils import launch_browser, get_self_closing_html
 # --- Shared State Management ---
 
-# Global store for results awaiting retrieval by the calling Python function.
-# Key: request_id (str), Value: submitted_value (str)
-PROMPT_RESULTS = {}
-results_lock = threading.Lock() 
+"""
+# Import shared state from the main server module
+try:
+    from pipeline.server.trend_server_eds import PROMPT_RESULTS, results_lock, SERVER_HOST_PORT
+except ImportError:
+    # Fallback for testing/running outside full environment
+    PROMPT_RESULTS = {}
+    results_lock = threading.Lock()
+    SERVER_HOST_PORT = "127.0.0.1:8082" # Fallback needs the actual running default
 
 # --- Server Control State ---
 _SERVER_THREAD = None
 _SERVER_LOCK = threading.Lock() 
+"""
+
+def browser_get_input(manager: Any, key: str, prompt_message: str, hide_input: bool) -> str | None:
+    """
+    Launches a modal/page on the MAIN FastAPI server and polls for the result.
+    This function now BLOCKS the calling thread (SecurityAndConfig).
+    """
+    # 1. Register the prompt request
+    try:
+        request_id = manager.register_prompt(key, prompt_message, hide_input)
+    except RuntimeError as e:
+        typer.echo(f"⚠️ Error: {e}")
+        return None # Return None if a prompt is already active
+    
+    # 1. Build the URL to tell the main server to show the modal
+    # NOTE: You MUST use the MAIN FastAPI app's URL/Port (e.g., 8083), not 8081
+    # You will need to determine how to get the main server's URL/Port here.
+    # For this example, let's assume the main app's URL is passed in or known.
+    
+    # 2. Get the URL from the manager
+    MAIN_SERVER_URL = manager.get_server_url()
+
+    encoded_key = urllib.parse.quote(key)
+    encoded_message = urllib.parse.quote(prompt_message)
+    
+    prompt_url = f"{MAIN_SERVER_URL}/config_modal?request_id={request_id}&key={encoded_key}&message={encoded_message}&is_credential={hide_input}"
+    
+    print(f"--- Prompt Required on Main UI ---")
+    print(f"URL: {prompt_url}")
+    
+    # 2. Launch the browser to the main UI's config modal
+    #launch_browser(prompt_url)
+    
+    # 3. Poll for the result (This is the blocking part)
+    # NO launch_browser() call here! The frontend polling handles the modal display.
+
+    print(f"--- Prompt ID {request_id} stored. Waiting for frontend input... ---")
+    
+    # 3. Poll for the result (Blocking)
+    while True:
+        value = manager.get_and_clear_result(request_id)
+        if value is not None:
+            print("--- Input Received from Main UI! ---")
+            return value
+
+        time.sleep(0.5)
 
 # --- Context Manager for Server Lifecycle ---
 class WebConfigurationManager:
@@ -392,7 +445,7 @@ def _wait_for_web_input(request_id, key, prompt_message: str, hide_input: bool) 
 
 
 
-def browser_get_input(key: str, prompt_message: str, hide_input: bool = False) -> str:
+def browser_get_input_defunct(key: str, prompt_message: str, hide_input: bool = False) -> str:
     """
     Retrieves a config value by launching a web prompt.
     NOTE: This function now ASSUMES the server is already running via the

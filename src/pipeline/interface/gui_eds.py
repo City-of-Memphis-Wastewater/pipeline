@@ -48,13 +48,15 @@ def launch_fsg()->None:
     # Load history for the dropdown list
     idcs_history = load_history()
 
-
-    import FreeSimpleGUI as sg
+    try:
+        import FreeSimpleGUI as sg
+    except:
+        """Fallback to web if FreeSimpleGUI is not available."""
+        launch_server_for_web_gui()
+        return
     # Set theme for a slightly better look
-    sg.theme('DarkGrey15')
-
     #sg.theme('DarkGrey15') # not available in web
-    #sg.theme('DarkGreen3')
+    sg.theme('DarkGreen3')
     #sg.theme('DarkGreen4') 
 
         
@@ -204,7 +206,8 @@ def launch_fsg()->None:
 def main(force_web:bool=False):
     force_web_env_var = os.getenv('PIPELINE_FORCE_WEB_GUI', '').lower() in ('1', 'true', 'yes')
     crossplatform_web_approach_required_and_available = pyhabitat.web_browser_is_available() and \
-                        ((pyhabitat.on_termux() or pyhabitat.on_ish_alpine()) or (not pyhabitat.tkinter_is_available) or (force_web_env_var) or (force_web))
+                        ((pyhabitat.on_termux() or pyhabitat.on_ish_alpine()) or (not pyhabitat.tkinter_is_available()) or (force_web_env_var) or (force_web))
+
     if crossplatform_web_approach_required_and_available:
         """
         print("\nStreamlit and freesimpleguiweb have been rejected by the pipeline project.")

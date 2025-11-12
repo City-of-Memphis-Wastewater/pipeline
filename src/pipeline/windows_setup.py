@@ -381,8 +381,8 @@ def cleanup_credential_manager_keyring_entries():
     A consistent username relevant to pipeline can be used for easy removal."
     """
     # We must define all added credentials discern which are relevant to pipeline.
-    from keyring.errors import PasswordDeleteError
     try:
+        from keyring.errors import PasswordDeleteError
         keyring.delete_password("service_name_placeholder", "username_placeholder")
     except PasswordDeleteError:
         pass
