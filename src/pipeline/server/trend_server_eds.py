@@ -1,6 +1,6 @@
 # src/pipeline/server/trend_server_eds.py
 
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, validator
@@ -9,13 +9,18 @@ from typer import BadParameter
 import uvicorn # Used for launching the server
 import socket
 from importlib import resources
+import urllib.parse
+from typing import Dict, Any
 
-
-# Import core business logic and history functions
-# Assuming pipeline.core.eds is available
+# Local imports
 from pipeline.core import eds as eds_core 
 from pipeline.interface.utils import save_history, load_history
-from pipeline.web_utils import launch_browser
+from pipeline.web_utils import get_self_closing_html
+from pipeline.security_and_config import CredentialsNotFoundError
+from pipeline.state_manager import PromptManager # Import the new class
+
+# --- State Initialization ---
+prompt_manager = PromptManager()
 
 # --- Configuration ---
 # Define the root directory for serving static files
@@ -24,7 +29,12 @@ STATIC_DIR = Path(__file__).parent.parent / "interface" / "web_gui"
 
 # Initialize FastAPI app
 app = FastAPI(title="EDS Trend Server", version="1.0.0")
+# Attach the manager instance to the app state for easy access via dependency injection
+app.state.prompt_manager = prompt_manager
 
+def get_prompt_manager() -> PromptManager:
+    """Dependency injector for the PromptManager."""
+    return app.state.prompt_manager
 
 def find_open_port(start_port: int = 8082, max_port: int = 8100) -> int:
     """
@@ -146,6 +156,12 @@ async def fetch_trend(request_data: TrendRequest):
         # Catch errors from core logic and return a structured JSON error
         raise HTTPException(status_code=400, detail={"error": f"Input Error: {str(e).strip()}"})
     
+    except CredentialsNotFoundError as e: # <-- ✅ NEW CATCH BLOCK
+        # Catch CLI-centric config errors and convert them to HTTP 400/500
+        # HTTP 400 is often appropriate for missing required input/config.
+        print(f"SECURITY ERROR: {e}") # Log the specific failure on the server
+        raise HTTPException(status_code=400, detail={"error": f"Configuration Required: {str(e)}"})
+    
     except Exception as e:
         # Catch unexpected errors (like VPN/network issues)
         raise HTTPException(status_code=500, detail={"error": f"Server Error (VPN/Core Issue): {str(e)}"})
@@ -158,22 +174,63 @@ async def get_history():
     history = load_history()
     return JSONResponse(history)
 
+# --- 4. Configuration Input Endpoints ---
+
+@app.get("/api/get_active_prompt", response_class=JSONResponse)
+async def get_active_prompt(manager: PromptManager = Depends(get_prompt_manager)):
+    """Returns the one and only prompt request waiting for input."""
+    data = manager.get_active_prompt()
+    if data:
+        data["show"] = True
+        return JSONResponse(data)
+    return JSONResponse({"show": False})
+    
+@app.post("/api/submit_config", response_class=HTMLResponse)
+async def submit_config(request: Request, manager: PromptManager = Depends(get_prompt_manager)):
+    """
+    Receives the submitted form data from the auto-launched config modal and unblocks the waiting Python thread.
+    """
+    try:
+        # FastAPI's Request.form() handles standard form submissions
+        form_data = await request.form()
+        request_id = form_data.get("request_id")
+        submitted_value = form_data.get("input_value")
+        
+        if not request_id or submitted_value is None:
+            raise HTTPException(status_code=400, detail="Missing request_id or input_value")
+
+        # 1. Store the result using the manager method
+        manager.submit_result(request_id, submitted_value)    
+        
+        # 2. Return the self-closing HTML (using the existing utility)
+     
+        return HTMLResponse(get_self_closing_html("Configuration submitted successfully!"))
+        
+    except Exception as e:
+        return HTMLResponse(f"<h1>Error during submission: {e}</h1>", status_code=500)
+        
 # --- Launch Command ---
 
 def launch_server_for_web_gui(host: str = "127.0.0.1", port: int = 8082):
     """Launches the FastAPI server using uvicorn."""
-    # Launch browser automatically
+
     try:
         port = find_open_port(port, port + 50)
     except RuntimeError as e:
         print(e)
         return
     
-    url = f"http://{host}:{port}"
+    host_port_str = f"{host}:{port}" # e.g., "127.0.0.1:8082"
+    url = f"http://{host_port_str}"
+
+    # Use the Manager instance to set the port, eliminating the global SERVER_HOST_PORT
+    prompt_manager.set_server_port(host_port_str)
+
     print(f"Starting EDS Trend Web Server at {url}")
     
     try:
-        launch_browser(url)
+        #launch_browser(url)
+        pass
     except Exception:
         print("Could not launch browser automatically. Open the URL manually.")
         
