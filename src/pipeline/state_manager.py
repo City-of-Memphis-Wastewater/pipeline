@@ -58,7 +58,14 @@ class PromptManager:
         """Retrieves a result and removes it to unblock the waiting thread."""
         with self.results_lock:
             return self.prompt_results.pop(request_id, None)
-
+    
+    def clear_result(self, request_id: str):
+        """Removes a request_id entry from the results dictionary."""
+        with self.results_lock:
+            # Using pop with a default value of None removes the key if it exists, 
+            # but prevents a KeyError if it was already retrieved/cleared.
+            self.prompt_results.pop(request_id, None)
+            
     def set_server_host_port(self, host_port_str: str):
         """Sets the dynamically found server host and port."""
         self.server_host_port = host_port_str

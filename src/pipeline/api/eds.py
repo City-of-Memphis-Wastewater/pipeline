@@ -24,8 +24,7 @@ from pipeline.time_manager import TimeManager
 from pipeline.security_and_config import SecurityAndConfig, get_base_url_config_with_prompt
 #from pipeline.variable_clarity_grok import Redundancy
 from pipeline.variable_clarity import Redundancy
-
-#get_configurable_default_plant_name, 
+ 
 #_get_credential_with_prompt, 
 # 
 #_get_config_with_prompt, 
@@ -684,11 +683,17 @@ class EdsClient:
                 idcs = SecurityAndConfig.get_temporary_input()
         
         base_url = get_base_url_config_with_prompt(service_name = f"{plant_name}_eds_base_url", prompt_message=f"Enter {plant_name} EDS base url (e.g., http://000.00.0.000, or just 000.00.0.000)")
+        if base_url is None: return
         eds_soap_api_port = SecurityAndConfig.get_config_with_prompt(config_key = f"{plant_name}_eds_soap_api_port", prompt_message=f"Enter {plant_name} EDS SOAP API port (e.g., 43080)")
+        if eds_soap_api_port is None: return
         eds_soap_api_sub_path = SecurityAndConfig.get_config_with_prompt(config_key = f"{plant_name}_eds_soap_api_sub_path", prompt_message=f"Enter {plant_name} EDS SOAP API WSDL PATH (e.g., 'eds.wsdl')")
+        if eds_soap_api_sub_path is None: return
         username = SecurityAndConfig.get_credential_with_prompt(service_name, "username", f"Enter your EDS API username for {plant_name} (e.g. admin)", hide=False)
+        if username is None: return
         password = SecurityAndConfig.get_credential_with_prompt(service_name, "password", f"Enter your EDS API password for {plant_name} (e.g. '')")
+        if password is None: return
         idcs_to_iess_suffix = SecurityAndConfig.get_config_with_prompt(f"{plant_name}_eds_api_iess_suffix", f"Enter iess suffix for {plant_name} (e.g., .UNIT0@NET0)")
+        if idcs_to_iess_suffix is None: return
         
         #session = EdsClient.login_to_session_with_api_credentials(api_credentials)
         
@@ -698,7 +703,7 @@ class EdsClient:
         if eds_soap_api_url is None:
             logging.info("Not enough information provided to build: eds_soap_api_url.")
             logging.info("Please rerun your last command or try something else.")
-            sys.exit()
+            return
         try:
             # 1. Create the SOAP client
             print(f"Attempting to connect to WSDL at: {eds_soap_api_url}")
@@ -879,27 +884,26 @@ class EdsClient:
         authstring = None
         
         if plant_name is None:
-            plant_name = str(input("Enter plant_name: "))
-
-        if plant_name is None:
-            plant_name = get_configurable_default_plant_name()
+            plant_name = SecurityAndConfig.get_configurable_default_plant_name()
 
         service_name = EdsClient.get_service_name(plant_name = plant_name) # for secure credentials
         base_url = get_base_url_config_with_prompt(service_name=f"{plant_name}_eds_base_url", prompt_message=f"Enter {plant_name} EDS base url (e.g., http://000.00.0.000, or just 000.00.0.000)")
-        #eds_soap_api_port = SecurityAndConfig.get_credential_with_prompt(f"{plant_name}_eds_soap_api_port", f"Enter {plant_name} EDS SOAP API port (e.g., 43080)")
-        #eds_soap_api_sub_path = SecurityAndConfig.get_credential_with_prompt(f"{plant_name}_eds_soap_api_sub_path", f"Enter {plant_name} EDS SOAP API WSDL sub path (e.g., 'eds.wsdl')")
+        if base_url is None: return
         username = SecurityAndConfig.get_credential_with_prompt(service_name, "username", f"Enter your EDS API username for {plant_name} (e.g. admin)", hide=False)
+        if username is None: return
         password = SecurityAndConfig.get_credential_with_prompt(service_name, "password", f"Enter your EDS API password for {plant_name} (e.g. '')")
+        if password is None: return
         idcs_to_iess_suffix = SecurityAndConfig.get_config_with_prompt(f"{plant_name}_eds_api_iess_suffix", f"Enter iess suffix for {plant_name} (e.g., .UNIT0@NET0)")
+        if idcs_to_iess_suffix is None: return
         
         #session = EdsClient.login_to_session_with_api_credentials(api_credentials)
 
         # Let API Port and the sub path be None, such that the defaults will be used.
-        eds_soap_api_url = EdsClient.get_soap_api_url(base_url = base_url, eds_soap_api_port = None, eds_soap_api_sub_path = None)
+        eds_soap_api_url = EdsClient.get_soap_api_url(base_url = base_url)
         if eds_soap_api_url is None:
             logging.info("Not enough information provided to build: eds_soap_api_url.")
             logging.info("Please rerun your last command or try something else.")
-            sys.exit()
+            return
 
         try:
             # 1. Create the SOAP client
