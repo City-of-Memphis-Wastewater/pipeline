@@ -7,6 +7,8 @@ from pathlib import Path
 import uvicorn # Used for launching the server
 import socket
 from importlib import resources
+from importlib.resources import files
+
 import urllib.parse
 from typing import Dict, Any
 import threading
@@ -21,7 +23,9 @@ prompt_manager = PromptManager()
 # --- Configuration ---
 # Define the root directory for serving static files
 # Assumes this script is run from the project root or the path is correctly resolved
-STATIC_DIR = Path(__file__).parent.parent / "interface" / "web_gui"
+#STATIC_DIR = Path(__file__).parent.parent / "interface" / "web_gui"
+STATIC_DIR = files("pipeline.interface.web_gui.static")
+TEMPLATE_DIR = files("pipeline.interface.web_gui.templates")
 
 # Initialize FastAPI app
 app = FastAPI(title="Config and Credential Modal Input Server", version="1.0.0") # should this have its own server?

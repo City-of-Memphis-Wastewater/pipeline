@@ -8,6 +8,8 @@ from typer import BadParameter
 import uvicorn # Used for launching the server
 from importlib import resources
 from typing import Dict, Any
+from importlib.resources import files
+
 
 # Local imports
 from pipeline.core import eds as eds_core 
@@ -15,6 +17,8 @@ from pipeline.interface.utils import save_history, load_history
 from pipeline.security_and_config import CredentialsNotFoundError
 from pipeline.server.web_utils import launch_server_for_web_gui
 
+STATIC_DIR = files("pipeline.interface.web_gui.static")
+TEMPLATE_DIR = files("pipeline.interface.web_gui.templates")
 # Initialize FastAPI app
 app = FastAPI(title="EDS Trend Server", version="1.0.0") # this does not reflect the entire app - just one html for one of the CLI commands converted into a webpage
 # Attach the manager instance to the app state for easy access via dependency injection
