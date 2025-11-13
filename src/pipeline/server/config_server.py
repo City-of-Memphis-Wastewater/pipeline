@@ -38,6 +38,50 @@ class ConfigModular(BaseModel):
 
 # --- 4. Configuration Input Endpoints ---
 
+# --- New Endpoint: Serves the Config Modal HTML ---
+@app.get("/config_modal", response_class=HTMLResponse)
+async def serve_config_modal_html(request_id: str):
+    """
+    Serves the HTML page for the configuration modal/iframe, including the request ID.
+    
+    The HTML will contain JavaScript that polls for the prompt data associated with the ID.
+    """
+    try:
+        # 1. Read the HTML file content
+        # Adjust the path to where your config_modal.html is located
+        # Assuming config_modal.html is directly under pipeline/interface/web_gui
+        html_content = resources.read_text(
+            'pipeline.interface.web_gui.templates', # Assuming this is the module path
+            'config_modal.html'
+        )
+        
+        # 2. Inject the request_id into the HTML for the JavaScript/form to use
+        # This is a common pattern to pass server-side variables to the client
+        # We will replace a placeholder like {{ request_id }}
+        
+        # Note: We should URL-escape the request_id just in case, though UUIDs are usually safe
+        escaped_id = urllib.parse.quote_plus(request_id)
+        
+        # Assuming the HTML file has a placeholder like '{{ request_id }}'
+        # If not, you'll need to update config_modal.html to include one.
+        final_html = html_content.replace('{{ request_id }}', escaped_id)
+        
+        # 3. Return the HTML
+        return HTMLResponse(content=final_html)
+
+    except FileNotFoundError:
+        # Handle case where the HTML file is missing
+        raise HTTPException(
+            status_code=500, 
+            detail="Config modal HTML file not found."
+        )
+    except Exception as e:
+        # General error handling
+        raise HTTPException(
+            status_code=500, 
+            detail=f"An error occurred while serving the config modal: {e}"
+        )
+    
 @app.get("/api/get_active_prompt", response_class=JSONResponse)
 async def get_active_prompt(manager: PromptManager = Depends(get_prompt_manager)):
     """Returns the one and only prompt request waiting for input."""
@@ -77,13 +121,13 @@ def run_config_server_in_thread(host: str = "127.0.0.1", port: int = 8083) -> th
     # 1. Use an available port (important, as 8082 is already taken by the Trend server)
     port = find_open_port(port, port + 50)
     host_port_str = f"{host}:{port}"
+    full_url = f"http://{host_port_str}"
     
     # 2. Update the prompt manager with the Config Server's URL
     # Assuming prompt_manager is globally accessible or imported correctly here
-    prompt_manager.set_server_port(host_port_str) 
+    prompt_manager.set_server_host_port(host_port_str) 
 
-    print(f"--- Config Server starting at http://{host_port_str} ---")
-    
+    print(f"--- Config Server starting at {full_url} ---")
     # Uvicorn's Server must be explicitly created to run in a thread
     config = uvicorn.Config(app, host=host, port=port, log_level="warning")
     server = uvicorn.Server(config=config)

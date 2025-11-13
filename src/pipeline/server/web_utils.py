@@ -8,17 +8,11 @@ import socket
 import uvicorn # Used for launching the server
 from pathlib import Path
 import requests
-from fastapi.staticfiles import StaticFiles
-
-from pipeline.state_manager import PromptManager # Import the new class
 
 # --- Configuration ---
 # Define the root directory for serving static files
 # Assumes this script is run from the project root or the path is correctly resolved
 STATIC_DIR = Path(__file__).parent.parent / "interface" / "web_gui"
-
-# --- State Initialization ---
-prompt_manager = PromptManager()
 
 # --- Browser Launch Logic ---
 
@@ -104,13 +98,6 @@ def find_open_port(start_port: int = 8082, max_port: int = 8100) -> int:
 
 def launch_server_for_web_gui(app, host: str = "127.0.0.1", port: int = 8082):
     """Launches the FastAPI server using uvicorn."""
-    # Attach the manager instance to the app state for easy access via dependency injection
-    app.state.prompt_manager = prompt_manager # possibly not related at this point - maybe two servers need to talk to each other? I don't know anything about servers.
-
-        # Mount the static directory for CSS/JS/images
-    if STATIC_DIR.is_dir():
-        app.mount("/static", StaticFiles(directory=STATIC_DIR / "static"), name="static")
-
 
     try:
         port = find_open_port(port, port + 50)
@@ -120,9 +107,6 @@ def launch_server_for_web_gui(app, host: str = "127.0.0.1", port: int = 8082):
     
     host_port_str = f"{host}:{port}" # e.g., "127.0.0.1:8082"
     url = f"http://{host_port_str}"
-
-    # Use the Manager instance to set the port, eliminating the global SERVER_HOST_PORT
-    prompt_manager.set_server_port(host_port_str)
 
     print(f"Starting Generalized Web Server at {url}")
     
