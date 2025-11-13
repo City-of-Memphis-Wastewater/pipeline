@@ -6,6 +6,15 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 
 ---
 
+## [0.3.67] - 2025-11-13
+
+### Added:
+- Pex build script, `build_pex.py`; `build_pex.sh` deprecated. 
+- Added STATIC and TEMPLATES references to trend_server_eds.py and Config_server.py, using `from importlib.resources import files`.
+- Reference static and template assets in `tool.poetry.include` in `pyproject.toml`.
+
+---
+
 ## [0.3.66] - 2025-11-13
 
 ### Added:
