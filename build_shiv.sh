@@ -86,7 +86,7 @@ echo "SHIV_VERSION: $SHIV_VERSION"
 # --- Compose .pyz and .bat filenames --
 # dash is prepended to EXTRAS_STR only if non-empty, and otherwise is an empty str
 PYZ_PATH="$DIST_DIR/${PKG_NAME}-${PKG_VERSION}-py${PY_MAJOR}${PY_MINOR}${EXTRAS_STR}.pyz"
-BAT_PATH="${PYZ_PATH%.pyz}.bat"
+BAT_PATH="${PYZ_PATH%.pyz}-pyz.bat"
 
 echo "Output .pyz will be: $PYZ_PATH"
 echo "Output launcher .bat will be: $BAT_PATH"
