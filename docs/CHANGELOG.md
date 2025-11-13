@@ -9,6 +9,19 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 ## [0.3.63] - 2025-11-10
 
 ### Added:
+- Pex build script, build_pex.sh. Forced to regernate the wheel. It is testing well but only in the project folder - not sure if it has carried the HTML assets.
+
+### Fixed:
+- Web config input stabilzed. Lots of work on the HTML and the FastAPI endpoints and architecture. See `./src/pipeline/server/` and `./src/pipeline/interface/web_gui/`.
+- Keyboard interrupt improved while two servers are running, though bugs still exist.
+- Web config should be able to be embedded as iframe or as standalone tab.
+- Runaway None return for credentials and config entry resolved with explicit checks for None for each one within the EdsClient functions.
+
+---
+
+## [0.3.63] - 2025-11-10
+
+### Added:
 - **gui CLI command:** Build web-based interface in raw html and alpine.js, along with local version in freesimplegui. Streamlit and freesimpleguiweb were tested. FSGW is dead because remi is dead. Streamlit is less scalable and maintainable than just writing the HTML directly.
 - **Tauri Example:** Generate tauri example with three js embedded canvas, found in .\src\example\tauri_multimodal_app\; the build files are gitignore'd but `npm run tauri build` can be run from what is available, from inside the src-tauri directory. So begins a new stack - we will favor web-based graphics, and then these can be made native with Tauri. Should we mgrate entirely to Rust? See notes in my disparate Markdown Vaults.
 
