@@ -1,6 +1,10 @@
 import sys
 import importlib.resources as pkg_resources
 from pathlib import Path
+from importlib.resources import files
+
+STATIC_DIR = files("pipeline.interface.web_gui.static")
+TEMPLATE_DIR = files("pipeline.interface.web_gui.templates")
 
 # IMPORTANT: This must match the name of the directory/package where the 
 # HTML file is placed when building the PEX.

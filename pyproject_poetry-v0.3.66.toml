@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pipeline-eds"
-version = "0.3.67"
+version = "0.3.66"
 description = "A Python API pipeline library and CLI toolkit for Emerson Ovation EDS systems — built for engineers, control technicians, and wastewater SCADA teams."
 
 authors = ["George Clayton Bennett <george.bennett@memphistn.gov>"]
@@ -13,9 +13,7 @@ packages = [
 homepage = "https://github.com/city-of-memphis-wastewater/pipeline"
 repository = "https://github.com/city-of-memphis-wastewater/pipeline"
 include = [
-    "src/pipeline/data/*",
-    "src/pipeline/interface/web_gui/static/**/*",
-    "src/pipeline/interface/web_gui/templates/**/*"
+    "src/pipeline/data/*"
 ]
 
 classifiers=[
@@ -98,9 +96,6 @@ pydantic = [
     { version = "^2.0.0", python = ">=3.12" },    # Use V2 for Python 3.12 and newer
     { version = "1.10.13", python = "<3.12" },    # Use V1 for Python 3.8 through 3.11
 ]
-pydantic-core = [
-    { version = "^2.0.0", python = ">=3.12" },    # Use V2 for Python 3.12 and newer 
-]
 
 pyhabitat = "^1.0.35"	
 pyodbc = { version = "^5.1.0", optional = true }
@@ -163,7 +158,6 @@ pytest-cov = [
 ]
 pygal = "^3.0.5"
 pyinstaller = "^6.16.0"
-pex = "^2.69.1"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
