@@ -9,6 +9,7 @@ from importlib.metadata import version, PackageNotFoundError
 import sys
 import re
 import pyhabitat as ph
+import threading
 
 try:
     import colorama # explicitly added so for the shiv build
@@ -42,6 +43,19 @@ if False and ph.on_termux():
 elif False and ph.on_windows():
     setup_windows_integration()
 # --- end SETUP / INSTALL HOOK ---
+
+GLOBAL_SHUTDOWN_EVENT = threading.Event()
+
+def handle_interrupt(sig, frame):
+    """Signal handler for SIGINT (Ctrl+C)."""
+    print("Main process received CTRL+C. Setting shutdown flag...")
+    GLOBAL_SHUTDOWN_EVENT.set()
+    # You may also want to propagate the signal to stop Uvicorn
+    # If Uvicorn is in a separate thread/process, this handles the main script.
+
+# Set the signal handler right after starting your server
+import signal
+signal.signal(signal.SIGINT, handle_interrupt)
 
 # -- Versioning --
 def print_version(value: bool):

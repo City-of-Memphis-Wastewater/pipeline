@@ -81,14 +81,6 @@
                 </div>
                 <p x-show="errorMessage" x-text="errorMessage" class="text-red-400 text-sm text-center"></p>
             </form>
-            <form id="config-form" method="POST" action="/api/submit_config">
-                <input type="hidden" name="request_id" value="{{ request_id }}"> 
-
-                <label for="input_value">Enter Credential/Config:</label>
-                <input type="text" id="input_value" name="input_value">
-                
-                <button type="submit">Submit</button>
-            </form>
         </div>
     </div>
 
