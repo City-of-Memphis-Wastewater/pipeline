@@ -42,24 +42,21 @@ class TrendRequest(BaseModel):
         return v
 
 
-@app.get("/", response_class=HTMLResponse)
+@app.get("/", response_class=HTMLResponse) # not a good endpoint if not index.html
 async def serve_gui(): # generalized or specific?
     """
-    Serves the main index.html file by loading it as a package resource.
+    Serves the eds_trend.html file by loading it as a package resource.
     The path must be the package path relative to the project root.
-    Assuming the file is in 'pipeline.interface.web_gui'.
     """
     try:
-        # Load the content of index.html as a resource
-        # Replace 'pipeline.interface.web_gui' with the actual Python package path 
-        # where the web_gui folder resides inside the installed/bundled package.
-        index_content = resources.read_text('pipeline.interface.web_gui', 'index.html')
+        # Load the content of eds _trend.html as a resource
+        index_content = resources.read_text('pipeline.interface.web_gui.templates', 'eds_trend.html')
         return HTMLResponse(index_content)
     
     except FileNotFoundError:
         # Handle the case where the resource wasn't bundled or the path is wrong
         return HTMLResponse(
-            "<html><body><h1>Error 500: index.html resource not found.</h1>"
+            "<html><body><h1>Error 500: eds_trend.html resource not found.</h1>"
             "<h2>Check resource bundling configuration.</h2></body></html>", 
             status_code=500
         )

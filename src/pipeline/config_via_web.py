@@ -26,42 +26,25 @@ def browser_get_input(manager: Any, key: str, prompt_message: str, hide_input: b
         print(f"⚠️ Error: {e}") 
         return None 
     
-    CONFIG_SERVER_URL = manager.get_server_url()
+    CONFIG_SERVER_URL_CHECK = manager.get_server_url()
     
     # 1. Server Status Check
-    server_is_active = is_server_running(CONFIG_SERVER_URL)
-    
-    # If the server isn't running, we must launch a temporary instance.
-    # We will launch the main server in a separate thread, which is complex and often messy.
-    # The clean solution is to have a dedicated *minimal* server for this.
-    # For now, let's assume the manager's server_url is set by the main server.
-
-    # 2. If the main server is not running, we must tell the user to start it or
-    #    handle the launch *here*.
-    # Since `launch_server_for_web_gui` blocks, we must run it in a separate thread.
-    
     server_thread = None
-    if not is_server_running(CONFIG_SERVER_URL)
+    if not is_server_running(CONFIG_SERVER_URL_CHECK):
         print(f"--- Server not running. Launching temporary config server. ---")
         server_thread = run_config_server_in_thread(port=8083)
 
-        # Launch browser to the CONFIG MODAL page (not the main Trend page)
-        # We need a dedicated URL for the config modal, e.g., /config_modal/{request_id}
-        # For now, let's keep launching the main UI, assuming it polls the new CONFIG server.
-        
-        # Launch browser to the MAIN UI to trigger polling
-        # Note: We need the MAIN Trend UI's URL, which the manager *does not know* directly.
-        # For simplicity, let's launch the CONFIG MODAL dedicated page for now:
-        CONFIG_MODAL_URL = f"http://{CONFIG_SERVER_URL}/config_modal?id={request_id}" 
-        launch_browser(CONFIG_MODAL_URL) # <-- This launches the second tab
+       # Now the manager has the correct URL (e.g., http://127.0.0.1:8083)
+        CONFIG_SERVER_URL = manager.get_server_url()
     else:
         # Server is running, we just need to ensure the client is polling.
         # If the client isn't polling, we should launch the config modal page
-        CONFIG_MODAL_URL = f"http://{CONFIG_SERVER_URL}/config_modal?id={request_id}"
-        launch_browser(CONFIG_MODAL_URL)
-        print(f"--- Config Server is active. Launched browser to dedicated modal page... ---")
-        
+        CONFIG_SERVER_URL = CONFIG_SERVER_URL_CHECK
+        print(f"--- Config Server is active. Using existing server at {CONFIG_SERVER_URL} ---")
 
+    CONFIG_MODAL_URL = f"{CONFIG_SERVER_URL}/config_modal?request_id={request_id}"
+    launch_browser(CONFIG_MODAL_URL)
+    print(f"--- Config Server is active. Launched browser to dedicated modal page... ---")
     # 4. Poll for the result (Blocking)
     try:
         while True:

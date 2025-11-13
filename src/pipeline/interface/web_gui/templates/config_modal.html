@@ -41,8 +41,9 @@
       x-init="init()"
       class="flex items-center justify-center min-h-screen p-4">
 
-    <div class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+    <div :class="{'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50': !isEmbedded, 'relative': isEmbedded}">
         <div class="card-bg p-8 rounded-xl shadow-2xl w-full max-w-md border-t-4 border-accent space-y-6">
+            
             <h2 class="text-3xl font-bold text-accent">Configuration Required</h2>
             <p class="text-gray-400">Please enter the required value to continue the process.</p>
             
@@ -80,11 +81,19 @@
                 </div>
                 <p x-show="errorMessage" x-text="errorMessage" class="text-red-400 text-sm text-center"></p>
             </form>
+            <form id="config-form" method="POST" action="/api/submit_config">
+                <input type="hidden" name="request_id" value="{{ request_id }}"> 
+
+                <label for="input_value">Enter Credential/Config:</label>
+                <input type="text" id="input_value" name="input_value">
+                
+                <button type="submit">Submit</button>
+            </form>
         </div>
     </div>
 
     <script>
-        document.addEventListener('alpine:init', () => {
+        document.addEventListener('alpine:init', () => { //detroy this line?
             Alpine.data('configPrompt', () => ({
                 requestId: '',
                 promptMessage: 'Loading...',
@@ -92,6 +101,7 @@
                 inputValue: '',
                 isSubmitting: false,
                 errorMessage: '',
+                isEmbedded: window.self !== window.top,
 
                 init() {
                     const urlParams = new URLSearchParams(window.location.search);
@@ -131,6 +141,13 @@
                         
                         if (response.ok) {
                             // Submission successful, close the window.
+                            if (this.isEmbedded) {
+                                // ⚠️ IFRAME SCENARIO: Send a message to the parent window
+                                window.parent.postMessage({
+                                    type: 'configSubmitted',
+                                    requestId: this.requestId
+                                }, '*'); // '*' means any origin
+                            }
                             this.closeWindow(); 
                         } else {
                             // Handle server-side errors (e.g., validation failure)
@@ -159,11 +176,14 @@
 
                 closeWindow() {
                     // Utility function to close the dedicated window
-                    try {
-                        window.close();
-                    } catch {
-                        // Alert for safety if run in a strict browser environment
-                        alert('Configuration submitted. Please manually close this tab.');
+                    if (!this.isEmbedded) {
+                        // Only attempt to close the window if we are NOT embedded (i.e., we are a new tab)
+                        try {
+                            window.close();
+                        } catch {
+                            // Alert for safety if run in a strict browser environment
+                            alert('Configuration submitted. Please manually close this tab.');
+                        }
                     }
                 }
             }));

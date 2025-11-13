@@ -59,12 +59,12 @@ class PromptManager:
         with self.results_lock:
             return self.prompt_results.pop(request_id, None)
 
-    def set_server_port(self, host_port_str: str):
+    def set_server_host_port(self, host_port_str: str):
         """Sets the dynamically found server host and port."""
         self.server_host_port = host_port_str
         
     def get_server_url(self) -> str:
         """Returns the full server URL."""
         if not self.server_host_port:
-             return "http://127.0.0.1:8082" 
+             return "http://127.0.0.1:8083" 
         return f"http://{self.server_host_port}"

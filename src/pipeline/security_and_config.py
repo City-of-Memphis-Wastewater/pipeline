@@ -43,6 +43,7 @@ class SecurityAndConfig:
                           hide_input: bool=False,
                           force_webbrowser:bool=False,
                           force_terminal:bool=False,
+                          force_tkinter: bool=False,
                           manager: PromptManager | None = None # <-- MANAGER IS ONLY FOR WEB GUI
                           ) -> str:
         """Handles prompting with a fallback from CLI to GUI.
@@ -58,11 +59,20 @@ class SecurityAndConfig:
         in "cooked mode.".
         On  Windows, however, just {Ctrl}+C is expected to successfully perform a keyboard interrupt..
         """
-        # Block these off for testing the browser_get_input, which is not expeceted in this iteration but is good practice for future proofing a hypothetical console-less GUI 
-        #force_webbrowser=True
-        #force_terminal=True
-        if force_terminal and force_webbrowser:
-            force_webbrowser
+        # --- Assess forced avenue ---
+        whichever_is_true = next((
+            name for name, flag in [
+                ("webbrowser", force_terminal and force_webbrowser or force_tkinter and force_webbrowser), # favor webbrowser in these multi-force scenarios
+                ("terminal", force_tkinter and force_terminal), # favor tkinter in this multi-force scenario
+                ("webbrowser", force_webbrowser),
+                ("terminal", force_terminal),
+                ("tkinter", force_tkinter)
+            ] if flag
+        ), None)
+
+        if whichever_is_true:
+            print(f"Force: {whichever_is_true}")
+        # --- End: Assess forced avenue ---
 
         value = None # ensure safe defeault so that the except block handles properly, namely if the user cancels the typer.prompt() input with control+ c
         
