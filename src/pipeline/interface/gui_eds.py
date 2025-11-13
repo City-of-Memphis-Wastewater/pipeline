@@ -2,16 +2,12 @@
 
 
 from typer import BadParameter
-import json
 from pathlib import Path
 from pipeline.core import eds as eds_core
 import os
-import sys
 import pyhabitat
-import time
 
-from pipeline.web_utils import launch_browser
-from pipeline.server.trend_server_eds import launch_server_for_web_gui 
+from pipeline.server.trend_server_eds import launch_server_for_web_gui_eds_trend_specific 
 from pipeline.interface.utils import save_history, load_history
 
 """
@@ -52,7 +48,8 @@ def launch_fsg()->None:
         import FreeSimpleGUI as sg
     except:
         """Fallback to web if FreeSimpleGUI is not available."""
-        launch_server_for_web_gui()
+        launch_server_for_web_gui_eds_trend_specific()
+        #launch_server_for_web_gui()
         return
     # Set theme for a slightly better look
     #sg.theme('DarkGrey15') # not available in web
@@ -219,7 +216,7 @@ def main(force_web:bool=False):
         # Inside gui_eds.py main block, replace the old web logic:
         print("\nSwitching to Pure Web (FastAPI/Alpine/Tailwind)...")
         """
-        launch_server_for_web_gui() 
+        launch_server_for_web_gui_eds_trend_specific()
     else:
         """
         Use local GUI interface.

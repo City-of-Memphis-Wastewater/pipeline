@@ -1,0 +1,142 @@
+<div x-data="configPrompt()" x-init="startPolling()" x-cloak>
+
+    <template x-if="prompt.show">
+        <div class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+            <div class="card-bg p-8 rounded-xl shadow-2xl w-full max-w-md border-t-4 border-accent space-y-6">
+                
+                <h2 x-show="!isSubmitting" class="text-3xl font-bold text-accent">Configuration Required</h2>
+                <h2 x-show="isSubmitting" class="text-3xl font-bold text-gray-500">Processing...</h2>
+                
+                <p x-text="prompt.message" class="text-lg font-semibold"></p>
+
+                <form @submit.prevent="submitForm()" class="space-y-4" x-show="!isSubmitting">
+                    
+                    <input type="hidden" name="request_id" :value="prompt.request_id">
+                    
+                    <div>
+                        <input 
+                            :type="prompt.hide_input ? 'password' : 'text'" 
+                            name="input_value" 
+                            x-model="inputValue"
+                            required
+                            class="w-full p-3 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent input-style"
+                            placeholder="Enter required value"
+                        >
+                        <p class="text-sm text-gray-500 mt-1">Cancelling submits an empty value (None).</p>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-4 pt-4">
+                        <button type="button" 
+                                @click="cancelInput()"
+                                class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
+                            Cancel
+                        </button>
+                        <button type="submit" 
+                                :disabled="!inputValue.trim()"
+                                class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition disabled:opacity-50">
+                            Submit
+                        </button>
+                    </div>
+                </form>
+                
+                <p x-show="errorMessage" x-text="errorMessage" class="text-red-400 text-sm text-center"></p>
+
+                <div x-show="isSubmitting" class="text-center py-6">
+                    <p class="text-gray-400">Waiting for server response...</p>
+                </div>
+            </div>
+        </div>
+    </template>
+</div>
+
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('configPrompt', () => ({
+            // State for the currently required prompt
+            prompt: {
+                show: false,
+                request_id: '',
+                message: '',
+                hide_input: false,
+            },
+            inputValue: '',
+            isSubmitting: false,
+            errorMessage: '',
+
+            // 1. Polling Function: Runs on an interval to check for a new prompt
+            async pollForPrompt() {
+                if (this.isSubmitting) return; // Don't poll while a submission is active
+
+                try {
+                    const response = await fetch('/api/get_active_prompt');
+                    const data = await response.json();
+
+                    if (data.show) {
+                        // A new prompt is active. We need to display it.
+                        // If the prompt ID is different, it's the *next* question in the sequence.
+                        if (data.request_id !== this.prompt.request_id) {
+                            this.prompt = data;
+                            this.inputValue = ''; // Clear input for the new question
+                            this.prompt.show = true;
+                            this.errorMessage = '';
+                        }
+                    } else if (!data.show && this.prompt.show) {
+                        // The server finished the sequence. Hide the modal.
+                        this.prompt.show = false;
+                    }
+                } catch (error) {
+                    console.error("Polling failed:", error);
+                    // Handle polling failure gracefully
+                }
+            },
+            
+            // 2. Initialization: Start polling on load
+            startPolling() {
+                setInterval(() => this.pollForPrompt(), 1000); // Poll every 1 second
+            },
+
+            // 3. Submission Handler
+            async submitData(valueToSend) {
+                this.isSubmitting = true;
+                this.errorMessage = '';
+                
+                const formData = new FormData();
+                formData.append('request_id', this.prompt.request_id);
+                formData.append('input_value', valueToSend);
+
+                try {
+                    const response = await fetch('/api/submit_config', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (response.ok) {
+                        // Submission successful. We don't hide the modal here!
+                        // The *next* prompt (if any) will show up automatically on the *next* poll
+                        // because pollForPrompt checks data.request_id !== this.prompt.request_id.
+                        this.inputValue = '';
+                        this.errorMessage = 'Submitted. Waiting for next step...';
+                    } else {
+                        // If the server rejects the input (e.g., validation)
+                        const errorText = await response.text();
+                        this.errorMessage = `Error: ${errorText.substring(0, 100)}...`;
+                    }
+                } catch (error) {
+                    this.errorMessage = `Network error during submission: ${error.message}`;
+                } finally {
+                    this.isSubmitting = false;
+                }
+            },
+            
+            submitForm() {
+                if (this.inputValue.trim()) {
+                    this.submitData(this.inputValue.trim());
+                }
+            },
+
+            cancelInput() {
+                this.submitData(''); 
+            },
+        }));
+    });
+</script>

@@ -14,7 +14,6 @@ from fastapi import HTTPException
 from pipeline.state_manager import PromptManager # Import the manager class for type hinting
 
     
-
 # Define a standard configuration path for your package
 CONFIG_PATH = Path.home() / ".pipeline-eds" / "config.json" ## configuration-example
 CONFIG_FILE = Path.home() / ".pipeline-eds" / "secure_config.json"
@@ -38,7 +37,8 @@ class SecurityAndConfig:
         pass
     def __init__(self):
         pass
-
+    
+    @staticmethod
     def _prompt_for_value(prompt_message: str=None,
                           hide_input: bool=False,
                           force_webbrowser:bool=False,
@@ -77,7 +77,23 @@ class SecurityAndConfig:
 
         elif ph.web_browser_is_available() or force_webbrowser: # 3. Check for browser availability
             # 3. Browser Mode (Web Browser as a fallback)
-            from pipeline.webconfig import browser_get_input
+            from pipeline.config_via_web import browser_get_input
+
+            # --- FIX: Retrieve the active manager if not provided ---
+            if manager is None:
+                try:
+                    # We need to import the function that exposes the manager
+                    #  The trend request is a particular page. We are trying to create a new kind of popup window (embedded in an existing page or in a dedicated page if none is available) 
+                    # ; code for a generic config input field should not be overloy coupled to a specific dedicated interface for EDS trends
+                    # However, that page can mention, if necesary, the dedicated injection point or "landing zone" for the config injection
+                    from pipeline.server.config_server import get_prompt_manager
+                    
+                    manager = get_prompt_manager()
+                except ImportError:
+                    # Handle case where server module isn't accessible (shouldn't happen here)
+                    typer.echo("FATAL: Cannot retrieve PromptManager. Is server initialized?", err=True)
+                    return None
+                
             typer.echo(f"\n --- TKinter nor console is not available to handle the configuration prompt. Opening browser-based configuration prompt --- ")
             # We use the prompt message as the identifier key for the web service
             # because the true config_key is not available in this function's signature.

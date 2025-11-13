@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 """
 History loading and saving for IDCS queries to the EDS Trend command.
+Could be generalized for various attributes stored to the same file.
 """
 # --- History Configuration ---
 # Define a path for the history file relative to the user's home directory 
@@ -13,6 +14,7 @@ MAX_HISTORY_ITEMS = 10
 
 def load_history():
     """Loads the list of recent IDCS queries from a file."""
+    # could be generalized for various attributes stored to the same file
     if HISTORY_FILE.exists():
         try:
             with open(HISTORY_FILE, 'r') as f:

@@ -13,7 +13,7 @@ import subprocess
 from urllib.parse import urlparse
 import signal
 
-from pipeline.web_utils import launch_browser
+from pipeline.server.web_utils import launch_browser
 from pipeline.plottools import normalize, normalize_ticks, get_ticks_array_n
 
 
