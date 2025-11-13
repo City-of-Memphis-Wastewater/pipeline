@@ -6,7 +6,7 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 
 ---
 
-## [0.3.63] - 2025-11-10
+## [0.3.66] - 2025-11-13
 
 ### Added:
 - Pex build script, build_pex.sh. Forced to regernate the wheel. It is testing well but only in the project folder - not sure if it has carried the HTML assets.
