@@ -903,7 +903,7 @@ class EdsClient:
         if eds_soap_api_url is None:
             logging.info("Not enough information provided to build: eds_soap_api_url.")
             logging.info("Please rerun your last command or try something else.")
-            return
+            sys.exit()
 
         try:
             # 1. Create the SOAP client

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PEX Byte-Served Dashboard</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; /* slate-300 */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; /* slate-400 */
+        }
+        /* Custom font */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* slate-50 */
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Header -->
+    <header class="bg-indigo-700 text-white shadow-lg p-4">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold">PEX Dashboard Demo</h1>
+            <span id="status-message" class="text-sm bg-indigo-500 rounded-full px-3 py-1">Status: Ready</span>
+        </div>
+    </header>
+
+    <!-- Main Dashboard Grid -->
+    <main class="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Left Column (Metrics and Chart) -->
+        <div class="lg:col-span-2 space-y-6">
+
+            <!-- Metrics Bar (Pane 1) -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div class="bg-white p-5 rounded-xl shadow-lg border border-gray-100">
+                    <p class="text-sm text-gray-500">Total Users</p>
+                    <p class="text-3xl font-extrabold text-indigo-600 mt-1">2,480</p>
+                </div>
+                <div class="bg-white p-5 rounded-xl shadow-lg border border-gray-100">
+                    <p class="text-sm text-gray-500">Revenue (Q3)</p>
+                    <p class="text-3xl font-extrabold text-green-600 mt-1">$45.2K</p>
+                </div>
+                <div class="bg-white p-5 rounded-xl shadow-lg border border-gray-100">
+                    <p class="text-sm text-gray-500">Avg. Session</p>
+                    <p class="text-3xl font-extrabold text-yellow-600 mt-1">3:12 min</p>
+                </div>
+                <div class="bg-white p-5 rounded-xl shadow-lg border border-gray-100">
+                    <p class="text-sm text-gray-500">Churn Rate</p>
+                    <p class="text-3xl font-extrabold text-red-600 mt-1">1.8%</p>
+                </div>
+            </div>
+
+            <!-- Main Chart Area (Pane 2) -->
+            <div class="bg-white p-6 rounded-xl shadow-lg h-96 border border-gray-100">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Activity Trend</h2>
+                <!-- Placeholder for a complex visualization -->
+                <div class="h-5/6 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400">
+                    <p>Chart Rendering Area (JS logic would draw here)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column (Settings and Log - Pane 3) -->
+        <div class="space-y-6">
+            <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">System Controls</h2>
+                <label for="interval" class="block text-sm font-medium text-gray-700 mb-2">Refresh Interval (s)</label>
+                <input type="number" id="interval" value="30" class="w-full border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                <button onclick="applySettings()" class="mt-4 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition duration-150">
+                    Apply Changes
+                </button>
+            </div>
+
+            <!-- Activity Log (Pane 4) -->
+            <div class="bg-white p-6 rounded-xl shadow-lg h-64 overflow-y-auto border border-gray-100">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Recent Activity Log</h2>
+                <ul id="log-list" class="space-y-2 text-sm text-gray-600">
+                    <!-- Log entries added by JS -->
+                </ul>
+            </div>
+        </div>
+    </main>
+
+    <!-- JavaScript Interactivity -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const logList = document.getElementById('log-list');
+
+            // Initial log entries
+            const initialLogs = [
+                "Dashboard loaded successfully.",
+                "API key validated for secure access.",
+                "Data stream initialized.",
+            ];
+
+            initialLogs.forEach(entry => addLogEntry(entry, 'text-gray-600'));
+
+            // Simulation of a running process
+            setInterval(() => {
+                const now = new Date().toLocaleTimeString();
+                addLogEntry(`Data fetch cycle complete at ${now}`, 'text-blue-500');
+            }, 10000);
+        });
+
+        function addLogEntry(message, colorClass) {
+            const logList = document.getElementById('log-list');
+            const li = document.createElement('li');
+            li.className = `${colorClass} flex items-center space-x-2`;
+            li.innerHTML = `
+                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span>${message}</span>
+            `;
+            logList.prepend(li);
+            // Keep only the last 10 entries
+            while (logList.children.length > 10) {
+                logList.removeChild(logList.lastChild);
+            }
+        }
+
+        function applySettings() {
+            const interval = document.getElementById('interval').value;
+            const status = document.getElementById('status-message');
+            status.textContent = `Status: Refresh set to ${interval}s`;
+            status.classList.remove('bg-indigo-500');
+            status.classList.add('bg-orange-500');
+
+            setTimeout(() => {
+                status.textContent = `Status: Ready`;
+                status.classList.remove('bg-orange-500');
+                status.classList.add('bg-indigo-500');
+            }, 3000);
+
+            addLogEntry(`Settings updated. New interval: ${interval}s`, 'text-green-500');
+        }
+    </script>
+</body>
+</html>
