@@ -2,55 +2,23 @@
 
 from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, validator
 from pathlib import Path
 from typer import BadParameter
 import uvicorn # Used for launching the server
-import socket
 from importlib import resources
-import urllib.parse
 from typing import Dict, Any
 
 # Local imports
 from pipeline.core import eds as eds_core 
 from pipeline.interface.utils import save_history, load_history
-from pipeline.web_utils import get_self_closing_html
 from pipeline.security_and_config import CredentialsNotFoundError
-from pipeline.state_manager import PromptManager # Import the new class
-
-# --- State Initialization ---
-prompt_manager = PromptManager()
-
-# --- Configuration ---
-# Define the root directory for serving static files
-# Assumes this script is run from the project root or the path is correctly resolved
-STATIC_DIR = Path(__file__).parent.parent / "interface" / "web_gui"
+from pipeline.server.web_utils import launch_server_for_web_gui
 
 # Initialize FastAPI app
-app = FastAPI(title="EDS Trend Server", version="1.0.0")
+app = FastAPI(title="EDS Trend Server", version="1.0.0") # this does not reflect the entire app - just one html for one of the CLI commands converted into a webpage
 # Attach the manager instance to the app state for easy access via dependency injection
-app.state.prompt_manager = prompt_manager
-
-def get_prompt_manager() -> PromptManager:
-    """Dependency injector for the PromptManager."""
-    return app.state.prompt_manager
-
-def find_open_port(start_port: int = 8082, max_port: int = 8100) -> int:
-    """
-    Finds an available TCP port starting from `start_port` up to `max_port`.
-    Returns the first available port.
-    """
-    for port in range(start_port, max_port + 1):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            try:
-                s.bind(("127.0.0.1", port))
-                s.close()
-                return port
-            except OSError:
-                continue
-    raise RuntimeError(f"No available port found between {start_port} and {max_port}.")
-
+# app.state.prompt_manager = prompt_manager # possibly not related at this point - maybe two servers need to talk to each other? I don't know anything about servers.
 
 # --- Pydantic Schema for Request Body ---
 class TrendRequest(BaseModel):
@@ -72,15 +40,10 @@ class TrendRequest(BaseModel):
             # Handle comma/space separation if the frontend sends it as a single string
             return [i.strip() for i in v.split() if i.strip()]
         return v
-    
-# --- 1. Serve Static Files ---
 
-# Mount the static directory for CSS/JS/images
-if STATIC_DIR.is_dir():
-    app.mount("/static", StaticFiles(directory=STATIC_DIR / "static"), name="static")
 
 @app.get("/", response_class=HTMLResponse)
-async def serve_gui():
+async def serve_gui(): # generalized or specific?
     """
     Serves the main index.html file by loading it as a package resource.
     The path must be the package path relative to the project root.
@@ -107,8 +70,8 @@ async def serve_gui():
     
 # --- 2. API Endpoint for Core Logic ---
 
-@app.post("/api/fetch_trend")
-async def fetch_trend(request_data: TrendRequest):
+@app.post("/api/fetch_eds_trend") # good specific url and function name - there will be other trends.
+async def fetch_eds_trend(request_data: TrendRequest): #
     """Fetches trend data and triggers plotting based on request parameters."""
     
     # Clean up IDCS list for the core logic
@@ -168,75 +131,17 @@ async def fetch_trend(request_data: TrendRequest):
 
 # --- 3. API Endpoint for History ---
 
-@app.get("/api/history")
+@app.get("/api/history") # url possibly too general, though all history could be loaded and then the relevanrt key pulled
 async def get_history():
     """Returns the list of saved IDCS queries."""
     history = load_history()
     return JSONResponse(history)
 
-# --- 4. Configuration Input Endpoints ---
-
-@app.get("/api/get_active_prompt", response_class=JSONResponse)
-async def get_active_prompt(manager: PromptManager = Depends(get_prompt_manager)):
-    """Returns the one and only prompt request waiting for input."""
-    data = manager.get_active_prompt()
-    if data:
-        data["show"] = True
-        return JSONResponse(data)
-    return JSONResponse({"show": False})
-    
-@app.post("/api/submit_config", response_class=HTMLResponse)
-async def submit_config(request: Request, manager: PromptManager = Depends(get_prompt_manager)):
-    """
-    Receives the submitted form data from the auto-launched config modal and unblocks the waiting Python thread.
-    """
-    try:
-        # FastAPI's Request.form() handles standard form submissions
-        form_data = await request.form()
-        request_id = form_data.get("request_id")
-        submitted_value = form_data.get("input_value")
-        
-        if not request_id or submitted_value is None:
-            raise HTTPException(status_code=400, detail="Missing request_id or input_value")
-
-        # 1. Store the result using the manager method
-        manager.submit_result(request_id, submitted_value)    
-        
-        # 2. Return the self-closing HTML (using the existing utility)
-     
-        return HTMLResponse(get_self_closing_html("Configuration submitted successfully!"))
-        
-    except Exception as e:
-        return HTMLResponse(f"<h1>Error during submission: {e}</h1>", status_code=500)
-        
 # --- Launch Command ---
-
-def launch_server_for_web_gui(host: str = "127.0.0.1", port: int = 8082):
-    """Launches the FastAPI server using uvicorn."""
-
-    try:
-        port = find_open_port(port, port + 50)
-    except RuntimeError as e:
-        print(e)
-        return
-    
-    host_port_str = f"{host}:{port}" # e.g., "127.0.0.1:8082"
-    url = f"http://{host_port_str}"
-
-    # Use the Manager instance to set the port, eliminating the global SERVER_HOST_PORT
-    prompt_manager.set_server_port(host_port_str)
-
-    print(f"Starting EDS Trend Web Server at {url}")
-    
-    try:
-        #launch_browser(url)
-        pass
-    except Exception:
-        print("Could not launch browser automatically. Open the URL manually.")
-        
-    # Start the server (runs until interrupted)
-    uvicorn.run(app, host=host, port=port)
+def launch_server_for_web_gui_eds_trend_specific():
+    print(f"Calling for specific EDS Trend HTML to be served")
+    launch_server_for_web_gui(app, port=8082)
 
 
 if __name__ == "__main__":
-    launch_server_for_web_gui()
+    launch_server_for_web_gui_eds_trend_specific()

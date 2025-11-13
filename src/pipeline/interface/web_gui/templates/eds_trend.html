@@ -289,7 +289,7 @@
                     };
 
                     try {
-                        const response = await fetch('/api/fetch_trend', {
+                        const response = await fetch('/api/fetch_eds_trend', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(payload),
@@ -321,4 +321,18 @@
         });
     </script>
 </body>
+<body>
+    <div x-data="{ showConfigIframe: false }">
+        <template x-if="showConfigIframe">
+            <div id="iframe-overlay">
+                <iframe 
+                    :src="configIframeUrl" 
+                    frameborder="0" 
+                    class="w-full h-full">
+                </iframe>
+            </div>
+        </template>
+    </div>
+    
+    </body>
 </html>

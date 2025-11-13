@@ -84,6 +84,7 @@ def main(
     typer.echo(f"command:\n{command_string}\n")
 
 @app.command(name="gui", help="Show the GUI. Use the --web flag for a browser-based interface.")
+#def gui
 def launch_gui_eds_trend(
     force_web: bool = typer.Option(False, "--web", "-w", help="Force web-based GUI for data input, even when the FreeSimpleGUI local window would be available."),
     ):
