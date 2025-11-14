@@ -98,6 +98,27 @@ class SystemInfo:
 
 
 # -----------------------------
+# Poetry Check
+# -----------------------------
+def did_poetry_make_the_call() -> bool:
+    """
+    Return True if the script is currently running under `poetry run`.
+
+    This works by checking the `POETRY_ACTIVE` environment variable,
+    which Poetry sets automatically when running commands.
+    """
+    # Environment variable is the most reliable
+    if os.environ.get("POETRY_ACTIVE") == "1":
+        return True
+
+    # Fallback: check if the executable path includes '.venv' or 'poetry'
+    python_path = sys.executable.lower()
+    if ".venv" in python_path or "poetry" in python_path:
+        return True
+
+    return False
+
+# -----------------------------
 # Version / Metadata
 # -----------------------------
 def get_package_version() -> str:
@@ -285,7 +306,7 @@ def main():
     # --- Wheel ---
     #latest_wheel = find_latest_wheel(dist_dir)
     #if not latest_wheel:
-    latest_wheel = build_wheel(dist_dir)
+    latest_wheel = build_wheel(dist_dir, use_poetry=did_poetry_make_the_call())
     if not latest_wheel:
         print("Error: Could not build or find wheel.", file=sys.stderr)
         sys.exit(1)
