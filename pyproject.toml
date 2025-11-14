@@ -12,10 +12,14 @@ packages = [
 ] # This makes `pipeline` available as an importable top-level module
 homepage = "https://github.com/city-of-memphis-wastewater/pipeline"
 repository = "https://github.com/city-of-memphis-wastewater/pipeline"
+#include = [
+#    "src/pipeline/data/*",
+#    "src/pipeline/interface/web_gui/static/**/*",
+#    "src/pipeline/interface/web_gui/templates/**/*"
+#]
 include = [
-    "src/pipeline/data/*",
-    "src/pipeline/interface/web_gui/static/**/*",
-    "src/pipeline/interface/web_gui/templates/**/*"
+    { path = "src/pipeline/interface/web_gui/templates", format = "sdist" },
+    { path = "src/pipeline/interface/web_gui/static", format = "sdist" }
 ]
 
 classifiers=[
