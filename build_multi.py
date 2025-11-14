@@ -289,6 +289,9 @@ def build_shiv(wheel_path, output_path):
     
     print(f"Bundling dependencies from: {site_packages_path}")
     
+    # Use poetry export to generate a clean requirements.txt excluding dev dependencies
+    reqs_cmd = ["poetry", "export", "-f", "requirements.txt", "--output", "requirements.txt", "--without-hashes"]
+
     cmd = [
         "shiv",
         wheel_path,
@@ -296,7 +299,7 @@ def build_shiv(wheel_path, output_path):
         "-o", str(output_path),
         "-p", "/usr/bin/env python3", # The shebang line for execution
         # Shiv needs to be explicitly told to bundle the venv packages
-        "--site-packages", site_packages_path
+        #"--site-packages", site_packages_path # the fact that pex is used causes problems.
     ]
     try:
         run_command(cmd)
@@ -424,8 +427,10 @@ def main():
     pex_path = dist_dir / f"{form_dynamic_binary_name(pkg_name, pkg_version, py_version, os_tag, arch, extras_str)}.pex"
 
     # --- Build Shiv / PEX ---
-    if build_shiv(latest_wheel, pyz_path) and build_pex(latest_wheel, pex_path):
-        print(f"Successfully created:\n  {pyz_path}\n  {pex_path}")
+    if build_shiv(latest_wheel, pyz_path):
+        print(f"Successfully created:\n  {pyz_path}")
+    if False and build_pex(latest_wheel, pex_path): #suppress
+        print(f"Successfully created:\n  {pex_path}")
 
     # --- Generate launchers ---
     if not ph.on_termux() and not ph.on_ish_alpine():
