@@ -22,6 +22,7 @@ import zipfile
 from pathlib import Path
 import re
 import toml
+import pyhabitat as ph
 
 try:
     import distro  # optional, for Linux detection
@@ -304,12 +305,13 @@ def main():
         print(f"Successfully created:\n  {pyz_path}\n  {pex_path}")
 
     # --- Generate launchers ---
-    #if args.windows or platform.system() == "Windows":
-    bat_path = pyz_path.with_suffix(".bat")
-    generate_windows_launcher(pyz_path, bat_path)
-    #if platform.system() == "Darwin":
-    app_dir = pyz_path.with_suffix(".app")
-    generate_macos_app(pyz_path, app_dir)
+    if not ph.on_termux() and not ph.on_ish_alpine():
+        #if args.windows or platform.system() == "Windows":
+        bat_path = pyz_path.with_suffix(".bat")
+        generate_windows_launcher(pyz_path, bat_path)
+        #if args.windows platform.system() == "Darwin":
+        app_dir = pyz_path.with_suffix(".app")
+        generate_macos_app(pyz_path, app_dir)
 
     # --- Metadata stamping ---
     write_version_file(dist_dir)
