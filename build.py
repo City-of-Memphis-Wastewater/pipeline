@@ -176,7 +176,7 @@ def clean_dist(dist_dir: Path):
                 else:
                     item.unlink()
 
-def build_wheel(dist_dir: Path, use_poetry=True) -> Path:
+def build_wheel(dist_dir: Path, use_poetry:bool=True) -> Path:
     """
     Always rebuild a wheel from pyproject.toml.
     Returns the path to the new wheel.
@@ -196,7 +196,8 @@ def build_wheel(dist_dir: Path, use_poetry=True) -> Path:
         print("Building wheel using 'python -m build --wheel'...")
         if not shutil.which("python3"):
             raise RuntimeError("python3 not found for building wheel.")
-        run_command([sys.executable, "-m", "build", "--wheel", "--outdir", str(dist_dir)], cwd=None)
+        #run_command([sys.executable, "-m", "build", "--wheel", "--outdir", str(dist_dir)], cwd=None)
+        run_command([sys.executable, "-m", "build", "--wheel"])
 
     # Find the latest wheel in dist
     wheels = list(dist_dir.glob("*.whl"))
