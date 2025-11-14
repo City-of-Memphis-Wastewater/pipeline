@@ -1,3 +1,4 @@
+from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
 import threading
 import uuid
 from typing import Dict, Any, Optional
@@ -5,7 +6,7 @@ from typing import Dict, Any, Optional
 class PromptManager:
     """
     Manages the state of active configuration prompts and submitted results.
-    Designed to be instantiated once and shared across FastAPI threads.
+    Designed to be instantiated once and shared across (Starlette/msgspec) threads.
     """
     def __init__(self):
         # Stores active prompt details waiting for frontend detection

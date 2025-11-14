@@ -1,5 +1,6 @@
 # pipeline/interfaces/gui_eds.py
 
+from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
 
 from typer import BadParameter
 from pathlib import Path
@@ -214,7 +215,7 @@ def main(force_web:bool=False):
         print("Pure web (vanilla HTML, Tailwind CSS, alpine.js, lowDB, Fast API, Flask).")
         print("\nUltimately, for native, we will leave freesimplegui for Tauri.")
         # Inside gui_eds.py main block, replace the old web logic:
-        print("\nSwitching to Pure Web (FastAPI/Alpine/Tailwind)...")
+        print("\nSwitching to Pure Web (msgspec/Starlette/Alpine/Tailwind)...")
         """
         launch_server_for_web_gui_eds_trend_specific()
     else:
