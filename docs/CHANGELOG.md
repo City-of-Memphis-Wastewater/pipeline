@@ -6,6 +6,18 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 
 ---
 
+## [0.3.68] - 2025-11-14
+
+### Changed:
+- Pydantic and FastAPI are out, Starlette and msgspec are in.
+- `trend_server_eds.py` and `config_server.py` updated. `gui_starlette_msgspec_plotly.py` has replaced `gui_fastapi_plotly_live.py` as the EDS live demo plotter.
+- Why this choice: Compatibility with PEX, PYZ, Python 3.8, and ease of install on Termux.
+
+## Fixed
+- `--site-packages` flag added to shiv and pex builds in build_multi.py, to ensure dependency availability. This should not pick up the global pip packages on the system, because the poetry env was not build with the `--system-site-packages` flag.
+
+---
+
 ## [0.3.67] - 2025-11-13
 
 ### Added:
