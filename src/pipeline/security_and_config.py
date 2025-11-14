@@ -10,7 +10,6 @@ import click.exceptions
 import logging
 import sys
 import pyhabitat as ph
-from fastapi import HTTPException
 from pipeline.state_manager import PromptManager # Import the manager class for type hinting
 
     

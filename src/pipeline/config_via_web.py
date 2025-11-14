@@ -14,7 +14,7 @@ from pipeline.cli import GLOBAL_SHUTDOWN_EVENT
 
 def browser_get_input(manager: Any, key: str, prompt_message: str, hide_input: bool) -> str | None:
     """
-    Launches a modal/page on the MAIN FastAPI server and polls for the result.
+    Launches a modal/page on the MAIN server and polls for the result.
     This function now BLOCKS the calling thread (SecurityAndConfig).
     """
     global GLOBAL_SHUTDOWN_EVENT

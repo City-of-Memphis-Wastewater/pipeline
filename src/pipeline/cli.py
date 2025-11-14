@@ -302,8 +302,7 @@ def trend(
     
     if force_webplot or not force_matplotlib or not ph.matplotlib_is_available_for_gui_plotting():
         from pipeline import gui_plotly_static
-        #from pipeline import gui_plotly_static_backup_06Oct25 as gui_plotly_static
-        #gui_fastapi_plotly_live.run_gui(data_buffer)
+        #gui_starlette_msgspec_plotly.run_gui(data_buffer)
         gui_plotly_static.show_static(data_buffer)
     elif ph.matplotlib_is_available_for_gui_plotting():
         from pipeline import gui_mpl_live

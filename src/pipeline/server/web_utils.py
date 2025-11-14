@@ -110,7 +110,7 @@ def find_open_port(start_port: int = 8082, max_port: int = 8100) -> int:
 
 
 def launch_server_for_web_gui(app, host: str = "127.0.0.1", port: int = 8082):
-    """Launches the FastAPI server using uvicorn."""
+    """Launches the server using uvicorn."""
 
     try:
         port = find_open_port(port, port + 50)
