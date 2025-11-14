@@ -126,51 +126,71 @@ def form_dynamic_binary_name(pkg_name, pkg_version, py_version, os_tag, arch, ex
 # -----------------------------
 # Command Execution Helper
 # -----------------------------
-def run_command(cmd, check=False, cwd=None):
-    """Run a shell command and print stdout/stderr."""
-    print(f"Running: {' '.join(cmd)}")
-    try:
-        result = subprocess.run(
-            cmd,
-            check=check,
-            capture_output=True,
-            text=True,
-            cwd=cwd
-        )
-        if result.stdout:
-            print(result.stdout)
-        if result.stderr:
-            print(result.stderr, file=sys.stderr)
-        return result
-    except FileNotFoundError:
-        print(f"Command not found: {cmd[0]}", file=sys.stderr)
-        return None
-    except subprocess.CalledProcessError as e:
-        print(f"Error executing command: {' '.join(cmd)}\n{e}", file=sys.stderr)
-        return None
 
+def run_command(cmd, cwd=None, check=True):
+    """Run a command with optional working directory, print stdout/stderr."""
+    print(f"Running command: {' '.join(cmd)}")
+    result = subprocess.run(cmd, cwd=cwd, text=True, capture_output=True)
+    if result.stdout:
+        print(result.stdout)
+    if result.stderr:
+        print(result.stderr, file=sys.stderr)
+    if check and result.returncode != 0:
+        raise subprocess.CalledProcessError(result.returncode, cmd)
+    return result
 
 # -----------------------------
 # Wheel Handling
 # -----------------------------
+
+def clean_dist(dist_dir: Path):
+    """Remove all existing artifacts in the dist directory."""
+    if dist_dir.exists():
+        print(f"Cleaning existing files in {dist_dir}...")
+        for item in dist_dir.iterdir():
+            if item.is_file() or item.is_dir():
+                if item.is_dir():
+                    shutil.rmtree(item)
+                else:
+                    item.unlink()
+
+def build_wheel(dist_dir: Path, use_poetry=True) -> Path:
+    """
+    Always rebuild a wheel from pyproject.toml.
+    Returns the path to the new wheel.
+    """
+    # Ensure the dist directory exists
+    dist_dir.mkdir(exist_ok=True)
+
+    # Optional: clean old builds to avoid stale artifacts
+    clean_dist(dist_dir)
+
+    # Attempt build with Poetry first if requested
+    if use_poetry and shutil.which("poetry"):
+        print("Building wheel using Poetry...")
+        run_command(["poetry", "build", "-f", "wheel"], cwd=None)
+    else:
+        # Fallback: python -m build
+        print("Building wheel using 'python -m build --wheel'...")
+        if not shutil.which("python3"):
+            raise RuntimeError("python3 not found for building wheel.")
+        run_command([sys.executable, "-m", "build", "--wheel", "--outdir", str(dist_dir)], cwd=None)
+
+    # Find the latest wheel in dist
+    wheels = list(dist_dir.glob("*.whl"))
+    if not wheels:
+        raise FileNotFoundError(f"No wheel found in {dist_dir} after build.")
+    # Pick the newest file just in case
+    latest_wheel = max(wheels, key=lambda f: f.stat().st_mtime)
+    print(f"Built wheel: {latest_wheel}")
+    return latest_wheel
+
 def find_latest_wheel(dist_dir: Path):
     wheels = list(dist_dir.glob("*.whl"))
     if not wheels:
         return None
     return max(wheels, key=os.path.getmtime)
 
-def build_wheel(dist_dir: Path):
-    """Attempt wheel build via Poetry first, fallback to python -m build."""
-    if shutil.which("poetry"):
-        print("Building wheel via Poetry...")
-        run_command(["poetry", "build", "-f", "wheel"], check=True)
-        latest = find_latest_wheel(dist_dir)
-        if latest:
-            return latest
-    # fallback
-    print("Building wheel via python -m build...")
-    run_command([sys.executable, "-m", "build", "--wheel", "--outdir", str(dist_dir)], check=True)
-    return find_latest_wheel(dist_dir)
 
 def extract_metadata_from_wheel(wheel_path: Path):
     """Extract package name and version from wheel METADATA."""
@@ -262,9 +282,9 @@ def main():
     dist_dir.mkdir(exist_ok=True)
 
     # --- Wheel ---
-    latest_wheel = find_latest_wheel(dist_dir)
-    if not latest_wheel:
-        latest_wheel = build_wheel(dist_dir)
+    #latest_wheel = find_latest_wheel(dist_dir)
+    #if not latest_wheel:
+    latest_wheel = build_wheel(dist_dir)
     if not latest_wheel:
         print("Error: Could not build or find wheel.", file=sys.stderr)
         sys.exit(1)
@@ -284,12 +304,12 @@ def main():
         print(f"Successfully created:\n  {pyz_path}\n  {pex_path}")
 
     # --- Generate launchers ---
-    if args.windows or platform.system() == "Windows":
-        bat_path = pyz_path.with_suffix(".bat")
-        generate_windows_launcher(pyz_path, bat_path)
-    if platform.system() == "Darwin":
-        app_dir = pyz_path.with_suffix(".app")
-        generate_macos_app(pyz_path, app_dir)
+    #if args.windows or platform.system() == "Windows":
+    bat_path = pyz_path.with_suffix(".bat")
+    generate_windows_launcher(pyz_path, bat_path)
+    #if platform.system() == "Darwin":
+    app_dir = pyz_path.with_suffix(".app")
+    generate_macos_app(pyz_path, app_dir)
 
     # --- Metadata stamping ---
     write_version_file(dist_dir)
