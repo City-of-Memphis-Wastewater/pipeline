@@ -33,7 +33,11 @@ def launch_browser(url: str):
         try:
             print("[WEBPROMPT] Attempting launch using 'termux-open-url'...")
             # Run the command without capturing output to keep it clean
-            subprocess.Popen(["termux-open-url", url], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.Popen(
+                ["termux-open-url", url],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
             launched = True
             return
         except subprocess.CalledProcessError as e:
@@ -47,10 +51,14 @@ def launch_browser(url: str):
             print("[WEBPROMPT] Attempting launch using 'microsoft-edge' (WSLg)...")
             # Use Popen for non-blocking execution
             # Pass the URL as the first argument to open it in a new tab/window
-            subprocess.Popen(["microsoft-edge", url], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.Popen(
+                ["microsoft-edge", url],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
             launched = True
             return
-        except Exception as e:
+        except Exception as e: 
             print(f"[WEBPROMPT WARNING] Direct 'microsoft-edge' launch failed: {e}. Falling back...")
             pass
 
@@ -58,7 +66,11 @@ def launch_browser(url: str):
     if shutil.which("xdg-open"):
         try:
             print("[WEBPROMPT] Attempting launch using 'xdg-open'...")
-            subprocess.Popen(["xdg-open", url], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.Popen(
+                ["xdg-open", url],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
             launched = True
             return
         except subprocess.CalledProcessError as e:
