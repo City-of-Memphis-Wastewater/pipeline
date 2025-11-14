@@ -326,7 +326,7 @@ def main():
     # --- Build Shiv / PEX ---
     if build_shiv(latest_wheel, pyz_path, args.entry_point): 
         print(f"Successfully created:\n  {pyz_path}")
-    if not ph.is_termux() and build_pex(latest_wheel, pex_path, args.entry_point):
+    if not ph.on_termux() and build_pex(latest_wheel, pex_path, args.entry_point):
         print(f"Successfully created:\n  {pex_path}")
 
     # --- Generate launchers ---
