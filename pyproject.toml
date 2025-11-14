@@ -58,12 +58,7 @@ colorama = [
     { version = "^0.4.6", python = ">=3.8,<3.15" }
 ]
 distro = "^1.9.0"
-#fastapi = "^0.116.1" # version clarity introduced in v0.3.55
-# fastapi: align the FastAPI version split with the Pydantic v1/v2 transition (Python 3.12).
-fastapi = [
-    { version = "^0.116.1", python = ">=3.12", extras = ["all"] },  # Use modern FastAPI for Python >=3.12 (where Pydantic V2 is mandatory)
-    { version = "0.99.1", python = "<3.12" },     # Use last FastAPI that officially supported Pydantic V1 (for Python 3.8-3.11)
-]
+
 freesimplegui = "^5.2.0.post1"
 # keyring: Version 25.x requires Python >=3.9, so we pin 24.x for 3.8.
 keyring = [
@@ -93,29 +88,36 @@ pendulum = [
 
 plotly = "^6.2.0"
 
-#pydantic = "1.10.13" # version clarity introduced in v0.3.55
-pydantic = [
-    { version = "^2.0.0", python = ">=3.12" },    # Use V2 for Python 3.12 and newer
-    { version = "1.10.13", python = "<3.12" },    # Use V1 for Python 3.8 through 3.11
-]
-pydantic-core = [
-    { version = "^2.0.0", python = ">=3.12" },    # Use V2 for Python 3.12 and newer 
-]
-
 pyhabitat = "^1.0.35"	
 pyodbc = { version = "^5.1.0", optional = true }
 pyyaml = ">=6.0.2,<7.0.0"
 requests = ">=2.32.3,<3.0.0"
 
-#rich = "^14.1.0"
-# rich: Pin to an older version for Python <3.10, where Streamlit 1.25.x is used (which requires rich <14)
 rich = [
     { version = "^14.1.0", python = ">=3.10" }, # Use the latest rich for modern Python
-    { version = "^10.14.0", python = "<3.10" },  # Use rich <14 for Python 3.8-3.9
+    { version = "^10.14.0", python = ">=3.8,<3.10" },  # Use rich <14 for Python 3.8-3.9
 ]
-# NOTE: Rich version 1.25.0 (pinned for <3.10) requires rich < 14, causing the next error.
 
 suds-py3 = "^1.4.5.0"
+
+# msgspec is for lightweight fast validation
+
+#msgspec – Fast, lightweight data validation and serialization
+#Provides near-native speed for validating and encoding/decoding structured data (JSON, MsgPack, Python objects).
+#Supports type hints, making it ideal for modern Python code without Pydantic’s heavy dependency tree.
+#Works well with async frameworks, Starlette, or any project where you want validated input/output but minimal overhead.
+#Perfect for replacing Pydantic in small services or live data pipelines, especially if you want Python 3.8–3.14 support.
+#Can be used to define schemas, parse incoming JSON or other serialized formats, and ensure type safety without runtime performance penalties.
+msgspec = [ 
+    { version = "^0.19.0", python = ">=3.9" },
+    { version = "0.18.*", python = ">=3.8,<3.9" }
+]
+
+# modern Starlette, drop FastAPI entirely
+starlette = [
+    { version = "^0.27.0", python = ">=3.8,<3.10" },  # compatible with Python 3.8 & 3.9
+    { version = "^0.50.0", python = ">=3.10" }        # latest for Python 3.10+
+]
 toml = ">=0.10.2,<0.11.0"
 typer = "^0.17.4"
 tzdata = "^2025.2"

@@ -40,7 +40,8 @@ def launch_browser(url: str):
             )
             launched = True
             return
-        except subprocess.CalledProcessError as e:
+        except Exception as e:
+
             print(f"[WEBPROMPT WARNING] 'termux-open-url' failed: {e}. Falling back...")
         except FileNotFoundError:
              pass
@@ -73,11 +74,11 @@ def launch_browser(url: str):
             )
             launched = True
             return
-        except subprocess.CalledProcessError as e:
+        except Exception as e:
             print(f"[WEBPROMPT WARNING] 'xdg-open' failed: {e}. Falling back...")
         except FileNotFoundError:
              pass
-             
+
     # 4. Fallback to standard Python library, for most environments.
     try:
         print("[WEBPROMPT] Attempting launch using standard Python 'webbrowser' module...")
