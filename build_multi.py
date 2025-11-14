@@ -8,6 +8,7 @@ Capabilities:
 - Generates Windows .bat and macOS .app launchers
 - Stamps metadata (_version.py) with version, timestamp, and Git commit
 - Supports extras flags (e.g., windows, mpl, zoneinfo)
+- Supports --skip-build-wheel flag for faster iteration
 """
 
 import argparse
@@ -28,6 +29,12 @@ try:
     import distro  # optional, for Linux detection
 except ImportError:
     distro = None
+
+# --- Configuration ---
+PROJECT_NAME = "pipeline-eds"
+ENTRY_POINT = "pipeline.cli:app"
+DIST_DIR = "dist"
+PYTHON_BIN = sys.executable # Use the current Python interpreter path
 
 # -----------------------------
 # System / OS Detection
@@ -227,19 +234,101 @@ def extract_metadata_from_wheel(wheel_path: Path):
             version = re.search(r"^Version: (.+)", content, re.MULTILINE).group(1)
             return name.strip(), version.strip()
 
+def get_site_packages_path() -> str | None:
+    """Dynamically finds the site-packages directory of the active environment."""
+    # Look for the path containing 'site-packages' that is not a zip file
+    for path in sys.path:
+        p = Path(path)
+        if "site-packages" in path and p.exists() and p.is_dir():
+            return path
+    return None
+
 # -----------------------------
 # Shiv / PEX Building
 # -----------------------------
-def build_shiv(latest_wheel: Path, pyz_path: Path, entry_point="pipeline.cli:app"):
-    # FIX: Add --site-packages to ensure all dependencies from the active virtual environment are included.
-    cmd = ["shiv", str(latest_wheel), "-e", entry_point, "-o", str(pyz_path), "-p", "/usr/bin/env python3", "--site-packages"]
-    return run_command(cmd)
+#def build_shiv(latest_wheel: Path, pyz_path: Path, entry_point="pipeline.cli:app"):
+#    # FIX: Add --site-packages/-S to ensure all dependencies from the active virtual environment are included.
+#    cmd = ["shiv", str(latest_wheel), "-e", entry_point, "-o", str(pyz_path), "-p", "/usr/bin/env python3", "-S"]
+#    return run_command(cmd)
 
-def build_pex(latest_wheel: Path, pex_path: Path, entry_point="pipeline.cli:app"):
-    # FIX: Add --site-packages to ensure all dependencies from the active virtual environment are included.
-    cmd = ["python", "-m", "pex", str(latest_wheel), "--output-file", str(pex_path),
-            "--entry-point", entry_point, "--python", "python3", "--python-shebang=/usr/bin/env python3", "--site-packages"]
-    return run_command(cmd)
+#def build_pex(latest_wheel: Path, pex_path: Path, entry_point="pipeline.cli:app"):
+#    # FIX: Add --site-packages to ensure all dependencies from the active virtual environment are included.
+#    cmd = ["python", "-m", "pex", str(latest_wheel), "--output-file", str(pex_path),
+#            "--entry-point", entry_point, "--python", "python3", "--python-shebang=/usr/bin/env python3", "--site-packages"]
+#    return run_command(cmd)
+
+# --- Build Functions ---
+'''
+def build_wheel_():
+    """Builds the project wheel using Poetry."""
+    print("Building wheel using Poetry...")
+    run_command(["poetry", "build", "-f", "wheel"])
+    
+    # Find the newly created wheel file
+    wheel_files = glob.glob(os.path.join(DIST_DIR, f"{PROJECT_NAME}-*.whl"))
+    if not wheel_files:
+        raise FileNotFoundError(f"Could not find wheel file in {DIST_DIR}")
+    
+    # Sort to get the latest version if multiple exist
+    latest_wheel = max(wheel_files, key=os.path.getctime)
+    version = os.path.basename(latest_wheel).split('-')[1] # Extract version
+    print(f"\nBuilt wheel: {latest_wheel}")
+    return latest_wheel, version
+'''
+
+def build_shiv(wheel_path, output_path):
+    """Builds the PYZ file using Shiv."""
+    print(f"\nBuilding PYZ with Shiv: {output_path}")
+    
+    # Get the path to the virtual environment's site-packages
+    venv_path = os.environ.get("VIRTUAL_ENV")
+    if not venv_path:
+        # Fallback assumption for standard Python 3.12 structure
+        venv_path = os.path.dirname(os.path.dirname(os.path.dirname(PYTHON_BIN)))
+    site_packages_path = os.path.join(venv_path, "lib", f"python{sys.version_info.major}.{sys.version_info.minor}", "site-packages")
+    
+    print(f"Bundling dependencies from: {site_packages_path}")
+    
+    cmd = [
+        "shiv",
+        wheel_path,
+        "-e", ENTRY_POINT,
+        "-o", str(output_path),
+        "-p", "/usr/bin/env python3", # The shebang line for execution
+        # Shiv needs to be explicitly told to bundle the venv packages
+        "--site-packages", site_packages_path
+    ]
+    try:
+        run_command(cmd)
+        print("Shiv build successful.")
+        return True
+    except subprocess.CalledProcessError:
+        print("Shiv build failed.")
+        return False
+
+def build_pex(wheel_path, output_path):
+    """Builds the PEX file using Pex."""
+    print(f"\nBuilding PEX with Pex: {output_path}")
+
+    # PEX Command: We remove the --site-packages argument!
+    # PEX automatically bundles all required dependencies from the wheel metadata.
+    cmd = [
+        PYTHON_BIN, "-m", "pex",
+        wheel_path,
+        "--output-file", str(output_path),
+        "--entry-point", ENTRY_POINT,
+        # We explicitly use the Python interpreter from the venv for running the pex module
+        "--python", "python3", 
+        "--python-shebang=/usr/bin/env python3"
+        # Removed: "--site-packages" <--- THIS WAS THE ERROR
+    ]
+    try:
+        run_command(cmd)
+        print("Pex build successful.")
+        return True
+    except subprocess.CalledProcessError:
+        print("Pex build failed.")
+        return False
 
 
 # -----------------------------
@@ -294,6 +383,8 @@ def main():
     parser.add_argument("--mpl", action="store_true")
     parser.add_argument("--zoneinfo", action="store_true")
     parser.add_argument("--entry-point", default="pipeline.cli:app")
+    parser.add_argument("--skip-build-wheel", action="store_true", 
+                        help="Skip the poetry wheel build if a wheel already exists in 'dist/'.")
     args = parser.parse_args()
 
     extras = []
@@ -305,12 +396,21 @@ def main():
     dist_dir = Path("dist")
     dist_dir.mkdir(exist_ok=True)
 
-    # --- Wheel ---
-    #latest_wheel = find_latest_wheel(dist_dir)
-    #if not latest_wheel:
-    latest_wheel = build_wheel(dist_dir, use_poetry=did_poetry_make_the_call())
+   # --- Wheel ---
+    latest_wheel = find_latest_wheel(dist_dir)
+
+    if args.skip_build_wheel and latest_wheel:
+        print(f"Skipping wheel build. Using existing wheel: {latest_wheel.name}")
+    else:
+        # If we are building, ensure old artifacts are cleaned first
+        clean_dist(dist_dir)
+        latest_wheel = build_wheel(dist_dir, use_poetry=did_poetry_make_the_call())
+    
     if not latest_wheel:
-        print("Error: Could not build or find wheel.", file=sys.stderr)
+        if args.skip_build_wheel:
+            print("Error: --skip-build-wheel used, but no existing wheel found.", file=sys.stderr)
+        else:
+            print("Error: Could not build wheel.", file=sys.stderr)
         sys.exit(1)
 
     pkg_name, pkg_version = extract_metadata_from_wheel(latest_wheel)
@@ -324,7 +424,7 @@ def main():
     pex_path = dist_dir / f"{form_dynamic_binary_name(pkg_name, pkg_version, py_version, os_tag, arch, extras_str)}.pex"
 
     # --- Build Shiv / PEX ---
-    if build_shiv(latest_wheel, pyz_path, args.entry_point) and build_pex(latest_wheel, pex_path, args.entry_point):
+    if build_shiv(latest_wheel, pyz_path) and build_pex(latest_wheel, pex_path):
         print(f"Successfully created:\n  {pyz_path}\n  {pex_path}")
 
     # --- Generate launchers ---
