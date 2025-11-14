@@ -1445,10 +1445,6 @@ def demo_eds_webplot_point_live():
     # Now run the GUI in the main thread
     gui_starlette_msgspec_plotly.run_gui(data_buffer)
 
-
-    
-                
-
 @log_function_call(level=logging.DEBUG)    
 def demo_eds_plot_trend():
     pass

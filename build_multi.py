@@ -227,17 +227,18 @@ def extract_metadata_from_wheel(wheel_path: Path):
             version = re.search(r"^Version: (.+)", content, re.MULTILINE).group(1)
             return name.strip(), version.strip()
 
-
 # -----------------------------
 # Shiv / PEX Building
 # -----------------------------
 def build_shiv(latest_wheel: Path, pyz_path: Path, entry_point="pipeline.cli:app"):
-    cmd = ["shiv", str(latest_wheel), "-e", entry_point, "-o", str(pyz_path), "-p", "/usr/bin/env python3"]
+    # FIX: Add --site-packages to ensure all dependencies from the active virtual environment are included.
+    cmd = ["shiv", str(latest_wheel), "-e", entry_point, "-o", str(pyz_path), "-p", "/usr/bin/env python3", "--site-packages"]
     return run_command(cmd)
 
 def build_pex(latest_wheel: Path, pex_path: Path, entry_point="pipeline.cli:app"):
+    # FIX: Add --site-packages to ensure all dependencies from the active virtual environment are included.
     cmd = ["python", "-m", "pex", str(latest_wheel), "--output-file", str(pex_path),
-           "--entry-point", entry_point, "--python", "python3", "--python-shebang=/usr/bin/env python3"]
+            "--entry-point", entry_point, "--python", "python3", "--python-shebang=/usr/bin/env python3", "--site-packages"]
     return run_command(cmd)
 
 
