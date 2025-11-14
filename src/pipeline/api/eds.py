@@ -1400,7 +1400,8 @@ def demo_eds_webplot_point_live():
     from workspaces.eds_to_rjn.code import collector
     from pipeline.plotbuffer import PlotBuffer
     #from pipeline import gui_flaskplotly_live
-    from pipeline import gui_fastapi_plotly_live
+    #from pipeline import gui_fastapi_plotly_live
+    from pipeline import gui_starlette_msgspec_plotly
 
     # Initialize the workspace based on configs and defaults, in the demo initializtion script
     workspace_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
@@ -1445,7 +1446,8 @@ def demo_eds_webplot_point_live():
 
     # Now run the GUI in the main thread
     #gui_flaskplotly_live.run_gui(data_buffer)
-    gui_fastapi_plotly_live.run_gui(data_buffer)
+    #gui_fastapi_plotly_live.run_gui(data_buffer)
+    gui_starlette_msgspec_plotly.run_gui(data_buffer)
 
 
     
