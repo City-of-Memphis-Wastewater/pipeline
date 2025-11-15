@@ -183,8 +183,13 @@ pyinstaller = "^6.16.0"
 pex = "^2.69.1"
 
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
+requires = ["poetry-core>=2.0.0,<3.0.0", "setuptools-scm"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.setuptools_scm]
+write_to = "src/pipeline/_version.py"
+version_scheme = "guess-next-dev"
+local_scheme = "node-and-date"
 
 [tool.poetry.plugins."scripts"]
 controller = "pipeline.daemon.controller:main_cli"
