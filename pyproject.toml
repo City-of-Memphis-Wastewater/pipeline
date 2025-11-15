@@ -18,10 +18,16 @@ repository = "https://github.com/city-of-memphis-wastewater/pipeline"
 #    "src/pipeline/interface/web_gui/templates/**/*"
 #]
 
-# For sdists (source tarballs)
+
+
+# ---- Data that must be in wheels AND sdists ----
 include = [
     { path = "src/pipeline/interface/web_gui/templates", format = "sdist" },
-    { path = "src/pipeline/interface/web_gui/static", format = "sdist" }
+    { path = "src/pipeline/interface/web_gui/static",   format = "sdist" },
+
+    # Wheel-specific (also works for sdist)
+    { include = "pipeline/interface/web_gui/templates/**", from = "src" },
+    { include = "pipeline/interface/web_gui/static/**",    from = "src" }
 ]
 
                 
@@ -40,11 +46,6 @@ classifiers=[
 ]
 
 
-# CRITICAL: For wheels (used by PEX, PyZ, pip install .)
-[tool.poetry.package.include]
-"pipeline/interface/web_gui/templates/**" = { from = "src" }
-"pipeline/interface/web_gui/static/**" = { from = "src" }
-	
 [tool.poetry.scripts]
 pipeline = "pipeline.cli:app" # for installation of pipeline as a CLI. Ex: pipeline trend M100FI -s June3 -f June17
 eds = "pipeline.cli:app" # alias eds for pipeline CLI
