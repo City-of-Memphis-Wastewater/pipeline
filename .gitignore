@@ -34,6 +34,7 @@ logs/
 **/export_eds_points_all.txt
 **/live_data.csv
 **/sent_data.csv
+exports/
 
 # PyInstaller / Build Artifacts
 dist/
