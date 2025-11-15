@@ -11,22 +11,19 @@ from starlette.requests import Request # Explicitly import Request
 # FIX: Use 'from msgspec import Struct' instead of 'import msgspec.struct'
 from msgspec import Struct 
 
-
 from pathlib import Path
 from typer import BadParameter
 import uvicorn # Used for launching the server
 from importlib import resources
 from typing import Dict, Any, List, Optional
-from importlib.resources import files
+#from importlib.resources import files
+from importlib.resources import read_text
 
 # Local imports
 from pipeline.core import eds as eds_core 
 from pipeline.interface.utils import save_history, load_history
 from pipeline.security_and_config import CredentialsNotFoundError
 from pipeline.server.web_utils import launch_server_for_web_gui
-
-STATIC_DIR = files("pipeline.interface.web_gui.static")
-TEMPLATE_DIR = files("pipeline.interface.web_gui.templates")
 
 # Initialize Starlette app
 app = Starlette(debug=True)
@@ -56,7 +53,7 @@ async def serve_gui(request: Request):
     """
     try:
         # Load the content of eds_trend.html as a resource
-        index_content = resources.read_text('pipeline.interface.web_gui.templates', 'eds_trend.html')
+        index_content = resources.read_text('pipeline.interface.web_gui.templates', 'eds_trend.html')        
         return HTMLResponse(index_content)
     
     except FileNotFoundError:

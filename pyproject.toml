@@ -42,8 +42,8 @@ classifiers=[
 
 # CRITICAL: For wheels (used by PEX, PyZ, pip install .)
 [tool.poetry.package.include]
-"pipeline/interface/web_gui/templates" = {}
-"pipeline/interface/web_gui/static" = {}
+"pipeline/interface/web_gui/templates/**" = { from = "src" }
+"pipeline/interface/web_gui/static/**" = { from = "src" }
 	
 [tool.poetry.scripts]
 pipeline = "pipeline.cli:app" # for installation of pipeline as a CLI. Ex: pipeline trend M100FI -s June3 -f June17

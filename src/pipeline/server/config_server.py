@@ -13,7 +13,9 @@ import uvicorn # Used for launching the server
 import socket
 from importlib import resources
 from importlib.resources import files
-
+from importlib.resources import read_text
+from starlette.responses import HTMLResponse
+from starlette.requests import Request
 import urllib.parse
 from typing import Dict, Any
 import threading
@@ -25,10 +27,6 @@ from pipeline.server.web_utils import find_open_port
 
 # --- State Initialization ---
 prompt_manager = PromptManager()
-
-# --- Configuration ---
-STATIC_DIR = files("pipeline.interface.web_gui.static")
-TEMPLATE_DIR = files("pipeline.interface.web_gui.templates")
 
 # Initialize Starlette app
 # The title and version previously in FastAPI are not necessary in Starlette's core
@@ -50,10 +48,7 @@ async def serve_config_modal_html(request: Request):
         
     try:
         # 1. Read the HTML file content
-        html_content = resources.read_text(
-            'pipeline.interface.web_gui.templates',
-            'config_modal.html'
-        )
+        html_content = resources.read_text('pipeline.interface.web_gui.templates', 'config_modal.html')
         
         # 2. Inject the request_id into the HTML
         escaped_id = urllib.parse.quote_plus(request_id)
