@@ -258,23 +258,6 @@ def get_site_packages_path() -> str | None:
 #    return run_command(cmd)
 
 # --- Build Functions ---
-'''
-def build_wheel_():
-    """Builds the project wheel using Poetry."""
-    print("Building wheel using Poetry...")
-    run_command(["poetry", "build", "-f", "wheel"])
-    
-    # Find the newly created wheel file
-    wheel_files = glob.glob(os.path.join(DIST_DIR, f"{PROJECT_NAME}-*.whl"))
-    if not wheel_files:
-        raise FileNotFoundError(f"Could not find wheel file in {DIST_DIR}")
-    
-    # Sort to get the latest version if multiple exist
-    latest_wheel = max(wheel_files, key=os.path.getctime)
-    version = os.path.basename(latest_wheel).split('-')[1] # Extract version
-    print(f"\nBuilt wheel: {latest_wheel}")
-    return latest_wheel, version
-'''
 
 def build_shiv(wheel_path, output_path):
     """Builds the PYZ file using Shiv."""
@@ -294,7 +277,7 @@ def build_shiv(wheel_path, output_path):
 
     cmd = [
         "shiv",
-        wheel_path,
+        str(wheel_path),
         "-e", ENTRY_POINT,
         "-o", str(output_path),
         "-p", "/usr/bin/env python3", # The shebang line for execution
@@ -317,7 +300,7 @@ def build_pex(wheel_path, output_path):
     # PEX automatically bundles all required dependencies from the wheel metadata.
     cmd = [
         PYTHON_BIN, "-m", "pex",
-        wheel_path,
+        str(wheel_path),
         "--output-file", str(output_path),
         "--entry-point", ENTRY_POINT,
         # We explicitly use the Python interpreter from the venv for running the pex module
@@ -427,9 +410,10 @@ def main():
     pex_path = dist_dir / f"{form_dynamic_binary_name(pkg_name, pkg_version, py_version, os_tag, arch, extras_str)}.pex"
 
     # --- Build Shiv / PEX ---
-    if build_shiv(latest_wheel, pyz_path):
+    if Fm build_shiv(latest_wheel, pyz_path):
         print(f"Successfully created:\n  {pyz_path}")
-    if False and build_pex(latest_wheel, pex_path): #suppress
+    # PEX will not build for Termux due to Android compatibility issue with os.link() 
+    if not ph.on_termux() and build_pex(latest_wheel, pex_path): 
         print(f"Successfully created:\n  {pex_path}")
 
     # --- Generate launchers ---
