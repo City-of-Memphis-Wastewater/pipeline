@@ -8,7 +8,7 @@ license = "MIT"
 readme = "README.md"
 packages = [
     { include = "pipeline", from = "src" },
-	{ include = "workspaces", from = "." }
+#	{ include = "workspaces", from = "." }
 ] # This makes `pipeline` available as an importable top-level module
 homepage = "https://github.com/city-of-memphis-wastewater/pipeline"
 repository = "https://github.com/city-of-memphis-wastewater/pipeline"
@@ -17,11 +17,14 @@ repository = "https://github.com/city-of-memphis-wastewater/pipeline"
 #    "src/pipeline/interface/web_gui/static/**/*",
 #    "src/pipeline/interface/web_gui/templates/**/*"
 #]
+
+# For sdists (source tarballs)
 include = [
     { path = "src/pipeline/interface/web_gui/templates", format = "sdist" },
     { path = "src/pipeline/interface/web_gui/static", format = "sdist" }
 ]
 
+                
 classifiers=[
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
@@ -35,6 +38,12 @@ classifiers=[
     "Topic :: Software Development :: Libraries :: Python Modules",
 	"Topic :: Utilities",
 ]
+
+
+# CRITICAL: For wheels (used by PEX, PyZ, pip install .)
+[tool.poetry.package.include]
+"pipeline/interface/web_gui/templates" = {}
+"pipeline/interface/web_gui/static" = {}
 	
 [tool.poetry.scripts]
 pipeline = "pipeline.cli:app" # for installation of pipeline as a CLI. Ex: pipeline trend M100FI -s June3 -f June17
