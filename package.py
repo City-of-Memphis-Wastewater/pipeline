@@ -259,7 +259,7 @@ def extract_and_clean(wheel: Path) -> Path:
 # ----------------------------------------------------------------------
 # 9. BUILDERS
 # ----------------------------------------------------------------------
-def build_zipapp(clean_dir: Path, out_path: Path, entry: str):
+def build_zipapp_(clean_dir: Path, out_path: Path, entry: str):
     """
     Build pure-Python .pyz using zipapp.
     Why zipapp?
@@ -289,6 +289,58 @@ if __name__ == "__main__":
     out_path.chmod(0o755)
     print("zipapp built – pure .py, no .pyc")
 
+def build_zipapp__(clean_dir: Path, out_path: Path, entry: str):
+    """
+    Build pure-Python .pyz using zipapp with --main.
+    Why --main?
+    • Avoids __main__.py in root → prevents MultiplexedPath crash
+    • Works on Termux, Android, Python 3.12+
+    • Cleaner, more reliable
+    """
+    print(f"\nBuilding zipapp → {out_path.name}")
+
+    cmd = [
+        sys.executable, "-m", "zipapp",
+        str(clean_dir),
+        "-p", "/usr/bin/env python3",
+        "-o", str(out_path),
+        "-c",
+        "--main", f"{entry}(__import__('sys').argv[1:])"
+    ]
+    run_command(cmd)
+    out_path.chmod(0o755)
+    print("zipapp built – pure .py, no .pyc, Termux-safe")
+
+def build_zipapp(clean_dir: Path, out_path: Path, entry: str):
+    """
+    Build zipapp with isolated __main__.py in subdir.
+    Relies on ./src/__main__.py already existing.
+
+    Avoids:
+    • MultiplexedPath crash
+    • zipapp --main limitations
+    • package name conflicts
+    """
+    print(f"\nBuilding zipapp → {out_path.name}")
+   
+    main_py = '''\
+#!/usr/bin/env python3
+import sys
+from pipeline.cli import app
+sys.exit(app())
+'''
+    (clean_dir / "__main__.py").write_text(main_py)
+                
+    cmd = [
+        sys.executable, "-m", "zipapp",
+        str(clean_dir),
+        "-p", "/usr/bin/env python3",
+        "-o", str(out_path),
+        "-c"
+    ]
+    run_command(cmd)
+    out_path.chmod(0o755)
+    print("zipapp built – pure .py, no .pyc")
 
 def build_shiv(wheel: Path, out_path: Path, entry: str):
     """
@@ -403,7 +455,8 @@ def main():
         print(f"Using existing wheel: {wheel.name}")
     else:
         wheel = build_wheel(dist_dir, use_poetry=did_poetry_make_the_call())
-
+    print(f"Wheel : {wheel.name}")
+    
     # --- 2. Extract once, clean once ---
     clean_dir = extract_and_clean(wheel)
 
@@ -415,18 +468,26 @@ def main():
         bin_name = form_dynamic_binary_name(name, ver, py_ver, os_tag, arch, extras_str)
 
         # --- 3. Build artifacts ---
-        zipapp_path = dist_dir / f"{bin_name}.pyz"
-        build_zipapp(clean_dir, zipapp_path, args.entry_point)
-
-        if args.shiv:
+        if not ph.on_termux():
+            zipapp_path = dist_dir / f"{bin_name}-zipapp.pyz"
+            build_zipapp(clean_dir, zipapp_path, args.entry_point)
+            print(f"Zipapp: {zipapp_path.name}")
+            try:
+                rel = zipapp_path.relative_to(dist_dir.parent)
+                print(f"    ./{rel}  # or")
+                print(f"    python {rel}")
+            except ValueError:
+                print(f"    {zipapp_path}")
+        if ph.on_termux() or args.shiv:
             # Filename ends with -shiv.pyz as requested
             shiv_path = dist_dir / f"{bin_name}-shiv.pyz"
             build_shiv(wheel, shiv_path, args.entry_point)
-
+            print(f"Shiv  : {shiv_path.name}")
         if not ph.on_termux():
             pex_path = dist_dir / f"{bin_name}.pex"
             build_pex(clean_dir, pex_path, args.entry_point)
-
+            print(f"PEX   : {pex_path.name}")
+        
         # --- 4. Launchers ---
         if not ph.on_termux() and not ph.on_ish_alpine():
             generate_windows_launcher(zipapp_path, zipapp_path.with_suffix(".bat"))
@@ -436,24 +497,8 @@ def main():
 
         # --- 5. FINAL SUMMARY: Copy-paste ready ---
         print("\n" + "="*70)
-        print("BUILD COMPLETE – COPY & PASTE")
-        print("="*70)
-        print(f"Wheel : {wheel.name}")
-        print(f"Zipapp: {zipapp_path.name}")
-        if args.shiv:
-            print(f"Shiv  : {shiv_path.name}")
-        if not ph.on_termux():
-            print(f"PEX   : {pex_path.name}")
-        print("-"*70)
-        print("Run the app:")
-        try:
-            rel = zipapp_path.relative_to(dist_dir.parent)
-            print(f"    ./{rel}  # or")
-            print(f"    python {rel}")
-        except ValueError:
-            print(f"    {zipapp_path}")
-        print("="*70 + "\n")
-
+        print("BUILD COMPLETE")
+        
     finally:
         # Always clean up temp dir
         shutil.rmtree(clean_dir, ignore_errors=True)

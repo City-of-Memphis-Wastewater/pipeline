@@ -16,7 +16,7 @@ repository = "https://github.com/city-of-memphis-wastewater/pipeline"
 include = [
 #    "src/pipeline/data/*",
     "src/pipeline/interface/web_gui/static/**/*",
-    "src/pipeline/interface/web_gui/templates/**/*"
+    "src/pipeline/interface/web_gui/templates/**/*",
 ]
 
 
