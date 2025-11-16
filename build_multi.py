@@ -183,6 +183,17 @@ def clean_dist(dist_dir: Path):
                 else:
                     item.unlink()
 
+def remove_pyc(root: Path) -> None:
+    """Delete every *.pyc and every __pycache__ directory under *root*."""
+    if not root.exists():
+        return
+    for pyc in root.rglob("*.pyc"):
+        pyc.unlink()
+        print(f"Removed {pyc}")
+    for cache in root.rglob("__pycache__"):
+        shutil.rmtree(cache, ignore_errors=True)
+        print(f"Removed {cache}")
+                                                        
 def build_wheel(dist_dir: Path, use_poetry:bool=True) -> Path:
     """
     Always rebuild a wheel from pyproject.toml.
@@ -221,7 +232,20 @@ def find_latest_wheel(dist_dir: Path):
         return None
     return max(wheels, key=os.path.getmtime)
 
+def extract_and_clean(wheel: Path) -> Path:
+    """
+    Extract the wheel into a temporary directory,
+    delete any stray .pyc files (defensive – should be none),
+    and return the clean directory.
+    """
+    extract_dir = Path(tempfile.mkdtemp(prefix="pipeline_"))
+    with zipfile.ZipFile(wheel) as z:
+        z.extractall(extract_dir)
 
+    print("\nCleaning stray .pyc files from extracted wheel…")
+    remove_pyc(extract_dir)
+    return extract_dir
+                                                
 def extract_metadata_from_wheel(wheel_path: Path):
     """Extract package name and version from wheel METADATA."""
     with zipfile.ZipFile(wheel_path, 'r') as zf:
@@ -258,7 +282,62 @@ def get_site_packages_path() -> str | None:
 #    return run_command(cmd)
 
 # --- Build Functions ---
+# -----------------------------
+# zipapp Builder (Recommended)
+# -----------------------------
+def build_zipapp(wheel: Path, output: Path, entry: str):
+    print(f"\nBuilding zipapp → {output.name}")
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        with zipfile.ZipFile(wheel) as z:
+            z.extractall(tmp_path)
 
+        # Create __main__.py
+        main_py = f'''\
+#!/usr/bin/env python3
+from {entry.rsplit(':', 1)[0]} import {entry.rsplit(':', 1)[1]}
+if __name__ == "__main__":
+    import sys
+    sys.exit({entry.rsplit(':', 1)[1]}())
+'''
+        (tmp_path / "__main__.py").write_text(main_py)
+
+        cmd = [
+            sys.executable, "-m", "zipapp",
+            str(tmp_path),
+            "-p", "/usr/bin/env python3",
+            "-o", str(output),
+        ]
+        
+        cmd.extend(["-c"])  # compress
+
+        run_command(cmd)
+        output.chmod(0o755)
+    print("zipapp built – pure .py, no .pyc, universal")
+
+
+# -----------------------------
+# shiv Builder (Optional)
+# -----------------------------
+def build_shiv_untested(wheel: Path, output: Path, entry: str):
+    print(f"\nBuilding shiv → {output.name}")
+    venv = os.environ.get("VIRTUAL_ENV")
+    if not venv:
+        raise RuntimeError("VIRTUAL_ENV not set")
+    site_pkg = Path(venv) / "lib" / f"python{sys.version_info.major}.{sys.version_info.minor}" / "site-packages"
+
+    cmd = [
+        "shiv",
+        #"--site-packages", str(site_pkg),
+        "--entry-point", entry,
+        "--output-file", str(output),
+        "--python-shebang", "/usr/bin/env python3",
+        str(wheel),
+    ]
+    run_command(cmd)
+    output.chmod(0o755)
+    print("shiv built – full venv, no .pyc")
+    
 def build_shiv(wheel_path, output_path):
     """Builds the PYZ file using Shiv."""
     print(f"\nBuilding PYZ with Shiv: {output_path}")
@@ -366,6 +445,8 @@ __build_time__ = "{timestamp}"
 def main():
     parser = argparse.ArgumentParser(description="Unified build script for pipeline-eds")
     parser.add_argument("--windows", action="store_true")
+    parser.add_argument("--shiv", action="store_true", help="Use shiv instead of zipapp")
+    #parser.add_argument("--no-pyc", action="store_true", default=True)
     parser.add_argument("--mpl", action="store_true")
     parser.add_argument("--zoneinfo", action="store_true")
     parser.add_argument("--entry-point", default="pipeline.cli:app")
@@ -399,21 +480,42 @@ def main():
             print("Error: Could not build wheel.", file=sys.stderr)
         sys.exit(1)
 
+    
     pkg_name, pkg_version = extract_metadata_from_wheel(latest_wheel)
     py_version = get_python_version()
     sysinfo = SystemInfo()
     os_tag = sysinfo.get_os_tag()
     arch = sysinfo.get_arch()
 
+    # --- Clean .pyc before building zipapp ---
+    #print("\nCleaning .pyc files from extracted wheel...")
+    #with tempfile.TemporaryDirectory() as tmp:
+    #    tmp_path = Path(tmp)
+    #with zipfile.ZipFile(latest_wheel) as z:
+    #    z.extractall(tmp_path)
+    #
+    #remove_pyc_files()
+    clean_dir = extract_and_clean(latest_wheel)
+    
+    # Now build zipapp from cleaned tree
+    zipapp_path = dist_dir / f"{form_dynamic_binary_name(pkg_name, pkg_version, py_version, os_tag, arch, extras_str)}.pyz"
+    build_zipapp_from_cleaned(tmp_path, zipapp_path, args.entry_point)
+    #base_name = dynamic_name(name, ver, py_tag, os_tag, arch, extras_str)
+    
     # --- Portable binaries ---
     pyz_path = dist_dir / f"{form_dynamic_binary_name(pkg_name, pkg_version, py_version, os_tag, arch, extras_str)}.pyz"
     pex_path = dist_dir / f"{form_dynamic_binary_name(pkg_name, pkg_version, py_version, os_tag, arch, extras_str)}.pex"
-
+    zipapp_path = dist_dir / f"{form_dynamic_binary_name(pkg_name, pkg_version, py_version, os_tag, arch, extras_str)}.pyz"
+    
     # --- Build Shiv / PEX ---
-    if Fm build_shiv(latest_wheel, pyz_path):
+    #build_zipapp(latest_wheel, zipapp_path, args.entry_point, no_pyc=args.no_pyc)
+    build_zipapp(clean_dir, zipapp_path, args.entry_point)
+    if False and  build_shiv(latest_wheel, pyz_path):
+    #if False and  build_shiv(clean_dir, pyz_path):
         print(f"Successfully created:\n  {pyz_path}")
     # PEX will not build for Termux due to Android compatibility issue with os.link() 
     if not ph.on_termux() and build_pex(latest_wheel, pex_path): 
+    #if not ph.on_termux() and build_pex(clean_dir, pex_path): 
         print(f"Successfully created:\n  {pex_path}")
 
     # --- Generate launchers ---
