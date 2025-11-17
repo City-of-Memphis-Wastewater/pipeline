@@ -16,6 +16,7 @@ import signal
 from pipeline.server.web_utils import launch_browser
 from pipeline.plottools import normalize, normalize_ticks, get_ticks_array_n
 
+from pipeline.cli import GLOBAL_SHUTDOWN_EVENT
 
 PLOTLY_THEME = 'seaborn'
 """
@@ -41,10 +42,11 @@ buffer_lock = threading.Lock()  # Optional, if you want thread safety
 # A simple HTTP server that serves files from the current directory.
 # We suppress logging to keep the Termux console clean.
 # --- Plot Server with Shutdown Endpoint ---
-class PlotServer(http.server.SimpleHTTPRequestHandler):
+class PlotServer_nov14(http.server.SimpleHTTPRequestHandler):
     """
     A simple HTTP server that serves files and includes a /shutdown endpoint.
     """
+    ##global GLOBAL_SHUTDOWN_EVENT
     # Suppress logging to keep the console clean
     def log_message(self, format, *args):
         return
@@ -62,6 +64,50 @@ class PlotServer(http.server.SimpleHTTPRequestHandler):
             self.wfile.write(b'<html><head><title>Closing...</title></head><body>Server shutting down. You may close this tab.</body></html>')
             
             # 2. CRITICAL: Shut down the server thread
+            # convert to using a while loop
+            #while True:
+            #    # 1. Check if the main process wants to shut down
+            #    if GLOBAL_SHUTDOWN_EVENT.is_set():
+            #        print("\nPolling loop detected shutdown signal. Exiting gracefully.")
+            #        return None # Exit the function
+            #    threading.Event().wait(0.5) 
+            threading.Thread(target=self.server.shutdown, daemon=True).start()
+            return
+            
+        # If not the shutdown path, serve the file normally
+        else:
+            http.server.SimpleHTTPRequestHandler.do_GET(self)
+
+
+# --- Plot Server with Shutdown Endpoint (User's Refined Logic) ---
+class PlotServer(http.server.SimpleHTTPRequestHandler):
+    """
+    A simple HTTP server that serves files and includes a /shutdown endpoint.
+    Uses the correct non-blocking shutdown call.
+    """
+    ##global GLOBAL_SHUTDOWN_EVENT
+    # Required for mypy to know the instance exists after server creation
+    server: http.server.HTTPServer 
+
+    # Suppress logging to keep the console clean
+    def log_message(self, format, *args):
+        return
+    
+    def do_GET(self):
+        """Handle GET requests, including the custom /shutdown path."""
+        
+        parsed_url = urlparse(self.path)
+        
+        if parsed_url.path == '/shutdown':
+            # 1. Respond to the browser first
+            self.send_response(200)
+            self.send_header('Content-type', 'text/html')
+            self.end_headers()
+            self.wfile.write(b'<html><head><title>Closing...</title></head><body style="text-align: center; padding: 50px;"><h1>Server shutting down...</h1><p>You may close this tab.</p></body></html>')
+            
+            # 2. CRITICAL: Shut down the server thread
+            # This is the correct, non-blocking way to stop the main server loop
+            print("\n[Server] Received /shutdown request. Signaling server to stop.")
             threading.Thread(target=self.server.shutdown, daemon=True).start()
             return
             
@@ -576,6 +622,18 @@ def inject_buttons(tmp_path: Path, is_server_mode: bool) -> Path:
     tmp_path.write_text(html_content, encoding='utf-8')
     return tmp_path
 
+#if __name__ == '__main__':
+#    # This block is for testing the plotting logic, assuming a working launch_browser
+#    show_static(MockBuffer())
+
 if __name__ == '__main__':
-    # This block is for testing the plotting logic, assuming a working launch_browser
-    show_static(MockBuffer())
+    # Add a signal handler for testing the CLI shutdown path (Ctrl+C)
+    def handle_interrupt(sig, frame):
+        """Signal handler for SIGINT (Ctrl+C)."""
+        print("\n[Demo] Main process received CTRL+C. Setting shutdown flag...")
+        GLOBAL_SHUTDOWN_EVENT.set()
+        
+    signal.signal(signal.SIGINT, handle_interrupt)
+    
+    # Demonstrate the functionality
+    show_static(MockBuffer())   
