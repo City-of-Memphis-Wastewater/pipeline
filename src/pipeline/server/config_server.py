@@ -7,6 +7,8 @@ from starlette.routing import Route
 from starlette.responses import HTMLResponse, Response, JSONResponse # Using Response for msgspec
 from starlette.exceptions import HTTPException
 from starlette.requests import Request # Explicitly import Request
+from starlette.middleware import Middleware
+from starlette.middleware.cors import CORSMiddleware
 
 from pathlib import Path
 import uvicorn # Used for launching the server
@@ -25,12 +27,26 @@ from pipeline.security_and_config import CredentialsNotFoundError
 from pipeline.state_manager import PromptManager
 from pipeline.server.web_utils import find_open_port
 
+# Define the middleware list
+# for iframe embeddings: HTML iframe from one port can be embedded into a site on a different port.
+middleware = [
+    Middleware(
+        CORSMiddleware,
+        # Allow origins from any port on localhost, or be specific: 
+        # allow_origins=["http://127.0.0.1:8082"] 
+        # Using '*' is simplest for local development:
+        allow_origins=["*"], 
+        allow_methods=["GET", "POST"],
+        allow_headers=["*"],
+    )
+]
+
 # --- State Initialization ---
 prompt_manager = PromptManager()
 
 # Initialize Starlette app
 # The title and version previously in FastAPI are not necessary in Starlette's core
-app = Starlette(debug=True)
+app = Starlette(debug=True, middleware=middleware)
 # Attach the manager instance to the app state for easy access via request
 app.state.prompt_manager = prompt_manager
 
