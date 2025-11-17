@@ -468,7 +468,25 @@ def main():
         bin_name = form_dynamic_binary_name(name, ver, py_ver, os_tag, arch, extras_str)
 
         # --- 3. Build artifacts ---
-        if not ph.on_termux():
+        if False: # not ph.on_termux(): *see "Why is build_zipapp disabled?"
+            """
+            Zipapp has known issues building on Termux.
+            There are also implications regarding __main__.py filea.
+            """
+            """
+            *Why is build_zipapp disabled?
+            =============================
+
+            The `zipapp` module (PEP 441) requires a `__main__.py` file in the **root** of the archive.
+            When the source package also contains a `pipeline/__main__.py` (used for `python -m pipeline`),
+            Python 3.12+ creates a **MultiplexedPath** to merge the zip archive with the import path.
+
+            What is MultiplexedPath?
+            ------------------------
+            - Introduced in Python 3.12 to support *multiple* import sources (zip + filesystem).
+            - It builds a virtual filesystem view: `sys.path[0]` = the .pyz archive.
+            - When a name appears **both** as a file and a package directory, the loader fails:
+            """
             zipapp_path = dist_dir / f"{bin_name}-zipapp.pyz"
             build_zipapp(clean_dir, zipapp_path, args.entry_point)
             print(f"Zipapp: {zipapp_path.name}")
@@ -478,7 +496,7 @@ def main():
                 print(f"    python {rel}")
             except ValueError:
                 print(f"    {zipapp_path}")
-        if ph.on_termux() or args.shiv:
+        if True:#ph.on_termux() or args.shiv:
             # Filename ends with -shiv.pyz as requested
             shiv_path = dist_dir / f"{bin_name}-shiv.pyz"
             build_shiv(wheel, shiv_path, args.entry_point)
