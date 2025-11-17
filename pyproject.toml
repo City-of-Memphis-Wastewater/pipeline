@@ -51,7 +51,7 @@ classifiers=[
 pipeline = "pipeline.cli:app" # for installation of pipeline as a CLI. Ex: pipeline trend M100FI -s June3 -f June17
 eds = "pipeline.cli:app" # alias eds for pipeline CLI
 pipeline-eds = "pipeline.cli:app" # alias eds for pipeline CLI
-package = "package:main"
+pipeline-package = "package:main"
 
 [tool.pytest.ini_options]
 markers = [
