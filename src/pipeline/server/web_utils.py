@@ -10,8 +10,6 @@ from pathlib import Path
 import requests
 import threading
 from typing import Any,  Tuple
-
-from pipeline.cli import GLOBAL_SHUTDOWN_EVENT
 # --- Configuration ---
 # Define the root directory for serving static files
 # Assumes this script is run from the project root or the path is correctly resolved
@@ -186,7 +184,6 @@ def launch_server_for_web_gui_(app: Any, host: str = "127.0.0.1", port: int = 80
         workers=1 # Must be 1 when running manually in a separate thread
     )
 
-    print(f"Starting Generalized Web Server at {url}")
     
     # 2. Instantiate Server
     server = uvicorn.Server(config=config)
@@ -202,6 +199,8 @@ def launch_server_for_web_gui_(app: Any, host: str = "127.0.0.1", port: int = 80
     url = f"http://{host_port_str}"
     MAX_WAIT_SECONDS = 5
     POLL_INTERVAL_SECONDS = 0.2
+
+    print(f"Starting Generalized Web Server at {url}")  
     
     # --- Server Polling Logic (Replaces time.sleep(1)) ---
     server_ready = False

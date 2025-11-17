@@ -23,7 +23,7 @@ from importlib.resources import read_text
 from pipeline.core import eds as eds_core 
 from pipeline.interface.utils import save_history, load_history
 from pipeline.security_and_config import CredentialsNotFoundError
-from pipeline.server.web_utils import launch_server_for_web_gui
+from pipeline.server.web_utils import launch_server_for_web_gui_
 
 # Initialize Starlette app
 app = Starlette(debug=True)
@@ -174,7 +174,7 @@ app.routes.extend(routes) # Add routes to the Starlette application
 def launch_server_for_web_gui_eds_trend_specific():
     print(f"Calling for specific EDS Trend HTML to be served")
     # This utility function must still be defined elsewhere to run uvicorn
-    launch_server_for_web_gui(app, port=8082)
+    launch_server_for_web_gui_(app, port=8082)
 
 
 if __name__ == "__main__":

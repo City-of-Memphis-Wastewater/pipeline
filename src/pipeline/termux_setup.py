@@ -381,8 +381,6 @@ def cleanup_termux_integration():
             print(f"Removed empty shortcut directory: {shortcut_dir.name}")
         else:
             print("Shortcut directory is not empty. Leaving remaining files in place.")
-    except :
-        pass # Already gone
     except OSError as e:
         print(f"Warning: Could not remove shortcut directory {shortcut_dir}: {e}")
         

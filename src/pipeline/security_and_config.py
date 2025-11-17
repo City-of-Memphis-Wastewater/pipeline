@@ -235,7 +235,7 @@ class SecurityAndConfig:
                     
             except Exception as e:
                 # Catch non-JSONDecode errors (e.g., File permission errors)
-                typer.echo(f"⚠️  Failed to read config file: {e}")
+                typer.echo(f"⚠️  Failed to read config file: {e}")
                 return None
             
         # Get the value from the config file, which will be None if not found

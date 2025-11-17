@@ -121,7 +121,7 @@ async def submit_config(request: Request):
             raise HTTPException(status_code=400, detail="Missing request_id or input_value")
 
         # 1. Store the result
-        manager.submit_result(request_id, submitted_value)    
+        manager.submit_result(request_id, submitted_value)    
         
         # 2. Return success HTML
         return HTMLResponse("<h1>Configuration submitted successfully!</h1>", status_code=200)

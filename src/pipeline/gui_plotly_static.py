@@ -64,13 +64,7 @@ class PlotServer_nov14(http.server.SimpleHTTPRequestHandler):
             self.wfile.write(b'<html><head><title>Closing...</title></head><body>Server shutting down. You may close this tab.</body></html>')
             
             # 2. CRITICAL: Shut down the server thread
-            # convert to using a while loop
-            #while True:
-            #    # 1. Check if the main process wants to shut down
-            #    if GLOBAL_SHUTDOWN_EVENT.is_set():
-            #        print("\nPolling loop detected shutdown signal. Exiting gracefully.")
-            #        return None # Exit the function
-            #    threading.Event().wait(0.5) 
+            # convert to using a while loop?
             threading.Thread(target=self.server.shutdown, daemon=True).start()
             return
             
@@ -85,7 +79,6 @@ class PlotServer(http.server.SimpleHTTPRequestHandler):
     A simple HTTP server that serves files and includes a /shutdown endpoint.
     Uses the correct non-blocking shutdown call.
     """
-    ##global GLOBAL_SHUTDOWN_EVENT
     # Required for mypy to know the instance exists after server creation
     server: http.server.HTTPServer 
 
