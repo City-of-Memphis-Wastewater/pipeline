@@ -159,18 +159,6 @@ def form_dynamic_binary_name(pkg, ver, py, os_tag, arch, extras="") -> str:
 # ----------------------------------------------------------------------
 # 6. COMMAND RUNNER — With pretty output
 # ----------------------------------------------------------------------
-def run_command_(cmd, cwd=None, check=True):
-    """Run command, print it, capture output, raise on error."""
-    print(f"Running: {' '.join(cmd)}")
-    result = subprocess.run(cmd, cwd=cwd, text=True, capture_output=True)
-    if result.stdout:
-        print(result.stdout)
-    if result.stderr:
-        print(result.stderr, file=sys.stderr)
-    if check and result.returncode != 0:
-        raise subprocess.CalledProcessError(result.returncode, cmd)
-    return result
-
 def run_command(cmd, cwd=None, check=True, env=None):
     """
     Run command, print it, capture output, raise on error.
@@ -322,7 +310,7 @@ def build_zipapp__(clean_dir: Path, out_path: Path, entry: str):
         "-p", "/usr/bin/env python3",
         "-o", str(out_path),
         "-c",
-        "--main", f"{entry}(__import__('sys').argv[1:])"
+        "--main", f"{entry}(__import__('sys').argv[1:])" # the --main flag does not exist for zipapp
     ]
     run_command(cmd)
     out_path.chmod(0o755)
@@ -334,7 +322,7 @@ def build_zipapp(clean_dir: Path, out_path: Path, entry: str):
     Relies on ./src/__main__.py already existing.
 
     Avoids:
-    • MultiplexedPath crash
+    • MultiplexedPath crash (no it does not)
     • zipapp --main limitations
     • package name conflicts
     """
