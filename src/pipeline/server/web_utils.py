@@ -117,6 +117,7 @@ def find_open_port(start_port: int = 8082, max_port: int = 8100) -> int:
 # --- 1. Serve Static Files ---
 
 def launch_server_for_web_gui(app, host: str = "127.0.0.1", port: int = 8082):
+    
     """Launches the server using uvicorn."""
 
     try:
@@ -222,7 +223,7 @@ def launch_server_for_web_gui_(app: Any, host: str = "127.0.0.1", port: int = 80
         print("Could not launch browser automatically. Open the URL manually.")
         
     # Return the control objects
-    return server, server_thread
+    return server, server_thread # Tuple[uvicorn.Server, threading.Thread]
 
 # --- Helper to check server status ---
 def is_server_running(url: str) -> bool:
