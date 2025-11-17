@@ -4,13 +4,13 @@ build_release.py — The Ultimate, No-.pyc, Cross-Platform Build Script
 =====================================================================
 
 Why this script exists:
-    • You want ONE command to build a wheel + portable .pyz + shiv + pex
-    • You want ZERO .pyc files by default (clean, portable, Termux-safe)
-    • You want fast startup on second run → use `shiv` (caches .pyc in ~/.shiv)
-    • You want clear, copy-pasteable output so anyone can run your app
-    • You want to understand WHY things are done this way
+    • We want ONE command to build a wheel + portable .pyz + shiv + pex
+    • We want ZERO .pyc files by default (clean, portable, Termux-safe)
+    • We want fast startup on second run → use `shiv` (caches .pyc in ~/.shiv)
+    • We want clear, copy-pasteable output so anyone can run your app
+    • We want to understand WHY things are done this way
 
-Author:  You (with love from AI)
+Author:  George Clayton Bennett (with love from AI)
 Project: pipeline-eds
 Date:    November 16, 2025
 """
@@ -159,7 +159,7 @@ def form_dynamic_binary_name(pkg, ver, py, os_tag, arch, extras="") -> str:
 # ----------------------------------------------------------------------
 # 6. COMMAND RUNNER — With pretty output
 # ----------------------------------------------------------------------
-def run_command(cmd, cwd=None, check=True):
+def run_command_(cmd, cwd=None, check=True):
     """Run command, print it, capture output, raise on error."""
     print(f"Running: {' '.join(cmd)}")
     result = subprocess.run(cmd, cwd=cwd, text=True, capture_output=True)
@@ -171,6 +171,23 @@ def run_command(cmd, cwd=None, check=True):
         raise subprocess.CalledProcessError(result.returncode, cmd)
     return result
 
+def run_command(cmd, cwd=None, check=True, env=None):
+    """
+    Run command, print it, capture output, raise on error.
+    Allow env vars to be used.
+    """
+    print(f"Running: {' '.join(cmd)}")
+    final_env = os.environ.copy()
+    if env:
+        final_env.update(env)
+    result = subprocess.run(cmd, cwd=cwd, text=True, capture_output=True, env=final_env)
+    if result.stdout:
+        print(result.stdout)
+    if result.stderr:
+        print(result.stderr, file=sys.stderr)
+    if check and result.returncode != 0:
+        raise subprocess.CalledProcessError(result.returncode, cmd)
+    return result
 
 # ----------------------------------------------------------------------
 # 7. WHEEL HANDLING
@@ -359,9 +376,17 @@ def build_shiv(wheel: Path, out_path: Path, entry: str):
         "-e", entry,
         "-o", str(out_path),
         "-p", "/usr/bin/env python3",
+        "--compressed",
         "--no-cache"  # Don't bake .pyc — cache at runtime
     ]
-    run_command(cmd)
+    env = {
+        "PIP_PROGRESS_BAR": "on",
+        "PIP_CACHE_DIR": "/data/data/com.termux/files/home/.cache/pip",
+        "PIP_NO_INPUT": "1"
+    }
+
+    run_command(cmd, env=env)
+    #run_command(cmd)
     out_path.chmod(0o755)
     print("shiv built – fast startup after first run")
 
@@ -496,7 +521,8 @@ def main():
                 print(f"    python {rel}")
             except ValueError:
                 print(f"    {zipapp_path}")
-        if True:#ph.on_termux() or args.shiv:
+                
+        if True: #ph.on_termux() or args.shiv:
             # Filename ends with -shiv.pyz as requested
             shiv_path = dist_dir / f"{bin_name}-shiv.pyz"
             build_shiv(wheel, shiv_path, args.entry_point)
@@ -507,9 +533,10 @@ def main():
             print(f"PEX   : {pex_path.name}")
         
         # --- 4. Launchers ---
-        if not ph.on_termux() and not ph.on_ish_alpine():
-            generate_windows_launcher(zipapp_path, zipapp_path.with_suffix(".bat"))
-            generate_macos_app(zipapp_path, zipapp_path.with_suffix(".app"))
+        path = shiv_path
+        generate_windows_launcher(path, path.with_suffix(".bat"))
+        if False:
+            generate_macos_app(path, path.with_suffix(".app"))
 
         write_version_file(dist_dir)
 

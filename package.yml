@@ -1,0 +1,6 @@
+# package.yml
+name: package
+description: Build wheel + shiv .pyz — Termux-safe, compressed, fast
+script:
+  - python package.py
+  entrypoint: package.py

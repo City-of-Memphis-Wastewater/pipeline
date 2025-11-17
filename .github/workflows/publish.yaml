@@ -48,6 +48,9 @@ jobs:
         # Install the package that was just built into the 'dist/' directory
         run: pip install dist/*.whl
 
+      - name: Run package command
+        run: poetry package
+
       - name: Run tests
         # Run a command that would fail if the code is broken
         # This could be your pytest suite, or just a simple sanity check.
