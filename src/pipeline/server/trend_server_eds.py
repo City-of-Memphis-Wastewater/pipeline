@@ -175,6 +175,17 @@ def launch_server_for_web_gui_eds_trend_specific():
     print(f"Calling for specific EDS Trend HTML to be served")
     # This utility function must still be defined elsewhere to run uvicorn
     launch_server_for_web_gui_(app, port=8082)
+    config = uvicorn.Config(
+        # The entry point is the factory function, not the app object itself
+        app=app, 
+        host="127.0.0.1",
+        port=8000,
+        log_level="info",
+        # Use the single server process
+        workers=1 
+    )
+    server = uvicorn.Server(config)
+    server.run()
 
 
 if __name__ == "__main__":

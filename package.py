@@ -515,7 +515,7 @@ def main():
             shiv_path = dist_dir / f"{bin_name}-shiv.pyz"
             build_shiv(wheel, shiv_path, args.entry_point)
             print(f"Shiv  : {shiv_path.name}")
-        if not ph.on_termux():
+        if False: #not ph.on_termux():
             pex_path = dist_dir / f"{bin_name}.pex"
             build_pex(clean_dir, pex_path, args.entry_point)
             print(f"PEX   : {pex_path.name}")
