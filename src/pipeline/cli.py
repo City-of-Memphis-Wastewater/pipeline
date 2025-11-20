@@ -56,7 +56,7 @@ def handle_interrupt(sig, frame):
 
 # Set the signal handler right after starting your server
 import signal
-signal.signal(signal.SIGINT, handle_interrupt)
+#signal.signal(signal.SIGINT, handle_interrupt)
 
 # -- Versioning --
 def print_version(value: bool):

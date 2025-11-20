@@ -28,7 +28,7 @@ class ServerManager:
         and initiates the graceful shutdown of all registered servers.
         """
         # 1. Register signal handler for Ctrl+C
-        signal.signal(signal.SIGINT, self._signal_handler)
+        #signal.signal(signal.SIGINT, self._signal_handler)
         
         print("\n[INFO] Server Manager started. Press Ctrl+C to shut down.")
 

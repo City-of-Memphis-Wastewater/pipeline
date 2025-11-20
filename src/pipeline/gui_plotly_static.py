@@ -626,7 +626,7 @@ if __name__ == '__main__':
         print("\n[Demo] Main process received CTRL+C. Setting shutdown flag...")
         GLOBAL_SHUTDOWN_EVENT.set()
         
-    signal.signal(signal.SIGINT, handle_interrupt)
+    #signal.signal(signal.SIGINT, handle_interrupt)
     
     # Demonstrate the functionality
     show_static(MockBuffer())   
