@@ -182,8 +182,10 @@ pytest-cov = [
 pygal = "^3.0.5"
 pyinstaller = "^6.16.0"
 pex = "^2.69.1"
-shiv = "^1.0.8"
-
+shiv = [
+    { version = "^1.0.8", markers = "sys_platform not in ('android', 'linux_aarch64')" },
+    { version = "0.6.2",  markers = "sys_platform == 'android' or sys_platform == 'linux_aarch64'" },
+]
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0", "setuptools-scm"]
 build-backend = "poetry.core.masonry.api"
