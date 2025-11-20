@@ -6,11 +6,13 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 
 ---
 
-
 ## [0.3.69] - 2025-11-17
 
-### Changed:
-- Implement a pre-launch threaded server strategy rather than using JIT.
+### Changed
+- Stabilized Packaging for Python 3.9: Refined pyproject.toml dependency constraints for starlette to ensure compatibility across Python 3.9 and Python 3.10+ environments, resolving previous Poetry lock failures during .pyz creation.
+- Improved Packaging Workflow: Updated the packaging script to ensure consistent generation of the self-contained executable (.pyz) and the accompanying Windows batch file (.bat) within the WSL/Ubuntu environment.
+- Updated project dependencies and regenerated poetry.lock.
+- Implemented a pre-launch threaded server strategy rather than using JIT.
 
 ---
 

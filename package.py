@@ -405,7 +405,7 @@ def generate_windows_launcher(pyz: Path, bat: Path):
 REM Windows launcher for {pyz.name}
 "%~dp0{pyz.name}" %*
 """)
-    print(f"Generated {bat.name}")
+    print(f"BAT : dist/{bat.name}")
 
 
 def generate_macos_app(pyz: Path, app_dir: Path):
@@ -514,11 +514,11 @@ def main():
             # Filename ends with -shiv.pyz as requested
             shiv_path = dist_dir / f"{bin_name}-shiv.pyz"
             build_shiv(wheel, shiv_path, args.entry_point)
-            print(f"Shiv  : {shiv_path.name}")
+            print(f"Shiv : dist/{shiv_path.name}")
         if False: #not ph.on_termux():
             pex_path = dist_dir / f"{bin_name}.pex"
             build_pex(clean_dir, pex_path, args.entry_point)
-            print(f"PEX   : {pex_path.name}")
+            print(f"PEX : dist/{pex_path.name}")
         
         # --- 4. Launchers ---
         path = shiv_path
