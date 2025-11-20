@@ -130,9 +130,8 @@ msgspec = [
 
 # modern Starlette, drop FastAPI entirely
 starlette = [
-    { version = "^0.44.0", python = "3.8.*" },  # compatible with Python 3.8 & 3.9
-    { version = "^0.47.3", python = "3.9.*" },  # compatible with Python 3.8 & 3.9
-#    { version = "^0.27.0", python = ">=3.8,<3.10" },  # compatible with Python 3.8 & 3.9
+    { version = "^0.44.0", python = "<3.9" },  # compatible with Python 3.8
+    { version = "^0.47.3", python = "3.9.*" },        # latest for Python 3.9+
     { version = "^0.50.0", python = ">=3.10" }        # latest for Python 3.10+
 ]
 toml = ">=0.10.2,<0.11.0"
@@ -183,6 +182,7 @@ pytest-cov = [
 pygal = "^3.0.5"
 pyinstaller = "^6.16.0"
 pex = "^2.69.1"
+shiv = "^1.0.8"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0", "setuptools-scm"]
