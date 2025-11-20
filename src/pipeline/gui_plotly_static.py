@@ -407,6 +407,8 @@ def show_static(plot_buffer)->"go.Plotly":
     
     # Keep the main thread alive for a moment to allow the browser to open.
     # The server will run in the background until the script is manually terminated.
+
+    """
     print("\nPlot displayed. Press Ctrl+C to exit this script and stop the server.")
     try:
         while server_thread.is_alive():
@@ -425,7 +427,25 @@ def show_static(plot_buffer)->"go.Plotly":
             except Exception as e:
                 print(f"Failed to delete temp file: {e}")
     # NOTE: You might need a cleanup mechanism for this temporary file.
-
+    """
+    print("Plot displayed. Press Ctrl+C to stop the server.")
+    try:
+        while server_thread.is_alive():
+            time.sleep(0.5)  # more responsive
+    except KeyboardInterrupt:
+        print("\nMain process received CTRL+C. Shutting down gracefully...")
+    finally:
+        if httpd:
+            print("Stopping server...")
+            httpd.shutdown()
+            server_thread.join(timeout=2)
+        # Clean up temp file
+        try:
+            os.chdir(original_cwd)
+            if tmp_path.exists():
+                tmp_path.unlink()
+        except:
+            pass
     
     return fig
 
