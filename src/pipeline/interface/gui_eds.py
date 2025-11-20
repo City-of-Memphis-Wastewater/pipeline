@@ -12,11 +12,13 @@ from pipeline.server.trend_server_eds import launch_server_for_web_gui_eds_trend
 from pipeline.interface.utils import save_history, load_history
 
 """
-To force webmode in PowerShell:
+To force webmode or localmode in PowerShell:
 $env:PIPELINE_FORCE_WEB_GUI = 1
+$env:PIPELINE_FORCE_LOCAL_GUI = 1
 
-To force webmode in Bash:
+To force webmode or localmode in Bash:
 export PIPELINE_FORCE_WEB_GUI=1
+export PIPELINE_FORCE_LOCAL_GUI=1
 """
 
 
@@ -201,28 +203,56 @@ def launch_fsg()->None:
 
     window.close()
 
-def main(force_web:bool=False):
-    force_web_env_var = os.getenv('PIPELINE_FORCE_WEB_GUI', '').lower() in ('1', 'true', 'yes')
-    crossplatform_web_approach_required_and_available = pyhabitat.web_browser_is_available() and \
-                        ((pyhabitat.on_termux() or pyhabitat.on_ish_alpine()) or (not pyhabitat.tkinter_is_available()) or (force_web_env_var) or (force_web))
+def main(force_web:bool=False, force_local:bool=False):
+    """
+    If both force_local and force_web are specified (via args or env),
+    web mode is favored. Successfully forcing local mode results in a
+    failure message if it is not available in the environment.
+    """
 
-    if crossplatform_web_approach_required_and_available:
-        """
-        print("\nStreamlit and freesimpleguiweb have been rejected by the pipeline project.")
-        print("Why? Because these do not achieve cross-platform graphics.")
-        print("Remi is dead = freesimpleguiweb is dead.")
-        print("\nWe are going all the way through, to touch the back of the belly button.")
-        print("Pure web (vanilla HTML, Tailwind CSS, alpine.js, lowDB, Fast API, Flask).")
-        print("\nUltimately, for native, we will leave freesimplegui for Tauri.")
-        # Inside gui_eds.py main block, replace the old web logic:
-        print("\nSwitching to Pure Web (msgspec/Starlette/Alpine/Tailwind)...")
-        """
-        launch_server_for_web_gui_eds_trend_specific()
+    # 1. Resolve arguments and environment variables into final flags
+    # Centralize: Web wins over Local if both are set.
+    
+    # Get combined force flags (args OR env var)
+    force_local_combined = force_local or os.getenv('PIPELINE_FORCE_LOCAL_GUI', '').lower() in ('1', 'true', 'yes')
+    force_web_combined = force_web or os.getenv('PIPELINE_FORCE_WEB_GUI', '').lower() in ('1', 'true', 'yes')
+
+    # Resolve conflict: Web wins over Local
+    if force_local_combined and force_web_combined:
+        force_local_combined = False # Web is the winner
+
+    # 2. Define environmental availability
+    is_mobile_env = pyhabitat.on_termux() or pyhabitat.on_ish_alpine()
+    tkinter_available = pyhabitat.tkinter_is_available()
+    web_browser_available = pyhabitat.web_browser_is_available()
+
+    # 3. Decision Tree
+
+    # A. User forced local mode
+    if force_local_combined:
+        if is_mobile_env or not tkinter_available:
+            # Cannot succeed in this environment
+            print("You tried to force local web gui, but it cannot succeeed in the current environment.")
+            print(f"pyhabitat.tkinter_is_available() = {tkinter_available}")
+        else:
+            # Local is available and forced
+            launch_fsg()
+        return # Exit after attempting local force
+
+    # B. If not forced local, check if web is required or forced
+    web_required = is_mobile_env or not tkinter_available
+    
+    if force_web_combined or web_required:
+        if web_browser_available:
+            # Web is either required by environment OR explicitly requested
+            launch_server_for_web_gui_eds_trend_specific()
+        else:
+            print("Web GUI is required/forced but no web browser is available to launch it.")
+    
+    # C. Default: Local desktop mode
     else:
-        """
-        Use local GUI interface.
-        """
-        launch_fsg() # Use the desktop version
+        # Local GUI is available and no force flags were set.
+        launch_fsg()
 
 if __name__ == "__main__":
     main()    
