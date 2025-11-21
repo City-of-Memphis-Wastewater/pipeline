@@ -31,9 +31,9 @@ jobs:
     - name: Install main dependencies only (skip dev for speed/CI stability)
       run: poetry install --without dev  # ← This skips shiv entirely
 
-    - name: Lint with flake8 (optional — uncomment if ready)
+    #     - name: Lint with flake8 (optional — uncomment if ready)
       run: |
-        poetry run flake8 .  # or: poetry run ruff check . (faster alternative)
+    #         poetry run flake8 .  # or: poetry run ruff check . (faster alternative)
 
     - name: Run tests with pytest (optional — uncomment if ready)
       run: poetry run pytest tests/ -v --cov=pipeline --cov-report=term-missing
