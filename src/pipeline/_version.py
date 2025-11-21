@@ -1,4 +1,4 @@
-# Auto-generated version file – DO NOT EDIT
-__version__ = "0.3.68"
-__git__ = "1b55d3c"
-__build_time__ = "2025-11-15T08:03:10.886729"
+# Auto-generated
+__version__ = "0.3.76"
+__git__ = "073b4d8"
+__build_time__ = "2025-11-21T14:04:28.987918"

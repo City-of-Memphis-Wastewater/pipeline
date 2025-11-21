@@ -54,8 +54,10 @@ os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
 # ----------------------------------------------------------------------
 PROJECT_NAME = "pipeline-eds"
 ENTRY_POINT = "pipeline.cli:app"   # Your Typer/FastAPI entry point
-
-PROJECT_ROOT = Path(__file__).resolve().parents[1]   # repo root
+REPO_NAME = "pipeline"
+PROJECT_ROOT = Path(__file__).resolve().parent   # repo root
+while PROJECT_ROOT.name != REPO_NAME and PROJECT_ROOT != PROJECT_ROOT.parent:
+    PROJECT_ROOT = PROJECT_ROOT.parent
 SRC_PKG = PROJECT_ROOT / "src" / "pipeline"
 DIST_DIR = PROJECT_ROOT / "dist"
 #DIST_DIR = "dist"                  # All artifacts go here
