@@ -54,7 +54,11 @@ os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
 # ----------------------------------------------------------------------
 PROJECT_NAME = "pipeline-eds"
 ENTRY_POINT = "pipeline.cli:app"   # Your Typer/FastAPI entry point
-DIST_DIR = "dist"                  # All artifacts go here
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]   # repo root
+SRC_PKG = PROJECT_ROOT / "src" / "pipeline"
+DIST_DIR = PROJECT_ROOT / "dist"
+#DIST_DIR = "dist"                  # All artifacts go here
 PYTHON_BIN = sys.executable        # Use the current venv interpreter
 
 
@@ -422,9 +426,11 @@ def generate_macos_app(pyz: Path, app_dir: Path):
 # ----------------------------------------------------------------------
 # 11. METADATA STAMPING
 # ----------------------------------------------------------------------
-def write_version_file(dist_dir: Path):
+def write_version_file(src_pkg_dir: Path):
     """_version.py — for runtime inspection."""
-    file = dist_dir / "_version.py"
+    #file = dist_dir / "_version.py"
+    #file = Path("src") / "pipeline" / "_version.py" # hardcode until fixed
+    file = src_pkg_dir / "_version.py"
     ver = get_package_version()
     git = subprocess.getoutput("git rev-parse --short HEAD")
     ts = datetime.datetime.now().isoformat()
@@ -526,7 +532,7 @@ def main():
         if False:
             generate_macos_app(path, path.with_suffix(".app"))
 
-        write_version_file(dist_dir)
+        write_version_file(SRC_PKG_DIR)
 
         # --- 5. FINAL SUMMARY: Copy-paste ready ---
         print("\n" + "="*70)
