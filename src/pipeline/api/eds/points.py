@@ -1,5 +1,6 @@
 from __future__ import annotations
 import re
+import requests
 
 def get_point_live(session: requests.Session, iess: str) -> dict | None:
     api_url = str(session.base_url)
