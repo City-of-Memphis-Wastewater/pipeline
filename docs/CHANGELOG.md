@@ -6,6 +6,32 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 
 ---
 
+## [0.3.70] - 2025-11-21
+
+### Added
+- **Termux/mobile development workflow dramatically improved**
+  - Added `docs/termux_zshrc_nov2025` — complete zsh + Oh My Zsh config with ghost-text autosuggestions, clean prompt, and async performance
+  - Integrated `getnf` for instant Nerd Font installation (Hermit, Cascadia, 0xProto, 3270, etc.)
+  - Full mobile contributor onboarding path documented
+- **EDS client package migration started**
+  - New modular structure under `src/pipeline/api/eds/` (`client.py`, `session.py`, `exceptions.py`, `points.py`, `trend.py`)
+  - All `typer.Exit()` removed from library code → web server now survives off-VPN
+  - Introduced proper `EdsTimeoutError` / `EdsAuthError`
+  - Old monolithic `eds.py` preserved as `eds_legacy.py` during safe, incremental migration
+  - Grok needed to be continuously monitored and corrected for accuracy. Lots of hype. Example: `docs/by_grok_edited_clay.md`
+
+### Changed
+- Temporarily renamed new `/src/pipeline/api/eds/__init__.py` → `/src/pipeline/api/eds/hold__init__.py` to surface import gaps for zero-downtime migration
+
+### Fixed
+- Web GUI no longer crashes on connection timeout
+- CLI + web both fully functional during refactor
+
+### Learned
+- cat EOF blocks with no triple ticks is a great way to copy and paste code from an AI chat bot.
+
+---
+
 ## [0.3.69] - 2025-11-17
 
 ### Changed
