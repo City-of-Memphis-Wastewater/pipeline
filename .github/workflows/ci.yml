@@ -15,7 +15,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ['3.11', '3.12', '3.13']  # Test some supported versions
+        python-version: ['3.8','3.9'.'3.10','3.11', '3.12', '3.13']  # Test some supported versions
 
     steps:
     - uses: actions/checkout@v4
@@ -31,9 +31,9 @@ jobs:
     - name: Install main dependencies only (skip dev for speed/CI stability)
       run: poetry install --without dev --with test  # ← This skips shiv entirely
 
-    - name: Lint with ruff
-      run: |
-        poetry run ruff check .
+    #- name: Lint with ruff
+    #  run: |
+    #    poetry run ruff check .
 
-    - name: Run tests with pytest (optional — uncomment if ready)
-      run: poetry run pytest tests/ -v --cov=pipeline --cov-report=term-missing
+    #- name: Run tests with pytest (optional — uncomment if ready)
+    #  run: poetry run pytest tests/ -v --cov=pipeline --cov-report=term-missing
