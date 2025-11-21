@@ -532,7 +532,7 @@ def main():
         if False:
             generate_macos_app(path, path.with_suffix(".app"))
 
-        write_version_file(SRC_PKG_DIR)
+        write_version_file(SRC_PKG)
 
         # --- 5. FINAL SUMMARY: Copy-paste ready ---
         print("\n" + "="*70)
