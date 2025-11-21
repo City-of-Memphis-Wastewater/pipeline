@@ -126,15 +126,21 @@ class EdsClient:
             # --- Add custom session attributes to the session object ---
             session.base_url = api_credentials.get("url")
             session.zd = api_credentials.get("zd")
-        except Timeout:
-            typer.echo(
-                typer.style(
-                    "\nConnection to the EDS API timed out. Please check your VPN connection and try again.",
-                    fg=typer.colors.RED,
-                    bold=True,
-                )
-            )
-            raise typer.Exit(code=1)
+        #except Timeout:
+        #    typer.echo(
+        #        typer.style(
+        #            "\nConnection to the EDS API timed out. Please check your VPN connection and try again.",
+        #            fg=typer.colors.RED,
+        #            bold=True,
+        #        )
+        #    )
+        #    raise typer.Exit(code=1) #FIXME
+        # --- 
+        except requests.exceptions.ConnectTimeout:
+            error_msg = "Connection to the EDS API timed out. Please check your VPN connection and try again."
+            print(f"\n{error_msg}")
+            raise requests.exceptions.ConnectTimeout(error_msg)  # re-raise as normal exception
+
         except EdsLoginException as e:
             typer.echo(
                 typer.style(
@@ -143,7 +149,7 @@ class EdsClient:
                     bold=True,
                 )
             )
-            raise typer.Exit(code=1)
+            raise typer.Exit(code=1) #FIXME
         
         return session
     

@@ -18,7 +18,7 @@ from importlib import resources
 from typing import Dict, Any, List, Optional
 #from importlib.resources import files
 from importlib.resources import read_text
-
+import requests
 # Local imports
 from pipeline.core import eds as eds_core 
 from pipeline.interface.utils import save_history, load_history
