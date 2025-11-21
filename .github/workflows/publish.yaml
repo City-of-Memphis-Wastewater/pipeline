@@ -55,7 +55,9 @@ jobs:
         run: pip install dist/*.whl
 
       - name: Run package command
-        run: poetry run pipeline-package
+        run: |
+          poetry install
+          poetry run pipeline-package
 
       - name: Run tests
         # Run a command that would fail if the code is broken
