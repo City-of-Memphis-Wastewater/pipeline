@@ -35,7 +35,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
-    import zipfile
+import zipfile
 from pathlib import Path
 import re
 import toml
@@ -208,7 +208,7 @@ def build_wheel(dist_dir: Path, use_poetry: bool = True) -> Path:
         run_command(["poetry", "build", "-f", "wheel", "--output", str(dist_dir)])
     else:
         print("Building wheel with python -m build (no .pyc)…")
-        run_command([sys.executable, "-m", "build", "--wheel", "--output", str(dist_dir)])
+        run_command([sys.executable, "-m", "build", "--wheel", "--outdir", str(dist_dir)])
 
     wheels = list(dist_dir.glob("*.whl"))
     if not wheels:
