@@ -6,11 +6,7 @@ description = "A Python API pipeline library and CLI toolkit for Emerson Ovation
 authors = ["George Clayton Bennett <george.bennett@memphistn.gov>"]
 license = "MIT"
 readme = "README.md"
-packages = [
-    { include = "pipeline", from = "src" },
-#	{ include = "workspaces", from = "." }
-] # This makes `pipeline` available as an importable top-level module
-
+packages = [{ include = "pipeline", from = "src" }] # Enables `import pipeline`
 homepage = "https://github.com/city-of-memphis-wastewater/pipeline"
 repository = "https://github.com/city-of-memphis-wastewater/pipeline"
 include = [
@@ -19,7 +15,11 @@ include = [
     "src/pipeline/interface/web_gui/templates/**/*",
 ]
 
-
+[tool.poetry.package-data]
+"pipeline.interface.web_gui" = [
+    "static/**/*",
+    "templates/**/*"
+]
 
 # ---- Data that must be in wheels AND sdists ----
 #include = [
