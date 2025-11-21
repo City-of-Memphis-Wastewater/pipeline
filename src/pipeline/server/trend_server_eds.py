@@ -77,7 +77,7 @@ async def fetch_eds_trend(request: Request):
         # 1. Decode the JSON request body using msgspec
         body = await request.body()
         request_data: TrendRequest = msgspec.json.decode(body, type=TrendRequest)
-        
+    
     except msgspec.DecodeError as e:
         # Catch JSON decoding errors (malformed JSON or invalid types)
         raise HTTPException(status_code=400, detail={"error": f"Invalid request body format or types: {e}"})
@@ -127,20 +127,27 @@ async def fetch_eds_trend(request: Request):
             media_type="application/json",
             status_code=200
         )
+    # ←←← REPLACE EVERYTHING FROM HERE DOWN TO THE END OF THE FUNCTION ←←←
+
+    except requests.exceptions.ConnectTimeout:
+        error_msg = "Connection to the EDS API timed out. Please check your VPN connection and try again."
+        print(f"[EDS TREND SERVER] {error_msg}")
+        raise HTTPException(status_code=503, detail=error_msg)
 
     except BadParameter as e:
-        # Catch errors from core logic and raise Starlette's HTTPException
-        raise HTTPException(status_code=400, detail={"error": f"Input Error: {str(e).strip()}"})
-    
-    except CredentialsNotFoundError as e:
-        # Catch config errors and convert them to HTTP 400
-        print(f"SECURITY ERROR: {e}") 
-        raise HTTPException(status_code=400, detail={"error": f"Configuration Required: {str(e)}"})
-    
-    except Exception as e:
-        # Catch unexpected errors
-        raise HTTPException(status_code=500, detail={"error": f"Server Error (VPN/Core Issue): {str(e)}"})
+        raise HTTPException(status_code=400, detail=f"Input Error: {str(e).strip()}")
 
+    except CredentialsNotFoundError as e:
+        print(f"SECURITY ERROR: {e}")
+        raise HTTPException(status_code=400, detail=f"Configuration Required: {str(e)}")
+
+    except Exception as e:
+        error_msg = f"Unexpected error fetching trend data: {str(e)}"
+        print(f"[EDS TREND SERVER] {error_msg}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=error_msg)
+        
 # --- 3. API Endpoint for History ---
 
 async def get_history(request: Request):

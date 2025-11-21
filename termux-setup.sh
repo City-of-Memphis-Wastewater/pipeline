@@ -162,6 +162,7 @@ rm -f requirements-termux.txt
 rm -rf dist build # Clean up artifacts
 # The wheel file itself is still in the dist folder, or can be removed if desired.
 
+source .venv/bin/activate
 export PYTHONPATH=$(pwd)/src
 
 echo "✅ Termux setup complete. Venv active, dependencies filtered by .whl metadata."
