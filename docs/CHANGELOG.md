@@ -5,10 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is (read: strives to be) based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
+## [0.3.75] – 2025-11-21
 
-### [0.3.71] – 2025-11-21
+### Fixed:
+- **CI/CD Bug Hunt:** _version.py is now only generated into ./src/pipeline/, not ./dist/ - this is whete the currebt publish.yaml is failing to finalize the build for PyPI.
+---
 
-#### CI/CD & Dependency Management Overhaul
+## [0.3.71] – 2025-11-21
+
+### CI/CD & Dependency Management Overhaul
 
 - **Separated `dev` and `test` dependency groups** in `pyproject.toml`  
   The heavyweight build tools (`shiv`, `pyinstaller`, `pex`, etc.) are now isolated in `[tool.poetry.group.dev.dependencies]` while lightweight CI tooling (`pytest`, `pytest-cov`, `ruff`) lives in a dedicated `[tool.poetry.group.test.dependencies]`. This eliminates the long-standing `shiv` marker/version hell that was breaking CI on every runner.
