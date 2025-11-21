@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is (read: strives to be) based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
+
+## [0.3.76] – 2025-11-21
+
+### Changed:
+- Comment out package.py section in publish.yml. It is overkill.
+
+---
+
 ## [0.3.75] – 2025-11-21
 
 ### Fixed:
