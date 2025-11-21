@@ -15,11 +15,11 @@ include = [
     "src/pipeline/interface/web_gui/templates/**/*",
 ]
 
-[tool.poetry.package-data]
-"pipeline.interface.web_gui" = [
-    "static/**/*",
-    "templates/**/*"
-]
+#[tool.poetry.package-data]
+#"pipeline.interface.web_gui" = [
+#    "static/**/*",
+#    "templates/**/*"
+#]
 
 # ---- Data that must be in wheels AND sdists ----
 #include = [
