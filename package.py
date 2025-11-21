@@ -374,7 +374,6 @@ def build_shiv(wheel: Path, out_path: Path, entry: str):
     }
 
     run_command(cmd, env=env)
-    #run_command(cmd)
     out_path.chmod(0o755)
     print("shiv built – fast startup after first run")
 
@@ -384,6 +383,7 @@ def build_pex(clean_dir: Path, out_path: Path, entry: str):
     Build .pex — single-file executable.
     Why not on Termux?
         • Uses os.link() → fails on Android
+    Currently unused.
     """
     cmd = [
         sys.executable, "-m", "pex",

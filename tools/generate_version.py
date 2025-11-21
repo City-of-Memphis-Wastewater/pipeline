@@ -46,10 +46,5 @@ __build_time__ = "{now}"
     (SRC_PKG / "_version.py").write_text(content)
     print(f"Version file written to {SRC_PKG / '_version.py'}")
 
-    # 2. Also copy to dist/ for the release assets
-    DIST.mkdir(exist_ok=True)
-    (DIST / "_version.py").write_text(content)
-    print(f"Version file copied to {DIST / '_version.py'}")
-
 if __name__ == "__main__":
     main()

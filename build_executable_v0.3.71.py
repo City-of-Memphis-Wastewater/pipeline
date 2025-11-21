@@ -25,7 +25,7 @@ ARCH    = platform.machine().lower()
 NAME    = f"pipeline-eds-{VERSION}-{PY_TAG}-{OS_TAG}-{ARCH}"
 
 def clean():
-    for item in ("build", f"{NAME}.spec"):
+    for item in ("build", "dist", f"{NAME}.spec"):
         p = Path(item)
         if p.exists():
             if p.is_dir():
