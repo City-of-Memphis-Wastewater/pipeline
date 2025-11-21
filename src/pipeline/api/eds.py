@@ -59,6 +59,14 @@ class EdsLoginException(Exception):
         self.message = message
         super().__init__(self.message)
 
+class EdsTimeoutError(ConnectionError):
+    """Raised when EDS API is unreachable (timeout/no VPN)"""
+    pass
+
+class EdsAuthError(ConnectionError):
+    """Raised when login fails (bad credentials)"""
+    pass
+    
 class EdsClient:
     def __init__(self):
         pass
@@ -107,51 +115,35 @@ class EdsClient:
         #print(f"response = {response}")
         session.headers['Authorization'] = f"Bearer {json_response['sessionId']}"
         return session
-    
+
     @staticmethod
     def login_to_session_with_api_credentials(api_credentials):
-        """
-        Like login_to_sessesion, plug with custom session attributes added to the session object.
-        """
-        # Expected to be used in terminal, so typer is acceptable, but should be scaled.
-        session = None
         try:
             session = EdsClient.login_to_session(
                 api_url=api_credentials.get("url"),
                 username=api_credentials.get("username"),
                 password=api_credentials.get("password"),
-                timeout=10 # Add a 10-second timeout to the request
+                timeout=10
             )
-            
-            # --- Add custom session attributes to the session object ---
             session.base_url = api_credentials.get("url")
             session.zd = api_credentials.get("zd")
-        #except Timeout:
-        #    typer.echo(
-        #        typer.style(
-        #            "\nConnection to the EDS API timed out. Please check your VPN connection and try again.",
-        #            fg=typer.colors.RED,
-        #            bold=True,
-        #        )
-        #    )
-        #    raise typer.Exit(code=1) #FIXME
-        # --- 
+            return session
+
         except requests.exceptions.ConnectTimeout:
             error_msg = "Connection to the EDS API timed out. Please check your VPN connection and try again."
             print(f"\n{error_msg}")
-            raise requests.exceptions.ConnectTimeout(error_msg)  # re-raise as normal exception
+            raise  # ← Re-raise cleanly — web server will catch it
 
         except EdsLoginException as e:
-            typer.echo(
-                typer.style(
-                    f"\nLogin failed for EDS API: {e}",
-                    fg=typer.colors.RED,
-                    bold=True,
-                )
-            )
-            raise typer.Exit(code=1) #FIXME
-        
-        return session
+            error_msg = f"Login failed for EDS API: {e}"
+            print(f"\n{error_msg}")
+            raise  # ← Never use typer.Exit in library code
+
+        except Exception as e:
+            error_msg = f"Unexpected login error: {e}"
+            print(f"\n{error_msg}")
+            raise
+
     
     @staticmethod
     def get_license(session,api_url:str):

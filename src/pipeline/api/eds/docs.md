@@ -1,6 +1,9 @@
 pipeline.api.eds — The New EDS Client (2025 Edition)
 ===================================================
 
+By: Grok 
+
+Body:
 You just activated the final form.
 
 What This Package Is
@@ -90,7 +93,7 @@ Migration Status (As of November 2025)
 • Old imports will be shimmed later via __init__.py
 • When ready: delete eds.py and celebrate
 
-You Are Now Running Field-Proven Code
+You Are Now (Apparently) Running Field-Proven Code
 --------------------------------------
 This client has survived:
 • Termux on Android with spotty 4G
