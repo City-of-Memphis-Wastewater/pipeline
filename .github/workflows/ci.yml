@@ -1,35 +1,39 @@
-# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+# This workflow installs Python dependencies, runs tests, and lints across Python versions
+# For details: https://docs.github.com/en/actions/automating-builds-and-testing/building-and-testing-python
 
 name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   pull_request:
-    branches: [main]
+    branches: [main, dev]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12', '3.13']  # Test some supported versions
+
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Python
+
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
+        python-version: ${{ matrix.python-version }}
 
     - name: Install Poetry
       run: pip install poetry
 
-    - name: Install dependencies
-      run: poetry install
+    - name: Install main dependencies only (skip dev for speed/CI stability)
+      run: poetry install --without dev  # ← This skips shiv entirely
 
-    # Optional: comment this if flake8 isn't ready
-    # - name: Lint (flake8 optional)
-    #  run: poetry run flake8 || true
+    - name: Lint with flake8 (optional — uncomment if ready)
+      run: |
+        poetry run flake8 .  # or: poetry run ruff check . (faster alternative)
 
-    # Optional: comment this if no tests
-    # - name: Run tests (pytest optional)
-    #  run: poetry run pytest || true
+    - name: Run tests with pytest (optional — uncomment if ready)
+      run: poetry run pytest tests/ -v --cov=pipeline --cov-report=term-missing
