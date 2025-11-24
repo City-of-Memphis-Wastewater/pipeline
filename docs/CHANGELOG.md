@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is (read: strives to be) based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+
+---
+
+## [0.3.80] – 2025-11-24
+### Fix get_prompt_manager() -> PromptManager
+
 ---
 
 ## [0.3.78] – 2025-11-23
