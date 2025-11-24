@@ -43,6 +43,9 @@ build/
 version.rc
 *.pyz
 
+# Jupyter Lab
+.ipynb_checkpoints/
+
 # Tauri
 # Rust / Cargo
 **/target/
