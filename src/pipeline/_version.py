@@ -1,4 +1,4 @@
 # Auto-generated
-__version__ = "0.3.76"
-__git__ = "073b4d8"
-__build_time__ = "2025-11-21T14:04:28.987918"
+__version__ = "0.3.78"
+__git__ = "b1f38af"
+__build_time__ = "2025-11-23T23:46:50.676190"

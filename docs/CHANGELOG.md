@@ -6,6 +6,16 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 
 ---
 
+## [0.3.78] – 2025-11-23
+
+### Added:
+- Lots of Grok-generated files added including the node red flows.
+
+### Fixed:
+- On Termux we had attempted to set us a vs code dev environment. This was accidentally commited. It has to be forcibly untracked, with history cleaned. This caused a merge challege on the Ubuntu dev environment. 
+
+---
+
 ## [0.3.76] – 2025-11-21
 
 ### Changed:
@@ -16,7 +26,7 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 ## [0.3.75] – 2025-11-21
 
 ### Fixed:
-- **CI/CD Bug Hunt:** _version.py is now only generated into ./src/pipeline/, not ./dist/ - this is whete the currebt publish.yaml is failing to finalize the build for PyPI.
+- **CI/CD Bug Hunt:** _version.py is now only generated into ./src/pipeline/, not ./dist/ - this is whete the current publish.yaml is failing to finalize the build for PyPI.
 ---
 
 ## [0.3.71] – 2025-11-21
