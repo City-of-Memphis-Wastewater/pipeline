@@ -1441,7 +1441,8 @@ def demo_eds_webplot_point_live():
     collector_thread.start()
 
     # Now run the GUI in the main thread
-    gui_starlette_msgspec_plotly.run_gui(data_buffer)
+    if False:
+        gui_starlette_msgspec_plotly.run_gui(data_buffer, port=find_open_port(8082))
 
 @log_function_call(level=logging.DEBUG)    
 def demo_eds_plot_trend():
