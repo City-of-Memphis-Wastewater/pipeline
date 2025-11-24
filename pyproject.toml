@@ -103,7 +103,7 @@ pendulum = [
 
 plotly = "^6.2.0"
 
-pyhabitat = "^1.0.35"	
+pyhabitat = "^1.0.40"	
 pyodbc = { version = "^5.1.0", optional = true }
 pyyaml = ">=6.0.2,<7.0.0"
 requests = ">=2.32.3,<3.0.0"
@@ -147,6 +147,7 @@ uvicorn = [
     { version = "^0.34.3", python = ">=3.9" },
     { version = "^0.33.0", python = "3.8.*" },
 ]
+python-multipart = "^0.0.20"
 
 [tool.poetry.dependencies."backports.zoneinfo"] # known poetry quirk necessary when freezing, a la "poetry export -f requirements.txt --without-hashes > requirements.txt"
 version = "^0.2.1"
