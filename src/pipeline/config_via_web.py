@@ -5,7 +5,7 @@ import urllib.parse
 from typing import Any
 
 from pipeline.server.web_utils import launch_browser, is_server_running
-from pipeline.server.config_server import get_prompt_manager, run_config_server_in_thread # Import the getter
+from pipeline.server.config_server import run_config_server_in_thread # Import the getter
 from pipeline.cli import GLOBAL_SHUTDOWN_EVENT
 # Import the launch function (Assuming you can import it or pass it)
 # Assuming 'launch_server_for_web_gui' is available in the module that imports config_via_web

@@ -50,6 +50,12 @@ app = Starlette(debug=True, middleware=middleware)
 # Attach the manager instance to the app state for easy access via request
 app.state.prompt_manager = prompt_manager
 
+
+# ADD a simple export function (synchronous)
+def get_prompt_manager() -> PromptManager:
+    """Returns the globally initialized PromptManager instance."""
+    return prompt_manager
+
 # --- 4. Configuration Input Endpoints ---
 
 async def serve_config_modal_html(request: Request):
@@ -83,7 +89,8 @@ async def serve_config_modal_html(request: Request):
             status_code=500, 
             detail=f"An error occurred while serving the config modal: {e}"
         )
-    
+
+
 async def get_active_prompt(request: Request):
     """
     Handles GET /api/get_active_prompt.
@@ -167,3 +174,4 @@ def run_config_server_in_thread(host: str = "127.0.0.1", port: int = 8083) -> th
     
     time.sleep(0.5) 
     return server_thread
+
