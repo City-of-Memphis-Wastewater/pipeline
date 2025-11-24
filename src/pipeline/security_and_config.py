@@ -521,7 +521,7 @@ def get_eds_local_db_credentials(plant_name: str, overwrite: bool = False) -> Di
 def get_configurable_default_plant_name(overwrite=False) -> str :
     '''Comma separated list of plant names to be used as the default if none is provided in other commands.'''
     plant_name = SecurityAndConfig.get_config_with_prompt(config_key = f"configurable_plantname_eds_api", prompt_message = f"Enter plant name(s) to be used as the default", overwrite=overwrite)
-    if ',' in plant_name:
+    if plant_name is not None and ',' in plant_name:
         plant_names = plant_name.split(',')
         return plant_names
     else:
