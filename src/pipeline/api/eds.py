@@ -24,6 +24,7 @@ from pipeline.time_manager import TimeManager
 from pipeline.security_and_config import SecurityAndConfig, get_base_url_config_with_prompt
 #from pipeline.variable_clarity_grok import Redundancy
 from pipeline.variable_clarity import Redundancy
+from pipeline.api.eds_.exceptions import EdsLoginException, EdsTimeoutError, EdsAuthError
  
 #_get_credential_with_prompt, 
 # 
@@ -41,32 +42,6 @@ else:
 logger = logging.getLogger(__name__)
 #logger.setLevel(logging.INFO)
 
-class EdsLoginException(Exception):
-    """
-    Custom exception raised when a login to the EDS API fails.
-
-    This exception is used to differentiate between a simple network timeout
-    and a specific authentication or API-related login failure.
-    """
-
-    def __init__(self, message: str = "Login failed for the EDS API. Check VPN and credentials."):
-        """
-        Initializes the EdsLoginException with a custom message.
-
-        Args:
-            message: A descriptive message for the error.
-        """
-        self.message = message
-        super().__init__(self.message)
-
-class EdsTimeoutError(ConnectionError):
-    """Raised when EDS API is unreachable (timeout/no VPN)"""
-    pass
-
-class EdsAuthError(ConnectionError):
-    """Raised when login fails (bad credentials)"""
-    pass
-    
 class EdsClient:
     def __init__(self):
         pass
@@ -237,7 +212,6 @@ class EdsClient:
 
 
     @staticmethod
-    #def get_points_export(session,filter_iess:str=''):
     def get_points_export(session,filter_iess: list=None, zd: str =None) -> str: 
         """
         Retrieves point metadata from the API, filtering by a list of IESS values.
@@ -362,8 +336,7 @@ class EdsClient:
 
     
     @staticmethod
-    #def create_tabular_request(session: object, api_url: str, starttime: int, endtime: int, points: list):
-    def create_tabular_request_(session, api_url, starttime, endtime, points, step_seconds = 300):
+    def create_tabular_request_(session: requests.Session, api_url: str, starttime: int, endtime: int, points: list, step_seconds: int = 300):
         
         data = {
             'period': {
@@ -388,7 +361,7 @@ class EdsClient:
             #print(f"response = {response}")
 
     @staticmethod
-    def create_tabular_request(session, api_url, starttime, endtime, points, step_seconds=300):
+    def create_tabular_request(session: requests.Session, api_url: str, starttime: int, endtime: int, points: list, step_seconds: int = 300):
         """
         Submit a tabular trend request. Returns request id on success, or None if failed.
         """

@@ -14,6 +14,7 @@ from pipeline.workspace_manager import WorkspaceManager
 from pipeline.queriesmanager import QueriesManager
 from pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_col
 from pipeline.time_manager import TimeManager
+from pipeline.security_and_config import SecurityAndConfig
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)

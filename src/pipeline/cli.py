@@ -37,7 +37,7 @@ from pipeline.version_info import  PIP_PACKAGE_NAME, PIPELINE_VERSION, __version
 # This runs on every command (including --version and --help or without sub commands), 
 # but the function's internal logic
 # ensures the shortcut file is only created once in the Termux environment.
-#-- SUPPRESS with "False and" as of 0.3.53 - automaic installation on every run is invasive and is annyoring for troubleshooting, like if the user changes the .shortcut/filename
+#-- SUPPRESS with "False and" as of 0.3.53 - automatic installation on every run is invasive and is annoying for troubleshooting, like if the user changes the .shortcut/filename
 #-- user may directly run 'install' command
 if False and ph.on_termux():
     setup_termux_integration()
