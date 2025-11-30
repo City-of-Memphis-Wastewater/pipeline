@@ -371,7 +371,8 @@ def build_shiv(wheel: Path, out_path: Path, entry: str):
         "-o", str(out_path),
         "-p", "/usr/bin/env python3",
         "--compressed",
-        "--no-cache"  # Don't bake .pyc — cache at runtime
+        "--no-cache",  # Don't bake .pyc — cache at runtime
+        "--", "--no-binary=msgspec"
     ]
     env = {
         "PIP_PROGRESS_BAR": "on",
