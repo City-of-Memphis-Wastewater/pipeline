@@ -39,6 +39,7 @@ class EdsSoapClient:
     def soap_api_iess_request_tabular(cls, plant_name: str | None= None, idcs: list[str] | None = None):
         
         from pipeline.api.eds.soap.config import get_eds_soap_api_url
+        from pipeline.api.eds.config import get_service_name
 
         tabular_data = None
         soapclient = None
@@ -48,7 +49,7 @@ class EdsSoapClient:
         if plant_name is None:
             plant_name = SecurityAndConfig.get_configurable_default_plant_name()
         print(f"plant_name = {plant_name}")
-        service_name = EdsRestClient.get_service_name(plant_name = plant_name) # for secure credentials
+        service_name = get_service_name(plant_name = plant_name) # for secure credentials
     
         if idcs is None:
             if use_default_idcs:
@@ -72,8 +73,8 @@ class EdsSoapClient:
         #session = EdsRestClient.login_to_session_with_api_credentials(api_credentials)
         
         eds_soap_api_url = get_eds_soap_api_url(base_url = base_url, 
-                                                      eds_soap_api_port = eds_soap_api_port, 
-                                                      eds_soap_api_sub_path = eds_soap_api_sub_path)
+                                                eds_soap_api_port = eds_soap_api_port, 
+                                                eds_soap_api_sub_path = eds_soap_api_sub_path)
         if eds_soap_api_url is None:
             logging.info("Not enough information provided to build: eds_soap_api_url.")
             logging.info("Please rerun your last command or try something else.")
@@ -247,6 +248,7 @@ class EdsSoapClient:
     def soap_api_iess_request_single(plant_name: str|None, idcs:list[str]|None):
 
         from pipeline.api.eds.soap.config import get_eds_soap_api_url
+        from pipeline.api.eds.config import get_service_name
         # --- Initialize vars ---
         soapclient = None
         authstring = None
@@ -255,7 +257,7 @@ class EdsSoapClient:
         if plant_name is None:
             plant_name = SecurityAndConfig.get_configurable_default_plant_name()
 
-        service_name = EdsRestClient.get_service_name(plant_name = plant_name) # for secure credentials
+        service_name = get_service_name(plant_name = plant_name) # for secure credentials
         base_url = get_base_url_config_with_prompt(service_name=f"{plant_name}_eds_base_url", prompt_message=f"Enter {plant_name} EDS base url (e.g., http://000.00.0.000, or just 000.00.0.000)")
         if base_url is None: return
         username = SecurityAndConfig.get_credential_with_prompt(service_name, "username", f"Enter your EDS API username for {plant_name} (e.g. admin)", hide=False)

@@ -1,3 +1,11 @@
+# src/pipeline/api/eds/soap/config.py
+from __future__ import annotations
+from typing import Dict
+import logging
+
+from pipeline.security_and_config import SecurityAndConfig, get_base_url_config_with_prompt, not_enough_info
+from pipeline.variable_clarity import Redundancy
+
 def get_eds_soap_api_credentials(plant_name: str, overwrite: bool = False, forget: bool = False) -> Dict[str, str]:
     """Retrieves API credentials for a given plant, prompting if necessary."""
   
@@ -18,7 +26,7 @@ def get_eds_soap_api_credentials(plant_name: str, overwrite: bool = False, forge
     eds_soap_api_sub_path = eds_soap_api_sub_path
 
     # Comparable SOAP API function, for documentation:
-    eds_soap_api_url = get_soap_api_url(base_url = eds_base_url,
+    eds_soap_api_url = get_eds_soap_api_url(base_url = eds_base_url,
                                                     eds_soap_api_port = str(eds_soap_api_port),
                                                     eds_soap_api_sub_path = eds_soap_api_sub_path)
     if eds_soap_api_url is None:
@@ -35,7 +43,7 @@ def get_eds_soap_api_credentials(plant_name: str, overwrite: bool = False, forge
         # or be prompted just-in-time as we discussed previously.
     }
     
-@Redundancy.set_on_return_hint(recipient=None,attribute_name="eds_soap_api_url")
+#@Redundancy.set_on_return_hint(recipient=None,attribute_name="eds_soap_api_url")
 def get_eds_soap_api_url(base_url: str | None = None,
                 eds_soap_api_port: int | None = 43080, 
                 eds_soap_api_sub_path: str | None = 'eds.wsdl', 
@@ -59,7 +67,7 @@ def get_eds_soap_api_url(base_url: str | None = None,
     if base_url and str(eds_soap_api_port) and eds_soap_api_sub_path:
         soap_api_url = base_url + ":" + str(eds_soap_api_port) + "/" + eds_soap_api_sub_path
     else:
-        logging.info("EdsRestClient.get_eds_soap_api_url() returns None due to incomplete information.")
+        logging.info("get_eds_soap_api_url() returns None due to incomplete information.")
         return None
     """
     Stash soap_api_url as a class variable. 

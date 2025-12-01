@@ -1,5 +1,6 @@
 from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
 import logging
+
 logger = logging.getLogger(__name__)
 
 from pipeline.decorators import log_function_call
