@@ -1,5 +1,12 @@
-from suds.client import Client as SudsClient
+from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9import time
+import sys
+import logging
+import time
+from suds.client import Client as SudsClient # uses suds-py3
 
+from pipeline.api.eds.rest.client import EdsRestClient
+from pipeline.security_and_config import SecurityAndConfig, get_base_url_config_with_prompt
+from pipeline.variable_clarity import Redundancy
 class EdsSoapClient:
     def __init__(self):
         pass
