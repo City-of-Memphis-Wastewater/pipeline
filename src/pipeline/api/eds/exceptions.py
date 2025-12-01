@@ -37,3 +37,13 @@ class EdsLoginException(Exception):
         self.message = message
         super().__init__(self.message)
 
+@staticmethod
+    def connection_error_message(e, url)-> None:
+        print(f"\n--- AN ERROR OCCURRED ---")
+        print(e)
+        print("\nPlease check:")
+        print(f"1. Is the IP address {url} correct and reachable?")
+        print("2. Is the EDS server running?")
+        print("3. Are your username and password correct?")
+        return None
+    

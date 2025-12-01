@@ -372,7 +372,9 @@ def build_shiv(wheel: Path, out_path: Path, entry: str):
         "-p", "/usr/bin/env python3",
         "--compressed",
         "--no-cache",  # Don't bake .pyc — cache at runtime
-        "--", "--no-binary=msgspec"
+        "--", "--no-binary=msgspec" # this can only call pip for handling requirements.txt, and does nothing with wheels
+        # we need a way to generate a requirements.txt from the pyproject.toml or to use the pyroject.toml directly
+        # Usually, using the pyproject.toml directly means generating a wheel - so, the wheel must be cross-platform.
     ]
     env = {
         "PIP_PROGRESS_BAR": "on",

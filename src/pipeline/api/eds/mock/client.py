@@ -3,7 +3,7 @@ from contextlib import contextmanager
 from .session import login_to_session_with_credentials
 from .exceptions import EdsTimeoutError
 
-class EdsClient:
+class EdsRestClient:
     def __init__(self, credentials: dict):
         self.credentials = credentials
         self.session = None

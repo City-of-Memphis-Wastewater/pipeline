@@ -27,7 +27,7 @@ This package does one thing per file — correctly.
 Goals Achieved:
 • Zero process-killing exceptions in library code
 • Consistent error messages across CLI and web
-• Full context manager support (with EdsClient(...) as session:)
+• Full context manager support (with EdsRestClient(...) as session:)
 • Backward compatible during migration (old eds.py stays untouched)
 • Ready for 100+ plants, multi-session, parallel collection
 
@@ -42,7 +42,7 @@ Core Rules (Non-Negotiable)
 Current Public API (import these)
 ---------------------------------
 from pipeline.api.eds import (
-    EdsClient,           # Main class — use with context manager
+    EdsRestClient,           # Main class — use with context manager
     EdsTimeoutError,     # No VPN / server down
     EdsAuthError,        # Bad password
     EdsAPIError,         # Everything else
@@ -60,7 +60,7 @@ Usage — CLI or Web (Identical Behavior)
 ---------------------------------------
 creds = get_api_credentials("Maxson")   # from your security module
 
-with EdsClient(creds) as session:
+with EdsRestClient(creds) as session:
     live = get_point_live(session, "M310LI.UNIT0@NET0")
     history = load_historic_data(
         session=session,
@@ -76,7 +76,7 @@ Your web server catches it → returns 503 → stays alive → you win
 File Map (What Goes Where)
 --------------------------
 __init__.py      → Public API surface
-client.py        → EdsClient class + context manager
+client.py        → EdsRestClient class + context manager
 session.py       → login logic (no CLI junk)
 exceptions.py    → Proper exception hierarchy
 points.py        → Live values, export, metadata parsing

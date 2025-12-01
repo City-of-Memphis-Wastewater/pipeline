@@ -6,7 +6,7 @@ import logging
 import csv
 from datetime import datetime
 
-from pipeline.api.eds import EdsClient, identify_relevant_tables
+from pipeline.api.eds import EdsRestClient, identify_relevant_tables
 from pipeline.api.rjn import RjnClient
 from pipeline import helpers
 from pipeline.env import SecretConfig
@@ -54,7 +54,7 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
 
     # --- Prepare Maxson session_eds
     base_url_maxson = secrets_dict.get("eds_apis", {}).get("Maxson", {}).get("url").rstrip("/")
-    session_maxson = EdsClient.login_to_session(api_url = base_url_maxson,
+    session_maxson = EdsRestClient.login_to_session(api_url = base_url_maxson,
                                                 username = secrets_dict.get("eds_apis", {}).get("Maxson", {}).get("username"),
                                                 password = secrets_dict.get("eds_apis", {}).get("Maxson", {}).get("password"))
     session_maxson.base_url = base_url_maxson
@@ -67,7 +67,7 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
         # REST API access fails due to firewall blocking the port
         # So, alternatively, if this fails, encourage direct MariaDB access, with files at E:\SQLData\stiles\
         base_url_stiles = secrets_dict.get("eds_apis", {}).get("WWTP", {}).get("url").rstrip("/")
-        session_stiles = EdsClient.login_to_session(api_url = base_url_stiles,
+        session_stiles = EdsRestClient.login_to_session(api_url = base_url_stiles,
                                                     username = secrets_dict.get("eds_apis", {}).get("WWTP", {}).get("username"),
                                                     password = secrets_dict.get("eds_apis", {}).get("WWTP", {}).get("password"))
         session_stiles.base_url = base_url_stiles
@@ -110,21 +110,20 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
         rjn_entityid_list = [row['rjn_entityid'] for row in queries_defaultdictlist_grouped_by_session_key.get(key_eds,[])]
         
         
-        if session_eds is None and not EdsClient.this_computer_is_an_enterprise_database_server(secrets_dict, key_eds):
+        if session_eds is None and not EdsRestClient.this_computer_is_an_enterprise_database_server(secrets_dict, key_eds):
             logger.warning(f"Skipping EDS session for {key_eds} — session_eds is None and this computer is not an enterprise database server.")
             continue
         
         # Fallback, if API Access fails.
-        if session_eds is None and EdsClient.this_computer_is_an_enterprise_database_server(secrets_dict, key_eds):
+        if session_eds is None and EdsRestClient.this_computer_is_an_enterprise_database_server(secrets_dict, key_eds):
             relevant_tables = identify_relevant_tables(key_eds, starttime_ts, endtime_ts, secrets_dict)
-            results = EdsClient.access_database_files_locally(key_eds, starttime_ts, endtime_ts, point=point_list_sid, tables=relevant_tables)
+            results = EdsRestClient.access_database_files_locally(key_eds, starttime_ts, endtime_ts, point=point_list_sid, tables=relevant_tables)
         else:
             api_url = session_eds.base_url
-            request_id = EdsClient.create_tabular_request(session_eds, api_url, starttime_ts, endtime_ts, points=point_list)
+            request_id = EdsRestClient.create_tabular_request(session_eds, api_url, starttime_ts, endtime_ts, points=point_list)
             logger.info(f"request_id = {request_id}")
-            EdsClient.wait_for_request_execution_session(session_eds, api_url, request_id)
-            results = EdsClient.get_tabular_trend(session_eds, request_id, point_list)
-            #results = EdsClient.get_tabular_mod(session_eds, request_id, point_list)
+            EdsRestClient.wait_for_request_execution_session(session_eds, api_url, request_id)
+            results = EdsRestClient.get_tabular_trend(session_eds, request_id, point_list)
             session_eds.post(f'{api_url}/logout', verify=False)
         #print(f"len(results) = {len(results)}")
         
@@ -140,7 +139,7 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
             
             for row in results[idx]:
                 #print(f"row = {row}")
-                #EdsClient.print_point_info_row(row)
+                #EdsRestClient.print_point_info_row(row)
 
                 dt = datetime.fromtimestamp(row["ts"])
                 timestamp_str = helpers.round_datetime_to_nearest_past_five_minutes(dt).isoformat(timespec='seconds')
@@ -179,33 +178,15 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
                     print("[TEST] RjnClient.send_data_to_rjn() skipped")
             
                     
-def setup_schedules():
-    """
-    Defunct. Use Microsoft Task Scheduler to call iterative runs.
-    """
-    testing = False
-    if not testing:
-        schedule.every().hour.do(run_hourly_tabular_trend_eds_to_rjn)
-    else:
-        schedule.every().second.do(run_hourly_tabular_trend_eds_to_rjn)
+
 
 def main():
     #logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-    task_scheduler_is_ready_to_handle_hourly_task_scheduling = True
-    if task_scheduler_is_ready_to_handle_hourly_task_scheduling:
-        run_hourly_tabular_trend_eds_to_rjn()
-    else:
-        setup_schedules()
 
-def start_daemon():
-    """
-    Defunct. Use Microsoft Task Scheduler to call iterative runs.
-    """
-    logging.info(f"Daemon started at {datetime.now()} and running...")
-    setup_schedules()
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
+    run_hourly_tabular_trend_eds_to_rjn()
+
+
+
 
 if __name__ == "__main__":
     import sys

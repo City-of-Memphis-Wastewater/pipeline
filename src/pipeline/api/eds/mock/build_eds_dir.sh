@@ -8,13 +8,13 @@ This package replaces the legacy monolithic eds.py while maintaining full
 backward compatibility during migration.
 
 Public API:
-    EdsClient           - Main class (context manager, REST + SOAP)
+    EdsRestClient           - Main class (context manager, REST + SOAP)
     EdsTimeoutError     - VPN/no connection
     EdsAuthError        - Bad credentials
     EdsAPIError         - General API failure
 """
 
-from .client import EdsClient
+from .client import EdsRestClient
 from .exceptions import EdsTimeoutError, EdsAuthError, EdsAPIError
 from .session import login_to_session, login_to_session_with_credentials
 from .points import get_point_live, get_points_export, get_points_metadata
@@ -22,7 +22,7 @@ from .trend import load_historic_data
 from .graphics import export_graphic, save_graphic
 
 __all__ = [
-    "EdsClient",
+    "EdsRestClient",
     "EdsTimeoutError",
     "EdsAuthError",
     "EdsAPIError",
@@ -103,7 +103,7 @@ from contextlib import contextmanager
 from .session import login_to_session_with_credentials
 from .exceptions import EdsTimeoutError
 
-class EdsClient:
+class EdsRestClient:
     def __init__(self, credentials: dict):
         self.credentials = credentials
         self.session = None
@@ -197,19 +197,19 @@ The original `eds.py` became a 1500-line monolith. This package:
 1. **Never use `typer.Exit()` in library code** → web server stays alive
 2. **All connection errors → `EdsTimeoutError`**
 3. **All auth errors → `EdsAuthError`**
-4. **Context manager (`with EdsClient(...)`) is preferred**
+4. **Context manager (`with EdsRestClient(...)`) is preferred**
 5. **Old `eds.py` remains untouched until full migration**
 
 ## Usage Examples
 
 ```python
 # CLI or web — both work perfectly
-from pipeline.api.eds import EdsClient
+from pipeline.api.eds import EdsRestClient
 from pipeline.security_and_config import get_api_credentials
 
 creds = get_api_credentials("Maxson")
 
-with EdsClient(creds) as session:
+with EdsRestClient(creds) as session:
     point = session.get_point_live("M100FI.UNIT0@NET0")
     data = session.load_historic_data(["M100FI...", "M310LI..."], "7d")
 ```

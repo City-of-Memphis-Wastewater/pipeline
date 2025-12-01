@@ -16,6 +16,6 @@ When ready, add this to `src/pipeline/api/__init__.py`:
 
 ```python
 # Backward compatibility — remove when migration complete
-from ..api.eds import EdsClient, EdsTimeoutError, EdsAuthError
+from ..api.eds import EdsRestClient, EdsTimeoutError, EdsAuthError
 ```
 

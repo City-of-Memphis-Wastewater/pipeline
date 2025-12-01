@@ -7,7 +7,7 @@ The original hype version of this file was 90 % enthusiastic fiction.
 Here is the truth.
 
 This package is the first step toward replacing a 1500-line eds.py monolith that has been growing since mid-2024.  
-The architecture of EdsClient (context manager, session handling, credential injection) was designed and iteratively improved by Clayton Bennett over many months, not in "two intense days".  
+The architecture of EdsRestClient (context manager, session handling, credential injection) was designed and iteratively improved by Clayton Bennett over many months, not in "two intense days".  
 Most of the logic is derived directly from Emerson Ovation EDS official REST and SOAP documentation, plus years of trial-and-error in the plants.
 
 Grok’s actual contributions (November 2025)

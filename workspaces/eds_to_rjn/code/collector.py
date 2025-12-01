@@ -2,10 +2,11 @@
 from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
 from datetime import datetime
 import logging
+
 logger = logging.getLogger(__name__)
 
 from pipeline.helpers import round_datetime_to_nearest_past_five_minutes
-from pipeline.api.eds import EdsClient
+from pipeline.api.eds import EdsRestClient
 
 
 def collect_live_values(session, queries_dictlist_filtered_by_session_key):   
@@ -34,7 +35,7 @@ def collect_live_values(session, queries_dictlist_filtered_by_session_key):
             continue
         
         try:
-            point_data = EdsClient.get_points_live_mod(session, iess)
+            point_data = EdsRestClient.get_points_live(session, iess)
             if point_data is None:
                 print(f"No data returned for iess={iess}")
                 continue
