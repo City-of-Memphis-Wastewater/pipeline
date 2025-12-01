@@ -62,7 +62,7 @@ def fetch_trend_data(
     default_idcs: bool = False
 ) -> tuple[PlotBuffer, list[str]]:
     """
-    Core logic to fetch trend data from EDS API.
+    Core logic to fetch trend data from EDS REST API.
     Returns a populated PlotBuffer and the list of IESS names used.
     """
     # 1. Resolve Plant Name
