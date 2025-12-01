@@ -4,9 +4,15 @@ Moving these means that the references must be changed for the currently running
 However, this should become a non-issue once we call the EDS SOAP API instead of the REST API or the local db files. 
 """
 from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
+import logging
+import typer
+import pyhabitat as ph
 
+from pipeline.api.eds.rest.client import EdsRestClient
+from pipeline.decorators import log_function_call
 
-if on_windows():
+logger = logging.getLogger(__name__)
+if ph.on_windows():
     import mysql.connector
 else:
     pass
@@ -15,22 +21,15 @@ else:
 def _get_eds_local_db_credentials(service_name = "pipeline-eds-local-database",item_name = "eds_dbs") -> dict:
         return {}
     
-    @staticmethod
-    #def access_database_files_locally(
-    #    session_key: str,
-    #    starttime: int,
-    #    endtime: int,
-    #    point: list[int],
-    #    tables: list[str] | None = None
-    #) -> list[list[dict]]:
 def access_database_files_locally(
-    session_key,
-    starttime,
-    endtime,
-    point,
-    tables
-):
-    from pipeline.api.eds.alarm import decode_stat
+    session_key: str,
+    starttime: int,
+    endtime: int,
+    point: list[int],
+    tables: list[str] | None = None
+) -> list[list[dict]]:
+
+    from pipeline.api.eds.rest.alarm import decode_stat
     """
     Access MariaDB data directly by querying all MyISAM tables with .MYD files
     modified in the given time window, filtering by sensor ids in 'point'.

@@ -129,7 +129,7 @@ def fetch_trend_data(
 
 def plot_trend_data(data_buffer: PlotBuffer, force_webplot: bool, force_matplotlib: bool):
     """
-    Handles the common logic for plotting the data based on flags.
+    Handles the common logic for plotting the data based on flags.  
     """
     import pyhabitat as ph # Assuming ph is a local import in the original CLI
     fig = None

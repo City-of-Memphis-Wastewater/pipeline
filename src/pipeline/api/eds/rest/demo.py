@@ -280,7 +280,7 @@ if __name__ == "__main__":
     import sys
     from pipeline.logging_setup import setup_logging
     from pipeline.api.eds.rest.graphics import demo_eds_save_graphics_export
-    from pipeline.api.eds.rest.database import demo_eds_local_database_access
+    from pipeline.api.eds.database import demo_eds_local_database_access
 
     cmd = sys.argv[1] if len(sys.argv) > 1 else "default"
 
