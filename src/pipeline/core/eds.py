@@ -1,4 +1,8 @@
 # pipeline/core/eds.py
+"""
+This was placed here by Grok.
+Yes, we need a core directory, but for eds stuff we should be calling pipeline.api.eds...
+"""
 import plotly.offline as pyo # You'll need this for the desktop display
 import webbrowser
 from pathlib import Path
@@ -7,11 +11,12 @@ import tempfile
 from typer import BadParameter
 
 
-from pipeline.security_and_config import get_configurable_default_plant_name, get_eds_rest_api_credentials, get_configurable_idcs_list
+from pipeline.security_and_config import get_configurable_default_plant_name, get_configurable_idcs_list
+from pipeline.api.eds.rest.config import get_eds_rest_api_credentials
 from pipeline import helpers
 from pipeline.time_manager import TimeManager
 from pipeline.plotbuffer import PlotBuffer
-from pipeline.api.eds import EdsRestClient
+from pipeline.api.eds.rest.client import EdsRestClient
 
 def resolve_idcs_list(idcs: list[str] | None, default_idcs: bool, plant_name: str) -> list[str]:
     """

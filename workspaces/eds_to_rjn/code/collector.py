@@ -6,7 +6,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from pipeline.helpers import round_datetime_to_nearest_past_five_minutes
-from pipeline.api.eds import EdsRestClient
+from pipeline.api.eds.rest.client import EdsRestClient
 
 
 def collect_live_values(session, queries_dictlist_filtered_by_session_key):   

@@ -6,7 +6,7 @@ import logging
 import csv
 from datetime import datetime
 
-from pipeline.api.eds import EdsRestClient, identify_relevant_tables
+from pipeline.api.eds.rest.client import EdsRestClient, identify_relevant_tables
 from pipeline.api.rjn import RjnClient
 from pipeline import helpers
 from pipeline.env import SecretConfig
@@ -177,15 +177,12 @@ def run_hourly_tabular_trend_eds_to_rjn(test = False):
                 else:
                     print("[TEST] RjnClient.send_data_to_rjn() skipped")
             
-                    
-
+                
 
 def main():
     #logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
     run_hourly_tabular_trend_eds_to_rjn()
-
-
 
 
 if __name__ == "__main__":

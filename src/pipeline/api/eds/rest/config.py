@@ -1,4 +1,9 @@
 from __future__ import annotations
+from typing import Dict
+
+from pipeline.security_and_config import SecurityAndConfig, get_base_url_config_with_prompt, not_enough_info
+
+
 def get_rest_api_url(base_url: str | None = None,
                         eds_rest_api_port: int | None = 43080, 
                         eds_rest_api_sub_path: str = 'api/v1', 
@@ -17,7 +22,7 @@ def get_rest_api_url(base_url: str | None = None,
 def get_eds_rest_api_credentials(plant_name: str, overwrite: bool = False, forget: bool = False) -> Dict[str, str]:
     """Retrieves API credentials for a given plant, prompting if necessary."""
 
-    #from pipeline.api.eds import EdsRestClient
+    #from pipeline.api.eds.rest.client import EdsRestClient
 
     service_name = f"pipeline-eds-api-{plant_name}"
     overwrite = False

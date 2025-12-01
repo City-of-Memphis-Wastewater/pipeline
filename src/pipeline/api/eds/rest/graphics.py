@@ -1,3 +1,12 @@
+from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
+import logging
+import os
+
+from pipeline.decorators import log_function_call
+from pipeline.api.eds.rest.demo import demo_eds_start_session_CoM_WWTPs
+
+logger = logging.getLogger(__name__)
+
 
 """
 Graphics-specific EDS functions copied manually by Clayton on 1 December 2025 from eds.py.
@@ -5,7 +14,7 @@ Graphics-specific EDS functions copied manually by Clayton on 1 December 2025 fr
 @log_function_call(level=logging.DEBUG)
 def demo_eds_save_graphics_export():
     # Start sessions for your WWTPs
-    workspace_manager, sessions = _demo_eds_start_session_CoM_WWTPs()
+    workspace_manager, sessions = demo_eds_start_session_CoM_WWTPs()
     session_maxson = sessions["Maxson"]
 
     # Get list of graphics from the EDS session

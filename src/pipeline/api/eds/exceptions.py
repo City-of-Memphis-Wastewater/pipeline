@@ -37,7 +37,7 @@ class EdsLoginException(Exception):
         self.message = message
         super().__init__(self.message)
 
-@staticmethod
+    @staticmethod
     def connection_error_message(e, url)-> None:
         print(f"\n--- AN ERROR OCCURRED ---")
         print(e)

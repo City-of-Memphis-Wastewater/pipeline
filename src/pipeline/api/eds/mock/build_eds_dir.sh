@@ -204,7 +204,7 @@ The original `eds.py` became a 1500-line monolith. This package:
 
 ```python
 # CLI or web — both work perfectly
-from pipeline.api.eds import EdsRestClient
+from pipeline.api.eds.rest.client import EdsRestClient
 from pipeline.security_and_config import get_api_credentials
 
 creds = get_api_credentials("Maxson")
