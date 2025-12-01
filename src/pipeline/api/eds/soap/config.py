@@ -69,20 +69,5 @@ def get_eds_soap_api_url(base_url: str | None = None,
     else:
         logging.info("get_eds_soap_api_url() returns None due to incomplete information.")
         return None
-    """
-    Stash soap_api_url as a class variable. 
-    Why? 
-    Because it makes it easy to reference and find.
-    And, it does not to be recalculated.
-    This function is a class method.
-    I am not converting it to an instance method for this one thing,
-    when the class is not expected to have multiple instances.
-    
-    Actually, thats an interesting question - 
-    Stiles and Maxon.
-    Two instantes of EdsCient.
-    Well then.
-    We just won't use the class attribute.
-    """
      
     return soap_api_url
