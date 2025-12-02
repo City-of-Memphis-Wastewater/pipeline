@@ -175,6 +175,7 @@ class EdsSoapClient:
                 item = soapclient.factory.create('TabularRequestItem')
                 item.pointId = soapclient.factory.create('PointId')
                 item.pointId.iess = 'I-0300A.UNIT1@NET1' # Using point from Example 4
+                item.shadePriority = 0
                 
                 # 6. Set the function (e.g., 'AVG', 'RAW', 'MIN', 'MAX')
                 # 'AVG' gives averages. Use 'RAW' to get raw recorded samples.
