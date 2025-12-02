@@ -225,8 +225,8 @@ class EdsSoapClient:
 
 
         except Exception as e:
-            from pipeline.api.eds.exceptions import connection_error_message
-            connection_error_message(e, url = eds_soap_api_url)
+            from pipeline.api.eds.exceptions import EdsLoginException
+            EdsLoginException.connection_error_message(e, url = eds_soap_api_url)
             
         finally:
             
@@ -360,8 +360,8 @@ class EdsSoapClient:
             # -----------------------------------------------
 
         except Exception as e:
-            from pipeline.api.eds.exceptions import connection_error_message
-            EdsRestClient.connection_error_message(e, url = eds_soap_api_url)
+            from pipeline.api.eds.exceptions import EdsLoginException
+            EdsLoginException.connection_error_message(e, url = eds_soap_api_url)
             
         finally:
             # 4. Logout using the authstring
