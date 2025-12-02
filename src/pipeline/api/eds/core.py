@@ -3,6 +3,7 @@
 This was placed here by Grok.
 Yes, we need a core directory, but for eds stuff we should be calling pipeline.api.eds...
 """
+from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9import time
 import plotly.offline as pyo # You'll need this for the desktop display
 import webbrowser
 from pathlib import Path

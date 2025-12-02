@@ -1,3 +1,4 @@
+# src/pipeline/workspace_manager.py
 from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
 import os
 import toml
@@ -285,33 +286,6 @@ class WorkspaceManager:
             base = Path(os.getenv("XDG_DATA_HOME", Path.home() / ".local" / "share"))
         return base / cls.APP_NAME
 
-    @classmethod
-    def ensure_appdata_workspaces_dir_misnomer(cls) -> Path:
-        """Create workspace folder and default toml if missing."""
-        # not called as is
-        import mulch
-        workspaces_dir = cls.get_appdata_dir() / cls.WORKSPACES_DIR_NAME
-        workspaces_dir.mkdir(parents=True, exist_ok=True)
-        cls.workspaces_dir = workspaces_dir 
-        default_file = workspaces_dir / cls.DEFAULT_WORKSPACE_TOML_FILE_NAME
-        if not default_file.exists():
-            pass
-            #default_file.write_text("# Default workspace config\n")
-        
-        mulch_scaffold = {
-            "scaffold": {
-            "dirs": [ "code", "configuration", "exports", "imports", "logs", "queries","scripts","secrets"
-                     ],
-            "files": [ "queries/default-queries.toml", "secrets/secrets-example.yml"
-                     ],
-            }
-        }
-
-        mulch.seed(target_dir = workspaces_dir,scaffold_dict = mulch_scaffold, skip_if_exists=True)
-        workspace_path = workspaces_dir / "eds"
-        mulch.workspace_from_scaffold(workspace_path, mulch_scaffold)
-        return workspaces_dir
-    
 def establish_default_workspace():
     workspace_name = WorkspaceManager.identify_default_workspace_name()
     logging.info(f"workspace_name = {workspace_name}")

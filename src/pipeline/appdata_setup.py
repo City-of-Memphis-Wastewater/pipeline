@@ -1,3 +1,4 @@
+# src/pipeline/appdata_setup.py
 # install_appdata.py
 from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
 import typer
@@ -12,15 +13,12 @@ app = typer.Typer(help="Manage mulch-like pipeline workspace installation")
 def setup():
     platform = sys.platform
     if platform.startswith("win"):
-        #from mulch import reg_winreg
-        # Always build LocalAppData mulch folder first
 
         # Copy files
         source_dir = Path(__file__).parent  # this is src/mulch/scripts/install 
         target_dir = Path(os.environ['LOCALAPPDATA']) / "pipeline" ## configuration-example
         target_dir.mkdir(parents=True, exist_ok=True)
 
-        copy_mulch_installation_files(source_dir, target_dir)
 
         # Registry
         #reg_winreg.call()
@@ -54,29 +52,6 @@ def setup():
     else:
         raise RuntimeError(f"Unsupported platform for setup: {platform}")
 
-def copy_mulch_installation_files(source_dir, target_dir):
-    required_files = [
-        "call-mulch-workspace.ps1",
-        "mulch-workspace.ps1",
-        "call-mulch-seed.ps1",
-        "mulch-seed.ps1",
-        "mulch-icon.ico",
-        ".mulchvision"
-    ]
-    missing_files = []
-    for f in required_files:
-        src = source_dir / f
-        if src.exists():
-            shutil.copy2(src, target_dir)
-            print(f"Copied {f} to {target_dir}")
-        else:
-            missing_files.append(f)
-
-    if missing_files:
-        raise FileNotFoundError(
-            f"Missing required files in {source_dir}: {', '.join(missing_files)}"
-        )
-    
 @app.command()
 def install_appdata():
     """Install the mulch workspace and mulch seed right-click context menu items."""
