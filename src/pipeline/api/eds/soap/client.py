@@ -256,6 +256,7 @@ class EdsSoapClient:
         authstring = None
         
         # --- Get encrypted credentials and plaintext configuration values --- 
+        plant_name = 'Stiles' # hardcode
         if plant_name is None:
             plant_name = SecurityAndConfig.get_configurable_default_plant_name()
 
