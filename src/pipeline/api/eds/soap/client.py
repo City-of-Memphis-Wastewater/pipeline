@@ -35,9 +35,155 @@ class EdsSoapClient:
                 
         # Return False to propagate exceptions, or True to suppress them
         return False
+
+    @classmethod
+    def soap_api_iess_request_tabular(
+        cls,
+        plant_name: str | None = None,
+        idcs: list[str] | None = None,
+        *,
+        start_time: int | None = None,
+        end_time: int | None = None,
+        step_seconds: int = 60,
+        function: str = "AVG",
+        shade_priority: int = 0,
+    ) -> "TabularReply | None":
+        """
+        Core reusable method: fetch tabular (historical) data by IDCS → IESS.
+
+        DRY. WET. Modular. Production-ready.
+        Used exactly like MATLAB: call it, get data, plot/save/do whatever.
+
+        Returns TabularReply object on success, None on failure.
+        """
+        from pipeline.api.eds.soap.config import get_eds_soap_api_url
+        from pipeline.api.eds.config import get_service_name
+
+        soapclient = None
+        authstring = None
+        tabular_data = None
+
+        # ———————————————————————— Config & Credentials ————————————————————————
+        if plant_name is None:
+            plant_name = SecurityAndConfig.get_configurable_default_plant_name()
+        service_name = get_service_name(plant_name=plant_name)
+
+        if idcs is None:
+            idcs = SecurityAndConfig.get_configurable_idcs_list(plant_name)
+
+        base_url = get_base_url_config_with_prompt(
+            service_name=f"{plant_name}_eds_base_url",
+            prompt_message=f"Enter {plant_name} EDS base url"
+        )
+        if not base_url:
+            return None
+
+        eds_soap_api_port = SecurityAndConfig.get_config_with_prompt(
+            config_key=f"{plant_name}_eds_soap_api_port", prompt_message="EDS SOAP port"
+        )
+        if not eds_soap_api_port:
+            return None
+
+        eds_soap_api_sub_path = SecurityAndConfig.get_config_with_prompt(
+            config_key=f"{plant_name}_eds_soap_api_sub_path", prompt_message="WSDL path (e.g. eds.wsdl)"
+        )
+        if not eds_soap_api_sub_path:
+            return None
+
+        username = SecurityAndConfig.get_credential_with_prompt(service_name, "username", f"Username for {plant_name}")
+        password = SecurityAndConfig.get_credential_with_prompt(service_name, "password", f"Password for {plant_name}")
+        iess_suffix = SecurityAndConfig.get_config_with_prompt(
+            f"{plant_name}_eds_api_iess_suffix", f"IESS suffix for {plant_name} (e.g. .UNIT0@NET0)"
+        )
+        if None in (username, password, iess_suffix):
+            return None
+
+        eds_soap_api_url = get_eds_soap_api_url(base_url, eds_soap_api_port, eds_soap_api_sub_path)
+        if not eds_soap_api_url:
+            return None
+
+        # ———————————————————————— SOAP Session ————————————————————————
+        try:
+            print(f"[{plant_name}] Connecting → {eds_soap_api_url}")
+            soapclient = SudsClient(eds_soap_api_url)
+            authstring = soapclient.service.login(username, password)
+            if not authstring:
+                print(f"[{plant_name}] Login failed")
+                return None
+            print(f"[{plant_name}] Authenticated")
+
+            # ———————————————————————— Resolve IESS names ————————————————————————
+            idcs = [s.upper() for s in idcs]
+            iess_list = [f"{idc}{iess_suffix}" for idc in idcs]
+
+            # Verify points exist (optional but smart)
+            filter_obj = soapclient.factory.create('PointFilter')
+            existing_iess = []
+            for iess in iess_list:
+                filter_obj.iessRe = iess
+                reply = soapclient.service.getPoints(authstring, filter_obj, None, None, None)
+                if reply.matchCount == 1:
+                    existing_iess.append(iess)
+                else:
+                    print(f"[{plant_name}] Point not found: {iess}")
+
+            if not existing_iess:
+                print(f"[{plant_name}] No valid points found")
+                return None
+
+            # ———————————————————————— Build & Submit Tabular Request ————————————————————————
+            start = start_time or (int(time.time()) - 600)
+            end = end_time or int(time.time())
+
+            request = soapclient.factory.create('TabularRequest')
+            period = soapclient.factory.create('TimePeriod')
+            getattr(period, 'from').second = start
+            period.till.second = end
+            request.period = period
+            request.step = soapclient.factory.create('TimeDuration')
+            request.step.seconds = step_seconds
+
+            for iess in existing_iess:
+                item = soapclient.factory.create('TabularRequestItem')
+                item.pointId = soapclient.factory.create('PointId')
+                item.pointId.iess = iess
+                item.shadePriority = shade_priority
+                item.function = function
+                request.items.append(item)
+
+            request_id = soapclient.service.requestTabular(authstring, request)
+            print(f"[{plant_name}] Tabular request submitted → {request_id}")
+
+            # ———————————————————————— Poll until ready ————————————————————————
+            while True:
+                time.sleep(1)
+                status_resp = soapclient.service.getRequestStatus(authstring, request_id)
+                status = status_resp.status
+                if status == 'REQUEST-SUCCESS':
+                    tabular_data = soapclient.service.getTabular(authstring, request_id)
+                    print(f"[{plant_name}] Trend data ready → {len(tabular_data.rows)} rows")
+                    break
+                elif status == 'REQUEST-FAILURE':
+                    print(f"[{plant_name}] Request failed: {status_resp.message}")
+                    break
+
+        except Exception as e:
+            from pipeline.api.eds.exceptions import EdsLoginException
+            EdsLoginException.connection_error_message(e, url=eds_soap_api_url)
+
+        finally:
+            if authstring and soapclient:
+                try:
+                    soapclient.service.logout(authstring)
+                except:
+                    pass
+
+        return tabular_data
+
+    
     @classmethod
     @Redundancy.set_on_return_hint(recipient=None,attribute_name="tabular_data")
-    def soap_api_iess_request_tabular(cls, plant_name: str | None= None, idcs: list[str] | None = None):
+    def soap_api_iess_request_tabular_(cls, plant_name: str | None= None, idcs: list[str] | None = None):
         
         from pipeline.api.eds.soap.config import get_eds_soap_api_url
         from pipeline.api.eds.config import get_service_name
