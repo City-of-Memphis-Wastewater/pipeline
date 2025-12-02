@@ -4,7 +4,7 @@ from __future__ import annotations # Delays annotation evaluation, allowing mode
 
 from typer import BadParameter
 from pathlib import Path
-from pipeline.core import eds as eds_core
+from pipeline.api.eds import core as eds_core
 import os
 import pyhabitat
 

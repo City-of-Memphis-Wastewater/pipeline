@@ -20,7 +20,7 @@ from typing import Dict, Any, List, Optional
 from importlib.resources import read_text
 import requests
 # Local imports
-from pipeline.core import eds as eds_core 
+from pipeline.api.eds import core as eds_core
 from pipeline.interface.utils import save_history, load_history
 from pipeline.security_and_config import CredentialsNotFoundError
 from pipeline.server.web_utils import launch_server_for_web_gui_
