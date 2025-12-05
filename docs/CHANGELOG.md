@@ -12,6 +12,7 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 
 ### Added:
 - MockBuffer is able to be used with curl and from the HTML is VPN is not available.
+- Docuement the curl command in curl-to-MockData-Eds-Trend.md
 
 ### To do:
 - Move web gui to `frontend` directory in root, like the `/gastrack` project.
