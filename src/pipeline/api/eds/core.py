@@ -60,7 +60,8 @@ def fetch_trend_data(
     plant_name: str | None,
     seconds_between_points: int | None, 
     datapoint_count: int | None,
-    default_idcs: bool = False
+    default_idcs: bool = False,
+    use_mock: bool = False
 ) -> tuple[PlotBuffer, list[str]]:
     """
     Core logic to fetch trend data from EDS REST API.
@@ -69,6 +70,15 @@ def fetch_trend_data(
     # 1. Resolve Plant Name
     if plant_name is None:
         plant_name = get_configurable_default_plant_name()
+
+    # 0b. If use_mock is requested, return a MockBuffer with synthetic data
+    if use_mock:
+        try:
+            from pipeline.gui_plotly_static import MockBuffer
+            return MockBuffer(), []
+        except Exception:
+            # Fallback: return an empty PlotBuffer so calling code behaves correctly
+            return PlotBuffer(), []
     
     # 2. Resolve IDCS List
     # The list passed from the GUI will be a list of one string if the user entered values,

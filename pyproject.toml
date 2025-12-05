@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pipeline-eds"
-version = "0.3.82"
+version = "0.3.83"
 description = "A Python API pipeline library and CLI toolkit for Emerson Ovation EDS systems — built for engineers, control technicians, and wastewater SCADA teams."
 authors = ["George Clayton Bennett <george.bennett@memphistn.gov>"]
 license = "MIT"
@@ -28,7 +28,7 @@ include = [
     # Wheel-specific (also works for sdist)
 #    { include = "pipeline/interface/web_gui/templates/**", from = "src" },
 #    { include = "pipeline/interface/web_gui/static/**",    from = "src" }
-#]
+#] 
 
                 
 classifiers=[

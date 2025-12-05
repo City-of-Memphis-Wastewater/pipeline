@@ -42,6 +42,7 @@ class TrendRequest(Struct, tag=True):
     datapoint_count: Optional[int] = None
     force_webplot: bool = True
     force_matplotlib: bool = False
+    use_mock: bool = False
 
 
 # --- 1. Endpoint to Serve the HTML GUI ---
@@ -103,6 +104,7 @@ async def fetch_eds_trend(request: Request):
             seconds_between_points=request_data.seconds_between_points, 
             datapoint_count=request_data.datapoint_count,
             default_idcs=request_data.default_idcs
+            , use_mock=request_data.use_mock
         )
         
         # 2. Check for empty data
