@@ -28,7 +28,7 @@ include = [
     # Wheel-specific (also works for sdist)
 #    { include = "pipeline/interface/web_gui/templates/**", from = "src" },
 #    { include = "pipeline/interface/web_gui/static/**",    from = "src" }
-#]
+#] 
 
                 
 classifiers=[
