@@ -132,21 +132,27 @@ async def fetch_eds_trend(request: Request):
     except requests.exceptions.ConnectTimeout:
         error_msg = "Connection to the EDS API timed out. Please check your VPN connection and try again."
         print(f"[EDS TREND SERVER] {error_msg}")
-        raise HTTPException(status_code=503, detail=error_msg)
+        response_data = {"error": error_msg}
+        return Response(content=msgspec.json.encode(response_data), media_type="application/json", status_code=503)
 
     except BadParameter as e:
-        raise HTTPException(status_code=400, detail=f"Input Error: {str(e).strip()}")
+        error_msg = f"Input Error: {str(e).strip()}"
+        response_data = {"error": error_msg}
+        return Response(content=msgspec.json.encode(response_data), media_type="application/json", status_code=400)
 
     except CredentialsNotFoundError as e:
+        error_msg = f"Configuration Required: {str(e)}"
         print(f"SECURITY ERROR: {e}")
-        raise HTTPException(status_code=400, detail=f"Configuration Required: {str(e)}")
+        response_data = {"error": error_msg}
+        return Response(content=msgspec.json.encode(response_data), media_type="application/json", status_code=400)
 
     except Exception as e:
         error_msg = f"Unexpected error fetching trend data: {str(e)}"
         print(f"[EDS TREND SERVER] {error_msg}")
         import traceback
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=error_msg)
+        response_data = {"error": error_msg}
+        return Response(content=msgspec.json.encode(response_data), media_type="application/json", status_code=500)
         
 # --- 3. API Endpoint for History ---
 
