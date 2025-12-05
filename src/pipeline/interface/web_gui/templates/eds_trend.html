@@ -251,6 +251,15 @@
                                placeholder="e.g., 1000">
                     </div>
                 </div>
+                <!-- Small separator and mock-data option -->
+                <div class="border-t border-gray-700 mt-4 pt-3">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="use_mock_web" x-model="useMock"
+                               class="form-checkbox h-4 w-4 rounded border-gray-400 focus:ring-accent card-bg"
+                               style="color: var(--color-accent);">
+                        <label for="use_mock_web" class="ml-3 text-sm text-gray-300">Use mock data (no VPN required)</label>
+                    </div>
+                </div>
             </details>
         </div>
 
@@ -322,6 +331,7 @@
                 message: { text: '', type: '' },
                 statusMessage: '',
                 statusColorClasses: '',
+                useMock: false,
 
                 // --- Methods ---
                 setMessage(text, type = 'info', duration = 4000) {
@@ -363,6 +373,7 @@
                         datapoint_count: this.datapointCountInput ? parseInt(this.datapointCountInput) : null,
                         force_webplot: this.plotMethod === 'webplot',
                         force_matplotlib: this.plotMethod === 'matplotlib',
+                        use_mock: this.useMock,
                     };
 
                     try {

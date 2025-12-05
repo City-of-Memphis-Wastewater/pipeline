@@ -15,6 +15,7 @@ import signal
 
 from pipeline.server.web_utils import launch_browser
 from pipeline.plottools import normalize, normalize_ticks, get_ticks_array_n
+from pipeline.plotbuffer import PlotBuffer
 
 from pipeline.cli import GLOBAL_SHUTDOWN_EVENT
 
@@ -111,9 +112,13 @@ class PlotServer(http.server.SimpleHTTPRequestHandler):
 # --- Plot Generation and Server Launch ---
 
 # Placeholder for plot_buffer.get_all() data structure
-class MockBuffer:
-    def get_all(self):
-        return {
+class MockBuffer(PlotBuffer):
+    """A PlotBuffer-backed mock buffer that implements the same interface as PlotBuffer.
+    This ensures callers can use `is_empty()` and `get_all()` as expected.
+    """
+    def __init__(self):
+        super().__init__(max_points=1000)
+        sample = {
             "Series Alpha": {"x": [1, 2, 3, 4], "y": [7, 13, 7, 9], "unit": "MGD"},
             "Series Beta": {"x": [1, 2, 3, 4], "y": [10, 20, 15, 25], "unit": "MG/L"},
             "Series Gamma": {"x": [1, 2, 3, 4], "y": [5, 12, 11, 10], "unit": "MGD"},
@@ -121,6 +126,9 @@ class MockBuffer:
             "Series Epison": {"x": [1, 2, 3, 4], "y": [4500, 3000, 13000, 8000], "unit": "KW"},
             "Series Zeta": {"x": [1, 2, 3, 4], "y": [5000, 4000, 12000, 9000], "unit": "KW"},
         }
+        for label, series in sample.items():
+            # Ensure structure matches PlotBuffer.data entries
+            self.data[label] = {"x": list(series["x"]), "y": list(series["y"]), "unit": series.get("unit")}
 #plot_buffer = MockBuffer()
 
 

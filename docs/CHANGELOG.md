@@ -4,11 +4,23 @@ All notable changes to this project will be documented in this file.
 
 The format is (read: strives to be) based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+---
+
+## [0.3.83] – 2025-12-06
+### Changed:
+- Edit eds_trend.html for style
+
+### Added:
+- MockBuffer is able to be used with curl and from the HTML is VPN is not available.
+
+### To do:
+- Move web gui to `frontend` directory in root, like the `/gastrack` project.
 
 ---
 
 ## [0.3.80] – 2025-11-24
-### Fix get_prompt_manager() -> PromptManager
+### Fixed:
+- get_prompt_manager() -> PromptManager
 
 ---
 
