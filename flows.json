@@ -1,0 +1,65 @@
+[
+    {
+        "id": "e35712358b6bc22b",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "669e73ac78a57858",
+        "type": "json",
+        "z": "e35712358b6bc22b",
+        "name": "",
+        "property": "payload",
+        "action": "str",
+        "pretty": true,
+        "x": 350,
+        "y": 640,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "b1673479bfa69b17",
+        "type": "http request",
+        "z": "e35712358b6bc22b",
+        "name": "",
+        "method": "GET",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": true,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 190,
+        "y": 640,
+        "wires": [
+            [
+                "669e73ac78a57858",
+                "193308b1a3775ab6"
+            ]
+        ]
+    },
+    {
+        "id": "193308b1a3775ab6",
+        "type": "debug",
+        "z": "e35712358b6bc22b",
+        "name": "debug 1",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 360,
+        "y": 740,
+        "wires": []
+    }
+]
