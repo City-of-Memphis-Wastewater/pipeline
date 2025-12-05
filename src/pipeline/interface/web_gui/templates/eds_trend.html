@@ -11,6 +11,9 @@
     <!-- Alpine.js (defer = important!) -->
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
+    <!-- Google Font: Poppins (exciting but stable) -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+
     <style>
         /* === DARK THEME VARIABLES === */
         :root {
@@ -30,12 +33,14 @@
         body {
             background-color: var(--color-bg);
             color: var(--color-text-primary);
-            font-family: 'Inter', sans-serif;
+            font-family: 'Poppins', Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
         }
 
         .card-bg {
             background-color: var(--color-card);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            /* subtle purple edge */
+            border: 1px solid rgba(156,39,176,0.12);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(156,39,176,0.02);
         }
 
         .input-border-visible {
@@ -75,6 +80,76 @@
         summary::-webkit-details-marker {
             display: none;
         }
+
+        /* === Compact / Mobile-friendly overrides === */
+        /* Reduce global font sizing and tighten paddings so the page fits a single mobile view */
+        body {
+            font-size: 14px;
+        }
+
+        h1 {
+            font-size: 1.25rem !important;
+            line-height: 1.1;
+            margin-bottom: 0.25rem;
+        }
+
+        /* Section titles: make h2 and details summary consistent and a bit smaller */
+        .card-bg h2,
+        details > summary {
+            color: var(--color-details-title) !important;
+            font-size: 1rem !important;
+            margin-bottom: 0.15rem !important;
+            font-weight: 700 !important;
+            letter-spacing: -0.01em;
+        }
+
+        /* If a summary explicitly has inline color, prefer the variable instead */
+        details > summary[style] { color: var(--color-details-title) !important; }
+
+        /* Make cards skinnier and reduce internal padding */
+        .card-bg {
+            padding: 0.75rem !important;
+            border-radius: 0.6rem;
+        }
+
+        /* Tighten inputs and controls */
+        input[type="text"], input[type="number"], textarea, select {
+            padding: 0.45rem !important;
+            font-size: 0.95rem !important;
+        }
+
+        .input-border-visible {
+            border-width: 1px !important;
+        }
+
+        /* Smaller buttons */
+        .btn-primary {
+            padding: 0.45rem 0.75rem !important;
+            font-size: 0.95rem !important;
+        }
+
+        /* Shrink status bar */
+        #STATUS_BAR_WEB {
+            padding: 0.35rem !important;
+            font-size: 0.85rem !important;
+        }
+
+        /* Reduce container width to approximate a single-column mobile layout even on desktop */
+        .max-w-4xl {
+            max-width: 28rem !important;
+        }
+
+        /* Tighten details/summary spacing */
+        details summary { padding: 0.25rem 0 !important; }
+
+        /* Helpful small-screen tweaks */
+        @media (max-width: 640px) {
+            .max-w-4xl {
+                max-width: 100% !important;
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+            }
+        }
     </style>
 </head>
 
@@ -99,9 +174,10 @@
         </div>
 
         <!-- 1. SENSOR SELECTION -->
-        <div class="card-bg p-6 rounded-xl shadow-lg space-y-4 border-t-4 border-accent">
+        <div class="card-bg p-6 rounded-xl shadow-lg space-y-4">
             <h2 class="text-2xl font-semibold">1. Sensor Selection (IDCS)</h2>
-            <p class="text-sm text-gray-400">Separate IDCS with spaces or commas (e.g., M100FI M310LI FI8001).</p>
+            <p class="text-sm text-gray-400">Separate IDCS with spaces or commas.</p>
+            <p class="text-sm text-gray-400">(e.g., M100FI M310LI FI8001).</p>
             
             <input 
                 type="text" 
@@ -109,7 +185,7 @@
                 x-init="loadHistory()"
                 list="idcs-history-list"
                 class="w-full p-3 card-bg input-border-visible rounded-lg focus:outline-none transition duration-150"
-                placeholder="Enter IDCS list here or select from history..."
+                placeholder="Enter IDCS list here or select from history."
             >
             <datalist id="idcs-history-list">
                 <template x-for="item in idcsHistory" :key="item">
@@ -129,26 +205,27 @@
         <div class="card-bg p-6 rounded-xl shadow-lg space-y-4">
             <details closed>
                 <summary class="text-2xl font-semibold" style="color: var(--color-details-title)">2. Time Range</summary>
-                <p class="text-sm text-gray-400 pt-4">You can define start/end or days. Defaults to last 48h.</p>
-
+                <p class="text-sm text-gray-400 pt-4">You can define zero, one, or two of these variables.</p>
+                <p class="text-sm text-gray-400 pt-4"> Defaults to last 48h.</p>
+                <br></br>
                 <div class="grid grid-cols-1 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-1" >Days to Plot</label>
+                        <input type="number" x-model="daysInput"
+                               class="w-full p-3 card-bg input-border-visible rounded-lg"
+                               placeholder="e.g., 7.5 (optional, integers or decimals)">
+                    </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-400 mb-1">Start Time</label>
                         <input type="text" x-model="startTimeInput"
                                class="w-full p-3 card-bg input-border-visible rounded-lg"
-                               placeholder="e.g., 18 February 2025 (optional)">
+                               placeholder="e.g., 18 February 2025 (optional, various formats)">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-400 mb-1">End Time</label>
                         <input type="text" x-model="endTimeInput"
                                class="w-full p-3 card-bg input-border-visible rounded-lg"
-                               placeholder="e.g., 2024-10-25 12:00 (optional)">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-400 mb-1">Days to Plot</label>
-                        <input type="number" x-model="daysInput"
-                               class="w-full p-3 card-bg input-border-visible rounded-lg"
-                               placeholder="e.g., 7 (optional)">
+                               placeholder="e.g., 2024-10-25 12:00 (optional, various formats)">
                     </div>
                 </div>
             </details>
@@ -294,16 +371,28 @@
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(payload),
                         });
-                        const result = await response.json();
+
+                        // Attempt to parse JSON safely. Some error responses
+                        // may include different keys (error, detail, message).
+                        let result = null;
+                        try {
+                            result = await response.json();
+                        } catch (jsonErr) {
+                            // Non-JSON response fallback
+                            result = { error: `Non-JSON response from server: ${jsonErr.message}` };
+                        }
 
                         if (response.ok) {
                             this.setMessage(result.message || "Success! Plot should open.", 'success', 6000);
                             this.loadHistory();
                         } else {
-                            this.setMessage(`Error: ${result.detail || 'Unknown error.'}`, 'error', 6000);
+                            // Prefer common keys in server responses. Provide a helpful fallback.
+                            const errMsg = result && (result.error || result.detail || result.message) || JSON.stringify(result) || 'Unknown error.';
+                            this.setMessage(`Error: ${errMsg}`, 'error', 8000);
                         }
                     } catch (err) {
-                        this.setMessage(`Network error: ${err.message}`, 'error', 6000);
+                        // Network-level errors (DNS, connection refused, CORS, etc.)
+                        this.setMessage(`Network error: ${err.message}`, 'error', 8000);
                     } finally {
                         this.isLoading = false;
                     }

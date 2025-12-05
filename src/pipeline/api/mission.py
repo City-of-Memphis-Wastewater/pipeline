@@ -252,7 +252,7 @@ class MissionClient:
         except Timeout:
             typer.echo(
                 typer.style(
-                    "\nConnection to the EDS API timed out. Please check your VPN connection and try again.",
+                    "\nConnection to the Mission API timed out. Please check your VPN connection and try again.",
                     fg=typer.colors.RED,
                     bold=True,
                 )
@@ -261,7 +261,7 @@ class MissionClient:
         except MissionLoginException as e:
             typer.echo(
                 typer.style(
-                    f"\nLogin failed for EDS API: {e}",
+                    f"\nLogin failed for Mission API: {e}",
                     fg=typer.colors.RED,
                     bold=True,
                 )
