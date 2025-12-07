@@ -10,6 +10,9 @@ from pathlib import Path
 import os
 import tempfile
 from typer import BadParameter
+import logging
+
+logger = logging.getLogger(__name__)
 
 from pipeline.api.eds.config import get_configurable_default_plant_name, get_configurable_idcs_list
 from pipeline.api.eds.rest.config import get_eds_rest_api_credentials
@@ -96,7 +99,24 @@ def fetch_trend_data(
     idcs_to_iess_suffix = get_idcs_to_iess_suffix(plant_name=plant_name) if idcs_to_iess_suffix is None else idcs_to_iess_suffix    
     iess_list = [x + idcs_to_iess_suffix for x in idcs]
     
-    session = EdsRestClient.login_to_session_with_api_credentials(api_credentials)
+    #session = EdsRestClient.login_to_session_with_api_credentials(api_credentials)
+
+    try:
+        session = EdsRestClient.login_to_session_with_api_credentials(api_credentials)
+    except RuntimeError as e:
+        # This catches ONLY the clean errors we raised above
+        error_message = str(e)
+        logger.warning(f"EDS login failed: {error_message}")
+        # Return a buffer with an error message overlaid
+        buffer = PlotBuffer()
+        #buffer.add_error_message(error_message)  # or however your PlotBuffer signals error
+        return buffer, iess_list  # or [], doesn't matter
+    except Exception as e:
+        logger.exception("Unexpected error during EDS login")
+        buffer = PlotBuffer()
+        #buffer.add_error_message("Unexpected error connecting to EDS")
+        return buffer, iess_list
+    
 
     # 4. Get Point Metadata
     points_data = EdsRestClient.get_points_metadata(session, filter_iess=iess_list)

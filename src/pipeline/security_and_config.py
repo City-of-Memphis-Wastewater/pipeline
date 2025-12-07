@@ -471,6 +471,7 @@ def get_eds_local_db_credentials(plant_name: str, overwrite: bool = False) -> Di
     # 2. Get secrets from the keyring
     username = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = "username", prompt_message = "Enter your EDS system username (e.g. root)", hide=False, overwrite=overwrite)
     password = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = "password", prompt_message = "Enter your EDS system password (e.g. Ovation1)", hide=True, overwrite=overwrite)
+    
 
     return {
         'username': username,
