@@ -27,7 +27,8 @@ from pipeline.api.eds.rest.demo import demo_eds_webplot_point_live, demo_eds_sav
 from pipeline.api.eds.exceptions import  EdsLoginException
 from pipeline.api.eds.rest.client import EdsRestClient
 from pipeline.api.eds.rest.config import get_eds_rest_api_credentials
-from pipeline.security_and_config import get_external_api_credentials, get_eds_local_db_credentials, get_all_configured_urls, get_configurable_default_plant_name, init_security, CONFIG_PATH
+from pipeline.security_and_config import get_external_api_credentials, get_eds_local_db_credentials, get_all_configured_urls, init_security, CONFIG_PATH
+from pipeline.api.eds.config import get_configurable_default_plant_name
 from pipeline.termux_setup import setup_termux_integration, cleanup_termux_integration
 from pipeline.windows_setup import setup_windows_integration, cleanup_windows_integration
 from pipeline import helpers

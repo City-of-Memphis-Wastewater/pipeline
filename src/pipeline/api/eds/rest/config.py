@@ -24,16 +24,24 @@ def get_eds_rest_api_credentials(plant_name: str, overwrite: bool = False, forge
     """Retrieves API credentials for a given plant, prompting if necessary."""
 
     #from pipeline.api.eds.rest.client import EdsRestClient
+    from pipeline.api.eds import config as eds_config
+    from pipeline.api.eds import security as eds_security
+    from pipeline.api.eds.rest import config as eds_rest_config # this file
 
     service_name = f"pipeline-eds-api-{plant_name}"
     overwrite = False
-    eds_base_url = get_base_url_config_with_prompt(service_name = f"{plant_name}_eds_base_url", prompt_message = f"Enter {plant_name} EDS base url (e.g., http://000.00.0.000, or just 000.00.0.000)")
+
+    eds_base_url = eds_config.get_eds_base_url(plant_name=plant_name, overwrite=overwrite)
+    idcs_to_iess_suffix = eds_config.get_idcs_to_iess_suffix(plant_name=plant_name, overwrite=overwrite)
+    zd = eds_config.get_zd(plant_name=plant_name, overwrite=overwrite)
+    
     eds_rest_api_port = SecurityAndConfig.get_config_with_prompt(config_key = f"{plant_name}_eds_rest_api_port", prompt_message = f"Enter {plant_name} EDS REST API port (e.g., 43084)", overwrite=overwrite)
     eds_rest_api_sub_path = SecurityAndConfig.get_config_with_prompt(config_key = f"{plant_name}_eds_rest_api_sub_path", prompt_message = f"Enter {plant_name} EDS REST API sub path (e.g., 'api/v1')", overwrite=overwrite)
+    
     username = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = "username", prompt_message = f"Enter your EDS API username for {plant_name} (e.g. admin)", hide=False, overwrite=overwrite)
     password = SecurityAndConfig.get_credential_with_prompt(service_name = service_name, item_name = "password", prompt_message = f"Enter your EDS API password for {plant_name} (e.g. '')", overwrite=overwrite)
-    idcs_to_iess_suffix = SecurityAndConfig.get_config_with_prompt(config_key = f"{plant_name}_eds_api_iess_suffix", prompt_message = f"Enter iess suffix for {plant_name} (e.g., .UNIT0@NET0)", overwrite=overwrite)
-    zd = SecurityAndConfig.get_config_with_prompt(config_key = f"{plant_name}_eds_api_zd", prompt_message = f"Enter {plant_name} ZD (e.g., 'Maxson' or 'WWTF')", overwrite=overwrite)
+    username = eds_security.get_username(plant_name=plant_name, overwrite=overwrite)
+    password = eds_security.get_password(plant_name=plant_name, overwrite=overwrite)
     
     #if not all([username, password]):
     #    raise CredentialsNotFoundError(f"API credentials for '{plant_name}' not found. Please run the setup utility.")

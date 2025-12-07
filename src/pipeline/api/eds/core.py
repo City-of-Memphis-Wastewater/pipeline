@@ -12,12 +12,14 @@ import tempfile
 from typer import BadParameter
 
 
-from pipeline.security_and_config import get_configurable_default_plant_name, get_configurable_idcs_list
+from pipeline.security_and_config import get_configurable_idcs_list
+from pipeline.api.eds.config import get_configurable_default_plant_name
 from pipeline.api.eds.rest.config import get_eds_rest_api_credentials
 from pipeline import helpers
 from pipeline.time_manager import TimeManager
 from pipeline.plotbuffer import PlotBuffer
 from pipeline.api.eds.rest.client import EdsRestClient
+from pipeline.api.eds.config import get_idcs_to_iess_suffix 
 
 def resolve_idcs_list(idcs: list[str] | None, default_idcs: bool, plant_name: str) -> list[str]:
     """
@@ -93,6 +95,7 @@ def fetch_trend_data(
 
     api_credentials = get_eds_rest_api_credentials(plant_name=plant_name)
     idcs_to_iess_suffix = api_credentials.get("idcs_to_iess_suffix")
+    idcs_to_iess_suffix = get_idcs_to_iess_suffix(plant_name=plant_name) if idcs_to_iess_suffix is None else idcs_to_iess_suffix    
     iess_list = [x + idcs_to_iess_suffix for x in idcs]
     
     session = EdsRestClient.login_to_session_with_api_credentials(api_credentials)
