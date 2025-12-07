@@ -458,41 +458,6 @@ def configure_filebased_secure_config():
     else:
         pass
 
-
-
-    
-def get_configurable_idcs_list(plant_name: str, overwrite: bool = False) -> List[str]:
-    """
-    Retrieves a list of default IDCS points for a specific plant from configuration. 
-    If not configured, it prompts the user to enter them and saves them.
-    
-    The function handles IDCS values separated by one or more spaces or commas.
-    """
-    service_name = f"{plant_name}-default-idcs"
-    
-    prompt_message = (
-        f"Enter default IDCS values for the {plant_name} plant"
-        f"(e.g., M100FI FI8001 M310LI)"
-    )
-    
-    idcs_value = SecurityAndConfig.get_config_with_prompt(config_key = service_name, prompt_message = prompt_message, overwrite=overwrite)
-    
-    if not idcs_value:
-        return []
-    
-    # Use re.split to split by multiple delimiters: 
-    # r'[,\s]+' means one or more commas (,) OR one or more whitespace characters (\s).
-    raw_idcs_list = re.split(r'[,\s]+', idcs_value)
-    
-    # Filter out any empty strings resulting from the split (e.g., if input was "IDCS1,,IDCS2")
-    # and strip leading/trailing whitespace from each element.
-    idcs_list = [
-        item.strip() 
-        for item in raw_idcs_list 
-        if item.strip()
-    ]
-    
-    return idcs_list
     
 def get_eds_local_db_credentials(plant_name: str, overwrite: bool = False) -> Dict[str, str]: # generalized for stiles and maxson
     """Retrieves all credentials and config for Stiles EDS Fallback DB, prompting if necessary."""

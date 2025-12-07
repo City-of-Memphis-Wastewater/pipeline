@@ -207,7 +207,7 @@ def trend(
     if idcs is None:
         if default_idcs:
             
-            from pipeline.security_and_config import get_configurable_idcs_list
+            from pipeline.api.eds.config import get_configurable_idcs_list
             # plant_name is resolved below, but we need a valid name for the helper
             # Temporarily resolve plant_name for the prompt if needed
             current_plant_name = plant_name if plant_name is not None else get_configurable_default_plant_name()

@@ -8,7 +8,7 @@ from suds.client import Client as SudsClient # uses suds-py3
 from pipeline.api.eds.rest.client import EdsRestClient
 from pipeline.security_and_config import SecurityAndConfig, get_base_url_config_with_prompt
 from pipeline.variable_clarity import Redundancy
-from pipeline.api.eds.config import get_configurable_default_plant_name
+from pipeline.api.eds.config import get_configurable_default_plant_name, get_configurable_idcs_list
 
 class EdsSoapClient:
     def __init__(self):
@@ -71,7 +71,7 @@ class EdsSoapClient:
         service_name = get_service_name(plant_name=plant_name)
 
         if idcs is None:
-            idcs = SecurityAndConfig.get_configurable_idcs_list(plant_name)
+            idcs = get_configurable_idcs_list(plant_name)
 
         base_url = get_base_url_config_with_prompt(
             service_name=f"{plant_name}_eds_base_url",
@@ -202,7 +202,7 @@ class EdsSoapClient:
     
         if idcs is None:
             if use_default_idcs:
-                idcs = SecurityAndConfig.get_configurable_idcs_list(plant_name)
+                idcs = get_configurable_idcs_list(plant_name)
             else:
                 idcs = SecurityAndConfig.get_temporary_input()
         
@@ -399,6 +399,8 @@ class EdsSoapClient:
 
         from pipeline.api.eds.soap.config import get_eds_soap_api_url
         from pipeline.api.eds.config import get_service_name
+        from pipeline.api.eds.security import get_username, get_password
+
         # --- Initialize vars ---
         soapclient = None
         authstring = None
@@ -411,9 +413,9 @@ class EdsSoapClient:
         service_name = get_service_name(plant_name = plant_name) # for secure credentials
         base_url = get_base_url_config_with_prompt(service_name=f"{plant_name}_eds_base_url", prompt_message=f"Enter {plant_name} EDS base url (e.g., http://000.00.0.000, or just 000.00.0.000)")
         if base_url is None: return
-        username = SecurityAndConfig.get_credential_with_prompt(service_name, "username", f"Enter your EDS API username for {plant_name} (e.g. admin)", hide=False)
+        username = get_username(plant_name=plant_name)
         if username is None: return
-        password = SecurityAndConfig.get_credential_with_prompt(service_name, "password", f"Enter your EDS API password for {plant_name} (e.g. '')")
+        password = get_password(plant_name=plant_name)
         if password is None: return
         idcs_to_iess_suffix = SecurityAndConfig.get_config_with_prompt(f"{plant_name}_eds_api_iess_suffix", f"Enter iess suffix for {plant_name} (e.g., .UNIT0@NET0)")
         if idcs_to_iess_suffix is None: return

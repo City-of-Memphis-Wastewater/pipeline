@@ -11,9 +11,7 @@ import os
 import tempfile
 from typer import BadParameter
 
-
-from pipeline.security_and_config import get_configurable_idcs_list
-from pipeline.api.eds.config import get_configurable_default_plant_name
+from pipeline.api.eds.config import get_configurable_default_plant_name, get_configurable_idcs_list
 from pipeline.api.eds.rest.config import get_eds_rest_api_credentials
 from pipeline import helpers
 from pipeline.time_manager import TimeManager
