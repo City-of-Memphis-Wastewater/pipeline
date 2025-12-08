@@ -14,6 +14,8 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 ### Added:
 - There is now pipeline.api.eds.config, pipeline.api.eds.rest.config, pipeline.api.eds.soap.config, and the comparable security files, for clear separation of concerns.
 
+### Plan:
+- Once we migrate to SOAP as the standarad, and test work on the Stiles EDS server, then we can destroy the local MariaDB database file fallback, and `poetry remove mysql-connector-python`.
 
 ---
 

@@ -2,6 +2,8 @@
 Migrated manually from eds.py by Clayton on 1 December 2025
 Moving these means that the references must be changed for the currently running code. 
 However, this should become a non-issue once we call the EDS SOAP API instead of the REST API or the local db files. 
+
+We would like to move away from this and just use the SOAP api.
 """
 from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
 import logging
