@@ -9,9 +9,11 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 ## [0.3.84] – 2025-12-07
 ### Changed:
 - Migrate get_configurable_default_plant_name() from SecurityAndConfig generic class to EDS-specific config.py file. 
+- Freesimplegui removed as a dependency, and local interface removed in favor of web. Tkinter popups are still present for config and credentials.
 
 ### Added:
 - There is now pipeline.api.eds.config, pipeline.api.eds.rest.config, pipeline.api.eds.soap.config, and the comparable security files, for clear separation of concerns.
+
 
 ---
 

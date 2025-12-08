@@ -28,6 +28,7 @@ from pipeline.time_manager import TimeManager
 from pipeline.create_sensors_db import get_db_connection, create_packaged_db, reset_user_db # get_user_db_path, ensure_user_db, 
 from pipeline.api.eds.rest.demo import demo_eds_webplot_point_live, demo_eds_save_point_export
 from pipeline.api.eds.exceptions import  EdsLoginException
+from pipeline.server.trend_server_eds import launch_server_for_web_gui_eds_trend_specific 
 from pipeline.api.eds.rest.client import EdsRestClient
 from pipeline.api.eds.rest.config import get_eds_rest_api_credentials
 from pipeline.security_and_config import get_external_api_credentials, get_eds_local_db_credentials, get_all_configured_urls, init_security, CONFIG_PATH
@@ -35,7 +36,6 @@ from pipeline.api.eds.config import get_configurable_default_plant_name
 from pipeline.termux_setup import setup_termux_integration, cleanup_termux_integration
 from pipeline.windows_setup import setup_windows_integration, cleanup_windows_integration
 from pipeline import helpers
-from pipeline.interface import gui_eds
 from pipeline.plotbuffer import PlotBuffer
 from pipeline.version_info import  PIP_PACKAGE_NAME, PIPELINE_VERSION, __version__, get_package_version, get_package_name
 #from pipeline.helpers import setup_logging
@@ -90,7 +90,7 @@ def main(
     """
 
     if ctx.invoked_subcommand is None:
-        gui_eds.main()
+        launch_server_for_web_gui_eds_trend_specific()
         raise typer.Exit()
     elif False:#ctx.invoked_subcommand is None:
         typer.echo(ctx.get_help())
@@ -106,15 +106,11 @@ def main(
     typer.echo(f"command:\n{command_string}\n")
 
 @app.command(name="gui", help="Show the GUI. Use the --web flag for a browser-based interface.")
-#def gui
-def launch_gui_eds_trend(
-    force_web: bool = typer.Option(False, "--web", "-w", help="Force web-based GUI for data requst input, even when the FreeSimpleGUI local window would be available."),
-    force_local: bool = typer.Option(False, "--local", "-l", help="Force local freesimplegui GUI for data request input."),
-    ):
+def launch_gui_eds_trend():
     """
-    Allows GUI interaction with EDS Trend
+    Allows GUI interaction with EDS Trend.
     """
-    gui_eds.main(force_web=force_web, force_local = force_local) 
+    launch_server_for_web_gui_eds_trend_specific() # this is a web world now
     
 @app.command()
 def list_sensors(
