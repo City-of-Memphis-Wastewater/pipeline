@@ -219,8 +219,6 @@ class EdsSoapClient:
         idcs_to_iess_suffix = SecurityAndConfig.get_config_with_prompt(f"{plant_name}_eds_api_iess_suffix", f"Enter iess suffix for {plant_name} (e.g., .UNIT0@NET0)")
         if idcs_to_iess_suffix is None: return
         
-        #session = EdsRestClient.login_to_session_with_api_credentials(api_credentials)
-        
         eds_soap_api_url = get_eds_soap_api_url(base_url = base_url, 
                                                 eds_soap_api_port = eds_soap_api_port, 
                                                 eds_soap_api_sub_path = eds_soap_api_sub_path)

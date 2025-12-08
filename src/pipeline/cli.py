@@ -11,6 +11,9 @@ import sys
 import re
 import pyhabitat as ph
 import threading
+import logging
+
+logger = logging.getLogger(__name__)
 
 try:
     import colorama # explicitly added so for the shiv build
@@ -253,7 +256,16 @@ def trend(
     typer.echo(f"")
 
     # Use the retrieved credentials to log in to the API, including custom session attributes
-    session = EdsRestClient.login_to_session_with_api_credentials(api_credentials)
+    #session = EdsRestClient.login_to_session_with_api_credentials(api_credentials)
+    try:
+        session = EdsRestClient.login_to_session_with_api_credentials(api_credentials)
+    except RuntimeError as e:
+        error_message = str(e)
+        logger.warning(f"EDS login failed: {error_message}")
+        return
+    except Exception as e:
+        logger.exception("Unexpected error during EDS login")
+        return
 
     points_data = EdsRestClient.get_points_metadata(session, filter_iess=iess_list)
 
@@ -489,7 +501,18 @@ def points_export(
     
     # Use the retrieved credentials to log in to the API, including custom session attributes
     typer.echo("Logging in to session...")
-    session = EdsRestClient.login_to_session_with_api_credentials(api_credentials)
+    #session = EdsRestClient.login_to_session_with_api_credentials(api_credentials)
+
+    try:
+        session = EdsRestClient.login_to_session_with_api_credentials(api_credentials)
+    except RuntimeError as e:
+        error_message = str(e)
+        logger.warning(f"EDS login failed: {error_message}")
+        return
+    except Exception as e:
+        logger.exception("Unexpected error during EDS login")
+        return
+    
     
 
     typer.echo("Retrieving point export...")

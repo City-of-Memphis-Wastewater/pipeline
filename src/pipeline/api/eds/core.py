@@ -104,7 +104,6 @@ def fetch_trend_data(
     try:
         session = EdsRestClient.login_to_session_with_api_credentials(api_credentials)
     except RuntimeError as e:
-        # This catches ONLY the clean errors we raised above
         error_message = str(e)
         logger.warning(f"EDS login failed: {error_message}")
         # Return a buffer with an error message overlaid
