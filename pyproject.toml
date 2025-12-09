@@ -75,13 +75,11 @@ keyring = [
 
 keyrings-alt = "^5.0.2"
 
-# matplotlib: pinned per Python version; older versions for older interpreters
-
-# mysql-connector-python: Version 9.1.0+ requires Python >=3.9. We pin 8.3.x for 3.8.
 mysql-connector-python = [
-    { version = "^9.3.0", python = ">=3.9" },
-    { version = "^8.3.0", python = "3.8.*" },
+    { version = "^9.3.0", python = ">=3.9", optional = true },
+    { version = "^8.3.0", python = "3.8.*", optional = true },
 ]
+
 # pendulum: Version 3.x requires Python >=3.9, so we pin 2.x for 3.8. 
 pendulum = [
     { version = "^3.1.0", python = ">=3.9" },
@@ -150,9 +148,8 @@ optional = false
 #python = "<3.9" # Or whatever version makes the standard library tarfile available
 #optional = false
 
-[tool.poetry.extras] # pipx install pipeline-eds[windows]
-windows = ["pyodbc","matplotlib"]
-mpl = ["matplotlib"]
+[tool.poetry.extras] # pipx install pipeline-eds[localdb_fallback]
+localdb_fallback_windows = ["pyodbc", "mysql-connector-python"]
 
 [tool.poetry.group.test.dependencies]
 # pytest: Version 8.x requires Python >=3.9, so we pin 7.x for 3.8.

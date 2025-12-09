@@ -13,9 +13,12 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 ### Removed:
 - Freesimplegui removed as a dependency, and local interface removed in favor of web. Tkinter popups are still present for config and credentials.
 - src/pipeline/gui.py is redundant to the gui cli command, requires maintenance, doesn't exit smoothly, and is an overly generic name with an overly specific purpose (the Eds Trend Web GUI).
+- `mpl` and `windows` optional dependendy groups are no longer available.
 
 ### Added:
 - There is now pipeline.api.eds.config, pipeline.api.eds.rest.config, pipeline.api.eds.soap.config, and the comparable security files, for clear separation of concerns.
+- `localdb_fallback_windows` has been added as an optional dependency group.
+
 
 ### Plan:
 - Once we migrate to SOAP as the standarad, and test work on the Stiles EDS server, then we can destroy the local MariaDB database file fallback, and `poetry remove mysql-connector-python`.

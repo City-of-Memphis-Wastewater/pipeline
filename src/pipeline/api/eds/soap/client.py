@@ -49,7 +49,7 @@ class EdsSoapClient:
         step_seconds: int = 60,
         function: str = "AVG",
         shade_priority: int = 0,
-    ) -> "TabularReply | None":
+    ) -> "object | None":
         """
         Core reusable method: fetch tabular (historical) data by IDCS → IESS.
 
