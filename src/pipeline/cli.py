@@ -76,7 +76,9 @@ def print_version(value: bool):
 
 ### Pipeline CLI
 
-app = typer.Typer(help="CLI for running pipeline workspaces.")
+app = typer.Typer(name="pipeline-eds",
+        help="CLI for running pipeline workspaces.",
+        add_completion=False,)
 console = Console()
 init_security()
 
@@ -105,8 +107,8 @@ def main(
     # 3. Print the command
     typer.echo(f"command:\n{command_string}\n")
 
-@app.command(name="gui", help="Show the GUI. Use the --web flag for a browser-based interface.")
 #def gui
+@app.command(name="gui", help="Show the GUI. Use the --web flag for a browser-based interface.")
 def launch_gui_eds_trend(
     force_web: bool = typer.Option(False, "--web", "-w", help="Force web-based GUI for data requst input, even when the FreeSimpleGUI local window would be available."),
     #force_local: bool = typer.Option(False, "--local", "-l", help="Defunct: Force local freesimplegui GUI for data request input."),
