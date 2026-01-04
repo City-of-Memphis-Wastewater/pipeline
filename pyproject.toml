@@ -98,7 +98,7 @@ testpaths = ["tests"]
 pythonpath = ["src", "."]
 
 [tool.uv]
-package = false
+package = true
 
 [tool.uv.sources]
 pipeline_eds = { path = "src/pipeline" }
