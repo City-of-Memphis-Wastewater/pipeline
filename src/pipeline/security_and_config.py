@@ -3,7 +3,6 @@ from __future__ import annotations # Delays annotation evaluation, allowing mode
 import json
 from pathlib import Path
 import re
-import keyring
 from typing import Dict, Set, List, Any
 import typer
 import click.exceptions
@@ -12,6 +11,10 @@ import sys
 import pyhabitat as ph
 from pipeline.state_manager import PromptManager # Import the manager class for type hinting
 
+try:
+    import keyring
+except:
+    pass
     
 # Define a standard configuration path for your package
 CONFIG_PATH = Path.home() / ".pipeline-eds" / "config.json" ## configuration-example
