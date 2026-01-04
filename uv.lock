@@ -1613,7 +1613,7 @@ wheels = [
 [[package]]
 name = "pipeline-eds"
 version = "0.4.1"
-source = { editable = "." }
+source = { virtual = "." }
 dependencies = [
     { name = "backports-tarfile" },
     { name = "backports-zoneinfo", marker = "python_full_version < '3.9'" },
