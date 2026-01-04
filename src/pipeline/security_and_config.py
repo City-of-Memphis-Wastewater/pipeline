@@ -435,9 +435,11 @@ def configure_keyring():
     Defunct, use configure_filebased_secure_config() instead.
     """
     if ph.on_termux or ph.on_ish_alpine():
+        pass
+
         #typer.echo("Termux environment detected. Configuring file-based keyring backend.")
-        import keyrings.alt.file
-        keyring.set_keyring(keyrings.alt.file.PlaintextKeyring())
+        #import keyrings.alt.file
+        #keyring.set_keyring(keyrings.alt.file.PlaintextKeyring())
         #typer.echo("Keyring configured to use file-based backend.")
     else:
         pass
