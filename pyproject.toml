@@ -1,186 +1,100 @@
-[tool.poetry]
+[build-system]
+requires = ["uv-build>=0.5"]
+build-backend = "uv_build"
+
+[project]
 name = "pipeline-eds"
 version = "0.3.84"
 description = "A Python API pipeline library and CLI toolkit for Emerson Ovation EDS systems — built for engineers, control technicians, and wastewater SCADA teams."
-authors = ["George Clayton Bennett <george.bennett@memphistn.gov>"]
-license = "MIT"
 readme = "README.md"
-packages = [{ include = "pipeline", from = "src" }] # Enables `import pipeline`
-homepage = "https://github.com/city-of-memphis-wastewater/pipeline"
-repository = "https://github.com/city-of-memphis-wastewater/pipeline"
-include = [
-#    "src/pipeline/data/*",
-    "src/pipeline/interface/web_gui/static/**/*",
-    "src/pipeline/interface/web_gui/templates/**/*",
+license = { text = "MIT" }
+requires-python = ">=3.8,<3.15"
+include-package-data = true
+
+authors = [
+    { name = "George Clayton Bennett", email = "george.bennett@memphistn.gov" }
 ]
 
-# ---- Data that must be in wheels AND sdists ----
-#include = [
-#    { path = "src/pipeline/interface/web_gui/templates", format = "sdist" },
-#    { path = "src/pipeline/interface/web_gui/static",   format = "sdist" },
+dependencies = [
+    "backports.tarfile>=1.2",
+    "colorama>=0.4.6",
+    "distro>=1.9.0",
 
-    # Wheel-specific (also works for sdist)
-#    { include = "pipeline/interface/web_gui/templates/**", from = "src" },
-#    { include = "pipeline/interface/web_gui/static/**",    from = "src" }
-#] 
+    "keyring>=25.6.0; python_version >= '3.9'",
+    "keyring>=24.3; python_version < '3.9'",
+    "keyrings-alt>=5.0.2",
 
-                
-classifiers=[
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-    "Intended Audience :: Developers",
-	"Intended Audience :: System Administrators",
-    "Intended Audience :: Science/Research",
-    "Topic :: Scientific/Engineering :: Information Analysis",
-    "Topic :: Scientific/Engineering :: Visualization",
-    "Environment :: Console",
-    "Topic :: Software Development :: Libraries :: Python Modules",
-	"Topic :: Utilities",
+    "pendulum>=3.1.0; python_version >= '3.9'",
+    "pendulum>=2.1.2; python_version < '3.9'",
+
+    "plotly>=6.2.0",
+    "pyhabitat>=1.0.40",
+    "pyyaml>=6.0.2,<7.0.0",
+    "requests>=2.32.3,<3.0.0",
+
+    "rich>=14.1.0; python_version >= '3.10'",
+    "rich>=10.14.0; python_version < '3.10'",
+
+    "suds-py3>=1.4.5.0",
+
+    "msgspec>=0.19.0; python_version >= '3.9'",
+    "msgspec>=0.18; python_version < '3.9'",
+
+    "starlette>=0.50.0; python_version >= '3.10'",
+    "starlette>=0.47.3; python_version == '3.9.*'",
+    "starlette>=0.44.0; python_version < '3.9'",
+
+    "typer>=0.17.4",
+    "tzdata>=2025.2",
+
+    "urllib3>=2.4.0; python_version >= '3.9'",
+    "urllib3>=1.26.19; python_version < '3.9'",
+
+    "uvicorn>=0.34.3; python_version >= '3.9'",
+    "uvicorn>=0.33.0; python_version < '3.9'",
+
+    "python-multipart>=0.0.20",
+    "backports.zoneinfo>=0.2.1; python_version < '3.9'",
 ]
 
+[project.optional-dependencies]
+localdb_fallback_windows = [
+    "pyodbc>=5.1.0",
+    "mysql-connector-python>=9.3.0; python_version >= '3.9'",
+    "mysql-connector-python>=8.3.0; python_version < '3.9'",
+]
 
-[tool.poetry.scripts]
-pipeline = "pipeline.cli:app" # for installation of pipeline as a CLI. Ex: pipeline trend M100FI -s June3 -f June17
-eds = "pipeline.cli:app" # alias eds for pipeline CLI
-pipeline-eds = "pipeline.cli:app" # alias eds for pipeline CLI
+[project.scripts]
+pipeline = "pipeline.cli:app"
+eds = "pipeline.cli:app"
+pipeline-eds = "pipeline.cli:app"
 package-pipeline = "package:main"
 
-[tool.pytest.ini_options]
-markers = [
-    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+[dependency-groups]
+test = [
+    "pytest>=8.4.1; python_version >= '3.9'",
+    "pytest>=7.4; python_version < '3.9'",
+    "pytest-cov>=6.2.1; python_version >= '3.9'",
+    "pytest-cov>=5.0; python_version < '3.9'",
+    "ruff>=0.7.0",
 ]
-#addopts = "--cov=pipeline --cov-report=html" #  visually inspect coverage, e.g. before a release or PR.
-addopts = "-ra --cov=pipeline --cov-report=term-missing" # for development — fast and informative in terminal.
+
+dev = [
+    "pygal>=3.0.5",
+    "pex>=2.69.1",
+
+    "pyinstaller>=6.16.0; platform_system == 'Linux' and platform_machine != 'aarch64'",
+
+    "shiv>=1.0.8; sys_platform != 'android'",
+    "shiv==0.5.1; sys_platform == 'android'",
+
+    "cffi>=1.17.0",
+]
+
+[tool.pytest.ini_options]
+addopts = "-ra --cov=pipeline --cov-report=term-missing"
 testpaths = ["tests"]
 pythonpath = ["src", "."]
 
-[tool.poetry.dependencies]
-python = ">=3.8,<3.15"
-
-# backports.tarfile is required due to a transitive dependency (likely jaraco.context's
-# use of tarball functionality) which unconditionally imports the backport, even
-# though standard Python 3.x includes the necessary functionality.
-"backports.tarfile" = "^1.2" # <--- Unconditional entry (no python marker)
-colorama = [
-    { version = "^0.4.6", python = ">=3.8,<3.15" }
-]
-distro = "^1.9.0"
-
-# keyring: Version 25.x requires Python >=3.9, so we pin 24.x for 3.8.
-keyring = [
-    { version = "^25.6.0", python = ">=3.9" },
-    { version = "^24.3", python = "3.8.*" },
-]
-
-keyrings-alt = "^5.0.2"
-
-mysql-connector-python = [
-    { version = "^9.3.0", python = ">=3.9", optional = true },
-    { version = "^8.3.0", python = "3.8.*", optional = true },
-]
-
-# pendulum: Version 3.x requires Python >=3.9, so we pin 2.x for 3.8. 
-pendulum = [
-    { version = "^3.1.0", python = ">=3.9" },
-    { version = "^2.1.2", python = "3.8.*" },
-]
-
-plotly = "^6.2.0"
-
-pyhabitat = "^1.0.40"	
-pyodbc = { version = "^5.1.0", optional = true }
-pyyaml = ">=6.0.2,<7.0.0"
-requests = ">=2.32.3,<3.0.0"
-
-rich = [
-    { version = "^14.1.0", python = ">=3.10" }, # Use the latest rich for modern Python
-    { version = "^10.14.0", python = ">=3.8,<3.10" },  # Use rich <14 for Python 3.8-3.9
-]
-
-suds-py3 = "^1.4.5.0"
-
-# msgspec is for lightweight fast validation
-
-#msgspec – Fast, lightweight data validation and serialization
-#Provides near-native speed for validating and encoding/decoding structured data (JSON, MsgPack, Python objects).
-#Supports type hints, making it ideal for modern Python code without Pydantic’s heavy dependency tree.
-#Works well with async frameworks, Starlette, or any project where you want validated input/output but minimal overhead.
-#Perfect for replacing Pydantic in small services or live data pipelines, especially if you want Python 3.8–3.14 support.
-#Can be used to define schemas, parse incoming JSON or other serialized formats, and ensure type safety without runtime performance penalties.
-msgspec = [ 
-    { version = "^0.19.0", python = ">=3.9" },
-    { version = "0.18.*", python = ">=3.8,<3.9" }
-]
-
-# modern Starlette, drop FastAPI entirely
-starlette = [
-    { version = "^0.44.0", python = "<3.9" },  # compatible with Python 3.8
-    { version = "^0.47.3", python = "3.9.*" },        # latest for Python 3.9+
-    { version = "^0.50.0", python = ">=3.10" }        # latest for Python 3.10+
-]
-toml = ">=0.10.2,<0.11.0"
-typer = "^0.17.4"
-tzdata = "^2025.2"
-# urllib3: Version 2.x requires Python >=3.9, so we pin 1.26.x for 3.8.
-urllib3 = [
-    { version = "^2.4.0", python = ">=3.9" },
-    { version = "^1.26.19", python = "3.8.*" }, # Pinning latest 1.x patch for security
-]
-# uvicorn: Version 0.34.0 dropped Python 3.8 support, so we pin 0.33.x for 3.8.
-uvicorn = [
-    { version = "^0.34.3", python = ">=3.9" },
-    { version = "^0.33.0", python = "3.8.*" },
-]
-python-multipart = "^0.0.20"
-
-[tool.poetry.dependencies."backports.zoneinfo"] # known poetry quirk necessary when freezing, a la "poetry export -f requirements.txt --without-hashes > requirements.txt"
-version = "^0.2.1"
-python = "<3.9"
-optional = false
-
-
-#[tool.poetry.dependencies."backports.tarfile"]
-## backports.tarfile is required due to a transitive dependency (likely jaraco.context's
-## use of tarball functionality) which unconditionally imports the backport, even
-## though standard Python 3.x includes the necessary functionality.
-#version = "^1.2" # or appropriate version
-#python = "<3.9" # Or whatever version makes the standard library tarfile available
-#optional = false
-
-[tool.poetry.extras] # pipx install pipeline-eds[localdb_fallback]
-localdb_fallback_windows = ["pyodbc", "mysql-connector-python"]
-
-[tool.poetry.group.test.dependencies]
-# pytest: Version 8.x requires Python >=3.9, so we pin 7.x for 3.8.
-pytest = [
-    { version = "^8.4.1", python = ">=3.9" }, # Upgraded to latest version for 3.9+
-    { version = "^7.4", python = "3.8.*" },
-]
-pytest-cov = [
-    { version = "^6.2.1", python = ">=3.9" }, # Upgraded to latest version for 3.9+
-    { version = "^5.0", python = "3.8.*" },
-]
-ruff = " ^0.7.0"
-
-[tool.poetry.group.dev.dependencies]
-pygal = "^3.0.5"
-pyinstaller = "^6.16.0"
-pex = "^2.69.1"
-shiv = [
-    { version = "^1.0.8", markers = "sys_platform != 'android'" },
-    { version = "0.5.1",  markers = "sys_platform == 'android'" }
-]
-cffi = "^1.17.0"  # add this line
-
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0", "setuptools-scm"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.setuptools_scm]
-write_to = "src/pipeline/_version.py"
-version_scheme = "guess-next-dev"
-local_scheme = "node-and-date"
-
-[tool.poetry.plugins."scripts"]
-controller = "pipeline.daemon.controller:main_cli"
+[tool.uv]
+package = true

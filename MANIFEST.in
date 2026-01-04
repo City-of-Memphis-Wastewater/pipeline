@@ -1,0 +1,2 @@
+recursive-include src/pipeline/interface/web_gui/static *
+recursive-include src/pipeline/interface/web_gui/templates *
