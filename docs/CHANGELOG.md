@@ -6,6 +6,12 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 
 ---
 
+## [0.4.1] – 2026-01-04
+### Changed:
+- Implement uv for dependency management, and uv-build for building. poetry is out.
+
+---
+
 ## [0.3.84] – 2025-12-07
 ### Changed:
 - Migrate get_configurable_default_plant_name() from SecurityAndConfig generic class to EDS-specific config.py file. 
