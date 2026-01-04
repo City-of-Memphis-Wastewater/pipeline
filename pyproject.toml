@@ -8,7 +8,7 @@ version = "0.4.1"
 description = "A Python API pipeline library and CLI toolkit for Emerson Ovation EDS systems — built for engineers, control technicians, and wastewater SCADA teams."
 readme = "README.md"
 license = { text = "MIT" }
-requires-python = ">=3.8,<3.15"
+requires-python = ">=3.9,<3.15"
 include-package-data = true
 
 authors = [
@@ -20,11 +20,9 @@ dependencies = [
     "colorama>=0.4.6",
     "distro>=1.9.0",
     "keyring>=25.6.0 ; python_version >= '3.9' and platform_machine != 'aarch64'",
-    "keyring>=24.3 ; python_version < '3.9' and platform_machine != 'aarch64'",
     #"cryptography>=46.0.3; platform_machine != 'aarch64'",
     "keyrings-alt>=5.0.2; platform_machine != 'aarch64'",
     "pendulum>=3.1.0; python_version >= '3.9'",
-    "pendulum>=2.1.2; python_version < '3.9'",
     "plotly>=6.2.0",
     "pyhabitat>=1.0.40",
     "pyyaml>=6.0.2,<7.0.0",
@@ -33,16 +31,13 @@ dependencies = [
     "rich>=10.14.0; python_version < '3.10'",
     "suds-py3>=1.4.5.0",
     "msgspec>=0.19.0; python_version >= '3.9'",
-    "msgspec>=0.18; python_version < '3.9'",
     "starlette>=0.50.0; python_version >= '3.10'",
     "starlette>=0.47.3; python_version == '3.9.*'",
-    "starlette>=0.44.0; python_version < '3.9'",
     "typer>=0.17.4",
     "tzdata>=2025.2",
     "urllib3>=2.4.0; python_version >= '3.9'",
     "urllib3>=1.26.19; python_version < '3.9'",
     "uvicorn>=0.34.3; python_version >= '3.9'",
-    "uvicorn>=0.33.0; python_version < '3.9'",
     "python-multipart>=0.0.20",
     "backports.zoneinfo>=0.2.1; python_version < '3.9'",
     "toml>=0.10.2",
@@ -52,7 +47,6 @@ dependencies = [
 localdb_fallback_windows = [
     "pyodbc>=5.1.0",
     "mysql-connector-python>=9.3.0; python_version >= '3.9'",
-    "mysql-connector-python>=8.3.0; python_version < '3.9'",
 ]
 
 [project.scripts]
@@ -64,9 +58,7 @@ package-pipeline = "package:main"
 [dependency-groups]
 test = [
     "pytest>=8.4.1; python_version >= '3.9'",
-    "pytest>=7.4; python_version < '3.9'",
     "pytest-cov>=6.2.1; python_version >= '3.9'",
-    "pytest-cov>=5.0; python_version < '3.9'",
     "ruff>=0.7.0",
 ]
 
