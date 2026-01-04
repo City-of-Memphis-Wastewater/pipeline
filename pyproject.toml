@@ -87,6 +87,7 @@ dev = [
 
     "shiv>=1.0.8; sys_platform != 'android'",
     "shiv==0.5.1; sys_platform == 'android'",
+    # platform_machine != 'aarch64'",
 
     "cffi>=1.17.0",
 ]
@@ -98,3 +99,6 @@ pythonpath = ["src", "."]
 
 [tool.uv]
 package = true
+
+[tool.uv.sources]
+pipeline-eds = { path = "src/pipeline" }
