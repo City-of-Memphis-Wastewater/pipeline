@@ -19,8 +19,9 @@ dependencies = [
     "backports.tarfile>=1.2",
     "colorama>=0.4.6",
     "distro>=1.9.0",
-    "keyring>=25.6.0; python_version >= '3.9' and platform_machine != 'aarch64'",
-    "keyring>=24.3; python_version < '3.9' and platform_machine != 'aarch64'",
+    "keyring>=25.6.0",# ; python_version >= '3.9' and platform_machine != 'aarch64'",
+    "keyring>=24.3", # ; python_version < '3.9' and platform_machine != 'aarch64'",
+    "cryptography>=46.0.3; platform_machine != 'aarch64'",
     "keyrings-alt>=5.0.2",
     "pendulum>=3.1.0; python_version >= '3.9'",
     "pendulum>=2.1.2; python_version < '3.9'",
@@ -75,8 +76,8 @@ dev = [
 
     "pyinstaller>=6.16.0; platform_system == 'Linux' and platform_machine != 'aarch64'",
 
-    "shiv>=1.0.8; sys_platform != 'android'",
-    "shiv==0.5.1; sys_platform == 'android'",
+    "shiv>=1.0.8; platform_machine != 'aarch64'",
+    "shiv==0.5.1; platform_machine == 'aarch64'",
     # platform_machine != 'aarch64'",
 
     "cffi>=1.17.0",
