@@ -6,6 +6,16 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 
 ---
 
+
+## [0.4.2] – 2026-01-04
+### Tested:
+- uv is stable for dependency management.
+
+### Changed:
+- Detritis files in root moved to dedicated jupyter and node-red based folders in ~./dev/ on the Ubuntu system.
+ 
+---
+
 ## [0.4.1] – 2026-01-04
 ### Changed:
 - Implement uv for dependency management, and uv-build for building. poetry is out.
