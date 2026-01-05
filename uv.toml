@@ -1,6 +1,8 @@
 # ~/dev/pipeline/uv.toml
 
-[install]
+# Configure which groups are synced by default (standard in 2026)
+default-groups = ["dev", "pdfium"]
+
 # Explicitly set copy mode to silence the Android hardlink warning
 link-mode = "copy"
 
@@ -13,6 +15,4 @@ name = "pipeline-eds"
 url = "https://pypi.org/pipeline-eds"
 default = true
 
-[project]
-# Configure which groups are synced by default (standard in 2026)
-default-groups = ["dev", "pdfium"]
+
