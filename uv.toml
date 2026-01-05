@@ -1,0 +1,18 @@
+# ~/dev/pipeline/uv.toml
+
+[install]
+# Explicitly set copy mode to silence the Android hardlink warning
+link-mode = "copy"
+
+# Point to your local environment variables file
+# Note: env-file is an option for certain commands like 'uv run'
+env-file = ".env"
+
+[[index]]
+name = "pipeline-eds"
+url = "https://pypi.org/pipeline-eds"
+default = true
+
+[project]
+# Configure which groups are synced by default (standard in 2026)
+default-groups = ["dev", "pdfium"]
