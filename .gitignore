@@ -18,6 +18,7 @@ uv.lock
 # Environment variables, secrets, etc.
 .env
 **/secrets.yaml
+.key
 
 # OS generated files
 .DS_Store

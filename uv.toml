@@ -6,13 +6,16 @@
 # Explicitly set copy mode to silence the Android hardlink warning
 link-mode = "copy"
 
-# Point to your local environment variables file
-# Note: env-file is an option for certain commands like 'uv run'
-#env-file = ".env"
 
 [[index]]
 name = "pipeline-eds"
 url = "https://pypi.org/pipeline-eds"
-default = true
+default = false
 
 
+# Point to your local environment variables file
+# Note: env-file is an option for certain commands like 'uv run'
+# uv handles .env already without ucing uv add python-dotenv
+
+[run]
+env-file = ".env"

@@ -68,8 +68,9 @@ dev = [
 
     "pyinstaller>=6.16.0; platform_system == 'Linux' and platform_machine != 'aarch64'",
 
-    "shiv>=1.0.8; platform_machine != 'aarch64'",
-    "shiv==0.5.1; platform_machine == 'aarch64'",
+    "shiv>=1.0.8",
+    #"shiv>=1.0.8; platform_machine != 'aarch64'",
+    #"shiv==0.5.1; platform_machine == 'aarch64'",
     # platform_machine != 'aarch64'",
 
     "cffi>=1.17.0",
