@@ -146,47 +146,29 @@ This method is for contributors who need a full development environment to modif
 Learn more about [git](https://www.youtube.com/watch?v=qrD3z9_9DXU).
 See [git guide](https://git-scm.com/docs).
 
-**1. Clone the Repository**
+** Clone the Repository**
 
 ```bash
 git clone https://github.com/City-of-Memphis-Wastewater/pipeline.git
 cd pipeline
 ```
 
-**2. Install `pyenv` and `Poetry`**
+** Install `uv`**
 
-This project uses `pyenv` to manage Python versions and `Poetry` for dependency management.
-You do not need `pyenv`.
-This project is compatible with Python 3.8 to 3.14, so there's not a huge demand for your to dial in a specific version.
+This project uses `uv` for dependency management.
 
-  * **`pyenv`:** Follow the official installation guide for your OS ([pyenv](https://github.com/pyenv/pyenv) for Linux/macOS, [pyenv-win](https://github.com/pyenv-win/pyenv-win) for Windows).
-  * **`Poetry`:** Follow the official [Poetry installation guide](https://www.google.com/search?q=https://python-poetry.org/docs/%23installation).
+```
+pipx install uv
 
-**3. Configure the Project Environment**
-
-If you so choose.
-
-```bash
-pyenv install 3.11.9
-pyenv local 3.11.9
-poetry env use 3.11.9
+# On Termux: 
+pkg install uv
 ```
 
-**4. Install Dependencies**
-
-Yes, this part is entirely necessary.
+** Run Commands**
 
 ```bash
-poetry install
-```
-
-**5. Run Commands**
-
-Execute all commands with `poetry run`. The `[tool.poetry.scripts]` section in `pyproject.toml` allows `eds` to work as an alias for `python -m pipeline.cli`.
-
-```bash
-poetry run eds config
-poetry run eds ping
+uv run eds config
+uv run eds ping
 ```
 
 </details>
