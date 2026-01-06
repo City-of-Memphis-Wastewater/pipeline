@@ -3,7 +3,8 @@
 name: Build and push multi-arch pipeline image
 
 on:
-  release
+  release:
+    types: [published]
   #push:
   #  tags: [ 'v*.*.*', 'v*.*.*-*' ]
   workflow_dispatch:
