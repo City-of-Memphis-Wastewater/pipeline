@@ -1,38 +1,34 @@
-# Use a slim Python 3.11 base image to keep the container small.
-FROM python:3.11-slim
+# Use slim Python image for small final size
+FROM python:3.12-slim
 
-# Set the working directory inside the container.
+# Set working directory
 WORKDIR /app
 
-# Install bash (optional, for interactive shell)
+# Install bash and curl (useful for debugging/healthchecks)
 RUN apt-get update && apt-get install -y bash curl \
     && rm -rf /var/lib/apt/lists/*
-	
-# Copy only dependency files first (pyproject.toml + poetry.lock)
-COPY pyproject.toml poetry.lock README.md ./
 
-# Install Poetry in the container.
-RUN pip install poetry
+# Install uv (fast dependency installer)
+RUN pip install --no-cache-dir uv
 
-# Use Poetry to install all project dependencies and the project itself.
-# This creates an editable install, making the 'pipeline' module available.
-RUN poetry install --without dev --no-interaction --no-ansi --no-root
+# Copy only dependency metadata first (enables Docker layer caching)
+COPY pyproject.toml uv.lock README.md ./
 
-# Copy all project files into the container. This includes src/, pyproject.toml, etc.
+# Install project dependencies from lockfile (frozen = reproducible)
+# --no-dev skips dev dependencies (equivalent to Poetry's --without dev)
+RUN uv sync --frozen --no-dev
+
+# Now copy the actual source code
 COPY src/ ./src/
-#COPY . .
 
-# Expose any ports your application might need (e.g., for the Plotly web server).
+# Optional: copy any other needed files (e.g., data, config)
+# COPY . .
+
+# Expose port if your app runs a server (e.g., FastAPI/Flask)
 EXPOSE 8000
 
-# Set the entry point for the container.
-# This defines the command that will run when the container starts.
-# It uses the "eds" alias from your pyproject.toml file.
-ENTRYPOINT ["poetry", "run", "eds"]
+# Run the CLI entrypoint using uv (equivalent to "poetry run eds")
+ENTRYPOINT ["uv", "run", "eds"]
 
-# Optional: allow overriding with interactive bash
-# Usage: docker run -it --rm --entrypoint bash pipeline-eds
+# Default command (can be overridden)
 CMD ["--help"]
-
-# Make the container available as a GitHub Package
-LABEL org.opencontainers.image.source https://github.com/city-of-memphis-wastewater/pipeline
