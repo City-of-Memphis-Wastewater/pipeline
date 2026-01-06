@@ -76,7 +76,8 @@ pythonpath = ["src", "."]
 
 [tool.uv]
 package = true
-default-groups = ["dev", "test"]
+#default-groups = ["dev", "test"]
+default-groups = []
 
 [tool.uv.sources]
 pipeline_eds = { path = "src/pipeline" }
