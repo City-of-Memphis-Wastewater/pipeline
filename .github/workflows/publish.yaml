@@ -31,14 +31,14 @@ jobs:
       - name: Install uv
         run: pip install --upgrade uv
 
-      - name: Install build dependencies
-        run: uv pip install --upgrade build
-
+      - name: Install build tool via uv (system-wide, no venv needed)
+        run: uv tool install build --upgrade
+        
       - name: Build package (sdist + wheel)
         run: uv build
 
       - name: Install the built package (sanity check)
-        run: uv pip install dist/*.whl
+        run: uv pip install dist/*.whl --system
 
       - name: Test CLI entrypoint
         run: |

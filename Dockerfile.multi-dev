@@ -17,7 +17,7 @@ COPY . .
 # Install all dependencies including dev groups/extras
 # Use --all-extras if you use optional-dependencies, or --with dev if using dependency-groups
 # Adjust based on your pyproject.toml structure
-RUN uv sync --all-extras --with dev
+RUN uv sync --all-extras --all-groups
 
 # Expose port for dev servers
 EXPOSE 8000
