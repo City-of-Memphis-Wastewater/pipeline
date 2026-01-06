@@ -30,7 +30,7 @@ jobs:
 
     - name: Install main dependencies only (skip dev for speed/CI stability)
       #run: poetry install --without dev --with test  # ← This skips shiv entirely
-      run: uv sync --extra test --no-dev
+      run: uv sync --group test --no-dev
     #- name: Lint with ruff
     #  run: |
     #    poetry run ruff check .
