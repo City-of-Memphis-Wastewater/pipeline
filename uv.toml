@@ -17,5 +17,5 @@ default = false
 # Note: env-file is an option for certain commands like 'uv run'
 # uv handles .env already without ucing uv add python-dotenv
 
-[run]
-env-file = ".env"
+#[run]
+#env-file = ".env"
