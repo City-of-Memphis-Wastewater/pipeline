@@ -44,7 +44,7 @@ jobs:
           poetry-version: 'latest' # Or a specific version, e.g., '1.8.3'
           
       - name: Install dependencies (for building)
-        run: python -m pip install --upgrade pip build
+        run: python -m pip install --upgrade pip build uv
 
       - name: Build S-Dist and Wheel
         # This command creates the package files (.tar.gz and .whl) in the 'dist/' directory.
