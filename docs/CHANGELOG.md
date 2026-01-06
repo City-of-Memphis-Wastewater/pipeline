@@ -9,6 +9,7 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 ## [0.4.3] – 2026-01-06
 ### Fixed:
 - Start passing CI by replacing poetry components in dockerfiles and ci.yml
+- Covert publish.yml to uv instead of poetry.
 
 ### Changed:
 - Stop supporting python 3.8
