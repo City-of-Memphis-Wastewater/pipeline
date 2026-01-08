@@ -9,6 +9,9 @@ requires-python = ">=3.9,<3.15"
 authors = [
     { name = "George Clayton Bennett", email = "george.bennett@memphistn.gov" }
 ]
+maintainers = [
+    { name = "George Clayton Bennett", email = "george.bennett@memphistn.gov" }
+]
 
 dependencies = [
     "backports.tarfile>=1.2",
@@ -34,6 +37,7 @@ dependencies = [
     "uvicorn>=0.34.3; python_version >= '3.9'",
     "python-multipart>=0.0.20",
     "toml>=0.10.2",
+    "dworshak-access>=0.1.11",
 ]
 
 [project.optional-dependencies]
