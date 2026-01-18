@@ -1,6 +1,6 @@
 [project]
 name = "pipeline-eds"
-version = "0.4.6"
+version = "0.4.7"
 description = "A Python API pipeline library and CLI toolkit for Emerson Ovation EDS systems — built for engineers, control technicians, and wastewater SCADA teams."
 readme = "README.md"
 license = { text = "MIT" }
@@ -49,6 +49,7 @@ localdb_fallback_windows = [
 [project.scripts]
 eds = "pipeline_eds.cli:app"
 pipeline_eds = "pipeline_eds.cli:app"
+pipeline-eds = "pipeline_eds.cli:app"
 
 [dependency-groups]
 test = [
@@ -81,8 +82,8 @@ package = true
 #default-groups = ["dev", "test"]
 default-groups = []
 
-[tool.uv.sources]
-pipeline_eds = { path = "src/pipeline_eds" }
+[tool.uv]
+package = true
 
 [build-system]
 requires = ["setuptools>=64", "wheel"]

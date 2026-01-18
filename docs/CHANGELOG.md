@@ -6,6 +6,12 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 
 ---
 
+## [0.4.7] – 2026-01-18
+### Fixed:
+- keep `pipeline_eds` and `pipeline-eds` as CLI entry points
+
+---
+
 ## [0.4.6] – 2026-01-18
 ### Changed:
 - `pipeline` -> `pipeline_eds`
