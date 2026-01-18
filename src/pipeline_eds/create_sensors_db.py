@@ -66,7 +66,7 @@ def get_user_db_path() -> Path:
     else:
         base = Path.home() / ".local" / "share"
 
-    user_dir = base / "pipeline"
+    user_dir = base / "pipeline_eds"
     user_dir.mkdir(parents=True, exist_ok=True)
     return user_dir / "sensors.db"
 

@@ -15,8 +15,8 @@ def setup():
     if platform.startswith("win"):
 
         # Copy files
-        source_dir = Path(__file__).parent  # this is src/mulch/scripts/install 
-        target_dir = Path(os.environ['LOCALAPPDATA']) / "pipeline" ## configuration-example
+        source_dir = Path(__file__).parent  # 
+        target_dir = Path(os.environ['LOCALAPPDATA']) / "pipeline_eds" ## configuration-example
         target_dir.mkdir(parents=True, exist_ok=True)
 
 

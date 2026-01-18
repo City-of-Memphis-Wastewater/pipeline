@@ -29,7 +29,7 @@ class WorkspaceManager:
     SECRETS_YAML_FILE_NAME ='secrets.yaml'
     SECRETS_EXAMPLE_YAML_FILE_NAME ='secrets-example.yaml'
     DEFAULT_WORKSPACE_TOML_FILE_NAME = 'default-workspace.toml'
-    APP_NAME = "pipeline"
+    APP_NAME = "pipeline_eds"
 
     TIMESTAMPS_JSON_FILE_NAME = 'timestamps_success.json'
 

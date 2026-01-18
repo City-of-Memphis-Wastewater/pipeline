@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]   # repo root
-SRC_PKG = PROJECT_ROOT / "src" / "pipeline"
+SRC_PKG = PROJECT_ROOT / "src" / "pipeline_eds"
 DIST = PROJECT_ROOT / "dist"
 
 def get_version() -> str:

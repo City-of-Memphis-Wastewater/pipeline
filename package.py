@@ -54,11 +54,10 @@ os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
 # ----------------------------------------------------------------------
 PROJECT_NAME = "pipeline-eds"
 ENTRY_POINT = "pipeline_eds.cli:app"   # Your Typer/FastAPI entry point
-REPO_NAME = "pipeline"
 PROJECT_ROOT = Path(__file__).resolve().parent   # repo root
-while PROJECT_ROOT.name != REPO_NAME and PROJECT_ROOT != PROJECT_ROOT.parent:
+while PROJECT_ROOT != PROJECT_ROOT.parent:
     PROJECT_ROOT = PROJECT_ROOT.parent
-SRC_PKG = PROJECT_ROOT / "src" / "pipeline"
+SRC_PKG = PROJECT_ROOT / "src" / "pipeline_eds"
 DIST_DIR = PROJECT_ROOT / "dist"
 #DIST_DIR = "dist"                  # All artifacts go here
 PYTHON_BIN = sys.executable        # Use the current venv interpreter
@@ -433,8 +432,6 @@ def generate_macos_app(pyz: Path, app_dir: Path):
 # ----------------------------------------------------------------------
 def write_version_file(src_pkg_dir: Path):
     """_version.py — for runtime inspection."""
-    #file = dist_dir / "_version.py"
-    #file = Path("src") / "pipeline" / "_version.py" # hardcode until fixed
     file = src_pkg_dir / "_version.py"
     ver = get_package_version()
     git = subprocess.getoutput("git rev-parse --short HEAD")
