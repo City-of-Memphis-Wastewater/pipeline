@@ -4,7 +4,7 @@ This guide will walk you through the process of installing and configuring the `
 
 #### **Python Setup**
 
-First, ensure you have Python 3.8 or a later version installed on your system.
+First, ensure you have Python 3.9 or a later version installed on your system.
 
   * **On Windows**, you can download it from the official Python website. Make sure to check the box to add Python to your PATH during installation.
   * **On macOS**, you can use Homebrew: `brew install python@3.11`.

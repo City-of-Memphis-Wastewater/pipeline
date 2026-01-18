@@ -11,8 +11,6 @@ venv/
 myenv/
 test-pypi-venv/
 
-# Poetry lock files (optional, but recommended to commit poetry.lock)
-#poetry.lock
 uv.lock 
 
 # Environment variables, secrets, etc.

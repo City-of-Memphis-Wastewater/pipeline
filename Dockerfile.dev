@@ -8,7 +8,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y bash curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install uv directly (faster than pip install uv)
+# Install uv directly 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # Copy the project files

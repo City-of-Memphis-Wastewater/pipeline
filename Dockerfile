@@ -15,7 +15,7 @@ RUN pip install --no-cache-dir uv
 COPY pyproject.toml uv.lock README.md ./
 
 # Install project dependencies from lockfile (frozen = reproducible)
-# --no-dev skips dev dependencies (equivalent to Poetry's --without dev)
+# --no-dev skips dev dependencies
 RUN uv sync --frozen --no-dev
 
 # Now copy the actual source code
@@ -27,7 +27,7 @@ COPY src/ ./src/
 # Expose port if your app runs a server (e.g., FastAPI/Flask)
 EXPOSE 8000
 
-# Run the CLI entrypoint using uv (equivalent to "poetry run eds")
+# Run the CLI entrypoint using uv 
 ENTRYPOINT ["uv", "run", "eds"]
 
 # Default command (can be overridden)

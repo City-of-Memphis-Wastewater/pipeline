@@ -121,33 +121,23 @@ class SystemInfo:
         return {"id": info.get("ID", "linux"), "version": info.get("VERSION_ID", "")}
 
 
-# ----------------------------------------------------------------------
-# 4. POETRY DETECTION — Why? Use Poetry if available
-# ----------------------------------------------------------------------
-def did_poetry_make_the_call() -> bool:
-    """Are we running under `poetry run`?"""
-    if os.environ.get("POETRY_ACTIVE") == "1":
-        return True
-    return ".venv" in sys.executable.lower() or "poetry" in sys.executable.lower()
 
 
 # ----------------------------------------------------------------------
 # 5. METADATA HELPERS
 # ----------------------------------------------------------------------
+    
 def get_package_version() -> str:
-    """Read version from pyproject.toml — Poetry source of truth."""
-    try:
-        return toml.load("pyproject.toml")["tool"]["poetry"]["version"]
-    except Exception:
-        return "0.0.0"
-
+    """Read from standard [project] ."""
+    data = toml.load("pyproject.toml")
+    project = data.get("project", {})
+    return project.get("version", "0.0.0")
 
 def get_package_name() -> str:
-    """Read name from pyproject.toml."""
-    try:
-        return toml.load("pyproject.toml")["tool"]["poetry"]["name"]
-    except Exception:
-        return "pipeline-eds"
+    """Read from standard [project] ."""
+    data = toml.load("pyproject.toml")
+    project = data.get("project", {})
+    return project.get("name", "pipeline-eds")
 
 
 def get_python_version() -> str:
@@ -194,29 +184,6 @@ def clean_dist(dist_dir: Path):
                 shutil.rmtree(item)
             else:
                 item.unlink()
-
-
-def build_wheel(dist_dir: Path, use_poetry: bool = True) -> Path:
-    """
-    Build wheel using Poetry (preferred) or fallback to `python -m build`.
-    Why Poetry? It respects pyproject.toml extras, lockfile, etc.
-    """
-    dist_dir.mkdir(exist_ok=True)
-    clean_dist(dist_dir)
-
-    if use_poetry and shutil.which("poetry"):
-        print("Building wheel with Poetry (no .pyc)…")
-        run_command(["poetry", "build", "-f", "wheel", "--output", str(dist_dir)])
-    else:
-        print("Building wheel with python -m build (no .pyc)…")
-        run_command([sys.executable, "-m", "build", "--wheel", "--outdir", str(dist_dir)])
-
-    wheels = list(dist_dir.glob("*.whl"))
-    if not wheels:
-        raise FileNotFoundError("No wheel built")
-    latest = max(wheels, key=lambda f: f.stat().st_mtime)
-    print(f"Built wheel: {latest.name}")
-    return latest
 
 
 def find_latest_wheel(dist_dir: Path):
@@ -352,6 +319,17 @@ sys.exit(app())
     out_path.chmod(0o755)
     print("zipapp built – pure .py, no .pyc")
 
+
+def build_wheel_with_uv(dist_dir: Path) -> Path:
+    """The modern way: fast, reliable, and no .pyc bloat."""
+    print("Building wheel with uv build...")
+    dist_dir.mkdir(exist_ok=True)
+    # uv build automatically cleans or manages the dist folder
+    subprocess.run(["uv", "build", "--wheel", "--outdir", str(dist_dir)], check=True)
+    
+    wheels = list(dist_dir.glob("*.whl"))
+    return max(wheels, key=lambda f: f.stat().st_mtime)
+
 def build_shiv(wheel: Path, out_path: Path, entry: str):
     """
     Build shiv .pyz from WHEEL (not extracted dir).
@@ -364,7 +342,7 @@ def build_shiv(wheel: Path, out_path: Path, entry: str):
     """
     print(f"\nBuilding shiv → {out_path.name}")
     cmd = [
-        "shiv",
+        "uvx", "shiv",
         str(wheel),
         "-e", entry,
         "-o", str(out_path),
@@ -475,7 +453,7 @@ def main():
     if args.skip_build_wheel and wheel:
         print(f"Using existing wheel: {wheel.name}")
     else:
-        wheel = build_wheel(dist_dir, use_poetry=did_poetry_make_the_call())
+        wheel = build_wheel_with_uv()
     print(f"Wheel : {wheel.name}")
     
     # --- 2. Extract once, clean once ---
