@@ -11,7 +11,7 @@ What This Package Is
 A complete, clean-room rewrite of the old 1500-line eds.py monolith.
 Designed from day one to run in three environments without breaking:
 
-• CLI (poetry run pipeline ...)
+• CLI (uv run pipeline_eds ...)
 • Web GUI (Starlette + msgspec + Plotly)
 • Background workers (Termux, systemd, Docker — future)
 

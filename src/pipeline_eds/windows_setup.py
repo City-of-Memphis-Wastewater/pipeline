@@ -61,8 +61,7 @@ def get_executable_path() -> Path | None:
     """
     Returns the path to the running executable (e.g., the PyInstaller .exe or shiv .pyz).
     
-    Returns None if the application is running as a Python script (e.g., via 
-    'python -m' or 'poetry run') to prevent setup from running with a source path.
+    Returns None if the application is running as a Python script to prevent setup from running with a source path.
     """
     if not on_windows():
         return None

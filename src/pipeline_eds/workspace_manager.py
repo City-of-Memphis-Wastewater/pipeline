@@ -304,6 +304,6 @@ if __name__ == "__main__":
         demo_establish_default_workspace()
     else:
         print("Usage options: \n" 
-        "poetry run python -m pipeline_eds.api.eds demo-default \n")  
+        "uv run python -m pipeline_eds.api.eds demo-default \n")  
 
     

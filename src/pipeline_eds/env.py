@@ -57,6 +57,6 @@ def demo_secrets():
     return secrets
 
 if __name__ == "__main__":
-    # call from the root directory using: poetry run python -m pipeline_eds.env
+    # call from the root directory using: uv run python -m pipeline_eds.env
     secrets=demo_secrets()
     secrets.print_config()

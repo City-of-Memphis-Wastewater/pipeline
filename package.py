@@ -46,6 +46,8 @@ try:
 except ImportError:
     distro = None
 
+from pipeline_eds.version_info import get_package_name, get_package_version
+
 os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
 
 
@@ -127,19 +129,6 @@ class SystemInfo:
 # 5. METADATA HELPERS
 # ----------------------------------------------------------------------
     
-def get_package_version() -> str:
-    """Read from standard [project] ."""
-    data = toml.load("pyproject.toml")
-    project = data.get("project", {})
-    return project.get("version", "0.0.0")
-
-def get_package_name() -> str:
-    """Read from standard [project] ."""
-    data = toml.load("pyproject.toml")
-    project = data.get("project", {})
-    return project.get("name", "pipeline-eds")
-
-
 def get_python_version() -> str:
     """py312, py311, etc."""
     return f"py{sys.version_info.major}{sys.version_info.minor}"

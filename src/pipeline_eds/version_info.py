@@ -30,27 +30,19 @@ except PackageNotFoundError:
         __version__ = "dev" 
 
 # --- Version Retrieval ---
+
 def get_package_version() -> str:
-    """Reads project version from pyproject.toml."""
-    try:
-        data = toml.load('pyproject.toml')
-        version = data['tool']['poetry']['version']
-    except Exception as e:
-        # print(f"Error reading version from pyproject.toml: {e}", file=sys.stderr)
-        # Fallback version if TOML fails
-        version = get_version_from_known_alias()
-        
-    #print(f"Detected project version: {version}")
-    return version
+    """Read from standard [project] ."""
+    data = toml.load("pyproject.toml")
+    project = data.get("project", {})
+    return project.get("version", "0.0.0")
 
 def get_package_name() -> str:
-    # 1. Read package name from pyproject.toml
-    try:
-        data = toml.load('pyproject.toml')
-        pkg_name = data['tool']['poetry']['name']
-    except:
-        pkg_name = 'pipeline-eds' # Fallback
-    return pkg_name
+    """Read from standard [project] ."""
+    data = toml.load("pyproject.toml")
+    project = data.get("project", {})
+    return project.get("name", "pipeline_eds")
+
 
 def get_python_version():
     py_major = sys.version_info.major

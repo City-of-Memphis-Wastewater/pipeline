@@ -146,4 +146,4 @@ if __name__ == "__main__":
         demo_rjn_ping()
     else:
         print("Usage options: \n"
-        "poetry run python -m pipeline_eds.api.rjn ping")
+        "uv run python -m pipeline_eds.api.rjn ping")

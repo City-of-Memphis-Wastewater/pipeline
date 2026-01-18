@@ -29,7 +29,6 @@ jobs:
       run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
     - name: Install main dependencies only (skip dev for speed/CI stability)
-      #run: poetry install --without dev --with test  # ← This skips shiv entirely
       run: uv sync --group test --no-dev
     #- name: Lint with ruff
     #  run: |

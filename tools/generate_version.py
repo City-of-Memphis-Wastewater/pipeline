@@ -11,16 +11,11 @@ import subprocess
 import sys
 from pathlib import Path
 
+from pipeline_eds.version_info import get_package_name, get_package_version
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]   # repo root
 SRC_PKG = PROJECT_ROOT / "src" / "pipeline_eds"
 DIST = PROJECT_ROOT / "dist"
-
-def get_version() -> str:
-    """Read version from pyproject.toml (Poetry)"""
-    import tomllib  # Python 3.11+; fallback for <3.11 below
-    with open(PROJECT_ROOT / "pyproject.toml", "rb") as f:
-        data = tomllib.load(f)
-    return data["tool"]["poetry"]["version"]
 
 def get_git_rev() -> str:
     try:
@@ -31,7 +26,7 @@ def get_git_rev() -> str:
         return "unknown"
 
 def main() -> None:
-    version = get_version()
+    version = get_package_version()
     git_rev = get_git_rev()
     now = datetime.datetime.utcnow().isoformat(timespec="microseconds")
 
