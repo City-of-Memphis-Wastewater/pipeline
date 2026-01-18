@@ -21,8 +21,8 @@ def run(cmd):
 
 # ---------- VENV ----------
 if not venv_python.exists(): run([str(python_exe), "-m", "venv", str(venv_dir)])
-run([str(venv_python), "-m", "pip", "install", "--upgrade", "pip", "poetry"])
-run([str(venv_python), "-m", "poetry", "install", "--no-interaction", "--no-root", "--quiet"])
+run([str(venv_python), "-m", "pip", "install", "--upgrade", "pip", "uv"])
+run([str(venv_python), "-m", "uv", "install", "--no-interaction", "--no-root", "--quiet"])
 
 # ---------- LAUNCH DAEMON ----------
 log("Launching daemon")

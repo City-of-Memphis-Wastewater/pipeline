@@ -1,0 +1,41 @@
+name: Build and Publish to Test PyPI
+
+on:
+  push:
+    branches: 
+      - dev
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Install uv
+        run: |
+          python -m pip install --upgrade pip
+          pip install uv
+
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Install dependencies
+        # uv sync handles the 'virtualenv create false' logic 
+        # via the --system flag if you don't want a venv
+        run: uv sync --no-dev
+
+      - name: Build package
+        run: uv build
+
+      - name: Publish package
+        env:
+          UV_PUBLISH_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}
+        run: |
+          # You can use uv publish instead of twine!
+          uv publish --publish-url https://test.pypi.org/legacy/

@@ -13,7 +13,7 @@ from pipeline_eds.system_info import SystemInfo
 Builds an EXE when run on Windows 
 Builds an ELF binary when run on Linunx
 How to run:
-    poetry run python build_executable.py
+    uv run python build_executable.py
 """
 
 # --- Configuration ---
@@ -23,7 +23,6 @@ IS_WINDOWS_BUILD = sys.platform.startswith('win')
 RC_TEMPLATE = Path('version.rc.template')
 RC_FILE = Path('version.rc')
 CLI_MAIN_FILE = Path('src/pipeline/cli.py')
-EXE_NAME = 'pipeline-eds-cli' # Will be made dynamic later
 
 # --- RC File Generation ---
 def generate_rc_file(package_version: str):
@@ -72,14 +71,14 @@ def run_pyinstaller(dynamic_exe_name: str):
         base_command.insert(3, f'--version-file={RC_FILE.name}')
     
     # 2. Determine the full command using shutil.which for availability check
-    if shutil.which('poetry'):
-        # Poetry is available, prepend 'poetry run'
-        full_command = ['poetry', 'run'] + base_command
-        print(f"Attempting with Poetry: {' '.join(full_command)}")
+    if shutil.which('uv'):
+        # UV is available, prepend 'uv run'
+        full_command = ['uv', 'run'] + base_command
+        print(f"Attempting with UV: {' '.join(full_command)}")
     else:
-        # Poetry is not available, run PyInstaller directly
+        # UV is not available, run PyInstaller directly
         full_command = base_command
-        print("Poetry executable not found. Running PyInstaller directly.")
+        print("UV executable not found. Running PyInstaller directly.")
         print(f"Executing: {' '.join(full_command)}")
     
     # 3. Execute the command
