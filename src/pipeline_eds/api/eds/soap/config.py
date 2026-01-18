@@ -1,4 +1,4 @@
-# src/pipeline/api/eds/soap/config.py
+# src/pipeline_eds/api/eds/soap/config.py
 from __future__ import annotations
 from typing import Dict
 import logging

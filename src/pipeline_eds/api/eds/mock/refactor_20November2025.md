@@ -12,7 +12,7 @@
 
 ### Final Step (optional, later)
 
-When ready, add this to `src/pipeline/api/__init__.py`:
+When ready, add this to `src/pipeline_eds/api/__init__.py`:
 
 ```python
 # Backward compatibility — remove when migration complete

@@ -1,4 +1,4 @@
-# src/pipeline/api/eds/security.py
+# src/pipeline_eds/api/eds/security.py
 from __future__ import annotations
 from pipeline_eds.security_and_config import SecurityAndConfig
 from pipeline_eds.api.eds.config import get_configurable_default_plant_name

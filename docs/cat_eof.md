@@ -27,7 +27,7 @@ Golden rule
 One file per paste. Always.
 
 Do this:
-cat << 'EOF' > src/pipeline/api/eds/client.py
+cat << 'EOF' > src/pipeline_eds/api/eds/client.py
 # whole file
 
 
@@ -42,7 +42,7 @@ Golden rule
 One file per paste. Always.
 
 Do this:
-cat << 'EOF' > src/pipeline/api/eds/client.py
+cat << 'EOF' > src/pipeline_eds/api/eds/client.py
 # whole file
 
 
@@ -57,7 +57,7 @@ Golden rule
 One file per paste. Always.
 
 Do this:
-cat << 'EOF' > src/pipeline/api/eds/client.py
+cat << 'EOF' > src/pipeline_eds/api/eds/client.py
 # whole file
 
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate src/pipeline/_version.py and copy it to dist/ after a build.
+Generate src/pipeline_eds/_version.py and copy it to dist/ after a build.
 
 ./tools/generate_version.py
 """

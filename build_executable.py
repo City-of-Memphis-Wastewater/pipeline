@@ -22,7 +22,7 @@ IS_WINDOWS_BUILD = sys.platform.startswith('win')
 # Configuration variables (assuming these are defined elsewhere)
 RC_TEMPLATE = Path('version.rc.template')
 RC_FILE = Path('version.rc')
-CLI_MAIN_FILE = Path('src/pipeline/cli.py')
+CLI_MAIN_FILE = Path('src/pipeline_eds/cli.py')
 
 # --- RC File Generation ---
 def generate_rc_file(package_version: str):

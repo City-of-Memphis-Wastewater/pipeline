@@ -1,4 +1,4 @@
-# src/pipeline/server/trend_server_eds.py
+# src/pipeline_eds/server/trend_server_eds.py
 
 from __future__ import annotations # Delays annotation evaluation
 import msgspec.json # New import for fast JSON serialization

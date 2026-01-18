@@ -88,7 +88,7 @@ docs.md          → This file — you're reading it
 
 Migration Status (As of November 2025)
 --------------------------------------
-• Legacy src/pipeline/api/eds.py → untouched and still works
+• Legacy src/pipeline_eds/api/eds.py → untouched and still works
 • All new code → use pipeline_eds.api.eds
 • Old imports will be shimmed later via __init__.py
 • When ready: delete eds.py and celebrate

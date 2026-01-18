@@ -1,4 +1,4 @@
-# src/pipeline/interface/web_gui/server.py
+# src/pipeline_eds/interface/web_gui/server.py
 """
 Implemented on 19 Novermber 2025 as a way to dig out of multi server complexity.
 See

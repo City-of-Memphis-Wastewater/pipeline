@@ -1,4 +1,4 @@
-# src/pipeline/server/server_manager.py 
+# src/pipeline_eds/server/server_manager.py 
 
 from __future__ import annotations
 import threading

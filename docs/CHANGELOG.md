@@ -52,7 +52,7 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 
 ### Removed:
 - Freesimplegui removed as a dependency, and local interface removed in favor of web. Tkinter popups are still present for config and credentials.
-- src/pipeline/gui.py is redundant to the gui cli command, requires maintenance, doesn't exit smoothly, and is an overly generic name with an overly specific purpose (the Eds Trend Web GUI).
+- src/pipeline_eds/gui.py is redundant to the gui cli command, requires maintenance, doesn't exit smoothly, and is an overly generic name with an overly specific purpose (the Eds Trend Web GUI).
 - `mpl` and `windows` optional dependendy groups are no longer available.
 
 ### Added:
@@ -105,7 +105,7 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 ## [0.3.75] – 2025-11-21
 
 ### Fixed:
-- **CI/CD Bug Hunt:** _version.py is now only generated into ./src/pipeline/, not ./dist/ - this is whete the current publish.yaml is failing to finalize the build for PyPI.
+- **CI/CD Bug Hunt:** _version.py is now only generated into ./src/pipeline_eds/, not ./dist/ - this is whete the current publish.yaml is failing to finalize the build for PyPI.
 ---
 
 ## [0.3.71] – 2025-11-21
@@ -144,14 +144,14 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
   - Integrated `getnf` for instant Nerd Font installation (Hermit, Cascadia, 0xProto, 3270, etc.)
   - Full mobile contributor onboarding path documented
 - **EDS client package migration started**
-  - New modular structure under `src/pipeline/api/eds/` (`client.py`, `session.py`, `exceptions.py`, `points.py`, `trend.py`)
+  - New modular structure under `src/pipeline_eds/api/eds/` (`client.py`, `session.py`, `exceptions.py`, `points.py`, `trend.py`)
   - All `typer.Exit()` removed from library code → web server now survives off-VPN
   - Introduced proper `EdsTimeoutError` / `EdsAuthError`
   - Old monolithic `eds.py` preserved as `eds_legacy.py` during safe, incremental migration
   - Grok needed to be continuously monitored and corrected for accuracy. Lots of hype. Example: `docs/by_grok_edited_clay.md`
 
 ### Changed
-- Temporarily renamed new `/src/pipeline/api/eds/__init__.py` → `/src/pipeline/api/eds/hold__init__.py` to surface import gaps for zero-downtime migration
+- Temporarily renamed new `/src/pipeline_eds/api/eds/__init__.py` → `/src/pipeline_eds/api/eds/hold__init__.py` to surface import gaps for zero-downtime migration
 
 ### Fixed
 - Web GUI no longer crashes on connection timeout
@@ -202,7 +202,7 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 - Pex build script, build_pex.sh. Forced to regernate the wheel. It is testing well but only in the project folder - not sure if it has carried the HTML assets.
 
 ### Fixed:
-- Web config input stabilzed. Lots of work on the HTML and the FastAPI endpoints and architecture. See `./src/pipeline/server/` and `./src/pipeline/interface/web_gui/`.
+- Web config input stabilzed. Lots of work on the HTML and the FastAPI endpoints and architecture. See `./src/pipeline_eds/server/` and `./src/pipeline_eds/interface/web_gui/`.
 - Keyboard interrupt improved while two servers are running, though bugs still exist.
 - Web config should be able to be embedded as iframe or as standalone tab.
 - Runaway None return for credentials and config entry resolved with explicit checks for None for each one within the EdsClient functions.
@@ -277,7 +277,7 @@ Lots here. Too much, actually.
 - Change the function names in termux_setup.py from setup_termux_install() to setup_termux_integration(), and from cleanup_termux_install() to cleanup_termux_integration(). Only use was in cli.py
 - Change the function names in windows_setup.py from setup_windows_install() to setup_windows_integration(), and from cleanup_windows_install() to cleanup_windows_integration(). Only use was in cli.py
 - gnore poetry.lock in Termux to allow ci.yml to succeed when pushing from Termux.
-- Push existing fix to src/pipeline/gui_fastapi_plotly_live.py from laptop, for stability and updated pydantic and fastapi specifications above and below 3.12.
+- Push existing fix to src/pipeline_eds/gui_fastapi_plotly_live.py from laptop, for stability and updated pydantic and fastapi specifications above and below 3.12.
 
 ---
 
@@ -325,7 +325,7 @@ Lots here. Too much, actually.
 ## [0.3.44] - 2025-10-20
 
 ### Breaking Change / Deprecation
-- **Removed Local Environment Module:** The local file containing environment checks (src/pipeline/environment.py) has been removed and replaced by the external pyhabitat library. Action Required: All code must update imports from src.pipeline_eds.environment to pyhabitat.
+- **Removed Local Environment Module:** The local file containing environment checks (src/pipeline_eds/environment.py) has been removed and replaced by the external pyhabitat library. Action Required: All code must update imports from src.pipeline_eds.environment to pyhabitat.
 
 ### Features & Improvements
 - **PyHabitat Integration:** Environment checks and capability detection logic (like is_termux() and tkinter_is_available()) are now sourced from the pyhabitat dependency, ensuring consistent behavior across all projects that use it.

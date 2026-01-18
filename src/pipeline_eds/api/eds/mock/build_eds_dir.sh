@@ -1,6 +1,6 @@
-mkdir -p src/pipeline/api/eds
+mkdir -p src/pipeline_eds/api/eds
 
-cat << 'EOF' > src/pipeline/api/eds/__init__.py
+cat << 'EOF' > src/pipeline_eds/api/eds/__init__.py
 """
 pipeline_eds.api.eds — Clean, modern, future-proof EDS API client package
 
@@ -37,7 +37,7 @@ __all__ = [
 ]
 EOF
 
-cat << 'EOF' > src/pipeline/api/eds/exceptions.py
+cat << 'EOF' > src/pipeline_eds/api/eds/exceptions.py
 from __future__ import annotations
 
 class EdsAPIError(RuntimeError):
@@ -59,7 +59,7 @@ class EdsRequestError(EdsAPIError):
         super().__init__(message)
 EOF
 
-cat << 'EOF' > src/pipeline/api/eds/session.py
+cat << 'EOF' > src/pipeline_eds/api/eds/session.py
 from __future__ import annotations
 import requests
 from .exceptions import EdsTimeoutError, EdsAuthError
@@ -97,7 +97,7 @@ def login_to_session_with_credentials(credentials: dict) -> requests.Session:
     return session
 EOF
 
-cat << 'EOF' > src/pipeline/api/eds/client.py
+cat << 'EOF' > src/pipeline_eds/api/eds/client.py
 from __future__ import annotations
 from contextlib import contextmanager
 from .session import login_to_session_with_credentials
@@ -133,7 +133,7 @@ class EdsRestClient:
         return False
 EOF
 
-cat << 'EOF' > src/pipeline/api/eds/points.py
+cat << 'EOF' > src/pipeline_eds/api/eds/points.py
 from __future__ import annotations
 import re
 
@@ -163,7 +163,7 @@ def get_points_metadata(session: requests.Session, iess_list: list[str]) -> dict
     return metadata
 EOF
 
-cat << 'EOF' > src/pipeline/api/eds/trend.py
+cat << 'EOF' > src/pipeline_eds/api/eds/trend.py
 from __future__ import annotations
 from pipeline_eds.time_manager import TimeManager
 
@@ -180,7 +180,7 @@ def load_historic_data(session, iess_list: list[str], starttime, endtime, step_s
     return trend_internal.fetch_tabular(session, api_url, req_id, iess_list)
 EOF
 
-cat << 'EOF' > src/pipeline/api/eds/docs.md
+cat << 'EOF' > src/pipeline_eds/api/eds/docs.md
 # pipeline_eds.api.eds — Next-Gen EDS Client (2025)
 
 ## Why This Package Exists

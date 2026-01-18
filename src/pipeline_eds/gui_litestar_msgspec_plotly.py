@@ -1,4 +1,4 @@
-# src/pipeline/gui_litestar_msgspec_plotly.py
+# src/pipeline_eds/gui_litestar_msgspec_plotly.py
 
 from litestar import Litestar, get
 from litestar.response import HTMLResponse, JSONResponse

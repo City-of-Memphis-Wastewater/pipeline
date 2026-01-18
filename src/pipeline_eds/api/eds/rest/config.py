@@ -1,4 +1,4 @@
-# src/pipeline/api/eds/rest/config.py
+# src/pipeline_eds/api/eds/rest/config.py
 from __future__ import annotations
 from typing import Dict
 

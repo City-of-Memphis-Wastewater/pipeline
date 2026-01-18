@@ -1,4 +1,4 @@
-# src/pipeline/workspace_manager.py
+# src/pipeline_eds/workspace_manager.py
 from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
 import os
 import toml
@@ -42,7 +42,7 @@ class WorkspaceManager:
         ROOT_DIR = Path(__file__).resolve().parents[2]  # root directory
     
     
-    # This climbs out of /src/pipeline/ to find the root.
+    # This climbs out of /src/pipeline_eds/ to find the root.
     # parents[0] → The directory that contains the (this) Python file.
     # parents[1] → The parent of that directory.
     # parents[2] → The grandparent directory (which should be the root), if root_pipeline\src\pipeline\
