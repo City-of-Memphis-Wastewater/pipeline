@@ -6,8 +6,8 @@ import shutil
 from subprocess import run
 import sys
 import toml
-from pipeline.version_info import get_package_name, get_package_version, get_python_version, form_dynamic_binary_name
-from pipeline.system_info import SystemInfo
+from pipeline_eds.version_info import get_package_name, get_package_version, get_python_version, form_dynamic_binary_name
+from pipeline_eds.system_info import SystemInfo
 
 """
 Builds an EXE when run on Windows 

@@ -1,4 +1,4 @@
-import pipeline.config_loader as config_loader  # adjust to actual file
+import pipeline_eds.config_loader as config_loader  # adjust to actual file
 
 '''
 Out here spoofing.

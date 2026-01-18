@@ -20,7 +20,7 @@ $logDir = Join-Path $projectRoot "logs"
 # Launch the Plotly demo Python module
 Write-Output "Launching the main Python application..."
 Start-Process -FilePath $pythonExe `
-    -ArgumentList "-m", "src.pipeline.api.eds", "demo-webplot-live" `
+    -ArgumentList "-m", "src.pipeline_eds.api.eds", "demo-webplot-live" `
 	-WorkingDirectory $projectRoot `
     -RedirectStandardOutput (Join-Path $logDir "webplot_output.log") `
     -RedirectStandardError (Join-Path $logDir "webplot_error.log") `

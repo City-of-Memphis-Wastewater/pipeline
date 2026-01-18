@@ -91,9 +91,9 @@ source .venv/bin/activate
 pip install pipeline-eds   # or pip install -r requirements.txt
 
 # Run commands
-python3 -m pipeline.cli config
-python3 -m pipeline.cli ping
-python3 -m pipeline.cli trend M100FI --start 2025-10-01 --end 2025-10-10
+python3 -m pipeline_eds.cli config
+python3 -m pipeline_eds.cli ping
+python3 -m pipeline_eds.cli trend M100FI --start 2025-10-01 --end 2025-10-10
 
 # Deactivate when done
 deactivate

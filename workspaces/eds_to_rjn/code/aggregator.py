@@ -1,12 +1,12 @@
-#pipeline.aggregator.py
+#pipeline_eds.aggregator.py
 from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
 import csv
 from collections import defaultdict
 import os
 from pprint import pprint
 
-from pipeline.api.rjn import RjnClient #send_data_to_rjn2
-from pipeline.time_manager import TimeManager
+from pipeline_eds.api.rjn import RjnClient #send_data_to_rjn2
+from pipeline_eds.time_manager import TimeManager
 
 
 def aggregate_and_send(session_rjn, data_file, checkpoint_file):

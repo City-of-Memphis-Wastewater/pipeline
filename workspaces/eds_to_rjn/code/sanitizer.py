@@ -9,7 +9,7 @@ So. We need explicit and discernible sanitization scenarios, called a scripted a
 '''
 from __future__ import annotations # Delays annotation evaluation, allowing modern 3.10+ type syntax and forward references in older Python versions 3.8 and 3.9
 from datetime import datetime
-from pipeline.helpers import round_datetime_to_nearest_past_five_minutes
+from pipeline_eds.helpers import round_datetime_to_nearest_past_five_minutes
 
 def sanitize_data_for_printing(data):
     #data_sanitized_for_printing = data

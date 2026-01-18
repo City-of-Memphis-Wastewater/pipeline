@@ -31,7 +31,7 @@ Start-Process -FilePath "C:\Program Files\cloudflared\cloudflared.exe" `
 
 # Launch the Plotly demo Python module
 Start-Process -FilePath "python.exe" `
-    -ArgumentList "-m", "src.pipeline.api.eds", "demo-webplot-live" `
+    -ArgumentList "-m", "src.pipeline_eds.api.eds", "demo-webplot-live" `
     -WindowStyle Hidden `
     -RedirectStandardOutput (Join-Path $LogDir "webplot_output.log") `
     -RedirectStandardError (Join-Path $LogDir "webplot_error.log")

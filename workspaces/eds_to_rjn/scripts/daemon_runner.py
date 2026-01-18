@@ -6,15 +6,15 @@ import logging
 import csv
 from datetime import datetime
 
-from pipeline.api.eds.rest.client import EdsRestClient, identify_relevant_tables
-from pipeline.api.rjn import RjnClient
-from pipeline import helpers
-from pipeline.env import SecretConfig
-from pipeline.workspace_manager import WorkspaceManager
-from pipeline.queriesmanager import QueriesManager
-from pipeline.queriesmanager import load_query_rows_from_csv_files, group_queries_by_col
-from pipeline.time_manager import TimeManager
-from pipeline.security_and_config import SecurityAndConfig
+from pipeline_eds.api.eds.rest.client import EdsRestClient, identify_relevant_tables
+from pipeline_eds.api.rjn import RjnClient
+from pipeline_eds import helpers
+from pipeline_eds.env import SecretConfig
+from pipeline_eds.workspace_manager import WorkspaceManager
+from pipeline_eds.queriesmanager import QueriesManager
+from pipeline_eds.queriesmanager import load_query_rows_from_csv_files, group_queries_by_col
+from pipeline_eds.time_manager import TimeManager
+from pipeline_eds.security_and_config import SecurityAndConfig
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)

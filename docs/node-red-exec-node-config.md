@@ -13,7 +13,7 @@ The `Exec` node is designed to run shell commands.
 |**Command**|`python scripts/generate_schema.py`|This executes the Python script.|
 |**Append `msg.payload`**|`unchecked`|We don't want to pass the message payload as arguments to the script.|
 |**Wait for command to complete?**|`checked`|Yes, we need the script to finish before proceeding.|
-|**Working Directory**|`/home/oolong/dev/pipeline`|**CRITICAL:** This must be set to your project root to ensure `from pipeline.config.key_registry import...` works correctly. Adjust this path to your exact project root location (`~/dev/pipeline`).|
+|**Working Directory**|`/home/oolong/dev/pipeline`|**CRITICAL:** This must be set to your project root to ensure `from pipeline_eds.config.key_registry import...` works correctly. Adjust this path to your exact project root location (`~/dev/pipeline`).|
 |**Output**|`return code`|We only need the status code (0 for success).|
 
 ### 2. Adding the Node via the Node-RED Web GUI

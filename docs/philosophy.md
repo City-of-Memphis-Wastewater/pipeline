@@ -1,5 +1,5 @@
 ```
->>> from pipeline.philosophy import Philosophy
+>>> from pipeline_eds.philosophy import Philosophy
 >>> p = Philosophy()
 >>> str(p)
 'Zen of Python: Beautiful is better than ugly.'

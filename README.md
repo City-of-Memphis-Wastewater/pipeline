@@ -149,7 +149,7 @@ See [git guide](https://git-scm.com/docs).
 ** Clone the Repository**
 
 ```bash
-git clone https://github.com/City-of-Memphis-Wastewater/pipeline.git
+git clone https://github.com/City-of-Memphis-Wastewater/pipeline_eds.git
 cd pipeline
 ```
 
@@ -186,7 +186,7 @@ A use-case for this is for generating binaries on a system such that it is compa
 If you haven't already, clone the project from GitHub.
 
 ```bash
-git clone https://github.com/City-of-Memphis-Wastewater/pipeline.git
+git clone https://github.com/City-of-Memphis-Wastewater/pipeline_eds.git
 cd pipeline
 ```
 
@@ -235,7 +235,7 @@ The steps below are platform-specific.
     ```
 4.  **Run Commands:**
     ```bash
-    python -m pipeline.cli config
+    python -m pipeline_eds.cli config
     ```
 
 #### For iSH / Alpine Linux (iOS)
@@ -270,7 +270,7 @@ The steps below are platform-specific.
 4.  **Run Commands:**
     ```bash
 	 # Execute the main application command using the Python interpreter from the activated venv.
-    python3 -m pipeline.cli trend M100FI
+    python3 -m pipeline_eds.cli trend M100FI
 	
 	# Deactivate the virtual environment. This resets the shell's PATH to the system's 
     # default Python environment.

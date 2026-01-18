@@ -44,7 +44,7 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 - `mpl` and `windows` optional dependendy groups are no longer available.
 
 ### Added:
-- There is now pipeline.api.eds.config, pipeline.api.eds.rest.config, pipeline.api.eds.soap.config, and the comparable security files, for clear separation of concerns.
+- There is now pipeline_eds.api.eds.config, pipeline_eds.api.eds.rest.config, pipeline_eds.api.eds.soap.config, and the comparable security files, for clear separation of concerns.
 - `localdb_fallback_windows` has been added as an optional dependency group.
 
 
@@ -204,7 +204,7 @@ The format is (read: strives to be) based on [Keep a Changelog](https://keepacha
 - **Tauri Example:** Generate tauri example with three js embedded canvas, found in .\src\example\tauri_multimodal_app\; the build files are gitignore'd but `npm run tauri build` can be run from what is available, from inside the src-tauri directory. So begins a new stack - we will favor web-based graphics, and then these can be made native with Tauri. Should we mgrate entirely to Rust? See notes in my disparate Markdown Vaults.
 
 ### Fixed:
-- pipeline.server.trend_server_eds.launch_server_for_web_gui() leverages find_open_port(s).
+- pipeline_eds.server.trend_server_eds.launch_server_for_web_gui() leverages find_open_port(s).
 
 ---
 
@@ -313,7 +313,7 @@ Lots here. Too much, actually.
 ## [0.3.44] - 2025-10-20
 
 ### Breaking Change / Deprecation
-- **Removed Local Environment Module:** The local file containing environment checks (src/pipeline/environment.py) has been removed and replaced by the external pyhabitat library. Action Required: All code must update imports from src.pipeline.environment to pyhabitat.
+- **Removed Local Environment Module:** The local file containing environment checks (src/pipeline/environment.py) has been removed and replaced by the external pyhabitat library. Action Required: All code must update imports from src.pipeline_eds.environment to pyhabitat.
 
 ### Features & Improvements
 - **PyHabitat Integration:** Environment checks and capability detection logic (like is_termux() and tkinter_is_available()) are now sourced from the pyhabitat dependency, ensuring consistent behavior across all projects that use it.
@@ -491,7 +491,7 @@ This release focuses on a major overhaul of the build and packaging system to im
 
 ## [0.2.111] - 2025-10-02
 - Initial multi-OS release with `.whl`, `.pyz`, and `.exe` distributions
-- Refactored `pipeline.cli` for better CLI alias support
+- Refactored `pipeline_eds.cli` for better CLI alias support
 
 ### Changed
 - Updated Python dependency pins for 3.8–3.14 compatibility

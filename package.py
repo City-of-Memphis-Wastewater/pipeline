@@ -53,7 +53,7 @@ os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
 # 2. CONFIGURATION
 # ----------------------------------------------------------------------
 PROJECT_NAME = "pipeline-eds"
-ENTRY_POINT = "pipeline.cli:app"   # Your Typer/FastAPI entry point
+ENTRY_POINT = "pipeline_eds.cli:app"   # Your Typer/FastAPI entry point
 REPO_NAME = "pipeline"
 PROJECT_ROOT = Path(__file__).resolve().parent   # repo root
 while PROJECT_ROOT.name != REPO_NAME and PROJECT_ROOT != PROJECT_ROOT.parent:
@@ -337,7 +337,7 @@ def build_zipapp(clean_dir: Path, out_path: Path, entry: str):
     main_py = '''\
 #!/usr/bin/env python3
 import sys
-from pipeline.cli import app
+from pipeline_eds.cli import app
 sys.exit(app())
 '''
     (clean_dir / "__main__.py").write_text(main_py)

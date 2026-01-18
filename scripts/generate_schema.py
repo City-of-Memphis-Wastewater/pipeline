@@ -1,7 +1,7 @@
 import json
 import os
 from pathlib import Path
-from pipeline.config.key_registry import get_all_keys
+from pipeline_eds.config.key_registry import get_all_keys
 
 # --- Configuration ---
 # Define the output path for the JSON Schema artifact
@@ -67,10 +67,10 @@ def generate_schema():
     
 if __name__ == "__main__":
     # Note: You must run this script from the project root 
-    # (or adjust PYTHONPATH) so 'pipeline.config.key_registry' can be imported.
+    # (or adjust PYTHONPATH) so 'pipeline_eds.config.key_registry' can be imported.
     try:
         generate_schema()
     except ImportError as e:
-        print("ERROR: Could not import 'pipeline.config.key_registry'.")
+        print("ERROR: Could not import 'pipeline_eds.config.key_registry'.")
         print("Ensure you are running this script from the project root or your Python path is set correctly.")
         print(f"Details: {e}")
