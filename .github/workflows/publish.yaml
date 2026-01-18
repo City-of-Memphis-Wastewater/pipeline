@@ -29,10 +29,15 @@ jobs:
           python-version: '3.x'
 
       - name: Install uv
-        run: pip install --upgrade uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
-      - name: Install build tool via uv (system-wide, no venv needed)
-        run: uv tool install build --upgrade
+      - name: Install dependencies
+        # uv sync handles the 'virtualenv create false' logic 
+        # via the --system flag if you don't want a venv
+        run: uv sync --no-dev
+
+      - name: Build package
+        run: uv build
         
       - name: Build package (sdist + wheel)
         run: uv build
